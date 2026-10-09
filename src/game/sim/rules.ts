@@ -80,6 +80,12 @@ export const RULES = {
     crossFactor: 6,
   },
 
+  /**
+   * Energy drain multiplier while parked on a stop spot (`spot+0x6c`). The constructor holds 0.5
+   * and 0.25; which belongs to the plain spot and which to the VIP one is inferred.
+   */
+  stopSpotDrain: { normal: 0.5, vip: 0.25 },
+
   /** Taxiing accelerates towards the next node, is capped, and brakes for the final target. */
   taxiAcceleration: 200,
   taxiMaxSpeed: 200,
@@ -89,6 +95,8 @@ export const RULES = {
 } as const;
 
 export const PROVISIONAL = {
+  /** Stop spot click area, around its position. The original rectangle has not been read. */
+  stopSpotClick: { x1: -34, y1: -20, x2: 34, y2: 20 },
   /** The router skips nodes another plane is using; the simulation does not track that yet. */
   taxiIgnoresNodeOccupancy: true,
   /** How far past the screen edge a flying plane goes before turning back. */

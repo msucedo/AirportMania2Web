@@ -339,3 +339,60 @@ describe('simulation, level 1-3 (fuel)', () => {
     expect(plane.gasDone && plane.loaded).toBe(true);
   });
 });
+
+describe('simulation, stop spot', () => {
+  it('parks a landed plane, halves its energy drain and lets it go on to a gate', () => {
+    const sim = newSim(1);
+    run(sim, 1.1);
+    const plane = sim.planes[0]!;
+    const spot = sim.stopSpots[0]!;
+    expect(sim.stopSpots).toHaveLength(1);
+    expect(spot.drain).toBe(0.5);
+
+    // A circling plane needs its landing queued before the spot.
+    expect(sim.addOrder(plane, spot)).toBe(false);
+    expect(sim.addOrder(plane, sim.runways[0]!)).toBe(true);
+    expect(sim.addOrder(plane, spot)).toBe(true);
+    runUntil(sim, () => spot.use === 'occupied', 40);
+    expect(plane.state).toBe(PlaneState.WAITING);
+    expect(sim.runways[0]!.use).toBe('free');
+
+    const before = plane.energy;
+    run(sim, 4);
+    // Plane 1, female: 28 s per unit of energy, at half rate while parked.
+    expect(before - plane.energy).toBeCloseTo((4 / 28) * 0.5, 2);
+
+    expect(sim.addOrder(plane, sim.gates[0]!)).toBe(true);
+    runUntil(sim, () => plane.state === PlaneState.UNLOADING, 40);
+    expect(spot.use).toBe('free');
+    expect(spot.plane).toBeNull();
+  });
+
+  it('refuses the spot after a gate is planned and before the plane has unloaded', () => {
+    const sim = newSim(1);
+    run(sim, 1.1);
+    const plane = sim.planes[0]!;
+    sim.addOrder(plane, sim.runways[0]!);
+    sim.addOrder(plane, sim.gates[0]!);
+    expect(sim.addOrder(plane, sim.stopSpots[0]!)).toBe(false);
+  });
+
+  it('keeps a second plane waiting while the spot is taken', () => {
+    const sim = newSim(1);
+    run(sim, 23.2);
+    const [first, second] = sim.planes as [Plane, Plane];
+    const spot = sim.stopSpots[0]!;
+    sim.addOrder(first, sim.runways[0]!);
+    sim.addOrder(first, spot);
+    runUntil(sim, () => spot.use === 'occupied', 40);
+    sim.addOrder(second, sim.runways[1]!);
+    sim.addOrder(second, spot);
+    runUntil(sim, () => second.landed, 40);
+    run(sim, 3);
+    expect(second.state).toBe(PlaneState.WAITING);
+    expect(spot.plane).toBe(first);
+    sim.addOrder(first, sim.gates[0]!);
+    runUntil(sim, () => spot.plane === second && spot.use === 'occupied', 40);
+  });
+});
+

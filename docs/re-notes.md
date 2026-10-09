@@ -385,8 +385,18 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
     station node and to each other, plus two linked terminal nodes at (+30, −15) and (−50, −15)
     whose purpose is not known (not modelled). The reference point is taken to be the station
     node; that is an assumption.
-- Stop spot: vtable `0x17b928` (slots 11 `0x7983c`, 12 `0x79788`, 13 `0x797a0`, 14 `0x797b4`,
-  15 `0x797a8`, 6 `0x797c8`, 9 `0x797c0`). Not read yet.
+- Stop spot: vtable `0x17b928`, kind 3.
+  - Slot 11 (`0x7983c`): a plane that has not landed needs a runway in its itinerary; a plane
+    that has not unloaded is refused once a gate is in the itinerary; a landed, unloaded plane
+    (with `+0x26f` clear) is refused once a runway is in the itinerary.
+  - Slot 15 (`0x797a8`): only the base check, the plane must have landed.
+  - Slot 12 (`0x79788`): spot state 2 and `Plane::setModifier(spot)` (`0x6298`, `plane+0x320`).
+    The energy drain multiplies by the spot's `+0x6c` while that is set.
+  - Slot 6 (`0x797c8`): when the plane leaves state 2 the spot is freed and the modifier cleared
+    (`0x62c4`). Slots 13/14/9: reserve (state 1), busy (state ≠ 0), release.
+  - Constructor (`0x79194`): a four-way switch sets `+0x6c` to 0.25, 0.5, 0.25 or 0.5; mapping
+    0.5 to the plain spot and 0.25 to the VIP one is inferred. It creates six pass-through nodes
+    (offsets built from ±30, ±10, ±15) and five links whose pairing has not been read.
 
 ## Still unknown
 

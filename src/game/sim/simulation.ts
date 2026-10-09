@@ -75,7 +75,17 @@ export interface GasStation extends PlaceBase {
   progress: number;
 }
 
-export type Place = Gate | Runway | GasStation;
+export interface StopSpot extends PlaceBase {
+  kind: 'stopSpot';
+  position: Point;
+  vip: boolean;
+  /** Energy drain multiplier for a plane parked here (`spot+0x6c`). */
+  drain: number;
+  /** Original `spot+0x60`: 0 free, 1 reserved, 2 occupied. */
+  use: 'free' | 'reserved' | 'occupied';
+}
+
+export type Place = Gate | Runway | GasStation | StopSpot;
 
 export interface Plane {
   id: number;
@@ -128,6 +138,7 @@ export type SimEvent =
   | { type: 'forbidden' }
   | { type: 'queueCancelled'; plane: Plane }
   | { type: 'score'; plane: Plane; points: number; multiplier: number; reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'left' }
+  | { type: 'parked'; plane: Plane; spot: StopSpot }
   | { type: 'fuelingStarted'; plane: Plane; station: GasStation }
   | { type: 'fuelingFinished'; plane: Plane; station: GasStation }
   | { type: 'punctuality'; plane: Plane; result: Punctuality }
@@ -164,6 +175,7 @@ export class Simulation {
   readonly gates: Gate[] = [];
   readonly runways: Runway[] = [];
   readonly gasStations: GasStation[] = [];
+  readonly stopSpots: StopSpot[] = [];
   readonly counts: Record<'unload' | 'takeOff', Record<Punctuality, number>> = {
     unload: { EARLY: 0, ON_TIME: 0, LATE: 0 },
     takeOff: { EARLY: 0, ON_TIME: 0, LATE: 0 },
@@ -255,13 +267,35 @@ export class Simulation {
       });
     }
 
+    // Stop spots come last in the stage builder.
+    for (const slot of layout.stopSpots) {
+      if (slot.requires !== null && !owned.has(slot.requires)) continue;
+      // The painting stop spot that replaces this one is a different place, not modelled yet.
+      if (slot.replacedBy !== undefined && owned.has(slot.replacedBy)) continue;
+      const vip = slot.upgradedBy !== undefined && owned.has(slot.upgradedBy);
+      const { x, y } = slot.position;
+      const click = PROVISIONAL.stopSpotClick;
+      this.stopSpots.push({
+        kind: 'stopSpot',
+        id: `stop-spot-${this.stopSpots.length + 1}`,
+        position: slot.position,
+        node: slot.position,
+        taxiNode: this.graph.addStopSpot(slot.position),
+        click: { x1: x + click.x1, y1: y + click.y1, x2: x + click.x2, y2: y + click.y2 },
+        plane: null,
+        vip,
+        drain: vip ? RULES.stopSpotDrain.vip : RULES.stopSpotDrain.normal,
+        use: 'free',
+      });
+    }
+
     this.graph.autoLink();
 
     this.pending = [...config.schedule.planes].sort((a, b) => a.time - b.time);
   }
 
   get places(): Place[] {
-    return [...this.gates, ...this.gasStations, ...this.runways];
+    return [...this.gates, ...this.gasStations, ...this.stopSpots, ...this.runways];
   }
 
   get goals(): LevelGoals {
@@ -361,6 +395,13 @@ export class Simulation {
       if (!plane.unloaded) return false;
       return plane.loaded || this.itineraryHas(plane, 'gate');
     }
+    if (place.kind === 'stopSpot') {
+      // 0x7983c: a parking place. A flying plane needs its landing queued; before unloading it
+      // cannot follow a gate, and after unloading it cannot be added once a runway is planned.
+      if (!plane.landed && !this.itineraryHas(plane, 'runway')) return false;
+      if (plane.unloaded) return !plane.landed || !this.itineraryHas(plane, 'runway');
+      return !this.itineraryHas(plane, 'gate');
+    }
     if (place.kind === 'gasStation') {
       // 0x410d0: only for a plane that has unloaded and still needs fuel. Hangar service, when
       // needed, has to come first; there is no hangar in this stage.
@@ -379,13 +420,14 @@ export class Simulation {
   private canEnter(place: Place, plane: Plane): boolean {
     if (place.kind === 'runway') return !plane.landed || (plane.unloaded && plane.loaded);
     if (place.kind === 'gasStation') return plane.landed && plane.unloaded && plane.serviceDone && !plane.gasDone;
+    if (place.kind === 'stopSpot') return plane.landed;
     if (!plane.landed || plane.loaded) return false;
     return !plane.unloaded || (plane.serviceDone && plane.gasDone && plane.luggageDone);
   }
 
   /** Place virtual slot 14 (gate `0x43510`, runway `0x6da24`, gas station `0x40d40`). */
   private busy(place: Place, plane: Plane): boolean {
-    if (place.kind === 'runway' || place.kind === 'gasStation') return place.use !== 'free';
+    if (place.kind !== 'gate') return place.use !== 'free';
     if (place.service === 'idle') return false;
     return !(place.service === 'loaded' && place.plane === plane);
   }
@@ -395,7 +437,7 @@ export class Simulation {
     if (place.kind === 'gate') {
       place.samePlane = place.plane === plane;
       place.service = 'reserved';
-    } else if (place.kind === 'gasStation') {
+    } else if (place.kind === 'gasStation' || place.kind === 'stopSpot') {
       place.use = 'reserved';
     } else {
       place.use = plane.state === PlaneState.FLYING ? 'landing' : 'takeOffReserved';
@@ -514,7 +556,9 @@ export class Simulation {
     if (!RULES.drainingStates.has(plane.state)) return;
     if (plane.energy <= RULES.minEnergy) return;
     const fallTime = plane.sex === 'MALE' ? plane.descriptor.times.maleEnergyFall : plane.descriptor.times.femaleEnergyFall;
-    const rate = (1 / fallTime) * (plane.emergency ? RULES.emergencyDrainFactor : 1);
+    // A stop spot the plane is parked on scales the drain (`plane+0x320`, set by 0x79788).
+    const parked = plane.place?.kind === 'stopSpot' && plane.place.use === 'occupied' ? plane.place.drain : 1;
+    const rate = (1 / fallTime) * (plane.emergency ? RULES.emergencyDrainFactor : 1) * parked;
     plane.energy = Math.max(RULES.minEnergy, plane.energy - rate * dt);
   }
 
@@ -634,6 +678,12 @@ export class Simulation {
     }
     if (place.kind === 'gate') this.gateArrival(place, plane);
     else if (place.kind === 'gasStation') this.gasStationArrival(place, plane);
+    else if (place.kind === 'stopSpot') {
+      // `StopSpot::planeArrived` (0x79788): the plane simply waits there.
+      place.use = 'occupied';
+      plane.state = PlaneState.WAITING;
+      this.emit({ type: 'parked', plane, spot: place });
+    }
     else this.runwayUsed(place, plane);
   }
 

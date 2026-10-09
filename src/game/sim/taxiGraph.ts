@@ -100,6 +100,19 @@ export class TaxiGraph {
   }
 
   /**
+   * A stop spot's node and the pass-through nodes around it. The constructor (0x794bc) creates six
+   * nodes at these offsets and makes five links; which pairs it links has not been read, so each
+   * is linked to the spot here.
+   */
+  addStopSpot(node: Point): TaxiNode {
+    const spot = this.addNode(node, true);
+    for (const [dx, dy] of [[-30, -15], [-10, -15], [10, -15], [-10, 15], [10, 15], [30, 15]] as const) {
+      this.link(spot, this.addNode({ x: node.x + dx, y: node.y + dy }, false));
+    }
+    return spot;
+  }
+
+  /**
    * A runway's nodes (runway constructor, 0x6d0d2): its own node at one end, a second terminal
    * node at the other, a ring of pass-through nodes around each, and two free nodes.
    * `nodeSide` is -1 when the runway's node is at the left end.

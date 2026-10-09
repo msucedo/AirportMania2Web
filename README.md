@@ -16,10 +16,11 @@ npm test
 
 Stage 1 is playable for levels 1 to 6 (`?level=N`): select a plane, send it to a runway, then to a
 gate (it unloads and, if it needs nothing else, loads there), then to a runway to take off. From
-level 3 some planes ask for fuel between unloading and loading. Orders can be queued. It is drawn
+level 3 some planes ask for fuel between unloading and loading. A landed plane can be parked
+on the stop spot, where it loses energy more slowly. Orders can be queued. It is drawn
 with the original HUD, fonts, texts, indicators and backdrop, and plays the original sounds.
 
-Not there yet: stop spots, the transplant-organ plane of level 6, the extra-plane level variants,
+Not there yet: the transplant-organ plane of level 6, the extra-plane level variants,
 shop improvements, menus and the other stages.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
