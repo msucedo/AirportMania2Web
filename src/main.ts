@@ -6,6 +6,8 @@ import { TextureStore } from './engine/textures';
 import { LevelScene } from './game/levelScene';
 import { LevelSelect } from './game/levelSelect';
 import { MainMenu } from './game/mainMenu';
+import { loadSettings, saveSettings } from './game/settings';
+import { OPTIONS_SURFACES, OptionsDialog } from './game/view/optionsDialog';
 import { WorldMap } from './game/worldMap';
 import { Progress } from './game/progress';
 import { STAGES } from './game/stages';
@@ -45,8 +47,16 @@ async function main(): Promise<void> {
   const data = await loadGameData();
   const app = await createScreen(host);
   const textures = new TextureStore(data.resources);
+  let settings = loadSettings();
+  // `?lang=` overrides the language chosen in the options, for trying one out.
   const language = params.get('lang');
-  const chosen = isLanguage(language) ? language : 'spanish';
+  const chosen = isLanguage(language) ? language : settings.language;
+  const makeAudio = (): AudioPlayer => {
+    const player = new AudioPlayer(data.resources);
+    player.muted = params.has('mute');
+    player.setVolumes(settings.sound, settings.music);
+    return player;
+  };
   const progress = Progress.load();
   if (params.has('reset')) progress.reset();
   window.progress = progress;
@@ -60,8 +70,7 @@ async function main(): Promise<void> {
 
   const playable = new Map([...STAGES.keys()].map((s) => [s, data.areas.get(s)!.levelsCount]));
   if (params.has('map')) {
-    const audio = new AudioPlayer(data.resources);
-    audio.muted = params.has('mute');
+    const audio = makeAudio();
     const focus = Number.parseInt(params.get('map') ?? '', 10);
     await WorldMap.create(app, data, textures, audio, {
       strings: await data.strings(chosen),
@@ -73,12 +82,25 @@ async function main(): Promise<void> {
       onMenu: () => navigate(null, null),
     });
   } else if (!params.has('stage') && level === null) {
-    const audio = new AudioPlayer(data.resources);
-    audio.muted = params.has('mute');
+    const audio = makeAudio();
+    const strings = await data.strings(chosen);
+    await textures.load(OPTIONS_SURFACES);
     await MainMenu.create(app, data, textures, audio, {
-      strings: await data.strings(chosen),
-      enabled: ['PLAY'],
-      onSelect: () => navigate(null, null, ''),
+      strings,
+      enabled: ['PLAY', 'OPTIONS'],
+      onSelect: (entry) => {
+        if (entry === 'PLAY') return navigate(null, null, '');
+        const dialog = new OptionsDialog(textures, audio, strings, settings, (next) => {
+          const languageChanged = next.language !== settings.language;
+          settings = next;
+          saveSettings(settings);
+          // Texts are loaded once per page, so a new language needs the page again.
+          if (languageChanged) location.reload();
+          // Removed after the touch that closed it has been dispatched.
+          else setTimeout(() => dialog.destroy({ children: true }));
+        });
+        app.stage.addChild(dialog);
+      },
     });
   } else if (level === null) {
     await LevelSelect.create(app, data, textures, {
@@ -92,8 +114,7 @@ async function main(): Promise<void> {
       onMenu: () => navigate(null, null, stage),
     });
   } else {
-    const audio = new AudioPlayer(data.resources);
-    audio.muted = params.has('mute');
+    const audio = makeAudio();
     window.game = await LevelScene.create(app, data, textures, audio, {
       stage,
       level,

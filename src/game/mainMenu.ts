@@ -5,7 +5,7 @@ import type { AudioPlayer } from '../engine/audio';
 import { fontFamily, loadFonts } from '../engine/fonts';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../engine/screen';
 import type { TextureStore } from '../engine/textures';
-import { MAIN_FONT } from './view/floatingText';
+import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
 
 const SURFACES = ['MAIN_MENU.BACK', 'MAIN_MENU.TOWER', 'MAIN_MENU.FRONT', 'MAIN_MENU.PANEL', 'MAIN_MENU.TITLE', 'MAIN_MENU.FRANCHISE', 'MAIN_MENU.NUMBER_TWO', 'MAIN_MENU.BUTTON_OVER'];
 
@@ -91,7 +91,7 @@ export class MainMenu {
   }
 
   static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: MainMenuOptions): Promise<MainMenu> {
-    await Promise.all([textures.load(SURFACES), loadFonts(data.resources, [MAIN_FONT])]);
+    await Promise.all([textures.load(SURFACES), loadFonts(data.resources, [MAIN_FONT, SCORE_FONT])]);
     const menu = new MainMenu(textures, audio, options);
     app.stage.addChild(menu.root);
     // Browsers only allow sound after a gesture, so the music starts with the first touch.

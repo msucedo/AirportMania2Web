@@ -564,8 +564,12 @@ Vtable `0x17a8e8`, kind 5.
   the sign's corner, each a button (`0x5c7a0`) 160×30 with `MAIN_MENU.BUTTON_OVER` and the text
   in `FONTS.MAIN`.
 - Not read: the entrance animations, the plane flying past (`0x59f7c`), the greeting sign and the
-  dialogs behind Users, Options and Credits. The web menu shows the scene in place, with only
-  Play working, and leaves out the badge and the promotional buttons.
+  dialogs behind Users, Options and Credits. The web menu shows the scene in place, with Play
+  and Options working, and leaves out the badge and the promotional buttons.
+- The web options dialog is not a copy of the original (`0x2220`, with sound, music, tips and
+  device entries): it offers sound and music volume and the language, built from the original
+  dialog pieces (`GUI.DIALOGS.*`, `FLAGS.*`) and strings, and stores them in the browser
+  (`am2web.settings.v1`).
 
 ## World map (script `0xccc8c`)
 

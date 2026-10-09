@@ -1,5 +1,8 @@
 import type { Resources } from '../data/resources';
 
+const EFFECTS_LEVEL = 0.8;
+const MUSIC_LEVEL = 0.45;
+
 /**
  * Sound effects and music by resource id, on the Web Audio API.
  * Browsers only start audio after a user gesture, so everything is created lazily by `unlock()`.
@@ -14,6 +17,7 @@ export class AudioPlayer {
   private musicToken = 0;
   private pendingMusic: (() => void) | null = null;
   muted = false;
+  private volumes = { sound: 1, music: 1 };
 
   constructor(private readonly resources: Resources) {}
 
@@ -31,13 +35,20 @@ export class AudioPlayer {
     if (!Context) return;
     this.context = new Context();
     this.effects = this.context.createGain();
-    this.effects.gain.value = 0.8;
+    this.effects.gain.value = EFFECTS_LEVEL * this.volumes.sound;
     this.effects.connect(this.context.destination);
     this.musicGain = this.context.createGain();
-    this.musicGain.gain.value = 0.45;
+    this.musicGain.gain.value = MUSIC_LEVEL * this.volumes.music;
     this.musicGain.connect(this.context.destination);
     this.pendingMusic?.();
     this.pendingMusic = null;
+  }
+
+  /** Player volumes from 0 to 1, on top of the mix levels. */
+  setVolumes(sound: number, music: number): void {
+    this.volumes = { sound, music };
+    if (this.effects) this.effects.gain.value = EFFECTS_LEVEL * sound;
+    if (this.musicGain) this.musicGain.gain.value = MUSIC_LEVEL * music;
   }
 
   /** Decodes samples ahead of time so the first play is not late. */
