@@ -14,7 +14,8 @@ npm test
 
 ## Status
 
-The game opens on the original main menu and world map: touch a level's marker and press Play.
+The game opens on the original main menu and world map: touch a level's marker, or Play for the
+current one, and confirm in its dialog.
 Two stages are playable, Arches with six levels and the island with seven. Options in the main
 menu set the sound and music volume and, under Advanced, the language (eight are available);
 during a level the menu button opens the original menu, with the options and the ways out.

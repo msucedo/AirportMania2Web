@@ -662,8 +662,16 @@ Vtable `0x17a8e8`, kind 5.
 - Also in the script and not drawn by the web version: `MAP.ISLAND_FRONT`, clouds
   (`0x61210`), wind streams (`0x60bec`), carrier waves, satellites and twinkling points
   (`0x60cc4`), the "coming soon" sign, and the level information dialog (`0x64824`).
-- Web version: dragging scrolls the map; the chosen level's name and best score are written
-  over the bar.
+- Level dialog (`0x64824`, opened by a marker `0x5dda4` or by the bar's Play `0x5f54c`): frame
+  420 wide, `MAP.LEVEL_STAGE_NUMBER` in `FONTS.ULTRA`, the level's five goal scores
+  (`0x53c24`), `SCORE.BEST_SCORE` when the record has one, and on the bottom row (20 px above
+  the frame's edge) `CANCEL` at x −100 and `MAP.PLAY` at x 100, both 160 wide. Its height and
+  the placing of the scores are in a draw routine that has not been read.
+- Stage dialog (`0x63c60`, from a stage icon): `STAGES.%d.NAME`, `STAGES.%d.DESCRIPTION`,
+  `MAP_INFO_DIALOG.STAGE_CLEARED` with a small star and `x %d`, `MAP_INFO_DIALOG.TOTAL` and
+  `CLOSE`. Positions not read.
+- Web version: dragging scrolls the map; both dialogs use the original texts and buttons in a
+  layout of ours where the positions are not known.
 
 ## Still unknown
 

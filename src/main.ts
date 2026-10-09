@@ -84,6 +84,7 @@ async function main(): Promise<void> {
       strings: await data.strings(chosen),
       progress,
       playable,
+      licences: new Map([...STAGES].map(([s, l]) => [s, l.extraPlaneLicence])),
       focus: STAGES.has(focus) ? focus : null,
       onPlay: (s, l) => navigate(s, l),
       onMenu: () => navigate(null, null),

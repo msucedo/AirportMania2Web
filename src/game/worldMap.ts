@@ -7,7 +7,10 @@ import { fontFamily, loadFonts } from '../engine/fonts';
 import { SCREEN_WIDTH } from '../engine/screen';
 import type { TextureStore } from '../engine/textures';
 import type { Progress } from './progress';
+import { DIALOG_SURFACES } from './view/dialog';
 import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
+import { LevelDialog, MAP_DIALOG_FONTS, StageDialog } from './view/mapDialogs';
+import { findGoals } from '../data/levels';
 
 /** Stage icons and the ribbon under each, in map pixels, from the map script (0xccc8c). */
 const STAGE_ICONS: readonly { stage: number; icon: Point; ribbon: Point }[] = [
@@ -51,6 +54,8 @@ export interface WorldMapOptions {
   progress: Progress;
   /** Stages that can be played in this version, with their level counts. */
   playable: Map<number, number>;
+  /** Per stage, the improvement that is its plane licence: owning it changes a level's goals. */
+  licences: Map<number, number>;
   /** Stage to bring into view at the start; by default the one with the next level to play. */
   focus: number | null;
   onPlay: (stage: number, level: number) => void;
@@ -60,20 +65,22 @@ export interface WorldMapOptions {
 /**
  * The world map: the original image with the stage icons, ribbons and level markers where the
  * map script and the level position table put them, and the bar with its four buttons. A level
- * is chosen by touching its marker and started with Play. Dragging scrolls the map. The
+ * is started from the dialog its marker opens, or with Play for the current one; a stage's icon
+ * opens its description. Dragging scrolls the map. The
  * original's drifting clouds, ships, wind and satellites are not drawn, and the tutorial and awards buttons do nothing yet.
  */
 export class WorldMap {
   readonly root = new Container();
   private readonly map = new Container();
   private readonly cursor: Sprite;
-  private readonly info: Text;
+  private dialog: Container | null = null;
   private selected: { stage: number; level: number } | null = null;
   private time = 0;
 
   private constructor(
-    textures: TextureStore,
-    audio: AudioPlayer,
+    private readonly textures: TextureStore,
+    private readonly audio: AudioPlayer,
+    private readonly data: GameData,
     positions: Map<number, Point[]>,
     private readonly options: WorldMapOptions,
   ) {
@@ -86,6 +93,9 @@ export class WorldMap {
     for (const { stage, icon, ribbon } of STAGE_ICONS) {
       const picture = textures.sprite(`MAP.STAGES.${stage}`);
       picture.position.copyFrom(icon);
+      picture.eventMode = 'static';
+      picture.cursor = 'pointer';
+      picture.on('pointertap', () => this.askStage(stage));
       const band = textures.sprite('MAP.HERALDIC_RIBBON');
       band.position.copyFrom(ribbon);
       const title = new Text({ text: strings.t(`STAGES.${stage}.TITLE`), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 20, fill: 0x5a4a2a } });
@@ -112,7 +122,7 @@ export class WorldMap {
           marker.hitArea = new Rectangle(-24, -30, 48, 60);
           marker.on('pointertap', () => {
             audio.play('SOUNDS.CLICK');
-            this.select(stage, level, at);
+            this.askLevel(stage, level);
           });
         }
         this.map.addChild(marker);
@@ -146,22 +156,17 @@ export class WorldMap {
       zone.on('pointertap', () => {
         audio.play('SOUNDS.CLICK');
         if (button.id === 'RETURN') options.onMenu();
-        else if (this.selected) options.onPlay(this.selected.stage, this.selected.level);
+        else if (this.selected) this.askLevel(this.selected.stage, this.selected.level);
       });
       bar.addChild(zone);
     }
     bar.addChild(glass);
 
-    // Our addition: the chosen level and its best score, shown over the bar.
-    this.info = new Text({ text: '', style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 13, fill: 0xffffff, stroke: { color: 0x1c2a3a, width: 3 } } });
-    this.info.anchor.set(0.5, 1);
-    this.info.position.set(SCREEN_WIDTH / 2, BAR_Y + 2);
-
-    this.root.addChild(this.map, bar, this.info);
+    this.root.addChild(this.map, bar);
     this.enableDragging();
 
     const start = next as { stage: number; level: number } | null;
-    if (start) this.select(start.stage, start.level, positions.get(start.stage)![start.level - 1]!);
+    if (start) this.mark(start.stage, start.level, positions.get(start.stage)![start.level - 1]!);
     const centre = STAGE_ICONS.find((s) => s.stage === (options.focus ?? start?.stage ?? 1))?.icon.x ?? 0;
     this.scrollTo(SCREEN_WIDTH / 2 - centre * MAP_SCALE);
   }
@@ -170,12 +175,42 @@ export class WorldMap {
     return this.options.progress.stageUnlocked(stage);
   }
 
-  private select(stage: number, level: number, at: Point): void {
+  /** The level the profile is on is marked on the map. */
+  private mark(stage: number, level: number, at: Point): void {
     this.selected = { stage, level };
     this.cursor.visible = true;
     this.cursor.position.copyFrom(at);
-    const best = this.options.progress.result(stage, level).best;
-    this.info.text = `${this.options.strings.t('MAP.LEVEL_STAGE_NUMBER', stage, level)}${best > 0 ? `  ·  ${best}` : ''}`;
+  }
+
+  private open(dialog: Container): void {
+    this.dialog = dialog;
+    this.root.addChild(dialog);
+  }
+
+  private close(): void {
+    const closing = this.dialog;
+    this.dialog = null;
+    // Removed after the touch that closed it has been dispatched.
+    if (closing) setTimeout(() => closing.destroy({ children: true }));
+  }
+
+  /** Touching a marker, or Play for the current level, asks before starting it (0x64824). */
+  private askLevel(stage: number, level: number): void {
+    if (this.dialog) return;
+    const { strings, progress } = this.options;
+    const area = this.data.areas.get(stage)!;
+    const licence = this.options.licences.get(stage);
+    const goals = findGoals(area, level, licence !== undefined && progress.improvements(stage, level).has(licence));
+    this.open(new LevelDialog(this.textures, this.audio, strings, { stage, level, goals, best: progress.result(stage, level).best }, () => this.options.onPlay(stage, level), () => this.close()));
+  }
+
+  /** Touching a stage's icon describes it (0x63c60). */
+  private askStage(stage: number): void {
+    if (this.dialog) return;
+    const { strings, progress, playable } = this.options;
+    const cleared = playable.has(stage) && progress.record(stage, playable.get(stage)!).tier > 0;
+    const prize = cleared ? { stars: progress.stageStars(stage), total: progress.stageReward(stage) } : null;
+    this.open(new StageDialog(this.textures, this.audio, strings, { number: stage, prize }, () => this.close()));
   }
 
   private scrollTo(x: number): void {
@@ -202,12 +237,12 @@ export class WorldMap {
   }
 
   static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: WorldMapOptions): Promise<WorldMap> {
-    const surfaces = ['MAP.BACK', 'MAP.LEVEL_SELECTED', 'MAP.HERALDIC_RIBBON', 'MAP.HUD.BACK', 'MAP.HUD.REFLEXION'];
+    const surfaces = [...DIALOG_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL', 'MAP.BACK', 'MAP.LEVEL_SELECTED', 'MAP.HERALDIC_RIBBON', 'MAP.HUD.BACK', 'MAP.HUD.REFLEXION'];
     for (let i = 0; i <= 6; i++) surfaces.push(`MAP.LEVELS.${i}`);
     for (const { stage } of STAGE_ICONS) surfaces.push(`MAP.STAGES.${stage}`);
     for (const button of BUTTONS) surfaces.push(`MAP.HUD.BUTTONS.${button.id}_ON`);
-    const [positions] = await Promise.all([data.levelPositions(), textures.load(surfaces), loadFonts(data.resources, [MAIN_FONT, SCORE_FONT])]);
-    const map = new WorldMap(textures, audio, positions, options);
+    const [positions] = await Promise.all([data.levelPositions(), textures.load(surfaces), loadFonts(data.resources, [MAIN_FONT, SCORE_FONT, ...MAP_DIALOG_FONTS])]);
+    const map = new WorldMap(textures, audio, data, positions, options);
     app.stage.addChild(map.root);
     app.ticker.add((ticker) => map.update(ticker.deltaMS / 1000));
     audio.preload(['SOUNDS.CLICK']);

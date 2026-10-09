@@ -35,7 +35,19 @@ try {
   await page.mouse.move(...at(300, 120)); await page.mouse.down(); await page.mouse.move(...at(60, 120), { steps: 8 }); await page.mouse.up();
   await sleep(300);
   await page.screenshot({ path: `${outDir}/M4-map-scrolled.png` });
-  await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 20000 }), page.mouse.click(...at(419, 295))]);
+  // Back at the start, the stage 1 icon (map 151,260 at half size) opens its description.
+  await page.mouse.move(...at(60, 120)); await page.mouse.down(); await page.mouse.move(...at(300, 120), { steps: 8 }); await page.mouse.up();
+  await sleep(300);
+  await page.mouse.click(...at(75, 130));
+  await sleep(400);
+  await page.screenshot({ path: `${outDir}/M5-stage-dialog.png` });
+  await page.mouse.click(...at(240, 260)); // Close
+  await sleep(400);
+  // The bar's Play asks about the current level; its dialog's Play (x 100, bottom row) starts it.
+  await page.mouse.click(...at(419, 295));
+  await sleep(400);
+  await page.screenshot({ path: `${outDir}/M6-level-dialog.png` });
+  await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 20000 }), page.mouse.click(...at(340, 260))]);
   await page.waitForFunction('document.body.dataset.ready || document.body.dataset.error', { timeout: 20000 });
   console.log('after map Play:', new URL(page.url()).search);
   console.log('problems:', problems.length ? problems : 'none');
