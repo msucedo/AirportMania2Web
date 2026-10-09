@@ -55,8 +55,7 @@ export const ISLAND: StageLayout = {
   pontoons: true,
   runwayBalloonCorner: 1,
   water: true,
-  // Ids, prices and order as registered by the script. Coffee and cake (0x74, 50000, between
-  // the gate B upgrade and the licence) is left out until it is implemented.
+  // Ids, prices and order as registered by the script.
   improvements: [
     offer(IMPROVEMENT.EXTRA_STOP_SPOT, 17000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'ISLAND_STORAGE_PLACE'),
     offer(IMPROVEMENT.EXTRA_STOP_SPOT_2, 25000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'ISLAND_STORAGE_PLACE', IMPROVEMENT.EXTRA_STOP_SPOT),
@@ -65,6 +64,7 @@ export const ISLAND: StageLayout = {
     offer(IMPROVEMENT.EXTRA_GATE_C, 35000, 'EXTRA_GATE_C', 'EXTRA_GATE', 'GATE_2'),
     offer(IMPROVEMENT.UPGRADED_GATE_A, 35000, 'IMPROVED_GATE_A', 'IMPROVED_GATE', 'GATE_3'),
     offer(IMPROVEMENT.UPGRADED_GATE_B, 40000, 'IMPROVED_GATE_B', 'IMPROVED_GATE', 'GATE_3'),
+    offer(IMPROVEMENT.COFFEE_AND_CAKE, 50000, 'COFFEE_AND_CAKE', 'COFFEE_AND_CAKE', 'COFFEE_AND_CAKE'),
     offer(IMPROVEMENT.PLANE_5_LICENCE, 120000, 'PLANE_5_LICENCE', 'PLANE_5_LICENCE', 'PLANE_5'),
     offer(IMPROVEMENT.UPGRADED_GATE_C, 45000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_3', IMPROVEMENT.EXTRA_GATE_C),
   ],

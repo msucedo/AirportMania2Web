@@ -3,7 +3,7 @@ import type { LevelGoals, LevelSchedule, PlaneColor, PlaneSpawn, Sex } from '../
 import type { PlaneDescriptor } from '../../data/planes';
 import type { Point } from '../../data/xml';
 import { COLOR_NAMES } from '../palette';
-import type { StageLayout } from '../stages/layout';
+import { IMPROVEMENT, type StageLayout } from '../stages/layout';
 import { TaxiGraph, type TaxiNode } from './taxiGraph';
 import { Need, PROVISIONAL, PlaneState, RULES, UNSELECTABLE_STATES, clamp01, punctuality, roundScore, type Punctuality } from './rules';
 
@@ -100,6 +100,14 @@ export interface StopSpot extends PlaceBase {
   painting: PaintBooth | null;
 }
 
+/** A service the player starts from the top bar, usable again after a recharge (class `0x24010`). */
+export interface ServiceButton {
+  recharge: number;
+  /** Seconds of recharge left (`+0x24`); it is ready once this has gone below zero. */
+  left: number;
+  ready: boolean;
+}
+
 /** What a painting stop spot adds to a stop spot (class at vtable `0x17b1e8`). */
 export interface PaintBooth {
   /** Seconds it takes to recharge after a repaint (`+0x74`). */
@@ -168,6 +176,8 @@ export type SimEvent =
   | { type: 'select'; plane: Plane }
   | { type: 'order'; plane: Plane; place: Place }
   | { type: 'forbidden'; plane?: Plane }
+  | { type: 'coffeeReady' }
+  | { type: 'coffeeServed'; planes: Plane[] }
   | { type: 'paintingReady'; spot: StopSpot }
   | { type: 'paintingStarted'; plane: Plane; spot: StopSpot; color: PlaneColor }
   | { type: 'repainted'; plane: Plane; from: PlaneColor }
@@ -217,6 +227,8 @@ export class Simulation {
   readonly gasStations: GasStation[] = [];
   readonly hangars: Hangar[] = [];
   readonly stopSpots: StopSpot[] = [];
+  /** The coffee and cake service, when the improvement is owned. */
+  readonly coffee: ServiceButton | null;
   /** The colours used in this level; the painting stop spot offers these (`airport+0x15c`). */
   readonly colors: readonly PlaneColor[];
   readonly counts: Record<'unload' | 'takeOff', Record<Punctuality, number>> = {
@@ -357,6 +369,8 @@ export class Simulation {
     this.graph.autoLink();
 
     this.pending = [...config.schedule.planes].sort((a, b) => a.time - b.time);
+    // It starts empty, like the painting spot (0x24010).
+    this.coffee = owned.has(IMPROVEMENT.COFFEE_AND_CAKE) ? { recharge: RULES.coffee.recharge, left: RULES.coffee.recharge, ready: false } : null;
     // 0x133fc: the colours the level's planes come in, in the order of the colour table.
     this.colors = COLOR_NAMES.filter((name) => config.schedule.planes.some((p) => p.color === name));
   }
@@ -531,6 +545,14 @@ export class Simulation {
     for (const station of this.gasStations) this.updateGasStation(station, dt);
     for (const hangar of this.hangars) this.updateHangar(hangar, dt);
     for (const spot of this.stopSpots) if (spot.painting) this.updatePainting(spot, spot.painting, dt);
+    if (this.coffee && !this.coffee.ready) {
+      // 0x240f4: it counts down and is ready on the update after reaching zero.
+      if (this.coffee.left >= 0) this.coffee.left -= dt;
+      else {
+        this.coffee.ready = true;
+        this.emit({ type: 'coffeeReady' });
+      }
+    }
     for (const plane of this.planes) if (!plane.gone) this.updatePlane(plane, dt);
 
     const active = this.planes.some((p) => !p.gone);
@@ -551,6 +573,21 @@ export class Simulation {
     if (!booth || !booth.ready || booth.job || !plane) return [];
     if (spot.use !== 'occupied' || plane.state !== PlaneState.WAITING) return [];
     return this.colors.filter((color) => color !== plane.color);
+  }
+
+  /**
+   * Coffee and cake is served (0x244a8, 0x107d4): every plane that has landed and not yet
+   * finished loading cheers up, and the button has to recharge.
+   */
+  serveCoffee(): boolean {
+    const coffee = this.coffee;
+    if (this.ended || !coffee || !coffee.ready) return false;
+    coffee.left = coffee.recharge;
+    coffee.ready = false;
+    const planes = this.planes.filter((plane) => !plane.gone && plane.landed && !plane.loaded);
+    for (const plane of planes) this.addEnergy(plane, RULES.coffee.energy);
+    this.emit({ type: 'coffeeServed', planes });
+    return true;
   }
 
   /** `PaintingStopSpot::paint` (0x68014): starts repainting the parked plane. */

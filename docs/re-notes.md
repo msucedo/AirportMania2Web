@@ -446,6 +446,27 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
 - Web version: the turning direction of the ring and the can's rotation sign follow Pixi's
   convention, not checked against the engine's.
 
+## Service tabs: coffee and cake, in-flight movies — confirmed
+
+- The stage script ends with `0x12f90(airport, 0, owns 0x73, owns 0x74, owns 0x6e, owns 0x6f,
+  owns 0x70)`. The last three are stored as bytes at `airport+0xac…0xae` (use not read). For
+  `0x73` (in-flight movies) it creates a tab at (354, 11), otherwise a `GUI.INGAMEGUI.GRIP`
+  filler at (354, 9); for `0x74` (coffee and cake) a tab at (395, 11) or a filler at (395, 9).
+- Tab base class `0x24010(position, recharge)`: touch area x ±20, y −5…+36. `+0x24` counts down
+  from the recharge time, starting full; once below zero the tab is ready (`+0x34`) and its
+  ready sound plays (`0x240f4`). Coffee and cake recharges in 50 s (`0x243d8`).
+- Pressed while ready (`0x244a8`): its sound, the countdown restarts and `0x107d4` gives +0.5
+  energy to every plane that has landed (`+0x268`) and not finished loading (`+0x26f`). The
+  movies equivalent (`0x1080a`) gives +0.6 to every plane that has not landed.
+- While the finger is on a ready tab (`0x244d0`), `0x1083c` sets `plane+0x284` on the planes it
+  would reach.
+- Draw (`0x24170`): the `_OFF` image with its top-left at (x − w/2, y − 10 − (h − 20)·(1 − f)),
+  `f` being the ready fade (6/s), stretched vertically by `1 + 0.3·sin(πf)` while not ready;
+  the `_ON` image over it with the touch fade (5/s) as opacity. It is drawn behind the bar.
+- Web version: the tab acts when the finger goes down, not when it is lifted; the mark on the
+  planes it would reach (`+0x284`) is not drawn; in-flight movies is not offered in stages 1
+  and 2, so only its filler exists.
+
 ## Gate, runway and order flag drawing
 
 - Gate resources (`0x42afc`): the letter comes from the descriptor's `LetterSurfaceResource`

@@ -74,6 +74,8 @@ export class Hud extends Container {
   private shownScore: number | null = null;
   private time = 0;
   onPause: (() => void) | null = null;
+  /** Drawn behind the bar: the service tabs show through its openings and hang below it. */
+  readonly behind = new Container();
 
   constructor(
     textures: TextureStore,
@@ -93,7 +95,7 @@ export class Hud extends Container {
     this.glow.anchor.set(1, 0.5);
     this.glow.blendMode = 'add';
     this.glow.height = BAR.height;
-    this.addChild(this.fill, this.glow, textures.sprite('GUI.INGAMEGUI.BACK'));
+    this.addChild(this.behind, this.fill, this.glow, textures.sprite('GUI.INGAMEGUI.BACK'));
 
     const marks = [goals.goal, goals.expert, goals.master, goals.supreme];
     for (const mark of marks) {

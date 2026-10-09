@@ -96,6 +96,12 @@ export const RULES = {
    */
   painting: { recharge: 42, colorAt: 4, duration: 5.5, energy: 0.4 },
 
+  /**
+   * Coffee and cake: the button recharges for 50 seconds (0x243d8) and gives 0.5 energy to every
+   * plane on the ground that has not finished loading (0x107d4).
+   */
+  coffee: { recharge: 50, energy: 0.5 },
+
   /** Taxiing accelerates towards the next node, is capped, and brakes for the final target. */
   taxiAcceleration: 200,
   taxiMaxSpeed: 200,

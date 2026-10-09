@@ -14,6 +14,7 @@ import { LEVEL_INTRO_FONTS, LEVEL_INTRO_SURFACES, LevelIntro } from './view/leve
 import { StageClear } from './view/stageClear';
 import { GAME_MENU_SURFACES, GameMenu } from './view/gameMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
+import { SERVICE_SLOTS, SERVICE_TAB_SURFACES, ServiceTab, serviceGrip } from './view/serviceTab';
 import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
 import { PASSENGER_ICONS, PlaneView, planeSurfaceIds, type BalloonCorner, type Passenger } from './planeView';
@@ -84,6 +85,7 @@ export class LevelScene {
   private readonly choosers = new Map<StopSpot, PaintChooser>();
   private readonly fading: PaintChooser[] = [];
   private readonly sprays: SprayCan[] = [];
+  coffeeTab: ServiceTab | null = null;
   /** The colour chooser the finger went down on, until it is lifted. */
   heldChooser: PaintChooser | null = null;
   private dialog: Container | null = null;
@@ -99,6 +101,12 @@ export class LevelScene {
     this.sim = sim;
     this.hud = new Hud(textures, sim.goals);
     this.hud.onPause = () => this.openPause();
+    // 0x12f90: each slot of the bar holds its service tab or, without the improvement, a filler.
+    this.hud.behind.addChild(serviceGrip(textures, SERVICE_SLOTS.movies));
+    if (sim.coffee) {
+      this.coffeeTab = new ServiceTab(textures, sim.coffee, SERVICE_SLOTS.coffee, { on: 'GUI.INGAMEGUI.COFFEE_AND_CAKE_ON', off: 'GUI.INGAMEGUI.COFFEE_AND_CAKE_OFF' });
+      this.hud.behind.addChild(this.coffeeTab);
+    } else this.hud.behind.addChild(serviceGrip(textures, SERVICE_SLOTS.coffee));
     this.flags = new OrderFlags(textures);
     this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.floating, this.hud);
     this.build();
@@ -127,7 +135,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
+    const ids = new Set<string>([...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
     for (const layer of layout.backdrop.layers) {
       ids.add(layer.resource);
     }
@@ -180,6 +188,7 @@ export class LevelScene {
     const release = (event: FederatedPointerEvent): void => {
       scene.heldChooser?.release(event.global.y);
       scene.heldChooser = null;
+      if (scene.coffeeTab) scene.coffeeTab.held = false;
     };
     app.stage.on('pointerup', release);
     app.stage.on('pointerupoutside', release);
@@ -191,7 +200,13 @@ export class LevelScene {
     const first = !this.audio.unlocked;
     this.audio.unlock();
     // With the pause menu up, touches belong to it.
-    if (this.hud.contains(y) || this.dialog) return;
+    if (this.dialog) return;
+    if (this.coffeeTab?.contains(x, y) && !this.paused) {
+      this.coffeeTab.held = true;
+      this.sim.serveCoffee();
+      return;
+    }
+    if (this.hud.contains(y)) return;
     if (first) {
       this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.BONUS_X2']);
       for (const plane of new Set(this.sim.planes.map((p) => p.descriptor))) this.audio.preload(Object.values(plane.sounds).filter((id) => !id.includes('%')));
@@ -473,6 +488,12 @@ export class LevelScene {
       case 'fuelingStarted':
         this.audio.play('SOUNDS.FUELING');
         break;
+      case 'coffeeReady':
+        this.audio.play('SOUNDS.CAKE_AND_COFFEE_READY');
+        break;
+      case 'coffeeServed':
+        this.audio.play('SOUNDS.CAKE_AND_COFFEE');
+        break;
       case 'paintingReady':
         this.audio.play('SOUNDS.PAINTING_READY');
         break;
@@ -515,6 +536,7 @@ export class LevelScene {
     this.sparkles?.update(elapsed);
     this.rings?.update(elapsed);
     this.drawPainting(elapsed);
+    this.coffeeTab?.update(elapsed);
     for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
     for (const view of this.runwayViews) view.update();

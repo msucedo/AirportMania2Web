@@ -473,6 +473,30 @@ describe('simulation, improvements', () => {
     expect(events.filter((e) => e.type === 'paintingDone')).toHaveLength(1);
   });
 
+  it('serves coffee and cake to the planes on the ground once the button has charged', () => {
+    expect(withImprovements().coffee).toBeNull();
+    const sim = withImprovements(0x74);
+    const events: SimEvent[] = [];
+    run(sim, 1.1, events);
+    const landed = sim.planes[0]!;
+    sim.addOrder(landed, sim.runways[0]!);
+    runUntil(sim, () => landed.landed && landed.state === PlaneState.WAITING, 40, events);
+    expect(sim.serveCoffee()).toBe(false);
+
+    runUntil(sim, () => sim.coffee!.ready, 60, events);
+    expect(sim.time).toBeCloseTo(RULES.coffee.recharge, 0);
+    expect(events.filter((e) => e.type === 'coffeeReady')).toHaveLength(1);
+    const flying = sim.planes.find((p) => !p.gone && !p.landed)!;
+    landed.energy = 0.2;
+    flying.energy = 0.2;
+    expect(sim.serveCoffee()).toBe(true);
+    // Only the plane on the ground gets it.
+    expect(landed.energy).toBeCloseTo(0.7, 5);
+    expect(flying.energy).toBeCloseTo(0.2, 5);
+    expect(sim.coffee).toMatchObject({ ready: false, left: RULES.coffee.recharge });
+    expect(sim.serveCoffee()).toBe(false);
+  });
+
   it('unloads faster at an upgraded gate', () => {
     const sim = withImprovements(0x1e);
     run(sim, 1.1);
