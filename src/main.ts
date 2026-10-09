@@ -5,6 +5,7 @@ import { createScreen } from './engine/screen';
 import { TextureStore } from './engine/textures';
 import { LevelScene } from './game/levelScene';
 import { LevelSelect } from './game/levelSelect';
+import { MainMenu } from './game/mainMenu';
 import { Progress } from './game/progress';
 import { STAGES } from './game/stages';
 
@@ -17,12 +18,18 @@ declare global {
 }
 
 /**
- * Screens are separate page loads: `?stage=S&level=N` plays a level, no level shows the stage
- * screen. `?reset` is dropped on navigation so it only applies once.
+ * Screens are separate page loads: no parameters shows the main menu, `?stage=S` the stage screen
+ * and `?stage=S&level=N` plays a level. `?reset` is dropped on navigation so it only applies once.
  */
-function navigate(stage: number, level: number | null): void {
+function navigate(stage: number | null, level: number | null): void {
   const params = new URLSearchParams(location.search);
   params.delete('reset');
+  if (stage === null) {
+    params.delete('stage');
+    params.delete('level');
+    location.href = `${location.pathname}?${params.toString()}`;
+    return;
+  }
   params.set('stage', String(stage));
   if (level === null) params.delete('level');
   else params.set('level', String(level));
@@ -48,7 +55,16 @@ async function main(): Promise<void> {
   const requested = Number.parseInt(params.get('level') ?? '', 10);
   const level = Number.isInteger(requested) && requested >= 1 && requested <= levels ? requested : null;
 
-  if (level === null) {
+  if (!params.has('stage') && level === null) {
+    const audio = new AudioPlayer(data.resources);
+    audio.muted = params.has('mute');
+    await MainMenu.create(app, data, textures, audio, {
+      strings: await data.strings(chosen),
+      enabled: ['PLAY'],
+      // Play opens the furthest stage reached.
+      onSelect: () => navigate([...STAGES.keys()].filter((s) => progress.stageUnlocked(s, data.areas.get(s - 1)?.levelsCount ?? 0)).pop() ?? 1, null),
+    });
+  } else if (level === null) {
     await LevelSelect.create(app, data, textures, {
       stage,
       layout,
@@ -57,6 +73,7 @@ async function main(): Promise<void> {
       stages: [...STAGES.keys()].map((s) => ({ stage: s, open: progress.stageUnlocked(s, data.areas.get(s - 1)?.levelsCount ?? 0) })),
       onPlay: (next) => navigate(stage, next),
       onStage: (next) => navigate(next, null),
+      onMenu: () => navigate(null, null),
     });
   } else {
     const audio = new AudioPlayer(data.resources);

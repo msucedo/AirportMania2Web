@@ -31,7 +31,8 @@ try {
   };
   const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem('am2web.progress.v1') ?? 'null'));
 
-  await open('?reset&mute'); await shot('F1-stage-empty');
+  await open('?reset&mute'); await shot('F0-main-menu');
+  await open('?stage=1&mute'); await shot('F1-stage-empty');
   // Play level 1 perfectly through the simulation API: every plane lands, uses a gate and leaves.
   await open('?level=1&mute');
   const result = await page.evaluate(() => {
@@ -55,7 +56,7 @@ try {
 
   // Give the player funds, buy the first improvement on the stage screen and check level 2 has it.
   await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('am2web.progress.v1')); d.funds = 50000; localStorage.setItem('am2web.progress.v1', JSON.stringify(d)); });
-  await open('?mute'); await shot('F3-stage-funds');
+  await open('?stage=1&mute'); await shot('F3-stage-funds');
   await click(12 + 54, 130 + 34);            // first shop tile: extra stop spot
   await sleep(200);
   await click(12 + 2 * 114 + 54, 130 + 34);  // third tile: gate C

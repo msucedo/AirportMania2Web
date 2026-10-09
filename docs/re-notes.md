@@ -552,6 +552,21 @@ Vtable `0x17a8e8`, kind 5.
 - Web version: the plane is drawn at the middle of the building while it is serviced instead of
   being walked in.
 
+## Main menu (`0x597b0`)
+
+- Built in this order: background (`0x5d138`), `MAIN_MENU.TOWER` at (36, 77) and
+  `MAIN_MENU.FRONT` at (−48, 152) through `0x5c45c` with factors 0.4 and 0.6 (not read; likely
+  how far each slides in), the sign (`0x5c250`) at (240, 118), `MAIN_MENU.TITLE` at (213, 43)
+  scale 0.8, `MAIN_MENU.FRANCHISE` at (270, 96) scale 0.7, `MAIN_MENU.NUMBER_TWO` at (411, 46)
+  scale 0.7, a star badge (`ORANGE`/`YELLOW`) at (95, 200), the Facebook button at (206, 290) and
+  `MAIN_MENU.MORE_GAMES` at (95, 290). Music `MUSICS.MAIN`.
+- Sign entries (`0x5c030`): Play, Users, Options and Credits at x 119 and y 43, 81, 119, 157 from
+  the sign's corner, each a button (`0x5c7a0`) 160×30 with `MAIN_MENU.BUTTON_OVER` and the text
+  in `FONTS.MAIN`.
+- Not read: the entrance animations, the plane flying past (`0x59f7c`), the greeting sign and the
+  dialogs behind Users, Options and Credits. The web menu shows the scene in place, with only
+  Play working, and leaves out the badge and the promotional buttons.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.

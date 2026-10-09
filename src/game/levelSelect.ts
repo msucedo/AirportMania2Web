@@ -17,6 +17,7 @@ export interface LevelSelectOptions {
   stages: { stage: number; open: boolean }[];
   onPlay: (level: number) => void;
   onStage: (stage: number) => void;
+  onMenu: () => void;
 }
 
 const STAR = 'GUI.FINAL_REPORT.STAR_SMALL';
@@ -42,6 +43,10 @@ export class LevelSelect {
     const { strings, stage } = options;
     this.root.addChild(new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill(0x1d2c3f));
     this.text(`${strings.t(`STAGES.${stage}.TITLE`)} - ${strings.t(`STAGES.${stage}.NAME`)}`, SCREEN_WIDTH / 2, 16, 15, this.main, 0xffb52e, 0.5, SCREEN_WIDTH - 110);
+    const menu = this.text(`\u2039 ${strings.t('MAP.MAIN_MENU')}`, 8, SCREEN_HEIGHT - 9, 11, this.small, 0xffe45c, 0);
+    menu.eventMode = 'static';
+    menu.cursor = 'pointer';
+    menu.on('pointerdown', () => options.onMenu());
     // Arrows to the neighbouring stages.
     for (const [delta, x, glyph] of [[-1, 22, '\u25c0'], [1, SCREEN_WIDTH - 22, '\u25b6']] as const) {
       const target = options.stages.find((s) => s.stage === stage + delta);
