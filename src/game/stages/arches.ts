@@ -22,6 +22,7 @@ export const ARCHES: StageLayout = {
   gateDecorations: [],
   stopSpotSurfaces: { normal: ['STOPSPOT'], vip: ['STOPSPOT_VIP'] },
   pontoons: false,
+  water: false,
   decorations: [{ resource: 'STAGES.ARCHES.ARCH', position: { x: 403, y: 50 } }],
   gates: [
     { letter: 'A', position: { x: 40, y: 122 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_GATE_A },

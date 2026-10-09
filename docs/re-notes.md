@@ -496,6 +496,25 @@ sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructo
   `0x16` 35000, `0x1e` 35000, `0x1f` 40000, `0x74` 50000 (coffee and cake), `0xcc` 120000
   (plane 5 licence), `0x20` 45000.
 
+### Water effects of the island — confirmed
+
+- Sea glints, `0x13c3c` → `0x729b8`, created after the sea strip with the area (0, 55)–(480, 80)
+  and a sag of 11: `area / 80` sprites of `AMBIENT.WAVE_REFLECT` (`0x72740`). For each, with
+  `d = rand^3.5`: x is random across the area widened by 15 px each side, y is
+  `y1 + 4 + (y2 − y1) d + sag · |x / 240 − 1|`, size `(0.4 d + 0.2) / 2` and a random phase. Drawn
+  (`0x72ab8`) while `v = sin(2π (t / 2 + phase)) − 0.3` is positive, scaled by `v · size` with
+  alpha `0.7 v`.
+- Rings, `0x13950` → `0x86770` (`STAGES.ISLAND.WATER_RING`), kept at `airport + 0x780`. A plane
+  below altitude 1 adds one at its position (`0x6cb2`) every
+  `clamp(5 / max(5, speed), 0.07, ·) × (0.7 + 0.3 rand)` seconds; the upper clamp is read as 1.
+  A ring lives one second (`0x868b0`): alpha `min(1, 2 min(t, 1 − t))`, scale
+  `0.25 + 0.75 · size · (1 − t)` with t running from 1 to 0 and size 0.2–1.1 (`0x8690c`).
+- Buoys, `0x14104` → `0x23274`: two lines per runway, at (x − 186, y − 27) before the runway is
+  created and (x − 166, y + 6) after it. Nine buoys 41 px apart; each rises by
+  `(sin(t · a + x) + sin(t · b + x) + 2) / 2` with a in 4.5–8.3 and b in 1.5–4.3, and
+  `STAGES.ISLAND.BUOY_MASK` is drawn at its resting place over it (`0x233e8`).
+- `0x138ac` → `0x5021c`, created right after the rings, has not been identified.
+
 ## Hangar — confirmed
 
 Vtable `0x17a8e8`, kind 5.

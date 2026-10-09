@@ -8,6 +8,7 @@ import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { paletteColor } from './palette';
 import { SKY_SURFACES, SkyView } from './view/sky';
+import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
 import { PlaneView, planeSurfaceIds } from './planeView';
 import type { Progress } from './progress';
 import { FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
@@ -45,6 +46,11 @@ export class LevelScene {
   private readonly gateViews: { gate: Gate; view: GateView }[] = [];
   private readonly flags: OrderFlags;
   private sky!: SkyView;
+  private sparkles: SeaSparkles | null = null;
+  private rings: WaterRings | null = null;
+  private readonly buoys: BuoyLine[] = [];
+  /** Per plane: where it was last frame and how long until its next ring on the water. */
+  private readonly wakes = new Map<number, { x: number; y: number; next: number }>();
   private readonly stationViews: GasStationView[] = [];
   private readonly hangarBars: { hangar: Hangar; bar: Graphics }[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
@@ -101,6 +107,7 @@ export class LevelScene {
     }
     for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip]) ids.add(id);
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
+    if (layout.water) for (const id of WATER_SURFACES) ids.add(id);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
@@ -172,11 +179,20 @@ export class LevelScene {
     this.sky = new SkyView(this.textures, layout.backdrop.sky, horizon);
     this.ground.addChild(this.sky);
 
-    for (const layer of layers) {
+    layers.forEach((layer, index) => {
       const sprite = this.textures.sprite(layer.resource);
       sprite.position.copyFrom(layer.position);
       if (layer.scale) sprite.scale.copyFrom(layer.scale);
       this.ground.addChild(sprite);
+      const sparkles = layout.backdrop.sparkles;
+      if (sparkles?.afterLayer === index) {
+        this.sparkles = new SeaSparkles(this.textures, sparkles.area);
+        this.ground.addChild(this.sparkles);
+      }
+    });
+    if (layout.water) {
+      this.rings = new WaterRings(this.textures);
+      this.ground.addChild(this.rings);
     }
 
     for (const runway of this.sim.runways) {
@@ -185,7 +201,14 @@ export class LevelScene {
       // The number is drawn at the end where planes stop; its exact place is not read from the binary.
       const number = this.textures.sprite(`RUNWAY.NUMBER_${runway.number}`);
       number.position.copyFrom(runway.node);
+      // A water runway lies between two lines of buoys, set relative to it by the stage script (0xcf370).
+      const buoys = layout.water
+        ? [new BuoyLine(this.textures, runway.position.x - 186, runway.position.y - 27), new BuoyLine(this.textures, runway.position.x - 166, runway.position.y + 6)]
+        : [];
+      this.buoys.push(...buoys);
+      if (buoys[0]) this.ground.addChild(buoys[0]);
       this.ground.addChild(sprite, number);
+      if (buoys[1]) this.ground.addChild(buoys[1]);
     }
     for (const spot of this.sim.stopSpots) {
       for (const id of spot.vip ? layout.stopSpotSurfaces.vip : layout.stopSpotSurfaces.normal) {
@@ -318,7 +341,11 @@ export class LevelScene {
 
   private draw(seconds: number): void {
     for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, gate.lastColor ? tintOf(gate.lastColor) : this.options.layout.neutralColor);
-    this.sky.update(this.paused ? 0 : seconds);
+    const elapsed = this.paused ? 0 : seconds;
+    this.sky.update(elapsed);
+    this.sparkles?.update(elapsed);
+    this.rings?.update(elapsed);
+    for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
     for (const { hangar, bar } of this.hangarBars) {
       // Plain progress bar: the original uses HANGARS.PROGRESS sprites that this stage's group does not ship.
@@ -336,6 +363,7 @@ export class LevelScene {
     for (const plane of this.sim.planes) {
       let view = this.planeViews.get(plane.id);
       if (plane.gone) {
+        this.wakes.delete(plane.id);
         if (view) {
           view.destroy({ children: true });
           this.planeViews.delete(plane.id);
@@ -353,6 +381,21 @@ export class LevelScene {
       if (inside) view.position.set(inside.position.x, inside.position.y + 8);
       else view.position.set(plane.x, plane.y);
       view.zIndex = plane.altitude > 0 ? 10000 : plane.y;
+      if (this.rings && elapsed > 0) {
+        // On the water a plane leaves rings, the faster it moves the closer together (0x6cb2).
+        const wake = this.wakes.get(plane.id) ?? { x: plane.x, y: plane.y, next: 0 };
+        const speed = Math.hypot(plane.x - wake.x, plane.y - wake.y) / elapsed;
+        wake.x = plane.x;
+        wake.y = plane.y;
+        if (plane.altitude < 1 && !inside) {
+          wake.next -= elapsed;
+          if (wake.next < 0) {
+            wake.next += ringInterval(speed);
+            this.rings.add(plane.x, plane.y);
+          }
+        }
+        this.wakes.set(plane.id, wake);
+      }
       const draining = plane.state === PlaneState.FLYING || plane.state === PlaneState.WAITING;
       // The bubble shows what the plane wants next while it has no orders (0x5f28).
       const idle = draining && !plane.landing && plane.queue.length === 0;

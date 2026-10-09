@@ -1,3 +1,4 @@
+import type { SparkleArea } from '../view/waterEffects';
 import type { Point } from '../../data/xml';
 
 // What a compiled stage script sets up: where each place goes, which improvements gate it and
@@ -54,7 +55,11 @@ export interface StageLayout {
     /** Screen y down to which the sky's bottom colour is kept painted, behind the backdrop layers. */
     horizon: number;
     layers: BackdropLayer[];
+    /** Glints on the distant sea, drawn right after the layer with this index. */
+    sparkles?: { afterLayer: number; area: SparkleArea };
   };
+  /** Water stage: planes leave rings and each runway is marked by two lines of buoys. */
+  water: boolean;
   decorations: { resource: string; position: Point }[];
   /**
    * Extra sprites drawn with every gate, relative to it. One with a `depth` is sorted among the

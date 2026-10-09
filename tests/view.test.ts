@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor } from '../src/game/planeView';
 import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
+import { ringInterval } from '../src/game/view/waterEffects';
 
 describe('plane drawing rules', () => {
   it('picks the perspective and mirroring from the heading', () => {
@@ -56,5 +57,14 @@ describe('sky', () => {
     expect(cloudX(10, 0.3)).toBeCloseTo(340);
     expect(cloudX(0, 1)).toBeNull();
     expect(cloudX(260, 1)).toBeCloseTo(-100);
+  });
+});
+
+describe('water', () => {
+  it('spaces a plane\'s rings by its speed', () => {
+    expect(ringInterval(0, 1)).toBeCloseTo(1);
+    expect(ringInterval(0, 0)).toBeCloseTo(0.7);
+    expect(ringInterval(50, 1)).toBeCloseTo(0.1);
+    expect(ringInterval(200, 1)).toBeCloseTo(0.07);
   });
 });

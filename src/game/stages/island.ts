@@ -19,6 +19,7 @@ export const ISLAND: StageLayout = {
       { resource: 'STAGES.ISLAND.BACKGROUND_TOP', position: { x: 0, y: 40 } },
       { resource: 'STAGES.ISLAND.BACKGROUND_DOWN', position: { x: 335, y: 160 } },
     ],
+    sparkles: { afterLayer: 1, area: { x1: 0, y1: 55, x2: 480, y2: 80, sag: 11 } },
   },
   decorations: [],
   gateDecorations: [
@@ -51,6 +52,7 @@ export const ISLAND: StageLayout = {
     vip: ['STOPSPOT_ISLAND_VIP_BACK', 'STOPSPOT_ISLAND_VIP_FRONT'],
   },
   pontoons: true,
+  water: true,
   // Ids and prices as registered by the script. Coffee and cake (0x74, 50000) and the painting
   // stop spot (0x72, 95000) are left out until they are implemented.
   improvements: [
