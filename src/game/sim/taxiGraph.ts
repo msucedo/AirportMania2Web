@@ -88,6 +88,17 @@ export class TaxiGraph {
     return gate;
   }
 
+  /** A gas station's node and its two pass-through nodes (constructor 0x40952). */
+  addGasStation(node: Point): TaxiNode {
+    const station = this.addNode(node, true);
+    const right = this.addNode({ x: node.x + 30, y: node.y + 9 }, false);
+    const left = this.addNode({ x: node.x - 15, y: node.y + 9 }, false);
+    this.link(station, right);
+    this.link(station, left);
+    this.link(right, left);
+    return station;
+  }
+
   /**
    * A runway's nodes (runway constructor, 0x6d0d2): its own node at one end, a second terminal
    * node at the other, a ring of pass-through nodes around each, and two free nodes.

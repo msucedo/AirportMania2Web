@@ -34,7 +34,7 @@ export class OrderFlags extends Container {
       const place = places[i];
       flag.root.visible = place !== undefined;
       if (!place) return;
-      const anchor = place.kind === 'gate' ? { x: place.position.x, y: place.position.y - 46 } : { x: place.node.x + 40, y: place.node.y - 26 };
+      const anchor = place.kind === 'runway' ? { x: place.node.x + 40, y: place.node.y - 26 } : { x: place.position.x, y: place.position.y - 46 };
       flag.root.position.set(anchor.x, anchor.y);
       flag.color.tint = tint;
       flag.number.texture = this.textures.texture(`INDICATORS.FLAGS.NUMBERS.${i + 1}`);

@@ -9,6 +9,7 @@ import type { TextureStore } from '../engine/textures';
 import { PlaneView, planeSurfaceIds } from './planeView';
 import { FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
+import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
@@ -40,6 +41,7 @@ export class LevelScene {
   private readonly overlay = new Container();
   private readonly gateViews: { gate: Gate; view: GateView }[] = [];
   private readonly flags: OrderFlags;
+  private readonly stationViews: GasStationView[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating = new FloatingTexts();
   private readonly hud: Hud;
@@ -75,6 +77,8 @@ export class LevelScene {
       planes: data.planes,
       gates: data.gates,
       runways: data.runways,
+      gasStations: data.gasStations,
+      level: options.level,
       screenWidth: SCREEN_WIDTH,
     });
 
@@ -83,6 +87,7 @@ export class LevelScene {
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
+    for (const station of sim.gasStations) for (const id of gasStationSurfaceIds(station)) ids.add(id);
     for (const runway of sim.runways) {
       ids.add(runway.descriptor.backSurface);
       ids.add(`RUNWAY.NUMBER_${runway.number}`);
@@ -182,6 +187,11 @@ export class LevelScene {
       this.ground.addChild(view);
       this.gateViews.push({ gate, view });
     }
+    for (const station of this.sim.gasStations) {
+      const view = new GasStationView(this.textures, station);
+      this.ground.addChild(view);
+      this.stationViews.push(view);
+    }
     for (const decoration of layout.decorations) {
       const sprite = this.textures.sprite(decoration.resource);
       sprite.position.copyFrom(decoration.position);
@@ -249,6 +259,9 @@ export class LevelScene {
       case 'takeOff':
         this.planeSound(event.plane, 'Launching');
         break;
+      case 'fuelingStarted':
+        this.audio.play('SOUNDS.FUELING');
+        break;
       case 'leftAngry':
         this.planeSound(event.plane, 'Out');
         break;
@@ -269,6 +282,7 @@ export class LevelScene {
 
   private draw(seconds: number): void {
     for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, tintOf(gate.lastColor));
+    for (const view of this.stationViews) view.update();
     const selected = this.sim.selected;
     this.flags.update(selected, selected ? tintOf(selected.color) : 0xffffff);
 
@@ -289,7 +303,9 @@ export class LevelScene {
       view.position.set(plane.x, plane.y);
       view.zIndex = plane.altitude > 0 ? 10000 : plane.y;
       const draining = plane.state === PlaneState.FLYING || plane.state === PlaneState.WAITING;
-      view.update(seconds, plane.heading, plane.altitude, plane.scale, plane.selected, draining ? plane.energy : null);
+      // The bubble shows what the plane wants next while it has no orders (0x5f28).
+      const idle = draining && !plane.landing && plane.queue.length === 0;
+      view.update(seconds, plane.heading, plane.altitude, plane.scale, plane.selected, draining ? plane.energy : null, idle ? plane.need : null);
     }
     this.planeLayer.sortableChildren = true;
 

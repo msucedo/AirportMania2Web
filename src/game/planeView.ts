@@ -3,6 +3,8 @@ import { PERSPECTIVES, type Perspective, type PlaneDescriptor } from '../data/pl
 import type { TextureStore } from '../engine/textures';
 
 const ENERGY_FRAMES = 8;
+const NEED_ICONS = 9;
+const BUBBLE = ['INDICATORS.THOUGHT_A', 'INDICATORS.THOUGHT_B', 'INDICATORS.THOUGHT_C', 'INDICATORS.THOUGHT_D'];
 
 /** Surface ids a plane needs, for all three perspectives. */
 export function planeSurfaceIds(plane: PlaneDescriptor): string[] {
@@ -11,7 +13,8 @@ export function planeSurfaceIds(plane: PlaneDescriptor): string[] {
     ids.push(`${plane.body.color}.${p}`, `${plane.body.front}.${p}`, `${plane.body.remark}.${p}`, `${plane.eyes.opened}.${p}`, `${plane.eyes.closed}.${p}`);
   }
   for (let i = 0; i < ENERGY_FRAMES; i++) ids.push(`INDICATORS.ENERGY.${i}`);
-  return ids;
+  for (let i = 0; i < NEED_ICONS; i++) ids.push(`INDICATORS.ICONS.${i}`);
+  return [...ids, ...BUBBLE];
 }
 
 /**
@@ -57,6 +60,8 @@ export class PlaneView extends Container {
   private readonly body = new Container();
   private readonly poses: Pose[] = [];
   private readonly energy: Sprite;
+  private readonly bubble = new Container();
+  private readonly needIcon: Sprite;
   private blink = 2 + Math.random() * 3;
   private closedFor = 0;
 
@@ -94,13 +99,31 @@ export class PlaneView extends Container {
     this.energy = textures.sprite('INDICATORS.ENERGY.7');
     this.energy.y = plane.body.energyBarOffsetY;
     this.addChild(this.energy);
+
+    // Thought bubble: a cloud holding the need icon, trailed by three shrinking puffs towards the
+    // plane. The cloud sits at the descriptor's BubblePosition; the puff spacing is assumed.
+    const { x, y } = plane.bubble;
+    const cloud = textures.sprite(BUBBLE[0]!);
+    cloud.position.set(x, -y);
+    this.needIcon = textures.sprite('INDICATORS.ICONS.0');
+    this.needIcon.position.set(x, -y);
+    this.needIcon.scale.set(0.8);
+    this.bubble.addChild(cloud, this.needIcon);
+    BUBBLE.slice(1).forEach((id, i) => {
+      const puff = textures.sprite(id);
+      const t = 0.62 - i * 0.2;
+      puff.position.set(x * t, -y * t);
+      this.bubble.addChild(puff);
+    });
+    this.addChild(this.bubble);
   }
 
   /**
    * @param altitude height above the ground; the shadow stays down while the body rises
    * @param energy   energy to show on the bar, or null to hide it
+   * @param need     need code to show in the thought bubble, or null to hide it
    */
-  update(dt: number, heading: number, altitude: number, scale: number, selected: boolean, energy: number | null): void {
+  update(dt: number, heading: number, altitude: number, scale: number, selected: boolean, energy: number | null, need: number | null): void {
     const { perspective, flipped } = orientationFor(heading);
     const eyesShut = this.updateBlink(dt);
     this.poses.forEach((pose, p) => {
@@ -119,6 +142,13 @@ export class PlaneView extends Container {
     if (energy !== null) {
       this.energy.texture = this.textures.texture(`INDICATORS.ENERGY.${energyFrame(energy)}`);
       this.energy.y = -altitude + this.plane.body.energyBarOffsetY * scale;
+    }
+
+    this.bubble.visible = need !== null && need < NEED_ICONS;
+    if (this.bubble.visible) {
+      this.needIcon.texture = this.textures.texture(`INDICATORS.ICONS.${need}`);
+      this.bubble.y = -altitude;
+      this.bubble.scale.set(scale);
     }
   }
 

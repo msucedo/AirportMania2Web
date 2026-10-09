@@ -314,7 +314,8 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 - The draw (`0x89e0`) indexes every part array by `+0x324`. The energy bar offset is the
   descriptor value times a 0..1 plane factor (`+0x29c`).
 - Not read: layer order, which energy frame is shown for which energy, mouth and eyebrow
-  selection, blinking, and the thought bubble. The web version assumes these.
+  selection, blinking, and the thought bubble's layout (its icon is the need code). The web
+  version assumes these.
 
 ## Gate, runway and order flag drawing
 
@@ -357,6 +358,35 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   drawn in the colour of the ground tile's top row, which joins the ground without a seam. That
   interpretation fits the art but is not confirmed in the renderer.
 - `STAGES.ARCHES.ARCH` is a `StaticZImage` (`0x842fc`) with a depth value of 600.
+
+## Needs, schedule flags and the gas station — confirmed
+
+- Schedule parser (`0x53078`): each arrival carries a flag byte. Bit 0 sex (set for one of
+  MALE/FEMALE), bit 1 side, and a bit is set when the need is **false**: `NeedService` bit 2,
+  `NeedGas` bit 3, `NeedWash` bit 4, `NeedLuggage` bit 5. The level (`0x1094c`) passes bits 2–5
+  to the plane constructor, where they become `+0x26a` (service), `+0x26b` (gas), `+0x26c`
+  (wash) and `+0x26d` (luggage): "done or not needed".
+- Need codes (`+0x264`) double as indices of `INDICATORS.ICONS.%d`: 0 land, 1 unload, 2 service,
+  3 gas, 4 wash, 5 luggage, 6 load, 7 take off (icon meanings checked on the sprites).
+  After unloading (`0x64ac`): 2 if service is pending, else 3 if gas is pending, else 5 if
+  luggage is pending, else 6. Only code 6 triggers the automatic re-entry of the gate.
+- Gas station: vtable `0x17a808`, kind 4.
+  - Slot 11 (`0x410d0`): refused when gas is done or not needed, when the plane has not unloaded,
+    or when the itinerary already has a gas station; if service is pending the itinerary must
+    include a kind-5 place (hangar).
+  - Slot 15 (`0x40d4c`): landed, unloaded, service done, and gas still pending.
+  - Slot 12 (`0x40cbc`): starts fueling (plane state 7, station state 2) and adds 0.25 energy.
+  - Slot 6 (`0x40dd4`): progress grows by station `Speed` × dt; above `FuelingTime` the plane
+    gets `Plane::fuelingFinished` (`0x6798`: gas done, state 2, need 6 or 5) and
+    `floor(clamp(energy) * GasStationPoints / 5) * 5` points; the station then waits in state 3
+    until the plane leaves state 2.
+  - Slots 13/14/9: reserve (state 1), busy (state ≠ 0), release (state 0).
+  - Constructor (`0x40952`): two pass-through nodes at (+30, +9) and (−15, +9) linked to the
+    station node and to each other, plus two linked terminal nodes at (+30, −15) and (−50, −15)
+    whose purpose is not known (not modelled). The reference point is taken to be the station
+    node; that is an assumption.
+- Stop spot: vtable `0x17b928` (slots 11 `0x7983c`, 12 `0x79788`, 13 `0x797a0`, 14 `0x797b4`,
+  15 `0x797a8`, 6 `0x797c8`, 9 `0x797c0`). Not read yet.
 
 ## Still unknown
 

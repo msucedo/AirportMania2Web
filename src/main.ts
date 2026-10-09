@@ -24,9 +24,13 @@ async function main(): Promise<void> {
   const audio = new AudioPlayer(data.resources);
   audio.muted = params.has('mute');
 
+  // Stage 1 has six levels; ?level=N picks one.
+  const requested = Number.parseInt(params.get('level') ?? '1', 10);
+  const level = Number.isInteger(requested) && requested >= 1 && requested <= 6 ? requested : 1;
+
   window.game = await LevelScene.create(app, data, textures, audio, {
     stage: 1,
-    level: 1,
+    level,
     layout: ARCHES,
     language: isLanguage(language) ? language : 'spanish',
     showNodes: params.has('nodes'),

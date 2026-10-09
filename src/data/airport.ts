@@ -34,6 +34,15 @@ export interface RunwayDescriptor {
   backSurface: string;
 }
 
+export interface GasStationDescriptor {
+  type: number;
+  /** Multiplier applied to fueling speed. */
+  speed: number;
+  surfaces: { back: string; remark: string; spot: string };
+  node: Point;
+  click: Rect;
+}
+
 function rect(n: XmlNode): Rect {
   return { x1: num(n, 'x1'), y1: num(n, 'y1'), x2: num(n, 'x2'), y2: num(n, 'y2') };
 }
@@ -67,6 +76,21 @@ export function parseGateTable(tree: XmlNode[]): Map<number, GateDescriptor> {
       friendNodes,
     };
     table.set(gate.type, gate);
+  }
+  return table;
+}
+
+export function parseGasStationTable(tree: XmlNode[]): Map<number, GasStationDescriptor> {
+  const table = new Map<number, GasStationDescriptor>();
+  for (const node of children(root(tree, 'GasStationDescriptorTable'), 'GasStation')) {
+    const station: GasStationDescriptor = {
+      type: num(node, 'Type'),
+      speed: num(node, 'Speed'),
+      surfaces: { back: str(node, 'BackSurfaceResource'), remark: str(node, 'RemarkSurfaceResource'), spot: str(node, 'SurfaceSpotResource') },
+      node: point(requireChild(node, 'NodePosition')),
+      click: rect(requireChild(node, 'Rectangle')),
+    };
+    table.set(station.type, station);
   }
   return table;
 }

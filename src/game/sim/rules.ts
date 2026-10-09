@@ -9,6 +9,7 @@ export const PlaneState = {
   TAXIING: 3,
   LOADING: 4,
   UNLOADING: 5,
+  FUELING: 7,
   TAKING_OFF: 11,
   /** In the air after the take-off run. */
   AIRBORNE: 12,
@@ -19,8 +20,12 @@ export type PlaneState = (typeof PlaneState)[keyof typeof PlaneState];
 /** States in which a plane cannot be selected (mask 0x1822 in `Plane::isSelectable`). */
 export const UNSELECTABLE_STATES: ReadonlySet<number> = new Set([1, 5, 11, 12]);
 
-/** Pending need codes (`plane+0x264`) used by the first level: 6 = load at the gate, 7 = take off. */
-export const Need = { NONE: 0, LOAD: 6, TAKE_OFF: 7 } as const;
+/**
+ * Pending need codes (`plane+0x264`), chosen after unloading and after each service:
+ * hangar service, fuel, luggage, then load at a gate, then take off. The codes are also the
+ * indices of the need icons (`INDICATORS.ICONS.%d`) shown in the plane's thought bubble.
+ */
+export const Need = { LAND: 0, UNLOAD: 1, SERVICE: 2, GAS: 3, WASH: 4, LUGGAGE: 5, LOAD: 6, TAKE_OFF: 7 } as const;
 
 export const RULES = {
   maxQueuedOrders: 8,

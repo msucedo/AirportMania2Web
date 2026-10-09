@@ -26,6 +26,7 @@ export interface StageLayout {
   /** Gate descriptor types: [normal, upgraded]. */
   gateTypes: [number, number];
   runwayType: number;
+  gasStationType: number;
   backgroundDown: { resource: string; position: Point; scale: Point };
   backgroundTop: { resource: string; position: Point };
   decorations: { resource: string; position: Point }[];
@@ -57,6 +58,7 @@ export const IMPROVEMENT = {
 export const ARCHES: StageLayout = {
   gateTypes: [0, 1],
   runwayType: 1,
+  gasStationType: 1,
   backgroundDown: { resource: 'STAGES.ARCHES.BACKGROUND_DOWN', position: { x: 0, y: 160 }, scale: { x: 16, y: 16 } },
   backgroundTop: { resource: 'STAGES.ARCHES.BACKGROUND_TOP', position: { x: 0, y: 34 } },
   decorations: [{ resource: 'STAGES.ARCHES.ARCH', position: { x: 403, y: 50 } }],

@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseGateTable, parseRunwayTable } from '../src/data/airport';
+import { parseGasStationTable, parseGateTable, parseRunwayTable } from '../src/data/airport';
 import { findGoals, findLevel, parseLevelsDb, parseStageSchedule } from '../src/data/levels';
 import { parsePlaneTable } from '../src/data/planes';
 import type { XmlNode } from '../src/data/xml';
-import { PlaneState, RULES, punctuality, roundScore } from '../src/game/sim/rules';
+import { Need, PlaneState, RULES, punctuality, roundScore } from '../src/game/sim/rules';
 import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulation';
 import { ARCHES } from '../src/game/stages/arches';
 
@@ -15,17 +15,20 @@ const tree = (rel: string): XmlNode[] => JSON.parse(fs.readFileSync(path.join(ge
 const planes = parsePlaneTable(tree('data/descriptors/plane_descriptor_table.json'));
 const gates = parseGateTable(tree('data/descriptors/gate_descriptor_table.json'));
 const runways = parseRunwayTable(tree('data/descriptors/runway_descriptor_table.json'));
+const gasStations = parseGasStationTable(tree('data/descriptors/gas_station_descriptor_table.json'));
 const stage = parseStageSchedule(tree('data/maps/stage_levels_01.json'));
 const area = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(1)!;
 
-function newSim(): Simulation {
+function newSim(level = 1): Simulation {
   return new Simulation({
     layout: ARCHES,
-    schedule: findLevel(stage, 1, false),
-    goals: findGoals(area, 1, false),
+    schedule: findLevel(stage, level, false),
+    goals: findGoals(area, level, false),
     planes,
     gates,
     runways,
+    gasStations,
+    level,
     screenWidth: 480,
   });
 }
@@ -254,5 +257,85 @@ describe('simulation, level 1-1', () => {
     // Each lost plane costs its LeavingPoints: four of type 1 (500) and one of type 2 (750).
     expect(sim.score).toBe(-2750);
     expect(events.at(-1)).toEqual({ type: 'levelEnd', score: -2750 });
+  });
+});
+
+describe('simulation, level 1-3 (fuel)', () => {
+  it('has a gas station from level 3 on, wired into the taxi graph', () => {
+    expect(newSim(1).gasStations).toHaveLength(0);
+    expect(newSim(2).gasStations).toHaveLength(0);
+    const sim = newSim(3);
+    expect(sim.gasStations).toHaveLength(1);
+    const station = sim.gasStations[0]!;
+    expect(station.node).toEqual({ x: 296, y: 164 });
+    for (const gate of sim.gates) expect(sim.graph.route(gate.taxiNode, station.taxiNode)).not.toBeNull();
+    for (const runway of sim.runways) expect(sim.graph.route(station.taxiNode, runway.taxiNode)).not.toBeNull();
+  });
+
+  it('takes a plane that needs fuel through unload, fuel, load and take-off', () => {
+    const sim = newSim(3);
+    const events: SimEvent[] = [];
+    // Run until the first plane that needs fuel has arrived.
+    runUntil(sim, () => sim.planes.some((p) => !p.gasDone), 200, events);
+    const plane = sim.planes.find((p) => !p.gasDone)!;
+    const [gateA, gateB] = sim.gates as [(typeof sim.gates)[0], (typeof sim.gates)[0]];
+    const station = sim.gasStations[0]!;
+    const runway = sim.runways[1]!;
+    expect(plane.need).toBe(Need.LAND);
+
+    // The gas station is refused before the plane has unloaded.
+    expect(sim.addOrder(plane, runway)).toBe(true);
+    expect(sim.addOrder(plane, station)).toBe(false);
+    expect(sim.addOrder(plane, gateB)).toBe(true);
+    runUntil(sim, () => plane.unloaded, 60, events);
+
+    // No automatic loading this time: the plane waits at the gate asking for fuel.
+    expect(plane.state).toBe(PlaneState.WAITING);
+    expect(plane.need).toBe(Need.GAS);
+    run(sim, 1, events);
+    expect(plane.state).toBe(PlaneState.WAITING);
+    // It cannot load or leave yet.
+    expect(sim.addOrder(plane, gateA)).toBe(false);
+    expect(sim.addOrder(plane, runway)).toBe(false);
+
+    expect(sim.addOrder(plane, station)).toBe(true);
+    runUntil(sim, () => plane.state === PlaneState.FUELING, 30, events);
+    expect(gateB.service).toBe('idle');
+    const started = sim.time;
+    runUntil(sim, () => plane.gasDone, 60, events);
+    expect(sim.time - started).toBeCloseTo(plane.descriptor.times.fueling, 1);
+    expect(plane.need).toBe(Need.LOAD);
+    const fuel = events.filter((e) => e.type === 'score' && e.reason === 'gas' && e.plane === plane) as { points: number }[];
+    expect(fuel).toHaveLength(1);
+    expect(fuel[0]!.points % 5).toBe(0);
+    expect(fuel[0]!.points).toBeLessThanOrEqual(plane.descriptor.points.gasStation);
+    // A second visit to the pump is refused.
+    expect(sim.addOrder(plane, station)).toBe(false);
+
+    // Load at a gate, then take off.
+    expect(sim.addOrder(plane, gateA)).toBe(true);
+    runUntil(sim, () => plane.state === PlaneState.LOADING, 30, events);
+    expect(station.use).toBe('free');
+    expect(sim.addOrder(plane, runway)).toBe(true);
+    runUntil(sim, () => plane.gone, 60, events);
+    expect(plane.loaded).toBe(true);
+    expect(sim.planesServed).toBeGreaterThanOrEqual(1);
+  });
+
+  it('lets fuel and the loading gate be queued once the plane has left its gate', () => {
+    const sim = newSim(3);
+    runUntil(sim, () => sim.planes.some((p) => !p.gasDone), 200);
+    const plane = sim.planes.find((p) => !p.gasDone)!;
+    const station = sim.gasStations[0]!;
+    sim.addOrder(plane, sim.runways[0]!);
+    sim.addOrder(plane, sim.gates[0]!);
+    runUntil(sim, () => plane.unloaded, 60);
+    sim.addOrder(plane, station);
+    runUntil(sim, () => plane.state === PlaneState.TAXIING, 10);
+    // On the way to the pump: a gate is accepted because fuel is already in the itinerary.
+    expect(sim.addOrder(plane, sim.gates[1]!)).toBe(true);
+    expect(sim.addOrder(plane, sim.runways[0]!)).toBe(true);
+    runUntil(sim, () => plane.gone, 120);
+    expect(plane.gasDone && plane.loaded).toBe(true);
   });
 });
