@@ -123,6 +123,11 @@ async function main(): Promise<void> {
       progress,
       // Leaving a level goes back to the map; the next-level button goes straight on.
       onNavigate: (next) => (next === null ? navigate(null, null, stage) : navigate(stage, next)),
+      settings,
+      onSettings: (next) => {
+        settings = next;
+        saveSettings(next);
+      },
       showNodes: params.has('nodes'),
     });
   }

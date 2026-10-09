@@ -7,6 +7,9 @@ import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { paletteColor } from './palette';
+import type { Settings } from './settings';
+import { OPTIONS_SURFACES, OptionsDialog } from './view/optionsDialog';
+import { PauseMenu } from './view/pauseMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
 import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
@@ -34,6 +37,9 @@ export interface LevelOptions {
   progress: Progress;
   /** Navigation: a level number, or null for the stage screen. */
   onNavigate: (level: number | null) => void;
+  settings: Settings;
+  /** Called when the player changes the options from the pause menu. */
+  onSettings: (settings: Settings) => void;
   showNodes?: boolean;
 }
 
@@ -61,6 +67,7 @@ export class LevelScene {
   private accumulator = 0;
   private endShown = false;
   private paused = false;
+  private dialog: Container | null = null;
 
   private constructor(
     private readonly textures: TextureStore,
@@ -73,7 +80,7 @@ export class LevelScene {
   ) {
     this.sim = sim;
     this.hud = new Hud(textures, sim.goals);
-    this.hud.onPause = () => (this.paused = !this.paused);
+    this.hud.onPause = () => this.openPause();
     this.flags = new OrderFlags(textures);
     this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.floating, this.hud);
     this.build();
@@ -103,7 +110,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES]);
+    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...OPTIONS_SURFACES]);
     for (const layer of layout.backdrop.layers) {
       ids.add(layer.resource);
     }
@@ -146,12 +153,53 @@ export class LevelScene {
   press(x: number, y: number): void {
     const first = !this.audio.unlocked;
     this.audio.unlock();
-    if (this.hud.contains(y)) return;
+    // With the pause menu up, touches belong to it.
+    if (this.hud.contains(y) || this.dialog) return;
     if (first) {
       this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.BONUS_X2']);
       for (const plane of new Set(this.sim.planes.map((p) => p.descriptor))) this.audio.preload(Object.values(plane.sounds).filter((id) => !id.includes('%')));
     }
     this.sim.press(x, y);
+  }
+
+  /** The menu button: stops the game and offers to go on, change the options, restart or leave. */
+  private openPause(): void {
+    if (this.dialog || this.endShown) return;
+    this.audio.unlock();
+    this.paused = true;
+    const show = (dialog: Container): void => {
+      const previous = this.dialog;
+      this.dialog = dialog;
+      this.root.addChild(dialog);
+      // The one being replaced goes once the touch that closed it has been dispatched.
+      if (previous) setTimeout(() => previous.destroy({ children: true }));
+    };
+    const menu = (): PauseMenu =>
+      new PauseMenu(this.textures, this.audio, this.strings, (choice) => {
+        if (choice === 'restart') return this.options.onNavigate(this.options.level);
+        if (choice === 'map') return this.options.onNavigate(null);
+        if (choice === 'options') {
+          return show(
+            new OptionsDialog(
+              this.textures,
+              this.audio,
+              this.strings,
+              this.options.settings,
+              (next) => {
+                this.options.settings = next;
+                this.options.onSettings(next);
+                show(menu());
+              },
+              false,
+            ),
+          );
+        }
+        const closing = this.dialog;
+        this.dialog = null;
+        this.paused = false;
+        if (closing) setTimeout(() => closing.destroy({ children: true }));
+      });
+    show(menu());
   }
 
   /** A plane's own sound: descriptor slot, with `%s` filled by its sex and its voice pitch. */

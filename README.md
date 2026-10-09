@@ -14,7 +14,7 @@ npm test
 
 ## Status
 
-Options in the main menu set the sound and music volume and the language (eight are available). The game opens on the original main menu and world map: touch a level's marker and press Play. Touching a stage's icon opens its screen with the improvements shop. Two stages are playable (in the stage screen, arrows switch stage): Arches with six levels and the
+Options in the main menu set the sound and music volume and the language (eight are available). During a level the menu button pauses and offers the volumes, restarting and going back to the map. The game opens on the original main menu and world map: touch a level's marker and press Play. Touching a stage's icon opens its screen with the improvements shop. Two stages are playable (in the stage screen, arrows switch stage): Arches with six levels and the
 island with seven. Levels unlock in order, stars and best scores are saved in the browser, and the
 funds earned with stars buy each stage's improvements.
 

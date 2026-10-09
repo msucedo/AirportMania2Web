@@ -1,16 +1,14 @@
-import { Container, Graphics, NineSliceSprite, Rectangle, Text, type FederatedPointerEvent, type Sprite } from 'pixi.js';
+import { Container, NineSliceSprite, Rectangle, type FederatedPointerEvent, type Sprite } from 'pixi.js';
 import { LANGUAGES, type Language, type Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../engine/screen';
 import type { TextureStore } from '../../engine/textures';
 import type { Settings } from '../settings';
+import { DIALOG_SURFACES, dialogButton, dialogFrame, dialogText } from './dialog';
 import { MAIN_FONT, SCORE_FONT } from './floatingText';
 
 export const OPTIONS_SURFACES = [
-  'GUI.DIALOGS.BACK.BOX',
-  'GUI.DIALOGS.BUTTON',
-  'GUI.DIALOGS.BUTTON_OVER',
+  ...DIALOG_SURFACES,
   'GUI.DIALOGS.BAR',
   'GUI.DIALOGS.NIPPLE',
   'GUI.DIALOGS.NIPPLE_OVER',
@@ -19,6 +17,8 @@ export const OPTIONS_SURFACES = [
 ];
 
 const BOX = { width: 300, height: 232 };
+/** Height without the language row, as shown during a level. */
+const SHORT_HEIGHT = 192;
 const SLIDER = { x: 150, width: 120 };
 
 /**
@@ -28,37 +28,24 @@ const SLIDER = { x: 150, width: 120 };
  */
 export class OptionsDialog extends Container {
   private readonly draft: Settings;
-  private readonly flag: Sprite;
+  private flag: Sprite | null = null;
 
   constructor(
     private readonly textures: TextureStore,
-    private readonly audio: AudioPlayer,
+    audio: AudioPlayer,
     strings: Strings,
     settings: Settings,
     onClose: (chosen: Settings) => void,
+    /** The language can only change between screens, so a level leaves it out. */
+    withLanguage = true,
   ) {
     super();
     this.draft = { ...settings };
-    // Dims the screen and keeps touches from reaching it.
-    const shade = new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill({ color: 0x000000, alpha: 0.6 });
-    shade.eventMode = 'static';
-    const panel = new Container();
-    panel.position.set((SCREEN_WIDTH - BOX.width) / 2, (SCREEN_HEIGHT - BOX.height) / 2);
-    const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BACK.BOX'), leftWidth: 24, rightWidth: 24, topHeight: 24, bottomHeight: 24 });
-    frame.setSize(BOX.width, BOX.height);
-    // The frame's own filling is translucent; a solid backing keeps the texts readable over the menu.
-    panel.addChild(new Graphics().roundRect(4, 4, BOX.width - 8, BOX.height - 8, 20).fill({ color: 0x3b1d4d, alpha: 0.92 }), frame);
-    this.addChild(shade, panel);
-
+    const { overlay, panel } = dialogFrame(textures, BOX.width, withLanguage ? BOX.height : SHORT_HEIGHT);
+    this.addChild(overlay);
     const main = fontFamily(MAIN_FONT);
     const small = fontFamily(SCORE_FONT);
-    const text = (value: string, x: number, y: number, size: number, family: string, anchorX = 0): Text => {
-      const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill: 0xffffff, stroke: { color: 0x2a1030, width: 3 } } });
-      node.anchor.set(anchorX, 0.5);
-      node.position.set(x, y);
-      panel.addChild(node);
-      return node;
-    };
+    const text = (value: string, x: number, y: number, size: number, family: string, anchorX = 0): void => void dialogText(panel, value, x, y, size, family, anchorX);
     text(strings.t('OPTIONS_DIALOG.OPTIONS'), BOX.width / 2, 26, 18, main, 0.5);
 
     text(strings.t('OPTIONS_DIALOG.SOUND_FX'), 24, 68, 13, small);
@@ -73,33 +60,36 @@ export class OptionsDialog extends Container {
       audio.setVolumes(this.draft.sound, this.draft.music);
     });
 
-    text(strings.t('OPTIONS_DIALOG.LANGUAGE'), 24, 144, 13, small);
-    this.flag = textures.sprite(`FLAGS.${this.draft.language.toUpperCase()}`);
-    this.flag.scale.set(0.62);
-    this.flag.position.set(SLIDER.x + SLIDER.width / 2, 144);
-    panel.addChild(this.flag);
-    for (const step of [-1, 1]) {
-      const arrow = textures.sprite('GUI.DIALOGS.ARROW');
-      arrow.position.set(SLIDER.x + SLIDER.width / 2 + step * 74, 144);
-      // The art points left.
-      arrow.scale.set(-step * 0.8, 0.8);
-      arrow.eventMode = 'static';
-      arrow.cursor = 'pointer';
-      arrow.hitArea = new Rectangle(-18, -18, 36, 36);
-      arrow.on('pointertap', () => {
-        audio.play('SOUNDS.CLICK');
-        this.stepLanguage(step);
-      });
-      panel.addChild(arrow);
+    if (withLanguage) {
+      text(strings.t('OPTIONS_DIALOG.LANGUAGE'), 24, 144, 13, small);
+      const flag = textures.sprite(`FLAGS.${this.draft.language.toUpperCase()}`);
+      flag.scale.set(0.62);
+      flag.position.set(SLIDER.x + SLIDER.width / 2, 144);
+      panel.addChild(flag);
+      this.flag = flag;
+      for (const step of [-1, 1]) {
+        const arrow = textures.sprite('GUI.DIALOGS.ARROW');
+        arrow.position.set(SLIDER.x + SLIDER.width / 2 + step * 74, 144);
+        // The art points left.
+        arrow.scale.set(-step * 0.8, 0.8);
+        arrow.eventMode = 'static';
+        arrow.cursor = 'pointer';
+        arrow.hitArea = new Rectangle(-18, -18, 36, 36);
+        arrow.on('pointertap', () => {
+          audio.play('SOUNDS.CLICK');
+          this.stepLanguage(step);
+        });
+        panel.addChild(arrow);
+      }
     }
 
-    this.button(panel, BOX.width / 2, 194, strings.t('LANGUAGE_SELECTION_DIALOG.CHANGE_LANGUAGE'), small, () => onClose(this.draft));
+    dialogButton(textures, audio, panel, { x: BOX.width / 2, y: withLanguage ? 194 : 154, width: 110 }, strings.t('LANGUAGE_SELECTION_DIALOG.CHANGE_LANGUAGE'), small, () => onClose(this.draft));
   }
 
   private stepLanguage(step: number): void {
     const index = (LANGUAGES.indexOf(this.draft.language) + step + LANGUAGES.length) % LANGUAGES.length;
     this.draft.language = LANGUAGES[index] as Language;
-    this.flag.texture = this.textures.texture(`FLAGS.${this.draft.language.toUpperCase()}`);
+    if (this.flag) this.flag.texture = this.textures.texture(`FLAGS.${this.draft.language.toUpperCase()}`);
   }
 
   private slider(panel: Container, y: number, initial: number, onChange: (value: number, released: boolean) => void): void {
@@ -135,26 +125,5 @@ export class OptionsDialog extends Container {
     zone.on('pointerup', release);
     zone.on('pointerupoutside', release);
     panel.addChild(bar, knob, zone);
-  }
-
-  private button(panel: Container, x: number, y: number, label: string, family: string, onPress: () => void): void {
-    const width = 110;
-    const face = new NineSliceSprite({ texture: this.textures.texture('GUI.DIALOGS.BUTTON'), leftWidth: 18, rightWidth: 18, topHeight: 18, bottomHeight: 18 });
-    face.setSize(width, 40);
-    face.position.set(x - width / 2, y - 20);
-    const zone = new Container();
-    zone.hitArea = new Rectangle(x - width / 2, y - 20, width, 40);
-    zone.eventMode = 'static';
-    zone.cursor = 'pointer';
-    zone.on('pointerover', () => (face.texture = this.textures.texture('GUI.DIALOGS.BUTTON_OVER')));
-    zone.on('pointerout', () => (face.texture = this.textures.texture('GUI.DIALOGS.BUTTON')));
-    zone.on('pointerdown', () => {
-      this.audio.play('SOUNDS.CLICK');
-      onPress();
-    });
-    const text = new Text({ text: label, style: { fontFamily: family, fontSize: 14, fill: 0xffffff } });
-    text.anchor.set(0.5);
-    text.position.set(x, y);
-    panel.addChild(face, text, zone);
   }
 }

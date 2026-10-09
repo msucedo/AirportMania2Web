@@ -570,6 +570,9 @@ Vtable `0x17a8e8`, kind 5.
   device entries): it offers sound and music volume and the language, built from the original
   dialog pieces (`GUI.DIALOGS.*`, `FLAGS.*`) and strings, and stores them in the browser
   (`am2web.settings.v1`).
+- The level's menu button opens a pause menu of our own (resume, options without the language,
+  restart, map) made of the same pieces; the original's in-game menu (`IN_GAME_MENU_DIALOG`)
+  has not been read.
 
 ## World map (script `0xccc8c`)
 
