@@ -5,7 +5,7 @@ import type { Point } from '../../data/xml';
 import { COLOR_NAMES } from '../palette';
 import { IMPROVEMENT, type StageLayout } from '../stages/layout';
 import { TaxiGraph, type TaxiNode } from './taxiGraph';
-import { Need, PROVISIONAL, PlaneState, RULES, UNSELECTABLE_STATES, clamp01, punctuality, roundScore, type Punctuality } from './rules';
+import { Need, PlaneState, RULES, UNSELECTABLE_STATES, clamp01, punctuality, roundScore, type Punctuality } from './rules';
 
 // Deterministic, render-free model of one level. Coordinates are screen pixels.
 
@@ -141,6 +141,12 @@ export interface Plane {
   altitude: number;
   /** Horizontal travel direction, for the view. */
   facing: 1 | -1;
+  /**
+   * Where the plane is in the holding pattern (`plane+0x330` in state 0): 0 flying right on the
+   * far lane, 3 turning at the right end, 1 flying left on the near lane, 2 turning at the left
+   * end. `time` runs from 0 to 1 through a turn and `vx` is the horizontal speed.
+   */
+  flight: { phase: 0 | 1 | 2 | 3; time: number; vx: number };
   /** Degrees: 0 facing left, 90 towards the viewer, 180 right, 270 away (0x5c8c). */
   heading: number;
   scale: number;
@@ -360,7 +366,7 @@ export class Simulation {
       if (!paints && slot.requires !== null && !owned.has(slot.requires)) continue;
       const vip = slot.upgradedBy !== undefined && owned.has(slot.upgradedBy);
       const { x, y } = slot.position;
-      const click = PROVISIONAL.stopSpotClick;
+      const click = RULES.stopSpotClick;
       this.stopSpots.push({
         kind: 'stopSpot',
         id: `stop-spot-${this.stopSpots.length + 1}`,
@@ -677,6 +683,7 @@ export class Simulation {
       y: start.y,
       altitude: RULES.flightAltitude,
       facing: spawn.side === 'RIGHT' ? -1 : 1,
+      flight: { phase: spawn.side === 'RIGHT' ? 1 : 0, time: 0, vx: (spawn.side === 'RIGHT' ? -1 : 1) * RULES.flightSpeed },
       heading: spawn.side === 'RIGHT' ? 0 : 180,
       scale: start.scale,
       queue: [],
@@ -765,26 +772,56 @@ export class Simulation {
       // Keep circling while the runway is taken.
       if (plane.state !== PlaneState.FLYING) return;
     }
-    plane.heading = plane.facing > 0 ? 180 : 0;
-    plane.x += plane.facing * RULES.flightSpeed * dt;
-    const margin = PROVISIONAL.flightTurnMargin;
-    const turnRight = plane.facing < 0 && plane.x < -margin;
-    const turnLeft = plane.facing > 0 && plane.x > this.config.screenWidth + margin;
-    if (!turnRight && !turnLeft) return;
-    // The original decides at the turn whether an exhausted plane gives up.
-    if (plane.energy < 0) {
-      plane.state = PlaneState.LEAVING_ANGRY;
-      if (this.selected === plane) this.deselect();
-      this.planesLost++;
-      this.emit({ type: 'leftAngry', plane });
-      // `Plane::giveUp` (0x6a24) charges the plane's LeavingPoints; the score may go negative.
-      this.addScore(plane, -plane.descriptor.points.leaving, 1, 'left');
-      return;
+    const { flight } = plane;
+    const rule = RULES.holding;
+    const far = RULES.spawn.LEFT;
+    const near = RULES.spawn.RIGHT;
+    const speed = RULES.flightSpeed;
+    if (flight.phase === 0 || flight.phase === 1) {
+      const right = flight.phase === 0;
+      flight.vx = right ? speed : -speed;
+      plane.x += flight.vx * dt;
+      const past = right ? plane.x - rule.rightTurn : rule.leftTurn - plane.x;
+      if (past >= 0) {
+        // The original decides at the turn whether an exhausted plane gives up.
+        if (plane.energy < 0) {
+          this.giveUp(plane);
+          return;
+        }
+        flight.phase = right ? 3 : 2;
+        flight.time = past / speed;
+      }
+    } else {
+      // A half loop out and back while it changes lane and size.
+      const right = flight.phase === 3;
+      flight.time += dt / rule.turnTime;
+      if (flight.time < 1) {
+        const swing = Math.sin(Math.PI * flight.time) * (speed / rule.turnWidth);
+        const across = Math.sin((Math.PI / 2) * flight.time);
+        plane.x = right ? rule.rightTurn + swing : rule.leftTurn - swing;
+        plane.y = right ? far.y + (near.y - far.y) * across : near.y - (near.y - far.y) * across;
+        plane.scale = right ? far.scale + (near.scale - far.scale) * across : near.scale - (near.scale - far.scale) * across;
+        flight.vx = (right ? 1 : -1) * Math.cos(Math.PI * flight.time) * (speed / rule.turnWidth);
+      } else {
+        const lane = right ? near : far;
+        flight.phase = right ? 1 : 0;
+        flight.time = 0;
+        flight.vx = right ? -speed : speed;
+        plane.y = lane.y;
+        plane.scale = lane.scale;
+      }
     }
-    plane.facing = turnRight ? 1 : -1;
-    const lane = plane.facing > 0 ? RULES.spawn.LEFT : RULES.spawn.RIGHT;
-    plane.y = lane.y;
-    plane.scale = lane.scale;
+    if (flight.vx !== 0) plane.facing = flight.vx > 0 ? 1 : -1;
+    plane.heading = plane.facing > 0 ? 180 : 0;
+  }
+
+  /** `Plane::giveUp` (0x6a24): the plane leaves, charging its LeavingPoints; the score may go negative. */
+  private giveUp(plane: Plane): void {
+    plane.state = PlaneState.LEAVING_ANGRY;
+    if (this.selected === plane) this.deselect();
+    this.planesLost++;
+    this.emit({ type: 'leftAngry', plane });
+    this.addScore(plane, -plane.descriptor.points.leaving, 1, 'left');
   }
 
   /** Starts the first queued order once its place can take the plane (update, `0x7952` onwards). */
@@ -815,7 +852,7 @@ export class Simulation {
       const runway = place as Runway;
       plane.landing = true;
       plane.state = PlaneState.LANDING;
-      plane.approach = { phase: 0, time: 0, vx: plane.facing * RULES.flightSpeed, vy: 0, ax: runway.direction * RULES.landing.leaveAcceleration };
+      plane.approach = { phase: 0, time: 0, vx: plane.flight.vx, vy: 0, ax: runway.direction * RULES.landing.leaveAcceleration };
       this.emit({ type: 'landingStarted', plane, runway });
       return;
     }

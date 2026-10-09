@@ -877,6 +877,19 @@ State 2 with a queue (`0x7952`):
   released and every plane in it starts its order (`0x6594`); award counter 0x18 gets the count.
 - Otherwise, if a route exists, the order starts (`0x6594`).
 
+## Holding pattern — confirmed
+
+State 0 with a phase in `plane+0x330` (`0x6f78`); the flight speed is 80 (`0x1772d8`).
+
+- Phase 0: flying right on the far lane (y 680, scale 0.8). At x ≥ 380 a plane with energy
+  below zero gives up (`0x6a24`); otherwise phase 3 with its clock at `(x − 380) / 80`.
+- Phase 3: the clock runs at 0.5/s. `x = 380 + sin(πt)·80/1.5`, `y = 680 + 25·sin(πt/2)`,
+  scale `0.8 + 0.2·sin(πt/2)`. At 1: y 705, scale 1, speed −80, phase 1.
+- Phase 1: flying left on the near lane. At x ≤ 100 the same choice; phase 2 with its clock at
+  `(100 − x) / 80`.
+- Phase 2: the mirror turn, `x = 100 − sin(πt)·80/1.5`, back to y 680 and scale 0.8, phase 0.
+- Stop spot touch area: ±35 × ±20 around its position (`0x7921e`, same in `0x78d44`).
+
 ## Still unknown
 
 - Plane update (`0x6af0`): state 10; taxi speed.

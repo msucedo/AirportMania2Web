@@ -296,6 +296,48 @@ describe('simulation, level 1-1', () => {
   });
 });
 
+describe('simulation, holding pattern', () => {
+  it('keeps a waiting plane on screen, turning between the two lanes', () => {
+    const sim = newSim();
+    run(sim, 1.1);
+    const plane = sim.planes[0]!;
+    plane.energy = 100;
+    // It comes in from the left on the far lane, small.
+    expect(plane.flight.phase).toBe(0);
+    expect([plane.y, plane.scale]).toEqual([RULES.spawn.LEFT.y, RULES.spawn.LEFT.scale]);
+    runUntil(sim, () => plane.flight.phase === 3, 10);
+    // Within a frame's travel of the turning point.
+    expect(plane.x - RULES.holding.rightTurn).toBeGreaterThanOrEqual(0);
+    expect(plane.x - RULES.holding.rightTurn).toBeLessThan(RULES.flightSpeed * DT + 0.01);
+    // The turn takes two seconds and swings a little beyond the turning point.
+    const from = sim.time;
+    let furthest = plane.x;
+    runUntil(sim, () => ((furthest = Math.max(furthest, plane.x)), plane.flight.phase === 1), 5);
+    expect(sim.time - from).toBeCloseTo(RULES.holding.turnTime, 1);
+    expect(furthest).toBeCloseTo(RULES.holding.rightTurn + RULES.flightSpeed / RULES.holding.turnWidth, 0);
+    // It comes back along the near lane, full size, and turns again at the left end.
+    expect([plane.y, plane.scale, plane.facing]).toEqual([RULES.spawn.RIGHT.y, RULES.spawn.RIGHT.scale, -1]);
+    runUntil(sim, () => plane.flight.phase === 2, 10);
+    expect(RULES.holding.leftTurn - plane.x).toBeGreaterThanOrEqual(0);
+    expect(RULES.holding.leftTurn - plane.x).toBeLessThan(RULES.flightSpeed * DT + 0.01);
+    runUntil(sim, () => plane.flight.phase === 0, 5);
+    expect([plane.y, plane.scale, plane.facing]).toEqual([RULES.spawn.LEFT.y, RULES.spawn.LEFT.scale, 1]);
+  });
+
+  it('lets an exhausted plane give up at a turning point, not before', () => {
+    const sim = newSim();
+    run(sim, 1.1);
+    const plane = sim.planes[0]!;
+    plane.energy = -0.1;
+    run(sim, 1);
+    expect(plane.state).toBe(PlaneState.FLYING);
+    runUntil(sim, () => plane.state === PlaneState.LEAVING_ANGRY, 10);
+    // Within a frame's travel of the turning point.
+    expect(plane.x - RULES.holding.rightTurn).toBeGreaterThanOrEqual(0);
+    expect(plane.x - RULES.holding.rightTurn).toBeLessThan(RULES.flightSpeed * DT + 0.01);
+  });
+});
+
 describe('simulation, end of the level', () => {
   it('goes on after the time runs out while a plane still has energy', () => {
     const sim = newSim();

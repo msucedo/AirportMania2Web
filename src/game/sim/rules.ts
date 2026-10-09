@@ -60,6 +60,14 @@ export const RULES = {
     RIGHT: { x: 540, y: 705, scale: 1.0 },
     LEFT: { x: -60, y: 680, scale: 0.8 },
   },
+  /**
+   * The holding pattern (state 0, 0x6f90). Planes fly right along the far lane and left along
+   * the near one, turning between them at `rightTurn` and `leftTurn`: a turn takes `turnTime`
+   * seconds and swings `speed / turnWidth` px beyond the turning point.
+   */
+  holding: { rightTurn: 380, leftTurn: 100, turnTime: 2, turnWidth: 1.5 },
+  /** Stop spot touch area around its position (0x7921e). */
+  stopSpotClick: { x1: -35, y1: -20, x2: 35, y2: 20 },
   landingSpeed: 250,
   /** A landing plane starts this far from the runway node. */
   landingApproachDistance: 750,
@@ -126,12 +134,8 @@ export const RULES = {
 } as const;
 
 export const PROVISIONAL = {
-  /** Stop spot click area, around its position. The original rectangle has not been read. */
-  stopSpotClick: { x1: -34, y1: -20, x2: 34, y2: 20 },
   /** The router skips nodes another plane is using; the simulation does not track that yet. */
   taxiIgnoresNodeOccupancy: true,
-  /** How far past the screen edge a flying plane goes before turning back. */
-  flightTurnMargin: 60,
 } as const;
 
 export function clamp01(value: number): number {
