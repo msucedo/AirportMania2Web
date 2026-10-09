@@ -67,7 +67,9 @@ Improvements registered for the stage (id, price): `0x01` 10000, `0x72` 60000, `
 `0x16` 20000 (`IMPROVEMENTS.GATE_0`, confirmed), `0x1e` 25000, `0x1f` 30000, `0x20` 35000
 (confirmed), `0xcb` 85000. The meaning of the others follows the string order in the function
 (extra storage place, painting stop spot, VIP storage place, improved gates A/B, plane 4 licence):
-inferred.
+inferred. Registered order: `0x01`, `0x0a`, `0x72`, `0x16`, `0x1e`, `0x1f`, `0xcb`, `0x20`.
+`0x13458` also stores a number per improvement (2 for `0x01`, 4 for `0x16`, 3 for `0x1e`, 1000
+for the rest) whose use has not been read.
 
 ## Click handling (`0x10b58`, called from the level update `0x11654`)
 
@@ -407,6 +409,43 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   and when the next queued order turns out impossible (`0x7340`, `0x7a10`).
 - Web version: the award counters are not kept.
 
+## Painting stop spot — confirmed
+
+Class with vtable `0x17b1e8`, built by `0x145a8(position, variant, 42.0)`; variant 0 in Arches,
+2 on the island. It is a stop spot (same slots for accepting, reserving and the drain, which its
+base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the position).
+
+- Charge: `+0x74` is the recharge time (42 s) and `+0x78` what is left, starting full, so the
+  first repaint has to wait. At zero `+0x80` is set and `SOUNDS.PAINTING_READY` plays (`0x67e24`).
+- Level colours (`0x133fc`, `airport+0x15c`): the colours 1–7 that appear in the level's
+  schedule, in table order.
+- While a plane waits on a charged spot (plane state 2), a chooser (`0x68f08`) is created 55 px
+  right and 20 px above the spot with every level colour but the plane's. When the plane leaves
+  state 2 the spot is freed and the chooser dismissed.
+- Chooser (`0x68bf4`, `0x68854`): closed, it takes touches in x ±30, y −30…+40 and shows a ring
+  of `PAINTING_STOPSPOT.READY` discs, each 10 px off the centre, turning twice a second (app
+  clock `+0x1ec`); one colour makes three discs and two make four. Held down it opens (5/s):
+  touches in x ±90, y −(30+30n)…+40; rows of `COLOR` + `COLOR_SHADING` stack 30 px apart
+  upwards; the row under the finger, `floor((y0 − y)·n / (30+30n))`, is full size, the others
+  half and pushed 10 px away; the mark slides at 6·(⌊gap⌋+1) rows/s. Letting go on a row calls
+  `paint` (`0x68e28`).
+- `paint(colour)` (`0x68014`): plane state 8 (`0x6354`), spot state 2, and a spray object
+  (`0x7796c`, `SOUNDS.PAINTING`). The spray (`0x77a80`) fades in over 0.5 s, sets the plane's
+  colour after 4 s (`0x5a5c`), starts fading out at 5 s and at 5.5 s calls `0x67df8`: plane back
+  to state 2, +0.4 energy (`0x9b18`), recharge restarted. State 8 loses no energy and is
+  selectable.
+- Plane colour change (`0x5a5c`, `0x90d2`): `+0x34c` keeps the old colour and `+0x350` runs from
+  1 to 0 in a second; the body is drawn `old·w + new·(1−w)` with `w` a triangle wave of
+  `7·(+0x350)`.
+- Sign (`0x68584`): `RIGHT_OFF` (`RIGHT_OFF_ISLAND` for variant 2) at spot + (7, −33), `RIGHT`
+  over it with the ready fade (3/s) as opacity; `CHARGING` at + (50, −52), showing the rows
+  below `height · left/recharge`, pulsing 0.8 ± 0.2 at 5 rad/s once lit. Sorted at spot y − 15.
+- Spray draw (`0x77b78`): can = `SPRAY_COLOR` tinted + `SPRAY_TOP`, rotated `20·sin 5t − 13`°,
+  at (45 + 4·sin t, 15·cos t − 20), mirrored, at the plane (15 px further left for variant 2);
+  `SPRAY_RAY` tinted at (−6, −17) on the can, flickering.
+- Web version: the turning direction of the ring and the can's rotation sign follow Pixi's
+  convention, not checked against the engine's.
+
 ## Gate, runway and order flag drawing
 
 - Gate resources (`0x42afc`): the letter comes from the descriptor's `LetterSurfaceResource`
@@ -587,7 +626,11 @@ sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructo
   sprites at (−25, +30). Gas station type 2 at (52, 105). Hangar at (180, 90) from level 3.
 - Runways 1 (50, 195) and 2 (85, 250), descriptor type 2, created with flag 0: node at the right
   end, planes leave to the left. One taxi node at (280, 195).
-- Stop spots at (60, 300), (170, 300) and (280, 300); which improvement adds which is inferred.
+- Stop spots (`0xd0100`, confirmed): (280, 300) always, VIP with `0x0a`; (170, 300) with `0x01`;
+  (60, 300) with `0x02`, or the painting stop spot there when `0x72` is owned, whether or not
+  `0x02` is. Arches does the same at (60, 300) with `0x01` (`0xcebba`).
+- Registered order of the improvements: `0x01`, `0x02`, `0x0a`, `0x72` (95000), `0x16`, `0x1e`,
+  `0x1f`, `0x74` (50000), `0xcc`, `0x20`.
 - Improvements (id, price): `0x01` 17000, `0x02` 25000, `0x0a` 40000, `0x72` 95000,
   `0x16` 35000, `0x1e` 35000, `0x1f` 40000, `0x74` 50000 (coffee and cake), `0xcc` 120000
   (plane 5 licence), `0x20` 45000.

@@ -2,6 +2,7 @@ import type { GasStationDescriptor, GateDescriptor, HangarDescriptor, RunwayDesc
 import type { LevelGoals, LevelSchedule, PlaneColor, PlaneSpawn, Sex } from '../../data/levels';
 import type { PlaneDescriptor } from '../../data/planes';
 import type { Point } from '../../data/xml';
+import { COLOR_NAMES } from '../palette';
 import type { StageLayout } from '../stages/layout';
 import { TaxiGraph, type TaxiNode } from './taxiGraph';
 import { Need, PROVISIONAL, PlaneState, RULES, UNSELECTABLE_STATES, clamp01, punctuality, roundScore, type Punctuality } from './rules';
@@ -95,6 +96,20 @@ export interface StopSpot extends PlaceBase {
   drain: number;
   /** Original `spot+0x60`: 0 free, 1 reserved, 2 occupied. */
   use: 'free' | 'reserved' | 'occupied';
+  /** The repainting equipment of a painting stop spot; null on an ordinary one. */
+  painting: PaintBooth | null;
+}
+
+/** What a painting stop spot adds to a stop spot (class at vtable `0x17b1e8`). */
+export interface PaintBooth {
+  /** Seconds it takes to recharge after a repaint (`+0x74`). */
+  recharge: number;
+  /** Seconds of recharge left (`+0x78`). */
+  left: number;
+  /** Recharged and able to paint (`+0x80`). */
+  ready: boolean;
+  /** The repaint under way: the new colour and the seconds since it began (object `0x7796c`). */
+  job: { color: PlaneColor; time: number; applied: boolean } | null;
 }
 
 export type Place = Gate | Runway | GasStation | Hangar | StopSpot;
@@ -153,6 +168,10 @@ export type SimEvent =
   | { type: 'select'; plane: Plane }
   | { type: 'order'; plane: Plane; place: Place }
   | { type: 'forbidden'; plane?: Plane }
+  | { type: 'paintingReady'; spot: StopSpot }
+  | { type: 'paintingStarted'; plane: Plane; spot: StopSpot; color: PlaneColor }
+  | { type: 'repainted'; plane: Plane; from: PlaneColor }
+  | { type: 'paintingDone'; plane: Plane; spot: StopSpot }
   | { type: 'queueCancelled'; plane: Plane }
   | { type: 'score'; plane: Plane; points: number; multiplier: number; reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'service' | 'left' }
   | { type: 'serviceStartedAtHangar'; plane: Plane; hangar: Hangar }
@@ -198,6 +217,8 @@ export class Simulation {
   readonly gasStations: GasStation[] = [];
   readonly hangars: Hangar[] = [];
   readonly stopSpots: StopSpot[] = [];
+  /** The colours used in this level; the painting stop spot offers these (`airport+0x15c`). */
+  readonly colors: readonly PlaneColor[];
   readonly counts: Record<'unload' | 'takeOff', Record<Punctuality, number>> = {
     unload: { EARLY: 0, ON_TIME: 0, LATE: 0 },
     takeOff: { EARLY: 0, ON_TIME: 0, LATE: 0 },
@@ -311,9 +332,9 @@ export class Simulation {
 
     // Stop spots come last in the stage builder.
     for (const slot of layout.stopSpots) {
-      if (slot.requires !== null && !owned.has(slot.requires)) continue;
-      // The painting stop spot that replaces this one is a different place, not modelled yet.
-      if (slot.replacedBy !== undefined && owned.has(slot.replacedBy)) continue;
+      // The painting stop spot takes this place whether or not the plain one had been bought.
+      const paints = slot.replacedBy !== undefined && owned.has(slot.replacedBy);
+      if (!paints && slot.requires !== null && !owned.has(slot.requires)) continue;
       const vip = slot.upgradedBy !== undefined && owned.has(slot.upgradedBy);
       const { x, y } = slot.position;
       const click = PROVISIONAL.stopSpotClick;
@@ -328,12 +349,16 @@ export class Simulation {
         vip,
         drain: vip ? RULES.stopSpotDrain.vip : RULES.stopSpotDrain.normal,
         use: 'free',
+        // It starts empty and has to charge before the first repaint (0x67c40).
+        painting: paints ? { recharge: RULES.painting.recharge, left: RULES.painting.recharge, ready: false, job: null } : null,
       });
     }
 
     this.graph.autoLink();
 
     this.pending = [...config.schedule.planes].sort((a, b) => a.time - b.time);
+    // 0x133fc: the colours the level's planes come in, in the order of the colour table.
+    this.colors = COLOR_NAMES.filter((name) => config.schedule.planes.some((p) => p.color === name));
   }
 
   get places(): Place[] {
@@ -505,6 +530,7 @@ export class Simulation {
     for (const gate of this.gates) this.updateGate(gate, dt);
     for (const station of this.gasStations) this.updateGasStation(station, dt);
     for (const hangar of this.hangars) this.updateHangar(hangar, dt);
+    for (const spot of this.stopSpots) if (spot.painting) this.updatePainting(spot, spot.painting, dt);
     for (const plane of this.planes) if (!plane.gone) this.updatePlane(plane, dt);
 
     const active = this.planes.some((p) => !p.gone);
@@ -513,6 +539,58 @@ export class Simulation {
       this.ended = true;
       this.emit({ type: 'levelEnd', score: this.score });
     }
+  }
+
+  /**
+   * The colours a painting stop spot offers the plane parked on it: every colour of the level
+   * but the plane's own, once the spot has recharged (0x67f48, 0x68f08). Empty otherwise.
+   */
+  paintOptions(spot: StopSpot): readonly PlaneColor[] {
+    const booth = spot.painting;
+    const plane = spot.plane;
+    if (!booth || !booth.ready || booth.job || !plane) return [];
+    if (spot.use !== 'occupied' || plane.state !== PlaneState.WAITING) return [];
+    return this.colors.filter((color) => color !== plane.color);
+  }
+
+  /** `PaintingStopSpot::paint` (0x68014): starts repainting the parked plane. */
+  paint(spot: StopSpot, color: PlaneColor): boolean {
+    if (this.ended || !this.paintOptions(spot).includes(color)) return false;
+    const plane = spot.plane!;
+    plane.state = PlaneState.PAINTING;
+    spot.painting!.job = { color, time: 0, applied: false };
+    this.emit({ type: 'paintingStarted', plane, spot, color });
+    return true;
+  }
+
+  /** `PaintingStopSpot::update` (0x67e24) and the spray's own update (0x77a80). */
+  private updatePainting(spot: StopSpot, booth: PaintBooth, dt: number): void {
+    if (!booth.ready) {
+      booth.left -= dt;
+      if (booth.left <= 0) {
+        booth.left = 0;
+        booth.ready = true;
+        this.emit({ type: 'paintingReady', spot });
+      }
+    }
+    const job = booth.job;
+    const plane = spot.plane;
+    if (!job || !plane) return;
+    job.time += dt;
+    if (!job.applied && job.time > RULES.painting.colorAt) {
+      job.applied = true;
+      const from = plane.color;
+      plane.color = job.color;
+      this.emit({ type: 'repainted', plane, from });
+    }
+    if (job.time < RULES.painting.duration) return;
+    // 0x67df8: the plane waits again, cheered up, and the spot has to recharge.
+    booth.job = null;
+    plane.state = PlaneState.WAITING;
+    this.addEnergy(plane, RULES.painting.energy);
+    booth.left = booth.recharge;
+    booth.ready = false;
+    this.emit({ type: 'paintingDone', plane, spot });
   }
 
   private spawn(spawn: PlaneSpawn): void {

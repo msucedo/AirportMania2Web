@@ -11,6 +11,8 @@ export const PlaneState = {
   UNLOADING: 5,
   IN_HANGAR: 6,
   FUELING: 7,
+  /** Being repainted on a painting stop spot (0x6354). */
+  PAINTING: 8,
   TAKING_OFF: 11,
   /** In the air after the take-off run. */
   AIRBORNE: 12,
@@ -86,6 +88,13 @@ export const RULES = {
    * and 0.25; which belongs to the plain spot and which to the VIP one is inferred.
    */
   stopSpotDrain: { normal: 0.5, vip: 0.25 },
+
+  /**
+   * Painting stop spot. It recharges for `recharge` seconds (the stage scripts pass 42 to
+   * 0x145a8); the spray appears, changes the plane's colour after `colorAt` seconds and has gone
+   * after `duration` (0x77a80). The plane then gains `energy` (0x67df8).
+   */
+  painting: { recharge: 42, colorAt: 4, duration: 5.5, energy: 0.4 },
 
   /** Taxiing accelerates towards the next node, is capped, and brakes for the final target. */
   taxiAcceleration: 200,

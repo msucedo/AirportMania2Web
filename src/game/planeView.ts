@@ -101,6 +101,11 @@ export function moodFor(energy: number): { mouth: number; browAngle: number } {
   return { mouth: 0, browAngle: 0 };
 }
 
+/** How much of the old colour shows `left` seconds before a repaint settles (0x90d2). */
+export function repaintMix(left: number): number {
+  return left <= 0 ? 0 : triangle(left * 7);
+}
+
 /** 0 → 1 → 0 with period 2. */
 function triangle(t: number): number {
   const phase = t - 2 * Math.floor(t / 2);
@@ -132,6 +137,10 @@ interface Pose {
   opened: Sprite | null;
   closed: Sprite | null;
   eyeX: number;
+  /** The coloured body, and over it the colour it had before a repaint while that fades. */
+  color: Sprite | null;
+  oldColor: Sprite | null;
+  colorId: string;
 }
 
 export interface PlaneLook {
@@ -174,6 +183,8 @@ export class PlaneView extends Container {
   private shownNeed = 0;
   private shownThought = 0;
   private spoken: { need: number; left: number } | null = null;
+  /** Runs from 1 to 0 in the second after a repaint (`plane+0x350`). */
+  private repainted = 0;
 
   private time = 0;
   /** Seconds until the next blink; the eyes are shut for its last 0.1 s (0x6e94). */
@@ -195,7 +206,7 @@ export class PlaneView extends Container {
   constructor(
     private readonly textures: TextureStore,
     private readonly plane: PlaneDescriptor,
-    private readonly color: PaletteColor,
+    private color: PaletteColor,
     female: boolean,
     /** Water stages draw the plane's pontoons instead of its landing gear. */
     pontoons = false,
@@ -209,7 +220,7 @@ export class PlaneView extends Container {
     for (const p of PERSPECTIVES) {
       const root = new Container();
       root.y = plane.body.offsetY;
-      const pose: Pose = { root, remarks: new Container(), remarkSprites: [], brows: [], propellers: [], gear: null, gearRemark: null, gearFrames: [], mouth: null, opened: null, closed: null, eyeX: 0 };
+      const pose: Pose = { root, remarks: new Container(), remarkSprites: [], brows: [], propellers: [], gear: null, gearRemark: null, gearFrames: [], mouth: null, opened: null, closed: null, eyeX: 0, color: null, oldColor: null, colorId: `${plane.body.color}.${p}` };
       const remark = (sprite: Sprite): Sprite => {
         pose.remarkSprites.push(sprite);
         return sprite;
@@ -279,7 +290,12 @@ export class PlaneView extends Container {
 
       const color = new Sprite(textures.gradient(`${plane.body.color}.${p}`, this.color.main, this.color.shade));
       color.anchor.copyFrom(textures.sprite(`${plane.body.color}.${p}`).anchor);
-      root.addChild(color, textures.sprite(`${plane.body.front}.${p}`));
+      const oldColor = new Sprite(color.texture);
+      oldColor.anchor.copyFrom(color.anchor);
+      oldColor.visible = false;
+      pose.color = color;
+      pose.oldColor = oldColor;
+      root.addChild(color, oldColor, textures.sprite(`${plane.body.front}.${p}`));
 
       if (!browsBehind) for (const part of brows(browIds, false)) root.addChild(part);
       if (!back) for (const lash of lashes('PLANE.EYELASH', false)) root.addChild(lash);
@@ -331,6 +347,20 @@ export class PlaneView extends Container {
     this.talk();
   }
 
+  /**
+   * The plane takes a new colour (0x5a5c). For a second it flickers between the old one and
+   * the new, three and a half times, ending on the new (0x90d2).
+   */
+  repaint(color: PaletteColor): void {
+    for (const pose of this.poses) {
+      if (!pose.color || !pose.oldColor) continue;
+      pose.oldColor.texture = pose.color.texture;
+      pose.color.texture = this.textures.gradient(pose.colorId, color.main, color.shade);
+    }
+    this.color = color;
+    this.repainted = 1;
+  }
+
   /** The plane speaks: its mouth runs the talking animation and the eyes turn aside (0x5bd4). */
   talk(): void {
     this.sequence = MOUTH_SEQUENCES.talk;
@@ -352,6 +382,13 @@ export class PlaneView extends Container {
     this.time += dt;
     if (this.lastEnergy !== null && energy > this.lastEnergy + 0.01) this.cheer();
     this.lastEnergy = energy;
+
+    if (this.repainted > 0) this.repainted = Math.max(0, this.repainted - dt);
+    for (const pose of this.poses) {
+      if (!pose.oldColor) continue;
+      pose.oldColor.visible = this.repainted > 0;
+      pose.oldColor.alpha = repaintMix(this.repainted);
+    }
 
     this.blink -= dt;
     if (this.blink < 0) this.blink = 5 + Math.random() * 5;

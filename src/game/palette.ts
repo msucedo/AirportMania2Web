@@ -24,13 +24,13 @@ const PALETTE: readonly PaletteColor[] = [
 ];
 
 /** Colour names in the order the level files map to table indices (strings at `0x16bfb0`). */
-const NAMES = ['BLUE', 'ORANGE', 'GREEN', 'CYAN', 'PINK', 'YELLOW', 'VIOLET'];
+export const COLOR_NAMES: readonly string[] = ['BLUE', 'ORANGE', 'GREEN', 'CYAN', 'PINK', 'YELLOW', 'VIOLET'];
 
 export const NEUTRAL_COLOR = PALETTE[0]!;
 /** The president's plane has a colour of its own, whatever the level file says (0x4d1c). */
 export const PRESIDENT_COLOR = PALETTE[8]!;
 
 export function paletteColor(color: PlaneColor | null): PaletteColor {
-  const index = color ? NAMES.indexOf(color) + 1 : 0;
+  const index = color ? COLOR_NAMES.indexOf(color) + 1 : 0;
   return PALETTE[index] ?? NEUTRAL_COLOR;
 }

@@ -41,7 +41,8 @@ export const ISLAND: StageLayout = {
   taxiNodes: [{ x: 280, y: 195 }],
   // Water runways are created with flag 0: the node is at the right end and planes leave leftwards.
   runways: [runway(1, 50, 195, 0), runway(2, 85, 250, 0)],
-  // Which improvement adds which spot mirrors Arches and is inferred from the order of the calls.
+  // 0xd0100: the spot at 60 needs the second extra place, or is the painting spot when that is
+  // owned; the one at 170 needs the first extra place; the one at 280 is always there.
   stopSpots: [
     { position: { x: 280, y: 300 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_STOP_SPOT },
     { position: { x: 170, y: 300 }, requires: IMPROVEMENT.EXTRA_STOP_SPOT },
@@ -54,17 +55,18 @@ export const ISLAND: StageLayout = {
   pontoons: true,
   runwayBalloonCorner: 1,
   water: true,
-  // Ids and prices as registered by the script. Coffee and cake (0x74, 50000) and the painting
-  // stop spot (0x72, 95000) are left out until they are implemented.
+  // Ids, prices and order as registered by the script. Coffee and cake (0x74, 50000, between
+  // the gate B upgrade and the licence) is left out until it is implemented.
   improvements: [
     offer(IMPROVEMENT.EXTRA_STOP_SPOT, 17000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'ISLAND_STORAGE_PLACE'),
     offer(IMPROVEMENT.EXTRA_STOP_SPOT_2, 25000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'ISLAND_STORAGE_PLACE', IMPROVEMENT.EXTRA_STOP_SPOT),
     offer(IMPROVEMENT.UPGRADED_STOP_SPOT, 40000, 'VIP_STORAGE_PLACE', 'VIP_STORAGE_PLACE', 'ISLAND_VIP_STORAGE_PLACE'),
+    offer(IMPROVEMENT.PAINTING_STOP_SPOT, 95000, 'PAINTING_STOPSPOT', 'PAINTING_STOPSPOT', 'PAINTING_STOPSPOT'),
     offer(IMPROVEMENT.EXTRA_GATE_C, 35000, 'EXTRA_GATE_C', 'EXTRA_GATE', 'GATE_2'),
     offer(IMPROVEMENT.UPGRADED_GATE_A, 35000, 'IMPROVED_GATE_A', 'IMPROVED_GATE', 'GATE_3'),
     offer(IMPROVEMENT.UPGRADED_GATE_B, 40000, 'IMPROVED_GATE_B', 'IMPROVED_GATE', 'GATE_3'),
-    offer(IMPROVEMENT.UPGRADED_GATE_C, 45000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_3', IMPROVEMENT.EXTRA_GATE_C),
     offer(IMPROVEMENT.PLANE_5_LICENCE, 120000, 'PLANE_5_LICENCE', 'PLANE_5_LICENCE', 'PLANE_5'),
+    offer(IMPROVEMENT.UPGRADED_GATE_C, 45000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_3', IMPROVEMENT.EXTRA_GATE_C),
   ],
   extraPlaneLicence: IMPROVEMENT.PLANE_5_LICENCE,
 };

@@ -24,8 +24,9 @@ import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
-import { Need, PlaneState } from './sim/rules';
-import { Simulation, type Gate, type Hangar, type Plane, type SimEvent } from './sim/simulation';
+import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
+import { Need, PlaneState, RULES } from './sim/rules';
+import { Simulation, type Gate, type Hangar, type Plane, type SimEvent, type StopSpot } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
 const tintOf = (color: PlaneColor | null): number => paletteColor(color).main;
@@ -79,6 +80,12 @@ export class LevelScene {
   private accumulator = 0;
   private endShown = false;
   private paused = false;
+  private readonly paintingSigns: PaintingSign[] = [];
+  private readonly choosers = new Map<StopSpot, PaintChooser>();
+  private readonly fading: PaintChooser[] = [];
+  private readonly sprays: SprayCan[] = [];
+  /** The colour chooser the finger went down on, until it is lifted. */
+  heldChooser: PaintChooser | null = null;
   private dialog: Container | null = null;
   private report: FinalReport | null = null;
 
@@ -127,6 +134,7 @@ export class LevelScene {
     for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip]) ids.add(id);
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
     if (layout.water) for (const id of WATER_SURFACES) ids.add(id);
+    if (sim.stopSpots.some((spot) => spot.painting)) for (const id of PAINTING_SURFACES) ids.add(id);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
@@ -167,6 +175,14 @@ export class LevelScene {
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
     app.stage.on('pointerdown', (event: FederatedPointerEvent) => scene.press(event.global.x, event.global.y));
+    // The colour chooser of a painting spot follows the finger while it is held down.
+    app.stage.on('globalpointermove', (event: FederatedPointerEvent) => scene.heldChooser?.move(event.global.y));
+    const release = (event: FederatedPointerEvent): void => {
+      scene.heldChooser?.release(event.global.y);
+      scene.heldChooser = null;
+    };
+    app.stage.on('pointerup', release);
+    app.stage.on('pointerupoutside', release);
     app.ticker.add((ticker) => scene.frame(ticker.deltaMS / 1000));
     return scene;
   }
@@ -179,6 +195,12 @@ export class LevelScene {
     if (first) {
       this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.BONUS_X2']);
       for (const plane of new Set(this.sim.planes.map((p) => p.descriptor))) this.audio.preload(Object.values(plane.sounds).filter((id) => !id.includes('%')));
+    }
+    const chooser = this.paused ? undefined : [...this.choosers.values()].find((c) => c.contains(x, y));
+    if (chooser) {
+      this.heldChooser = chooser;
+      chooser.press(y);
+      return;
     }
     this.sim.press(x, y);
   }
@@ -332,6 +354,11 @@ export class LevelScene {
         sprite.position.copyFrom(spot.position);
         this.ground.addChild(sprite);
       }
+      if (spot.painting) {
+        const sign = new PaintingSign(this.textures, spot, layout.water);
+        this.paintingSigns.push(sign);
+        this.planeLayer.addChild(sign);
+      }
     }
     for (const gate of this.sim.gates) {
       for (const extra of layout.gateDecorations) {
@@ -446,6 +473,19 @@ export class LevelScene {
       case 'fuelingStarted':
         this.audio.play('SOUNDS.FUELING');
         break;
+      case 'paintingReady':
+        this.audio.play('SOUNDS.PAINTING_READY');
+        break;
+      case 'paintingStarted': {
+        this.audio.play('SOUNDS.PAINTING');
+        const spray = new SprayCan(this.textures, event.plane, event.color, this.options.layout.water, RULES.painting.duration);
+        this.sprays.push(spray);
+        this.planeLayer.addChild(spray);
+        break;
+      }
+      case 'repainted':
+        this.planeViews.get(event.plane.id)?.repaint(paletteColor(event.plane.color));
+        break;
       case 'serviceStartedAtHangar':
         this.audio.play('SOUNDS.REPAIRING_START');
         break;
@@ -474,6 +514,7 @@ export class LevelScene {
     this.sky.update(elapsed);
     this.sparkles?.update(elapsed);
     this.rings?.update(elapsed);
+    this.drawPainting(elapsed);
     for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
     for (const view of this.runwayViews) view.update();
@@ -553,6 +594,36 @@ export class LevelScene {
     this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds);
 
     if (this.sim.ended && !this.endShown) this.showEnd();
+  }
+
+  /** Painting stop spots: the sign, the colour chooser beside a parked plane and the spray cans. */
+  private drawPainting(elapsed: number): void {
+    for (const sign of this.paintingSigns) sign.update(elapsed);
+    for (const spot of this.sim.stopSpots) {
+      if (!spot.painting) continue;
+      const colors = this.sim.paintOptions(spot);
+      const chooser = this.choosers.get(spot);
+      if (colors.length > 0 && !chooser) {
+        const created = new PaintChooser(this.textures, spot, colors, (color) => this.sim.paint(spot, color));
+        this.choosers.set(spot, created);
+        this.planeLayer.addChild(created);
+      } else if (colors.length === 0 && chooser) {
+        // The plane is being painted or has left: the chooser fades away (0x67f36, 0x680b4).
+        chooser.closing = true;
+        if (this.heldChooser === chooser) this.heldChooser = null;
+        this.choosers.delete(spot);
+        this.fading.push(chooser);
+      }
+    }
+    for (const chooser of this.choosers.values()) chooser.update(elapsed);
+    for (const list of [this.fading, this.sprays]) {
+      for (let i = list.length - 1; i >= 0; i--) {
+        const item = list[i]!;
+        if (item.update(elapsed)) continue;
+        list.splice(i, 1);
+        item.destroy({ children: true });
+      }
+    }
   }
 
   private showEnd(): void {

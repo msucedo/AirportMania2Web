@@ -429,6 +429,50 @@ describe('simulation, improvements', () => {
     for (const place of [...sim.gates, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
   });
 
+  it('repaints a parked plane on the painting stop spot once it has charged', () => {
+    // The painting spot takes the second place even without the plain spot having been bought.
+    const sim = withImprovements(0x72);
+    expect(sim.stopSpots.map((spot) => [spot.position.x, spot.painting !== null, spot.drain])).toEqual([
+      [180, false, 0.5],
+      [60, true, 0.5],
+    ]);
+    expect(sim.colors).toEqual(['BLUE', 'PINK']);
+    const spot = sim.stopSpots[1]!;
+    const events: SimEvent[] = [];
+    run(sim, 1.1, events);
+    const plane = sim.planes[0]!;
+    sim.addOrder(plane, sim.runways[0]!);
+    sim.addOrder(plane, spot);
+    runUntil(sim, () => spot.use === 'occupied' && plane.state === PlaneState.WAITING, 40, events);
+    // Still charging: nothing is offered and nothing can be painted.
+    expect(spot.painting!.ready).toBe(false);
+    expect(sim.paintOptions(spot)).toEqual([]);
+    expect(sim.paint(spot, 'PINK')).toBe(false);
+
+    runUntil(sim, () => spot.painting!.ready, 45, events);
+    expect(sim.time).toBeCloseTo(RULES.painting.recharge, 1);
+    expect(events.filter((e) => e.type === 'paintingReady')).toHaveLength(1);
+    // Every colour of the level but its own.
+    expect(sim.paintOptions(spot)).toEqual(['PINK']);
+    expect(sim.paint(spot, 'BLUE')).toBe(false);
+
+    plane.energy = 0.5;
+    expect(sim.paint(spot, 'PINK')).toBe(true);
+    expect(plane.state).toBe(PlaneState.PAINTING);
+    run(sim, 3.9, events);
+    expect(plane.color).toBe('BLUE');
+    run(sim, 0.3, events);
+    expect(plane.color).toBe('PINK');
+    expect(plane.state).toBe(PlaneState.PAINTING);
+    runUntil(sim, () => plane.state === PlaneState.WAITING, 3, events);
+    // Being repainted costs no energy and ends with a boost; the spot has to charge again.
+    expect(plane.energy).toBeCloseTo(0.9, 2);
+    expect(spot.painting).toMatchObject({ ready: false, job: null });
+    expect(spot.painting!.left).toBeCloseTo(RULES.painting.recharge, 1);
+    expect(sim.paintOptions(spot)).toEqual([]);
+    expect(events.filter((e) => e.type === 'paintingDone')).toHaveLength(1);
+  });
+
   it('unloads faster at an upgraded gate', () => {
     const sim = withImprovements(0x1e);
     run(sim, 1.1);
