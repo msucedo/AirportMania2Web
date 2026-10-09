@@ -44,7 +44,7 @@ export class LevelScene {
   private readonly planeLayer = new Container();
   private readonly overlay = new Container();
   private readonly gateViews: GateView[] = [];
-  private readonly planeViews = new Map<number, { view: PlaneView; marks: Graphics }>();
+  private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating: FloatingText[] = [];
   private readonly hud: Hud;
   private accumulator = 0;
@@ -88,7 +88,7 @@ export class LevelScene {
     }
     for (const runway of sim.runways) ids.add(runway.descriptor.backSurface);
     for (const spawn of schedule.planes) {
-      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, 0)) ids.add(id);
+      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!)) ids.add(id);
     }
     await Promise.all([textures.load(ids), loadFonts(data.resources, [HUD_FONT])]);
 
@@ -265,36 +265,23 @@ export class LevelScene {
     }
 
     for (const plane of this.sim.planes) {
-      let entry = this.planeViews.get(plane.id);
+      let view = this.planeViews.get(plane.id);
       if (plane.gone) {
-        if (entry) {
-          entry.view.destroy({ children: true });
-          entry.marks.destroy();
+        if (view) {
+          view.destroy({ children: true });
           this.planeViews.delete(plane.id);
         }
         continue;
       }
-      if (!entry) {
-        entry = { view: new PlaneView(this.textures, plane.descriptor, 0, tintOf(plane.color)), marks: new Graphics() };
-        this.planeLayer.addChild(entry.marks, entry.view);
-        this.planeViews.set(plane.id, entry);
+      if (!view) {
+        view = new PlaneView(this.textures, plane.descriptor, tintOf(plane.color));
+        this.planeLayer.addChild(view);
+        this.planeViews.set(plane.id, view);
       }
-      const { view, marks } = entry;
-      const drawY = plane.y - plane.altitude;
-      view.position.set(plane.x, drawY);
-      // The artwork faces left.
-      view.scale.set(plane.facing > 0 ? -plane.scale : plane.scale, plane.scale);
+      view.position.set(plane.x, plane.y);
       view.zIndex = plane.altitude > 0 ? 10000 : plane.y;
-
-      marks.clear();
-      if (plane.selected) marks.ellipse(plane.x, drawY + 14, 30, 11).stroke({ color: 0xffffff, width: 2 });
       const draining = plane.state === PlaneState.FLYING || plane.state === PlaneState.WAITING;
-      if (draining) {
-        const fraction = Math.max(0, Math.min(1, plane.energy));
-        const fill = fraction >= 0.6 ? 0x7ad37a : fraction >= 0.3 ? 0xffd24a : 0xff6b6b;
-        marks.rect(plane.x - 16, drawY - 36, 32, 5).fill(0x000000);
-        marks.rect(plane.x - 15, drawY - 35, 30 * fraction, 3).fill(fill);
-      }
+      view.update(seconds, plane.heading, plane.altitude, plane.scale, plane.selected, draining ? plane.energy : null);
     }
     this.planeLayer.sortableChildren = true;
 

@@ -18,6 +18,7 @@ export interface RunwaySlot {
   position: Point;
   /** Node offset from the centre and plane heading there, as computed by the runway constructor. */
   node: Point;
+  /** Degrees; 0 faces left, 180 right. */
   heading: number;
 }
 

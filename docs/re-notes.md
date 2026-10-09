@@ -300,6 +300,21 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   the radar disc and the notched right-hand section show, and the reel animation. The web HUD
   approximates these.
 
+## Plane drawing
+
+- `Plane::setOrientation` (`0x5c8c`, confirmed): perspective (`+0x324`) is 0 for headings within
+  25° of 0 or 180, 1 between 25° and 155°, 2 between 205° and 335°; the sprite is mirrored
+  between 90° and 270°. The art faces left, so 0° is left, 90° towards the viewer (front view),
+  180° right and 270° away (back view, eyes hidden). Called on arrival with the place's heading
+  (`place+0x34`; gates use the descriptor's `PlaneOrientation`).
+- Resources loaded by `0x45e4`: body layers per perspective, eyes, `PLANE.MOUTH.%d`, eyebrows and
+  eyelashes (with female and remark variants), propellers, `INDICATORS.ENERGY.%d` (8 frames),
+  thought bubbles `INDICATORS.THOUGHT_A`–`D` with `INDICATORS.ICONS.%d`, and the globe.
+- The draw (`0x89e0`) indexes every part array by `+0x324`. The energy bar offset is the
+  descriptor value times a 0..1 plane factor (`+0x29c`).
+- Not read: layer order, which energy frame is shown for which energy, mouth and eyebrow
+  selection, blinking, and the thought bubble. The web version assumes these.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.

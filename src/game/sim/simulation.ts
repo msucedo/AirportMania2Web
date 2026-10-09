@@ -57,6 +57,8 @@ export interface Runway extends PlaceBase {
   descriptor: RunwayDescriptor;
   /** Direction of the take-off run (+1 right, -1 left). Landings roll the opposite way. */
   direction: 1 | -1;
+  /** Heading a plane takes when it stops on the runway node (`place+0x34`). */
+  heading: number;
   /** Original `runway+0x84`: 0 free, 4 landing reserved, 1 take-off reserved, 2 taking off. */
   use: 'free' | 'landing' | 'takeOffReserved' | 'takingOff';
   landings: ComboTrack;
@@ -79,6 +81,8 @@ export interface Plane {
   altitude: number;
   /** Horizontal travel direction, for the view. */
   facing: 1 | -1;
+  /** Degrees: 0 facing left, 90 towards the viewer, 180 right, 270 away (0x5c8c). */
+  heading: number;
   scale: number;
   queue: Place[];
   /** Place the plane is at or travelling to. */
@@ -203,6 +207,7 @@ export class Simulation {
         // The node sits at the end where landings stop and take-offs start, so the take-off run
         // heads from the node towards the runway centre.
         direction: slot.node.x < x ? 1 : -1,
+        heading: slot.heading,
         click: { x1: x - RULES.runwayHalfWidth, y1: y - RULES.runwayHalfHeight, x2: x + RULES.runwayHalfWidth, y2: y + RULES.runwayHalfHeight },
         plane: null,
         use: 'free',
@@ -382,6 +387,7 @@ export class Simulation {
       y: start.y,
       altitude: RULES.flightAltitude,
       facing: spawn.side === 'RIGHT' ? -1 : 1,
+      heading: spawn.side === 'RIGHT' ? 0 : 180,
       scale: start.scale,
       queue: [],
       place: null,
@@ -409,6 +415,7 @@ export class Simulation {
         else this.updateFlying(plane, dt);
         break;
       case PlaneState.LEAVING_ANGRY:
+        plane.heading = plane.facing > 0 ? 180 : 0;
         plane.x += plane.facing * RULES.flightSpeed * dt;
         if (this.offScreen(plane)) this.remove(plane);
         break;
@@ -424,6 +431,7 @@ export class Simulation {
         plane.speed += RULES.takeOffAcceleration * dt;
         plane.x += runway.direction * plane.speed * dt;
         plane.facing = runway.direction;
+        plane.heading = runway.direction > 0 ? 180 : 0;
         if (plane.state === PlaneState.TAKING_OFF) {
           if (Math.abs(plane.x - runway.node.x) > RULES.liftOffDistance) {
             plane.state = PlaneState.AIRBORNE;
@@ -459,6 +467,7 @@ export class Simulation {
       // Keep circling while the runway is taken.
       if (plane.landing) return;
     }
+    plane.heading = plane.facing > 0 ? 180 : 0;
     plane.x += plane.facing * RULES.flightSpeed * dt;
     const margin = PROVISIONAL.flightTurnMargin;
     const turnRight = plane.facing < 0 && plane.x < -margin;
@@ -519,11 +528,13 @@ export class Simulation {
     const runway = plane.place as Runway;
     plane.descent = Math.max(0, plane.descent - dt);
     plane.altitude = RULES.landingSpeed * plane.descent;
+    plane.heading = plane.facing > 0 ? 180 : 0;
     plane.x += plane.facing * RULES.landingSpeed * dt;
     const passed = plane.facing > 0 ? plane.x >= runway.node.x : plane.x <= runway.node.x;
     if (!passed) return;
     plane.x = runway.node.x;
     plane.altitude = 0;
+    plane.heading = runway.heading;
     plane.landing = false;
     plane.landed = true;
     plane.state = PlaneState.LANDED;
@@ -550,6 +561,8 @@ export class Simulation {
       const dy = next.y - plane.y;
       const distance = Math.hypot(dx, dy);
       if (Math.abs(dx) > 1) plane.facing = dx > 0 ? 1 : -1;
+      // Heading from the direction of travel: 0 is left, 90 is down the screen.
+      if (distance > 0.5) plane.heading = ((Math.atan2(dy, -dx) * 180) / Math.PI + 360) % 360;
       const last = plane.path.length === 1;
       if (distance > (last ? Math.max(step, 1) : step)) {
         plane.x += (dx / distance) * step;
@@ -613,6 +626,8 @@ export class Simulation {
     }
     const multiplier = Math.max(gate.combo, 1);
     const points = roundScore(clamp01(plane.energy) * plane.descriptor.points.gate * multiplier);
+    // On arrival the plane takes the place's heading (0x764a).
+    plane.heading = gate.descriptor.planeOrientation;
 
     gate.progress = 0;
     if (!plane.unloaded) {
