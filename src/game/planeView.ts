@@ -41,8 +41,13 @@ const MOUTH_SEQUENCES = {
 } as const;
 
 /** Surface ids a plane needs, for all three perspectives. */
-export function planeSurfaceIds(plane: PlaneDescriptor, female: boolean, pontoons = false): string[] {
+/** The icon a plane shows for a special passenger (0x4cc8). */
+export const PASSENGER_ICONS = { PRESIDENT: 'PRESIDENT', PREGNANT: 'PREGNANT', ORGAN: 'ORGANBAG' } as const;
+export type Passenger = keyof typeof PASSENGER_ICONS;
+
+export function planeSurfaceIds(plane: PlaneDescriptor, female: boolean, pontoons = false, passenger: Passenger | null = null): string[] {
   const ids = [plane.shadow, 'PLANE.EYELASH', 'PLANE.EYELASH_REMARK'];
+  if (passenger) ids.push(PASSENGER_ICONS[passenger]);
   const suffix = female ? '_FEMALE' : '';
   for (const side of ['LEFT', 'RIGHT']) ids.push(`PLANE.${side}_EYEBROW${suffix}`, `PLANE.${side}_EYEBROW${suffix}_REMARK`);
   for (let i = 0; i < MOUTHS; i++) ids.push(`PLANE.MOUTH.${i}`);
@@ -136,11 +141,13 @@ export interface PlaneLook {
   scale: number;
   selected: boolean;
   energy: number;
-  /** What the plane asks for, shown in its speech balloon: a need code, or null for nothing. */
+  /** What the plane asks for while it waits with nothing to do, shown in its speech balloon; null for nothing. */
   need: number | null;
   /** Icon of where it goes next, shown in its thought cloud while orders are queued; null for none. */
   thought: number | null;
   corner: BalloonCorner;
+  /** Special passenger still aboard, shown beside the energy bar. */
+  passenger: Passenger | null;
   /** Waiting with nothing to do: the eyes turn aside. */
   idle: boolean;
   gearDown: boolean;
@@ -157,6 +164,7 @@ export class PlaneView extends Container {
   private readonly poses: Pose[] = [];
   private readonly energySolid: Sprite;
   private readonly energyFlicker: Sprite;
+  private passengerIcon: Sprite | null = null;
   private readonly speech: Sprite;
   private readonly needIcon: Sprite;
   private readonly puffs: Sprite[] = [];
@@ -165,6 +173,7 @@ export class PlaneView extends Container {
   private thoughtFade = 0;
   private shownNeed = 0;
   private shownThought = 0;
+  private spoken: { need: number; left: number } | null = null;
 
   private time = 0;
   /** Seconds until the next blink; the eyes are shut for its last 0.1 s (0x6e94). */
@@ -313,6 +322,15 @@ export class PlaneView extends Container {
     this.addChild(this.speech, this.needIcon, ...this.puffs, this.thoughtIcon);
   }
 
+  /**
+   * The plane says what it needs (0x5bd4): the icon shows in its speech balloon for two seconds
+   * while it talks.
+   */
+  speak(need: number): void {
+    this.spoken = { need, left: 2 };
+    this.talk();
+  }
+
   /** The plane speaks: its mouth runs the talking animation and the eyes turn aside (0x5bd4). */
   talk(): void {
     this.sequence = MOUTH_SEQUENCES.talk;
@@ -419,8 +437,23 @@ export class PlaneView extends Container {
     const bar = energyBar(energy);
     this.energySolid.visible = bar !== null;
     this.energyFlicker.visible = bar !== null && bar.flicker !== null;
+    // A special passenger's icon sits 36 px left of the bar's place, and the bar moves 16 px
+    // right to make room (0x94bc). The icon throbs for a quarter of a second every two.
+    const barY = -altitude + this.plane.body.energyBarOffsetY * scale;
+    if (look.passenger && !this.passengerIcon) {
+      this.passengerIcon = this.textures.sprite(PASSENGER_ICONS[look.passenger]);
+      this.addChild(this.passengerIcon);
+    }
+    if (this.passengerIcon) {
+      this.passengerIcon.visible = look.passenger !== null;
+      this.passengerIcon.position.set(-36, barY);
+      const beat = (this.time % 2) - 1.75;
+      const swell = beat > 0 ? (beat * 2 > 0.25 ? 0.5 - beat * 2 : beat * 2) : 0;
+      this.passengerIcon.scale.set(scale * (1 + swell));
+    }
+    this.energySolid.x = this.energyFlicker.x = look.passenger ? 16 : 0;
     if (bar) {
-      const y = -altitude + this.plane.body.energyBarOffsetY * scale;
+      const y = barY;
       this.energySolid.texture = this.textures.texture(`INDICATORS.ENERGY.${bar.solid}`);
       this.energySolid.y = y;
       if (bar.flicker !== null) {
@@ -431,8 +464,10 @@ export class PlaneView extends Container {
     }
 
     // Both balloons fade at 4 per second and show once past a quarter (0x9758, 0x9922).
-    const asks = look.need !== null && look.need < NEED_ICONS;
-    if (asks) this.shownNeed = look.need!;
+    if (this.spoken && (this.spoken.left -= dt) <= 0) this.spoken = null;
+    const need = this.spoken?.need ?? look.need;
+    const asks = need !== null && need < NEED_ICONS;
+    if (asks) this.shownNeed = need;
     this.speechFade = slide(this.speechFade, asks, 4, dt);
     const speechAlpha = (this.speechFade - 0.25) / 0.75;
     this.speech.visible = this.needIcon.visible = speechAlpha > 0;

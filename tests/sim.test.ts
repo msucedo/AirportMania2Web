@@ -560,4 +560,27 @@ describe('simulation, stage 2 (island)', () => {
     runUntil(sim, () => plane.gone, 80, events);
     expect(plane.loaded).toBe(true);
   });
+
+  it('hurries a plane with a special passenger until it has landed', () => {
+    const sim = island(4);
+    const events: SimEvent[] = [];
+    runUntil(sim, () => sim.planes.some((p) => p.passenger !== null), 300, events);
+    const plane = sim.planes.find((p) => p.passenger !== null)!;
+    expect(plane.passenger).toBe('PREGNANT');
+    // In the air its energy falls at twice the usual rate.
+    const fall = plane.sex === 'MALE' ? plane.descriptor.times.maleEnergyFall : plane.descriptor.times.femaleEnergyFall;
+    const before = plane.energy;
+    for (let i = 0; i < 60; i++) sim.update(1 / 60);
+    expect(before - plane.energy).toBeCloseTo(2 / fall, 2);
+
+    sim.addOrder(plane, sim.runways[0]!);
+    runUntil(sim, () => plane.landed, 60, events);
+    expect(plane.passenger).toBeNull();
+    expect(events.filter((e) => e.type === 'passengerDelivered')).toHaveLength(1);
+    // Parked on the runway it now loses energy at the normal rate.
+    const landedAt = plane.energy;
+    for (let i = 0; i < 60; i++) sim.update(1 / 60);
+    expect(landedAt - plane.energy).toBeCloseTo(1 / fall, 2);
+  });
 });
+

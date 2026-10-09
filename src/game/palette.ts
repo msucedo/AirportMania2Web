@@ -27,6 +27,8 @@ const PALETTE: readonly PaletteColor[] = [
 const NAMES = ['BLUE', 'ORANGE', 'GREEN', 'CYAN', 'PINK', 'YELLOW', 'VIOLET'];
 
 export const NEUTRAL_COLOR = PALETTE[0]!;
+/** The president's plane has a colour of its own, whatever the level file says (0x4d1c). */
+export const PRESIDENT_COLOR = PALETTE[8]!;
 
 export function paletteColor(color: PlaneColor | null): PaletteColor {
   const index = color ? NAMES.indexOf(color) + 1 : 0;

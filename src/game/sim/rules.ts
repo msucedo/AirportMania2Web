@@ -38,7 +38,7 @@ export const RULES = {
   energyBoost: 0.25,
   /** Energy only drains while flying or waiting for orders. */
   drainingStates: new Set<number>([PlaneState.FLYING, PlaneState.WAITING]) as ReadonlySet<number>,
-  emergencyDrainFactor: 2,
+  specialPassengerDrainFactor: 2,
 
   /** Punctuality thresholds on the energy fraction. */
   lateBelow: 0.3,

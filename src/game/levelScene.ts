@@ -6,7 +6,7 @@ import { loadFonts } from '../engine/fonts';
 import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
-import { paletteColor } from './palette';
+import { PRESIDENT_COLOR, paletteColor } from './palette';
 import type { StageRules } from './progress';
 import type { Settings } from './settings';
 import { IMPROVEMENTS_FONTS, IMPROVEMENTS_SOUNDS, ImprovementsDialog, improvementsSurfaceIds } from './view/improvementsDialog';
@@ -16,7 +16,7 @@ import { GAME_MENU_SURFACES, GameMenu } from './view/gameMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
 import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
-import { PlaneView, planeSurfaceIds, type BalloonCorner } from './planeView';
+import { PASSENGER_ICONS, PlaneView, planeSurfaceIds, type BalloonCorner, type Passenger } from './planeView';
 import type { Progress } from './progress';
 import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
@@ -141,7 +141,7 @@ export class LevelScene {
       for (const id of runwaySurfaceIds(runway)) ids.add(id);
     }
     for (const spawn of schedule.planes) {
-      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, spawn.sex === 'FEMALE', layout.pontoons)) ids.add(id);
+      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, spawn.sex === 'FEMALE', layout.pontoons, spawn.passengers in PASSENGER_ICONS ? (spawn.passengers as Passenger) : null)) ids.add(id);
     }
     const [strings] = await Promise.all([
       data.strings(options.language),
@@ -261,6 +261,13 @@ export class LevelScene {
     });
     this.dialog = menu;
     this.root.addChild(menu);
+  }
+
+  /** The plane says what it needs, in the voice of its mood (0x5bd4). */
+  private speak(plane: Plane): void {
+    const mood = plane.energy < 0.3 ? 'TalkMad' : plane.energy < 0.5 ? 'TalkUpset' : plane.energy < 0.7 ? 'TalkNormal' : 'TalkHappy';
+    this.planeSound(plane, mood);
+    this.planeViews.get(plane.id)?.speak(plane.need);
   }
 
   /** A plane's own sound: descriptor slot, with `%s` filled by its sex and its voice pitch. */
@@ -420,6 +427,9 @@ export class LevelScene {
         break;
       case 'forbidden':
         this.audio.play('SOUNDS.FORBIDDEN_CLICK');
+        // Sent somewhere it cannot go while it has nothing else to do, the plane says what it
+        // needs (0x5b10).
+        if (event.plane && event.plane.queue.length === 0 && (event.plane.state === PlaneState.FLYING || event.plane.state === PlaneState.WAITING)) this.speak(event.plane);
         break;
       case 'queueCancelled':
         this.audio.play('SOUNDS.QUEUE_CANCEL');
@@ -493,7 +503,7 @@ export class LevelScene {
         continue;
       }
       if (!view) {
-        view = new PlaneView(this.textures, plane.descriptor, paletteColor(plane.color), plane.sex === 'FEMALE', this.options.layout.pontoons);
+        view = new PlaneView(this.textures, plane.descriptor, plane.passenger === 'PRESIDENT' ? PRESIDENT_COLOR : paletteColor(plane.color), plane.sex === 'FEMALE', this.options.layout.pontoons);
         this.planeLayer.addChild(view);
         this.planeViews.set(plane.id, view);
       }
@@ -519,8 +529,8 @@ export class LevelScene {
         this.wakes.set(plane.id, wake);
       }
       const draining = plane.state === PlaneState.FLYING || plane.state === PlaneState.WAITING;
-      // The bubble shows what the plane wants next while it has no orders (0x5f28).
-      const idle = draining && !plane.landing && plane.queue.length === 0;
+      // On the ground with nothing to do, the balloon shows what the plane wants next (0x874e).
+      const idle = plane.state === PlaneState.WAITING && plane.queue.length === 0;
       view.update(seconds, {
         heading: plane.heading,
         altitude: plane.altitude,
@@ -530,6 +540,7 @@ export class LevelScene {
         need: idle ? plane.need : null,
         thought: draining && plane.queue.length > 0 ? this.destinationIcon(plane) : null,
         corner: this.balloonCorner(plane),
+        passenger: plane.passenger,
         idle: plane.state === PlaneState.WAITING && plane.queue.length === 0,
         gearDown: plane.state !== PlaneState.AIRBORNE && (plane.state !== PlaneState.FLYING || plane.landing),
       });

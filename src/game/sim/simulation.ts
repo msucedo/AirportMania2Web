@@ -104,7 +104,12 @@ export interface Plane {
   descriptor: PlaneDescriptor;
   color: PlaneColor;
   sex: Sex;
-  emergency: boolean;
+  /**
+   * A special passenger aboard (`plane+0x228`), or null. While there is one the energy falls
+   * twice as fast (0x8920). A transplant organ or a pregnant passenger is delivered as soon as
+   * the plane has landed (0x8378); the president stays until it leaves.
+   */
+  passenger: 'PRESIDENT' | 'PREGNANT' | 'ORGAN' | null;
   state: PlaneState;
   energy: number;
   /** Ground position; draw at `y - altitude`. */
@@ -147,7 +152,7 @@ export type SimEvent =
   | { type: 'spawn'; plane: Plane }
   | { type: 'select'; plane: Plane }
   | { type: 'order'; plane: Plane; place: Place }
-  | { type: 'forbidden' }
+  | { type: 'forbidden'; plane?: Plane }
   | { type: 'queueCancelled'; plane: Plane }
   | { type: 'score'; plane: Plane; points: number; multiplier: number; reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'service' | 'left' }
   | { type: 'serviceStartedAtHangar'; plane: Plane; hangar: Hangar }
@@ -156,6 +161,7 @@ export type SimEvent =
   | { type: 'fuelingStarted'; plane: Plane; station: GasStation }
   | { type: 'fuelingFinished'; plane: Plane; station: GasStation }
   | { type: 'punctuality'; plane: Plane; result: Punctuality }
+  | { type: 'passengerDelivered'; plane: Plane; passenger: 'PREGNANT' | 'ORGAN' }
   | { type: 'serviceStarted'; plane: Plane; gate: Gate; service: 'unloading' | 'loading' }
   | { type: 'serviceFinished'; plane: Plane; gate: Gate; service: 'unloading' | 'loading' }
   | { type: 'landed'; plane: Plane; runway: Runway }
@@ -368,7 +374,7 @@ export class Simulation {
     const place = this.places.find((p) => inside(p.click, x, y));
     if (place) {
       if (this.addOrder(selected, place)) this.emit({ type: 'order', plane: selected, place });
-      else this.emit({ type: 'forbidden' });
+      else this.emit({ type: 'forbidden', plane: selected });
       return;
     }
     this.cancelQueue(selected);
@@ -518,7 +524,7 @@ export class Simulation {
       descriptor,
       color: spawn.color,
       sex: spawn.sex,
-      emergency: false,
+      passenger: spawn.passengers === 'PRESIDENT' || spawn.passengers === 'PREGNANT' || spawn.passengers === 'ORGAN' ? spawn.passengers : null,
       state: PlaneState.FLYING,
       energy: RULES.initialEnergy,
       x: start.x,
@@ -601,7 +607,7 @@ export class Simulation {
     const fallTime = plane.sex === 'MALE' ? plane.descriptor.times.maleEnergyFall : plane.descriptor.times.femaleEnergyFall;
     // A stop spot the plane is parked on scales the drain (`plane+0x320`, set by 0x79788).
     const parked = plane.place?.kind === 'stopSpot' && plane.place.use === 'occupied' ? plane.place.drain : 1;
-    const rate = (1 / fallTime) * (plane.emergency ? RULES.emergencyDrainFactor : 1) * parked;
+    const rate = (1 / fallTime) * (plane.passenger ? RULES.specialPassengerDrainFactor : 1) * parked;
     plane.energy = Math.max(RULES.minEnergy, plane.energy - rate * dt);
   }
 
@@ -683,6 +689,10 @@ export class Simulation {
     plane.heading = runway.heading;
     plane.landing = false;
     plane.landed = true;
+    if (plane.passenger === 'PREGNANT' || plane.passenger === 'ORGAN') {
+      this.emit({ type: 'passengerDelivered', plane, passenger: plane.passenger });
+      plane.passenger = null;
+    }
     plane.need = Need.UNLOAD;
     plane.state = PlaneState.LANDED;
     this.runwayUsed(runway, plane);
