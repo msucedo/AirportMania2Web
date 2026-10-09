@@ -1,13 +1,25 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Text, TilingSprite, type Sprite } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
+import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../engine/screen';
 import type { TextureStore } from '../../engine/textures';
 import type { Simulation } from '../sim/simulation';
-import { MAIN_FONT, SCORE_FONT } from './floatingText';
+import { dialogButton, dialogFrame } from './dialog';
+import { SCORE_FONT } from './floatingText';
 
-export const FINAL_REPORT_SURFACES = ['GUI.FINAL_REPORT.STAR', 'GUI.FINAL_REPORT.BACK_STAR'];
+export const FINAL_REPORT_SURFACES = [
+  'GUI.FINAL_REPORT.STAR',
+  'GUI.FINAL_REPORT.BACK_STAR',
+  'GUI.FINAL_REPORT.SPIRAL',
+  'GUI.FINAL_REPORT.TICK_GREEN',
+  'GUI.FINAL_REPORT.TICK_YELLOW',
+  'GUI.FINAL_REPORT.TICK_RED',
+];
+/** `FONTS.ULTRA` and `FONTS.WHITE` are these faces with a colour effect; the score uses `FONTS.SCORE`. */
+const TITLE_FONT = 'FONTS.BLUE_STONE';
+const ROW_FONT = 'FONTS.TEEN_BD';
+export const FINAL_REPORT_FONTS = [TITLE_FONT, ROW_FONT, SCORE_FONT];
 
 export type Tier = 'FAIL' | 'GOAL' | 'EXPERT' | 'MASTER' | 'SUPREME' | 'PERFECT';
 const TIERS: Exclude<Tier, 'FAIL'>[] = ['GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'];
@@ -19,104 +31,171 @@ export function tierFor(score: number, goals: LevelGoals): Tier {
   return reached;
 }
 
-/**
- * End-of-level summary with the original texts, fonts and star sprites. The layout is ours: the
- * original final report dialog has not been reconstructed.
- */
-export interface FinalReportExtras {
-  /** Funds paid for newly earned stars. */
-  earned: number;
-  /** Whether a following level exists and is now open. */
-  canAdvance: boolean;
+/** Where the stars go for one to four of them, from the dialog's centre (0x32a80). */
+const STAR_PLACES: readonly (readonly (readonly [number, number])[])[] = [
+  [],
+  [[124, -69]],
+  [[111, -74], [137, -65]],
+  [[124, -61], [105, -80], [143, -80]],
+  [[124, -61], [98, -74], [150, -74], [124, -87]],
+];
+
+const BOX = { width: 400, height: 250 };
+const PUNCTUALITY = [
+  { key: 'EARLY', text: 'PLANES_EARLY', tick: 'TICK_GREEN', y: 0 },
+  { key: 'ON_TIME', text: 'PLANES_ON_TIME', tick: 'TICK_YELLOW', y: 20 },
+  { key: 'LATE', text: 'PLANES_LATE', tick: 'TICK_RED', y: 40 },
+] as const;
+
+/** Share of the level's planes, as the whole percentage the bars grow to (0x33040). */
+export function reportPercent(count: number, total: number): number {
+  return total > 0 ? Math.floor((count / total) * 100) : 0;
 }
 
+/**
+ * The end-of-level report as the original builds it (dialog `0x3241c`, steps in `0x328d4`): a
+ * 400×250 box in which the result, the stars and each row appear in turn, half a unit of its
+ * clock apart; the clock runs at double speed and four times faster while the screen is held.
+ * The punctuality rows grow a bar of ticks to the share of planes for arrivals and departures.
+ * Last comes the score and, a full unit later, the Continue button. Coordinates are from the
+ * dialog's centre. The star's pop, the turning backdrop's speed and the font colour effects are
+ * approximations.
+ */
 export class FinalReport extends Container {
-  onReplay: (() => void) | null = null;
-  onNext: (() => void) | null = null;
-  onMenu: (() => void) | null = null;
+  onContinue: (() => void) | null = null;
 
-  constructor(textures: TextureStore, strings: Strings, sim: Simulation, level: number, extras: FinalReportExtras) {
+  private readonly panel: Container;
+  private readonly backdrop: Sprite;
+  private readonly steps: (() => boolean | void)[] = [];
+  private clock = 0;
+  private held = false;
+  private growing: { bar: TilingSprite; target: number; leftward: boolean }[] = [];
+  private pops: { sprite: Sprite; age: number }[] = [];
+
+  constructor(
+    private readonly textures: TextureStore,
+    private readonly audio: AudioPlayer,
+    strings: Strings,
+    sim: Simulation,
+  ) {
     super();
     const tier = tierFor(sim.score, sim.goals);
-    const panel = { x: 90, y: 48, width: 300, height: 232 };
-    this.addChild(new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill({ color: 0x000000, alpha: 0.45 }));
-    this.addChild(new Graphics().roundRect(panel.x, panel.y, panel.width, panel.height, 12).fill({ color: 0x1d2c3f, alpha: 0.95 }).stroke({ color: 0xf2f2f2, width: 2 }));
+    const { overlay, panel } = dialogFrame(textures, BOX.width, BOX.height);
+    // Everything below is placed from the centre of the box.
+    this.panel = new Container();
+    this.panel.position.set(BOX.width / 2, BOX.height / 2);
+    panel.addChild(this.panel);
+    this.addChild(overlay);
+    overlay.on('pointerdown', () => (this.held = true));
+    overlay.on('pointerup', () => (this.held = false));
+    overlay.on('pointerupoutside', () => (this.held = false));
+    overlay.eventMode = 'static';
 
-    const main = fontFamily(MAIN_FONT);
-    const score = fontFamily(SCORE_FONT);
-    const centre = panel.x + panel.width / 2;
-    const label = (text: string, x: number, y: number, size: number, family: string, fill: number, anchorX = 0.5): Text => {
-      const node = new Text({ text, style: { fontFamily: family, fontSize: size, fill, stroke: { color: 0x101820, width: 3 } } });
-      node.anchor.set(anchorX, 0.5);
+    this.backdrop = textures.sprite(tier === 'FAIL' ? 'GUI.FINAL_REPORT.SPIRAL' : 'GUI.FINAL_REPORT.BACK_STAR');
+    this.backdrop.scale.set(4);
+    this.backdrop.alpha = 0.18;
+    this.panel.addChild(this.backdrop);
+    const lines = new Graphics();
+    lines.rect(-190, -40.5, 380, 1).rect(-190, 53.5, 380, 1).rect(41.5, -78, 1, 36).rect(41.5, -31, 1, 82).fill({ color: 0xffffff, alpha: 0.5 });
+    this.panel.addChild(lines);
+
+    const white = fontFamily(ROW_FONT);
+    const row = (text: string, x: number, y: number, align: 0 | 2, family = white, size = 11, fill = 0xffffff): Text => {
+      const node = new Text({ text, style: { fontFamily: family, fontSize: size, fill, stroke: { color: 0x2a1030, width: 2 } } });
+      // Rows are placed by their baseline: each sits just above the rule drawn under it.
+      node.anchor.set(align === 2 ? 1 : 0, 0.85);
       node.position.set(x, y);
-      this.addChild(node);
+      this.panel.addChild(node);
       return node;
     };
+    const total = sim.planes.length;
 
-    label(strings.t('LEVEL_NUMBER', level), centre, panel.y + 20, 17, main, 0xffb52e);
-
-    // One star per goal reached, over the empty outlines.
-    const reached = tier === 'FAIL' ? 0 : TIERS.indexOf(tier) + 1;
-    TIERS.forEach((_, i) => {
-      const x = centre + (i - 2) * 34;
-      const back = textures.sprite('GUI.FINAL_REPORT.BACK_STAR');
-      back.anchor.set(0.5);
-      back.position.set(x, panel.y + 54);
-      // Dimmed so that only the stars actually earned stand out.
-      back.tint = 0x56606c;
-      this.addChild(back);
-      if (i < reached) {
+    this.steps.push(() => {
+      const title = new Text({
+        text: strings.t(tier === 'FAIL' ? 'SCORE.FAILED_SCORE' : `SCORE.${tier}_SCORE`),
+        style: { fontFamily: fontFamily(TITLE_FONT), fontSize: 20, fill: 0xffd75a, stroke: { color: 0x5a2a00, width: 3 } },
+      });
+      title.anchor.set(0.5);
+      title.position.set(0, -97);
+      this.panel.addChild(title);
+    });
+    this.steps.push(() => {
+      // One star for an expert score up to four for a perfect one (0x32a76).
+      const stars = Math.max(0, ['FAIL', 'GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'].indexOf(tier) - 1);
+      for (const [x, y] of STAR_PLACES[stars] ?? []) {
         const star = textures.sprite('GUI.FINAL_REPORT.STAR');
-        star.anchor.set(0.5);
-        star.position.set(x, panel.y + 54);
-        this.addChild(star);
+        star.position.set(x, y);
+        this.panel.addChild(star);
+        this.pops.push({ sprite: star, age: 0 });
       }
     });
-    label(strings.t(tier === 'FAIL' ? 'SCORE.FAILED_SCORE' : `SCORE.${tier}_SCORE`), centre, panel.y + 84, 15, main, tier === 'FAIL' ? 0xff6b5c : 0xfff2a8);
-
-    const rows: [string, number | string][] = [
-      [strings.t('FINAL_REPORT_DIALOG.PLANES_SERVED'), sim.planesServed],
-      [strings.t('FINAL_REPORT_DIALOG.PLANES_LOST'), sim.planesLost],
-      [`${strings.t('FINAL_REPORT_DIALOG.ARRIVALS')}: ${strings.t('FINAL_REPORT_DIALOG.PLANES_EARLY')} / ${strings.t('FINAL_REPORT_DIALOG.PLANES_ON_TIME')} / ${strings.t('FINAL_REPORT_DIALOG.PLANES_LATE')}`, `${sim.counts.unload.EARLY} / ${sim.counts.unload.ON_TIME} / ${sim.counts.unload.LATE}`],
-      [`${strings.t('FINAL_REPORT_DIALOG.DEPARTURES')}: ${strings.t('FINAL_REPORT_DIALOG.PLANES_EARLY')} / ${strings.t('FINAL_REPORT_DIALOG.PLANES_ON_TIME')} / ${strings.t('FINAL_REPORT_DIALOG.PLANES_LATE')}`, `${sim.counts.takeOff.EARLY} / ${sim.counts.takeOff.ON_TIME} / ${sim.counts.takeOff.LATE}`],
-    ];
-    rows.forEach(([name, value], i) => {
-      const y = panel.y + 108 + i * 17;
-      const text = label(name.replace(/:+/g, ':'), panel.x + 16, y, 11, score, 0xe8eef5, 0);
-      // Long translated rows shrink to leave room for the value.
-      const room = panel.width - 32 - 64;
-      if (text.width > room) text.scale.set(room / text.width);
-      label(String(value), panel.x + panel.width - 16, y, 12, score, 0xffffff, 1);
+    this.steps.push(() => {
+      row(strings.t('FINAL_REPORT_DIALOG.PLANES_SERVED'), -190, -65, 0);
+      row(String(sim.planesServed), 34, -65, 2);
     });
-
-    label(strings.t('FINAL_REPORT_DIALOG.LEVEL_SCORE'), panel.x + 16, panel.y + 178, 13, main, 0xffb52e, 0);
-    label(String(sim.score), panel.x + panel.width - 16, panel.y + 178, 18, score, sim.score < 0 ? 0xff6b5c : 0xffe45c, 1);
-    if (extras.earned > 0) {
-      label(strings.t('FINAL_REPORT_DIALOG.FUNDS'), panel.x + 16, panel.y + 194, 11, main, 0xffb52e, 0);
-      label(`+${extras.earned}`, panel.x + panel.width - 16, panel.y + 194, 13, score, 0x9be37a, 1);
-    }
-
-    const buttons: [string, () => void][] = [
-      [strings.t('FINAL_REPORT_DIALOG.MAINMENU_BUTTON'), () => this.onMenu?.()],
-      [strings.t('FINAL_REPORT_DIALOG.REPLAY_LEVEL'), () => this.onReplay?.()],
-    ];
-    if (extras.canAdvance) buttons.push([strings.t('FINAL_REPORT_DIALOG.NEXT_LEVEL'), () => this.onNext?.()]);
-    const slot = (panel.width - 16) / buttons.length;
-    buttons.forEach(([text, action], i) => {
-      const button = new Container();
-      button.position.set(panel.x + 8 + slot * (i + 0.5), panel.y + 214);
-      const caption = new Text({ text, style: { fontFamily: main, fontSize: 11, fill: 0x1d2c3f } });
-      caption.anchor.set(0.5);
-      const width = slot - 8;
-      if (caption.width > width - 10) caption.scale.set((width - 10) / caption.width);
-      button.addChild(new Graphics().roundRect(-width / 2, -11, width, 22, 8).fill(0xffb52e).stroke({ color: 0xffffff, width: 1 }), caption);
-      button.eventMode = 'static';
-      button.cursor = 'pointer';
-      button.on('pointerdown', (event) => {
-        event.stopPropagation();
-        action();
+    this.steps.push(() => {
+      row(strings.t('FINAL_REPORT_DIALOG.PLANES_LOST'), -190, -45, 0);
+      row(String(sim.planesLost), 34, -45, 2);
+    });
+    this.steps.push(() => {
+      row(strings.t('FINAL_REPORT_DIALOG.ARRIVALS'), 12, -20, 2);
+      row(strings.t('FINAL_REPORT_DIALOG.DEPARTURES'), 72, -20, 0);
+    });
+    for (const line of PUNCTUALITY) {
+      this.steps.push(() => {
+        row(strings.t(`FINAL_REPORT_DIALOG.${line.text}`), -190, line.y, 0);
+        row(String(sim.counts.unload[line.key]), 34, line.y, 2);
+        row(String(sim.counts.takeOff[line.key]), 50, line.y, 0);
+        this.bar(line.tick, 12, line.y, reportPercent(sim.counts.unload[line.key], total), true);
+        this.bar(line.tick, 72, line.y, reportPercent(sim.counts.takeOff[line.key], total), false);
       });
-      this.addChild(button);
+      // The next row waits for both bars.
+      this.steps.push(() => this.growing.length === 0);
+    }
+    this.steps.push(() => {
+      row(strings.t('FINAL_REPORT_DIALOG.LEVEL_SCORE'), -190, 82, 0);
+      row(String(sim.score), 190, 82, 2, fontFamily(SCORE_FONT), 14, sim.score < 0 ? 0xff6b5c : 0xffe45c);
     });
+    // The button comes a full unit after the score.
+    this.steps.push(() => this.clock >= 1);
+    this.steps.push(() => {
+      dialogButton(textures, audio, this.panel, { x: 0, y: 110, width: 200, height: 34 }, strings.t('FINAL_REPORT_DIALOG.CONTINUE'), fontFamily(SCORE_FONT), () => this.onContinue?.());
+    });
+  }
+
+  /** A bar of ticks that grows from the centre column: leftwards for arrivals, rightwards for departures. */
+  private bar(tick: string, x: number, y: number, target: number, leftward: boolean): void {
+    if (target <= 0) return;
+    const bar = new TilingSprite({ texture: this.textures.texture(`GUI.FINAL_REPORT.${tick}`), width: 0, height: 18 });
+    bar.position.set(x, y - 15);
+    this.panel.addChild(bar);
+    this.growing.push({ bar, target, leftward });
+  }
+
+  update(seconds: number): void {
+    this.backdrop.rotation += seconds * 0.4;
+    for (const pop of this.pops) {
+      pop.age += seconds;
+      const t = Math.min(1, pop.age / 0.25);
+      pop.sprite.scale.set(t < 1 ? 1.6 - 0.6 * t : 1);
+      pop.sprite.alpha = t;
+    }
+    this.clock += seconds * (this.held ? 8 : 2);
+    // Bars grow 20 px per unit of the clock, with a tick of sound as they go (0x33086).
+    for (const growing of this.growing) {
+      const width = Math.min(growing.target, growing.bar.width + seconds * (this.held ? 160 : 40));
+      growing.bar.width = width;
+      if (growing.leftward) growing.bar.x = 12 - width - 2;
+    }
+    if (this.growing.some((g) => g.bar.width < g.target) && Math.floor(this.clock * 10) !== Math.floor((this.clock - seconds * 2) * 10)) {
+      this.audio.play('SOUNDS.FINAL_REPORT.COUNTING_TICK');
+    }
+    this.growing = this.growing.filter((g) => g.bar.width < g.target);
+
+    const next = this.steps[0];
+    if (!next || this.clock < 0.5) return;
+    if (next() === false) return;
+    this.steps.shift();
+    this.clock = 0;
   }
 }

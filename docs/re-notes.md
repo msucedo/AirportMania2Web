@@ -377,8 +377,33 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   been read; the web version uses flat fills with an outline.
 - Floating texts: points use `FONTS.SCORE` (`0x5d2c`), negative points `FONTS.SCORE_NEGATIVE`
   (`0x5de0`), punctuality and bonus texts `FONTS.MAIN`, 50 px above the plane (`0x6110`).
-- The final report dialog layout is not reconstructed; the web summary uses the original
-  strings, fonts and star sprites in its own layout.
+## Final report (dialog `0x3241c`, steps `0x328d4`)
+
+- `tools/re/args.py <start> <end> [targets]` traces constants into the arguments of each call;
+  it was used to read the dialogs. Widgets: label `0x2cf54(parent, text, align 0 left / 2 right;
+  style, x, y, font, …)`, text box `0x2d14c`, frame `0x2c540(width, height)`, backdrop image
+  `0x2c890`, horizontal rule `0x2c26c(x, y, width)`, vertical rule `0x2c3c0(x, y, height)`,
+  counter `0x3b20c`, button `0x33f04`. Positions are from the dialog's centre.
+- The constructor plays `MUSICS.FINAL_REPORT.<tier>` and `SOUNDS.FINAL_REPORT.<tier>`, makes a
+  400×250 frame with `GUI.FINAL_REPORT.BACK_STAR` behind (`SPIRAL` for a failed level), rules
+  at y −40 and 54 (width 400) and at x 42 (centres −60 and 10, heights 36 and 82).
+- The update adds one step each time its clock passes 0.5; the clock advances 2 per second, plus
+  6 more while the screen is touched. Steps: the tier text in `FONTS.ULTRA` in the box
+  (−200, −95)–(200, −100); the stars, none for goal up to four for perfect, at (124, −69) /
+  (111, −74) (137, −65) / (124, −61) (105, −80) (143, −80) / (124, −61) (98, −74) (150, −74)
+  (124, −87); served (`level+0x13c`) at y −65 and lost (`+0x138`) at y −45, label at x −190 and
+  value right-aligned at 34, in `FONTS.WHITE`; "Arrivals" right-aligned at (12, −20) and
+  "Departures" at (72, −20); early, on time and late at y 0, 20 and 40 with the arrival count
+  (`+0x140`…`+0x148`) right-aligned at 34 and the departure count (`+0x14c`…`+0x154`) at 50; the
+  level score at y 82 in `FONTS.SCORE` (or `SCORE_NEGATIVE`), right-aligned at 190; and, after a
+  whole unit, the Continue button (`0x33f04`, y 110, width 200).
+- Each punctuality row grows two bars of `TICK_GREEN` / `YELLOW` / `RED` to
+  `floor(count / planes × 100)` px at 20 px per clock unit, with a counting tick sound: arrivals
+  leftwards from x 12, departures rightwards from x 72. `planes` is `level+0x134`, counted in the
+  plane constructor. Arrivals are judged when unloading starts (`0x6378`), departures at
+  take-off (`0x6110`).
+- Web version: text baselines, the star's pop, the backdrop's size and turning, and the fonts'
+  colour effects are approximations; the score is written at once instead of counting up.
 
 ## Stage backdrop
 

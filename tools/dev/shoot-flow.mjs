@@ -51,7 +51,7 @@ try {
     return { ended: sim.ended, score: sim.score, served: sim.planesServed, lost: sim.planesLost };
   });
   console.log('level 1 auto-play:', JSON.stringify(result));
-  await sleep(900); await shot('F2-report');
+  await sleep(1500); await shot('F2-report-building'); await sleep(9000); await shot('F2-report');
   console.log('saved after level 1:', JSON.stringify(await saved()));
 
   // Give the player funds, buy the first improvement on the stage screen and check level 2 has it.

@@ -15,7 +15,7 @@ import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
 import { PlaneView, planeSurfaceIds } from './planeView';
 import type { Progress } from './progress';
-import { FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
+import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
@@ -68,6 +68,7 @@ export class LevelScene {
   private endShown = false;
   private paused = false;
   private dialog: Container | null = null;
+  private report: FinalReport | null = null;
 
   private constructor(
     private readonly textures: TextureStore,
@@ -76,7 +77,6 @@ export class LevelScene {
     private readonly options: LevelOptions,
     sim: Simulation,
     private readonly perStarAmount: number,
-    private readonly hasNextLevel: boolean,
   ) {
     this.sim = sim;
     this.hud = new Hud(textures, sim.goals);
@@ -136,10 +136,10 @@ export class LevelScene {
     const [strings] = await Promise.all([
       data.strings(options.language),
       textures.load(ids),
-      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT]),
+      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS]),
     ]);
 
-    const scene = new LevelScene(textures, audio, strings, options, sim, area.perStarAmount, options.level < area.levelsCount);
+    const scene = new LevelScene(textures, audio, strings, options, sim, area.perStarAmount);
     app.stage.addChild(scene.root);
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
@@ -398,6 +398,7 @@ export class LevelScene {
 
   private draw(seconds: number): void {
     for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, gate.lastColor ? tintOf(gate.lastColor) : this.options.layout.neutralColor);
+    this.report?.update(seconds);
     const elapsed = this.paused ? 0 : seconds;
     this.sky.update(elapsed);
     this.sparkles?.update(elapsed);
@@ -487,12 +488,11 @@ export class LevelScene {
     this.audio.play(`SOUNDS.FINAL_REPORT.${tier}`);
     const { progress, stage, level, onNavigate } = this.options;
     const stars = ['FAIL', 'GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'].indexOf(tier);
-    const { earned } = progress.record(stage, level, this.sim.score, stars, this.perStarAmount);
-    const canAdvance = this.hasNextLevel && progress.unlocked(stage, level + 1);
-    const report = new FinalReport(this.textures, this.strings, this.sim, level, { earned, canAdvance });
-    report.onReplay = () => onNavigate(level);
-    report.onNext = () => onNavigate(level + 1);
-    report.onMenu = () => onNavigate(null);
+    progress.record(stage, level, this.sim.score, stars, this.perStarAmount);
+    const report = new FinalReport(this.textures, this.audio, this.strings, this.sim);
+    // The original report only offers to go on, which leads back to the map.
+    report.onContinue = () => onNavigate(null);
+    this.report = report;
     this.root.addChild(report);
   }
 }

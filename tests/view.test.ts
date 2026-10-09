@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor } from '../src/game/planeView';
 import { markerImage } from '../src/game/worldMap';
+import { reportPercent } from '../src/game/view/finalReport';
 import { comboArrows } from '../src/game/view/runwayView';
 import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
@@ -85,5 +86,14 @@ describe('world map markers', () => {
     expect(markerImage(0, true)).toBe(1);
     expect(markerImage(1, false)).toBe(2);
     expect(markerImage(5, false)).toBe(6);
+  });
+});
+
+describe('final report', () => {
+  it('grows each punctuality bar to the whole percentage of the level\'s planes', () => {
+    expect(reportPercent(5, 5)).toBe(100);
+    expect(reportPercent(1, 3)).toBe(33);
+    expect(reportPercent(0, 7)).toBe(0);
+    expect(reportPercent(2, 0)).toBe(0);
   });
 });
