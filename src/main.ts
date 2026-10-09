@@ -1,0 +1,41 @@
+import { loadGameData } from './data/load';
+import { AudioPlayer } from './engine/audio';
+import { createScreen } from './engine/screen';
+import { TextureStore } from './engine/textures';
+import { LevelScene } from './game/levelScene';
+import { ARCHES } from './game/stages/arches';
+
+declare global {
+  interface Window {
+    /** Exposed for manual poking and automated checks. */
+    game?: LevelScene;
+  }
+}
+
+async function main(): Promise<void> {
+  const host = document.getElementById('game')!;
+  const params = new URLSearchParams(location.search);
+  const data = await loadGameData();
+  const app = await createScreen(host);
+  const textures = new TextureStore(data.resources);
+
+  const audio = new AudioPlayer(data.resources);
+  audio.muted = params.has('mute');
+
+  window.game = await LevelScene.create(app, data, textures, audio, {
+    stage: 1,
+    level: 1,
+    layout: ARCHES,
+    showNodes: params.has('nodes'),
+  });
+  document.body.dataset.ready = 'true';
+}
+
+main().catch((error: unknown) => {
+  console.error(error);
+  document.body.dataset.error = String(error);
+  const pre = document.createElement('pre');
+  pre.style.cssText = 'color:#f66;padding:16px;white-space:pre-wrap';
+  pre.textContent = String(error);
+  document.body.appendChild(pre);
+});

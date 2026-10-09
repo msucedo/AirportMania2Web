@@ -1,0 +1,8 @@
+node_modules/
+dist/
+# Original game assets and data derived from them: imported locally, never committed.
+public/assets/
+src/data/generated/
+
+# Reverse-engineering work directory (binary and disassembly).
+.re/
