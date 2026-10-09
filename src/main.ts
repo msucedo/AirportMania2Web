@@ -6,7 +6,7 @@ import { TextureStore } from './engine/textures';
 import { LevelScene } from './game/levelScene';
 import { MainMenu } from './game/mainMenu';
 import { loadSettings, saveSettings } from './game/settings';
-import { OPTIONS_SURFACES, OptionsDialog } from './game/view/optionsDialog';
+import { GAME_MENU_SURFACES, GameMenu } from './game/view/gameMenu';
 import { WorldMap } from './game/worldMap';
 import { Progress, type StageRules } from './game/progress';
 import { STAGES } from './game/stages';
@@ -91,20 +91,22 @@ async function main(): Promise<void> {
   } else if (level === null) {
     const audio = makeAudio();
     const strings = await data.strings(chosen);
-    await textures.load(OPTIONS_SURFACES);
+    await textures.load(GAME_MENU_SURFACES);
     await MainMenu.create(app, data, textures, audio, {
       strings,
       enabled: ['PLAY', 'OPTIONS'],
       onSelect: (entry) => {
         if (entry === 'PLAY') return navigate(null, null, '');
-        const dialog = new OptionsDialog(textures, audio, strings, settings, (next) => {
-          const languageChanged = next.language !== settings.language;
-          settings = next;
-          saveSettings(settings);
-          // Texts are loaded once per page, so a new language needs the page again.
-          if (languageChanged) location.reload();
+        const dialog = new GameMenu(textures, audio, {
+          strings,
+          settings,
+          inGame: false,
+          onSettings: (next) => {
+            settings = next;
+            saveSettings(settings);
+          },
           // Removed after the touch that closed it has been dispatched.
-          else setTimeout(() => dialog.destroy({ children: true }));
+          onExit: () => setTimeout(() => dialog.destroy({ children: true })),
         });
         app.stage.addChild(dialog);
       },
@@ -119,6 +121,7 @@ async function main(): Promise<void> {
       progress,
       // Leaving a level goes back to the map; restarting loads it again.
       onNavigate: (next) => (next === null ? navigate(null, null, stage) : navigate(stage, next)),
+      onMainMenu: () => navigate(null, null),
       settings,
       rules: rules.get(stage)!,
       skipShop: params.has('go'),

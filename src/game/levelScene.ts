@@ -11,8 +11,7 @@ import type { StageRules } from './progress';
 import type { Settings } from './settings';
 import { IMPROVEMENTS_FONTS, IMPROVEMENTS_SOUNDS, ImprovementsDialog, improvementsSurfaceIds } from './view/improvementsDialog';
 import { StageClear } from './view/stageClear';
-import { OPTIONS_SURFACES, OptionsDialog } from './view/optionsDialog';
-import { PauseMenu } from './view/pauseMenu';
+import { GAME_MENU_SURFACES, GameMenu } from './view/gameMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
 import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
@@ -40,6 +39,7 @@ export interface LevelOptions {
   progress: Progress;
   /** Navigation: a level number, or null for the stage screen. */
   onNavigate: (level: number | null) => void;
+  onMainMenu: () => void;
   settings: Settings;
   /** The stage's rules for stars and rewards. */
   rules: StageRules;
@@ -117,7 +117,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...OPTIONS_SURFACES, ...improvementsSurfaceIds(layout.improvements), 'GUI.FINAL_REPORT.STAR_SMALL']);
+    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), 'GUI.FINAL_REPORT.STAR_SMALL']);
     for (const layer of layout.backdrop.layers) {
       ids.add(layer.resource);
     }
@@ -187,44 +187,30 @@ export class LevelScene {
     this.root.addChild(shop);
   }
 
-  /** The menu button: stops the game and offers to go on, change the options, restart or leave. */
+  /** The menu button: stops the game and opens the original's menu dialog. */
   private openPause(): void {
     if (this.dialog || this.endShown) return;
     this.audio.unlock();
     this.paused = true;
-    const show = (dialog: Container): void => {
-      const previous = this.dialog;
-      this.dialog = dialog;
-      this.root.addChild(dialog);
-      // The one being replaced goes once the touch that closed it has been dispatched.
-      if (previous) setTimeout(() => previous.destroy({ children: true }));
-    };
-    const menu = (): PauseMenu =>
-      new PauseMenu(this.textures, this.audio, this.strings, (choice) => {
-        if (choice === 'restart') return this.options.onNavigate(this.options.level);
-        if (choice === 'map') return this.options.onNavigate(null);
-        if (choice === 'options') {
-          return show(
-            new OptionsDialog(
-              this.textures,
-              this.audio,
-              this.strings,
-              this.options.settings,
-              (next) => {
-                this.options.settings = next;
-                this.options.onSettings(next);
-                show(menu());
-              },
-              false,
-            ),
-          );
-        }
-        const closing = this.dialog;
+    const menu = new GameMenu(this.textures, this.audio, {
+      strings: this.strings,
+      settings: this.options.settings,
+      inGame: true,
+      onSettings: (next) => {
+        this.options.settings = next;
+        this.options.onSettings(next);
+      },
+      onExit: (how) => {
+        if (how === 'restart') return this.options.onNavigate(this.options.level);
+        if (how === 'map') return this.options.onNavigate(null);
+        if (how === 'mainMenu') return this.options.onMainMenu();
         this.dialog = null;
         this.paused = false;
-        if (closing) setTimeout(() => closing.destroy({ children: true }));
-      });
-    show(menu());
+        setTimeout(() => menu.destroy({ children: true }));
+      },
+    });
+    this.dialog = menu;
+    this.root.addChild(menu);
   }
 
   /** A plane's own sound: descriptor slot, with `%s` filled by its sex and its voice pitch. */

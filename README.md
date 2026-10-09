@@ -16,8 +16,8 @@ npm test
 
 The game opens on the original main menu and world map: touch a level's marker and press Play.
 Two stages are playable, Arches with six levels and the island with seven. Options in the main
-menu set the sound and music volume and the language (eight are available); during a level the
-menu button pauses and offers the volumes, restarting and going back to the map.
+menu set the sound and music volume and, under Advanced, the language (eight are available);
+during a level the menu button opens the original menu, with the options and the ways out.
 
 Money works as in the original: a level's score is added to the funds of the next level, where
 the improvements shop opens before play; clearing a stage pays its stars and a bonus into the

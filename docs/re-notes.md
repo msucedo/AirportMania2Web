@@ -617,15 +617,28 @@ Vtable `0x17a8e8`, kind 5.
   the sign's corner, each a button (`0x5c7a0`) 160×30 with `MAIN_MENU.BUTTON_OVER` and the text
   in `FONTS.MAIN`.
 - Not read: the entrance animations, the plane flying past (`0x59f7c`), the greeting sign and the
-  dialogs behind Users, Options and Credits. The web menu shows the scene in place, with Play
-  and Options working, and leaves out the badge and the promotional buttons.
-- The web options dialog is not a copy of the original (`0x2220`, with sound, music, tips and
-  device entries): it offers sound and music volume and the language, built from the original
-  dialog pieces (`GUI.DIALOGS.*`, `FLAGS.*`) and strings, and stores them in the browser
-  (`am2web.settings.v1`).
-- The level's menu button opens a pause menu of our own (resume, options without the language,
-  restart, map) made of the same pieces; the original's in-game menu (`IN_GAME_MENU_DIALOG`)
-  has not been read.
+  dialogs behind Users and Credits. The web menu shows the scene in place, with Play and
+  Options working, and leaves out the badge and the promotional buttons.
+
+## Menu dialog (`0x66bbc`) and finish dialog (`0x376c4`)
+
+- `0x66bbc(mode)` is one dialog used two ways: mode 1 from the level's menu button (`0x87a80`),
+  mode 0 from the main menu's Options (`0x5cd64`). Frame 340 wide; 240 high in mode 1 and 220 in
+  mode 0. With `b = height / 2 − 20`:
+  - mode 1: buttons 280 wide at x 0 — Options (`0x67660`) at y `b − 190`, Help (`0x673c0`) at
+    `b − 130`, Finish game (`0x67120`) at `b − 70` and `RESUME` at `b`;
+  - mode 0, with `t = −height / 2 + 10`: `OPTIONS_DIALOG.SOUND_FX` at (−115, `t + 15`) with a
+    switch at x −145 (`0x2f504`) and a slider at x 85 (`0x2f3c4`); `OPTIONS_DIALOG.MUSIC` at
+    `t + 65` likewise (`0x2f58c`, `0x2f450`); Advanced (`0x678f8`) at `b − 60` and `BACK` at `b`.
+- Finish game opens `0x376c4`, frame 340×260, buttons 310 wide: restart at y −100, map at −40,
+  main menu at 20 and `RESUME` at 110.
+- Advanced opens `0x2220` (auto-orientate, show tips, tap on bubbles). There is no language
+  entry in this build: the language comes from the device.
+- `0x6a210` draws `PAUSE.PAUSED` and `PAUSE.TEXT` centred on the screen; it is not opened by a
+  button (most likely when the app is interrupted).
+- Web version: Help is shown but does nothing; Advanced opens a language choice of our own,
+  outside a level only; slider width, button height and the switch's look are assumed; the pause
+  screen is not used. Settings are stored in the browser (`am2web.settings.v1`).
 
 ## World map (script `0xccc8c`)
 

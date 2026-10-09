@@ -26,12 +26,18 @@ try {
   await page.mouse.click(...at(359, 237)); // Options entry
   await sleep(400);
   await page.screenshot({ path: `${outDir}/O1-options.png` });
-  // The dialog is 300x232 centred: its corner is at (90, 44). Music slider at y 104, from x 150 to 270.
-  await page.mouse.move(...at(90 + 270, 44 + 104)); await page.mouse.down(); await page.mouse.move(...at(90 + 180, 44 + 104), { steps: 6 }); await page.mouse.up();
-  await page.mouse.click(...at(90 + 150 + 60 + 74, 44 + 144)); // next language
+  // The dialog is centred on (240, 160): music slider at y -35 from x 10 to 160, Advanced at y 30
+  // and Back at 90; on the language page the arrows are 130 px either side at y -20.
+  const at0 = (x, y) => at(240 + x, 160 + y);
+  await page.mouse.move(...at0(160, -35)); await page.mouse.down(); await page.mouse.move(...at0(47, -35), { steps: 6 }); await page.mouse.up();
   await sleep(300);
   await page.screenshot({ path: `${outDir}/O2-options-changed.png` });
-  await page.mouse.click(...at(240, 44 + 194)); // Accept: a new language reloads the page
+  await page.mouse.click(...at0(0, 30)); // advanced: language
+  await sleep(300);
+  await page.mouse.click(...at0(130, -20)); // next language
+  await sleep(300);
+  await page.screenshot({ path: `${outDir}/O2-language.png` });
+  await page.mouse.click(...at0(0, 90)); // Back: a new language reloads the page
   await sleep(2500);
   await ready();
   console.log('saved:', await saved());
