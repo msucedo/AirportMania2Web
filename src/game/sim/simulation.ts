@@ -2,7 +2,7 @@ import type { GasStationDescriptor, GateDescriptor, RunwayDescriptor } from '../
 import type { LevelGoals, LevelSchedule, PlaneColor, PlaneSpawn, Sex } from '../../data/levels';
 import type { PlaneDescriptor } from '../../data/planes';
 import type { Point } from '../../data/xml';
-import type { StageLayout } from '../stages/arches';
+import type { StageLayout } from '../stages/layout';
 import { TaxiGraph, type TaxiNode } from './taxiGraph';
 import { Need, PROVISIONAL, PlaneState, RULES, UNSELECTABLE_STATES, clamp01, punctuality, roundScore, type Punctuality } from './rules';
 

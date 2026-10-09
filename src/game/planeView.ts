@@ -7,8 +7,9 @@ const NEED_ICONS = 9;
 const BUBBLE = ['INDICATORS.THOUGHT_A', 'INDICATORS.THOUGHT_B', 'INDICATORS.THOUGHT_C', 'INDICATORS.THOUGHT_D'];
 
 /** Surface ids a plane needs, for all three perspectives. */
-export function planeSurfaceIds(plane: PlaneDescriptor): string[] {
+export function planeSurfaceIds(plane: PlaneDescriptor, pontoons = false): string[] {
   const ids = [plane.shadow];
+  if (pontoons) for (const part of plane.pantoons) if (part) ids.push(part.resource);
   for (const p of PERSPECTIVES) {
     ids.push(`${plane.body.color}.${p}`, `${plane.body.front}.${p}`, `${plane.body.remark}.${p}`, `${plane.eyes.opened}.${p}`, `${plane.eyes.closed}.${p}`);
   }
@@ -69,6 +70,8 @@ export class PlaneView extends Container {
     private readonly textures: TextureStore,
     private readonly plane: PlaneDescriptor,
     tint: number,
+    /** Water stages draw the plane's pontoons, placed by the descriptor for each perspective. */
+    pontoons = false,
   ) {
     super();
     this.shadow = textures.sprite(plane.shadow);
@@ -80,6 +83,12 @@ export class PlaneView extends Container {
       const remark = textures.sprite(`${plane.body.remark}.${p}`);
       const color = textures.sprite(`${plane.body.color}.${p}`);
       color.tint = tint;
+      const pontoon = pontoons ? plane.pantoons[p] : undefined;
+      if (pontoon) {
+        const float = textures.sprite(pontoon.resource);
+        float.position.set(pontoon.x, pontoon.y);
+        root.addChild(float);
+      }
       root.addChild(remark, color, textures.sprite(`${plane.body.front}.${p}`));
 
       const placement = plane.eyes.placement[p];

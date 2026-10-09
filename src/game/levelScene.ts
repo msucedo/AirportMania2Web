@@ -16,7 +16,7 @@ import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PlaneState } from './sim/rules';
 import { Simulation, type Gate, type Plane, type SimEvent } from './sim/simulation';
-import type { StageLayout } from './stages/arches';
+import type { StageLayout } from './stages/layout';
 
 // Tints are placeholders: the original colour table is compiled into the binary and not read yet.
 const PROVISIONAL_TINTS: Record<string, number> = { BLUE: 0x4aa3ff, PINK: 0xff7fc0, GREEN: 0x6fd36f, CYAN: 0x5fe0e0 };
@@ -76,13 +76,15 @@ export class LevelScene {
     const area = data.areas.get(options.stage);
     if (!area) throw new Error(`Unknown stage ${options.stage}`);
     // Owning the stage's plane licence switches every level to its extra-plane variant.
-    const extraPlane = options.progress.owns(layout.extraPlaneLicence);
+    const owned = new Set<number>();
+    for (const key of options.progress.improvements) if (Math.floor(key / 1000) === options.stage) owned.add(key % 1000);
+    const extraPlane = owned.has(layout.extraPlaneLicence);
     const schedule = findLevel(stage, options.level, extraPlane);
     const sim = new Simulation({
       layout,
       schedule,
       goals: findGoals(area, options.level, extraPlane),
-      improvements: options.progress.improvements,
+      improvements: owned,
       planes: data.planes,
       gates: data.gates,
       runways: data.runways,
@@ -91,8 +93,13 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT', 'STOPSPOT_VIP', ...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES]);
-    for (const decoration of layout.decorations) ids.add(decoration.resource);
+    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES]);
+    for (const layer of layout.backdrop.layers) {
+      ids.add(layer.resource);
+      if (typeof layer.silhouette === 'object') ids.add(layer.silhouette.topRowOf);
+    }
+    for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip]) ids.add(id);
+    for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
@@ -102,7 +109,7 @@ export class LevelScene {
       ids.add(`RUNWAY.NUMBER_${runway.number}`);
     }
     for (const spawn of schedule.planes) {
-      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!)) ids.add(id);
+      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, layout.pontoons)) ids.add(id);
     }
     const [strings] = await Promise.all([
       data.strings(options.language),
@@ -155,13 +162,9 @@ export class LevelScene {
 
   private build(): void {
     const { layout } = this.options;
-    const down = this.textures.sprite(layout.backgroundDown.resource);
-    down.position.copyFrom(layout.backgroundDown.position);
-    down.scale.copyFrom(layout.backgroundDown.scale);
-
     // Behind everything the original draws a `Sky` object and clouds; the band colours have not been
     // matched exactly, so this is a plain gradient in the same light blues.
-    const horizon = layout.backgroundDown.position.y;
+    const { horizon, layers } = layout.backdrop;
     const sky = new Graphics();
     const bands = 24;
     for (let i = 0; i < bands; i++) {
@@ -170,13 +173,21 @@ export class LevelScene {
       const color = (mix(0x5c, 0x99) << 16) | (mix(0xb4, 0xe6) << 8) | mix(0xf0, 0xff);
       sky.rect(0, (horizon * i) / bands, SCREEN_WIDTH, horizon / bands + 1).fill(color);
     }
+    this.ground.addChild(sky);
 
-    // The upper background is an 8-bit grey image used as a silhouette: white is ground, black is
-    // sky. It is drawn in the colour of the ground tile's top edge so the two join seamlessly.
-    const upper = new Sprite(this.textures.alphaMask(layout.backgroundTop.resource));
-    upper.position.copyFrom(layout.backgroundTop.position);
-    upper.tint = this.textures.rowColor(layout.backgroundDown.resource, 0);
-    this.ground.addChild(sky, upper, down);
+    for (const layer of layers) {
+      let sprite: Sprite;
+      if (layer.silhouette === undefined) {
+        sprite = this.textures.sprite(layer.resource);
+      } else {
+        // An 8-bit grey image used as a silhouette: white is land, black is sky.
+        sprite = new Sprite(this.textures.alphaMask(layer.resource));
+        sprite.tint = typeof layer.silhouette === 'number' ? layer.silhouette : this.textures.rowColor(layer.silhouette.topRowOf, 0);
+      }
+      sprite.position.copyFrom(layer.position);
+      if (layer.scale) sprite.scale.copyFrom(layer.scale);
+      this.ground.addChild(sprite);
+    }
 
     for (const runway of this.sim.runways) {
       const sprite = this.textures.sprite(runway.descriptor.backSurface);
@@ -187,11 +198,18 @@ export class LevelScene {
       this.ground.addChild(sprite, number);
     }
     for (const spot of this.sim.stopSpots) {
-      const sprite = this.textures.sprite(spot.vip ? 'STOPSPOT_VIP' : 'STOPSPOT');
-      sprite.position.copyFrom(spot.position);
-      this.ground.addChild(sprite);
+      for (const id of spot.vip ? layout.stopSpotSurfaces.vip : layout.stopSpotSurfaces.normal) {
+        const sprite = this.textures.sprite(id);
+        sprite.position.copyFrom(spot.position);
+        this.ground.addChild(sprite);
+      }
     }
     for (const gate of this.sim.gates) {
+      for (const extra of layout.gateDecorations) {
+        const sprite = this.textures.sprite(extra.resource);
+        sprite.position.set(gate.position.x + extra.offset.x, gate.position.y + extra.offset.y);
+        (extra.front ? this.overlay : this.ground).addChild(sprite);
+      }
       const view = new GateView(this.textures, gate, gate.letter.charCodeAt(0) - 65);
       this.ground.addChild(view);
       this.gateViews.push({ gate, view });
@@ -305,7 +323,7 @@ export class LevelScene {
         continue;
       }
       if (!view) {
-        view = new PlaneView(this.textures, plane.descriptor, tintOf(plane.color));
+        view = new PlaneView(this.textures, plane.descriptor, tintOf(plane.color), this.options.layout.pontoons);
         this.planeLayer.addChild(view);
         this.planeViews.set(plane.id, view);
       }

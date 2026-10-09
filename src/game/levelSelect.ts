@@ -4,8 +4,8 @@ import type { Strings } from '../data/strings';
 import { fontFamily, loadFonts } from '../engine/fonts';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../engine/screen';
 import type { TextureStore } from '../engine/textures';
-import type { Progress } from './progress';
-import type { ImprovementOffer, StageLayout } from './stages/arches';
+import { Progress } from './progress';
+import type { ImprovementOffer, StageLayout } from './stages/layout';
 import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
 
 export interface LevelSelectOptions {
@@ -13,7 +13,10 @@ export interface LevelSelectOptions {
   layout: StageLayout;
   strings: Strings;
   progress: Progress;
+  /** Stage numbers that can be shown, with whether each is open. */
+  stages: { stage: number; open: boolean }[];
   onPlay: (level: number) => void;
+  onStage: (stage: number) => void;
 }
 
 const STAR = 'GUI.FINAL_REPORT.STAR_SMALL';
@@ -38,10 +41,24 @@ export class LevelSelect {
   ) {
     const { strings, stage } = options;
     this.root.addChild(new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill(0x1d2c3f));
-    this.text(`${strings.t(`STAGES.${stage}.TITLE`)} - ${strings.t(`STAGES.${stage}.NAME`)}`, SCREEN_WIDTH / 2, 16, 15, this.main, 0xffb52e, 0.5, SCREEN_WIDTH - 20);
+    this.text(`${strings.t(`STAGES.${stage}.TITLE`)} - ${strings.t(`STAGES.${stage}.NAME`)}`, SCREEN_WIDTH / 2, 16, 15, this.main, 0xffb52e, 0.5, SCREEN_WIDTH - 110);
+    // Arrows to the neighbouring stages.
+    for (const [delta, x, glyph] of [[-1, 22, '\u25c0'], [1, SCREEN_WIDTH - 22, '\u25b6']] as const) {
+      const target = options.stages.find((s) => s.stage === stage + delta);
+      if (!target) continue;
+      const arrow = new Text({ text: glyph, style: { fontFamily: 'sans-serif', fontSize: 18, fill: target.open ? 0xffe45c : 0x4a5562 } });
+      arrow.anchor.set(0.5);
+      arrow.position.set(x, 16);
+      if (target.open) {
+        arrow.eventMode = 'static';
+        arrow.cursor = 'pointer';
+        arrow.on('pointerdown', () => options.onStage(target.stage));
+      }
+      this.root.addChild(arrow);
+    }
 
     const area = data.areas.get(stage)!;
-    const width = 72;
+    const width = Math.min(72, Math.floor((SCREEN_WIDTH - 16) / area.levelsCount));
     const left = (SCREEN_WIDTH - area.levelsCount * width) / 2;
     for (let level = 1; level <= area.levelsCount; level++) this.levelTile(level, left + (level - 1) * width, 34, width - 6);
 
@@ -107,7 +124,7 @@ export class LevelSelect {
   }
 
   private available(offer: ImprovementOffer): boolean {
-    return offer.requires === undefined || this.options.progress.owns(offer.requires);
+    return offer.requires === undefined || this.options.progress.owns(Progress.improvementKey(this.options.stage, offer.requires));
   }
 
   private drawShop(): void {
@@ -119,7 +136,8 @@ export class LevelSelect {
     const width = 114;
     const height = 74;
     layout.improvements.forEach((offer, i) => {
-      const owned = progress.owns(offer.id);
+      const key = Progress.improvementKey(this.options.stage, offer.id);
+      const owned = progress.owns(key);
       const buyable = !owned && this.available(offer) && progress.funds >= offer.price;
       const tile = new Container();
       tile.position.set(12 + (i % columns) * width, 130 + Math.floor(i / columns) * height);
@@ -148,7 +166,7 @@ export class LevelSelect {
       tile.on('pointerdown', () => {
         this.hint.text = strings.t(offer.descriptionId).split('\n\n')[0]!.replace(/\n/g, '  ');
         // Redraw after the event has finished: rebuilding the tiles destroys the one being pressed.
-        if (buyable && progress.buy(offer.id, offer.price)) setTimeout(() => this.drawShop(), 0);
+        if (buyable && progress.buy(key, offer.price)) setTimeout(() => this.drawShop(), 0);
       });
       this.shop.addChild(tile);
     });

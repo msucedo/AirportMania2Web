@@ -1,82 +1,27 @@
-import type { Point } from '../../data/xml';
+import { IMPROVEMENT, offer, runway, type StageLayout } from './layout';
 
 // Stage 1 layout, read from the original stage builder (see docs/re-notes.md).
-// Coordinates are screen pixels at 480×320.
 
-export interface GateSlot {
-  letter: 'A' | 'B' | 'C';
-  position: Point;
-  /** Improvement that must be owned for the gate to exist; null when it always exists. */
-  requires: number[] | null;
-  /** Improvement that switches the gate to its upgraded descriptor. */
-  upgradedBy: number;
-}
-
-export interface RunwaySlot {
-  number: number;
-  /** Centre of the runway. */
-  position: Point;
-  /** Node offset from the centre and plane heading there, as computed by the runway constructor. */
-  node: Point;
-  /** Degrees; 0 faces left, 180 right. */
-  heading: number;
-}
-
-/** Something the player can buy for the stage between levels. */
-export interface ImprovementOffer {
-  id: number;
-  price: number;
-  titleId: string;
-  descriptionId: string;
-  /** Icon resource prefix; `.ACTIVE` and `.GRAYED` variants exist. */
-  icon: string;
-  /** Improvement that has to be owned first. */
-  requires?: number;
-}
-
-export interface StageLayout {
-  /** Gate descriptor types: [normal, upgraded]. */
-  gateTypes: [number, number];
-  runwayType: number;
-  gasStationType: number;
-  backgroundDown: { resource: string; position: Point; scale: Point };
-  backgroundTop: { resource: string; position: Point };
-  decorations: { resource: string; position: Point }[];
-  gates: GateSlot[];
-  gasStation: { position: Point; minLevel: number };
-  taxiNodes: Point[];
-  runways: RunwaySlot[];
-  stopSpots: { position: Point; requires: number | null; upgradedBy?: number; replacedBy?: number }[];
-  improvements: ImprovementOffer[];
-  /** Improvement that switches levels to their extra-plane variant. */
-  extraPlaneLicence: number;
-}
-
-const RUNWAY_NODE_OFFSET = 144;
-const runway = (number: number, x: number, y: number): RunwaySlot => ({
-  number,
-  position: { x, y },
-  node: { x: x - RUNWAY_NODE_OFFSET, y },
-  heading: 0,
-});
-
-export const IMPROVEMENT = {
-  EXTRA_STOP_SPOT: 0x01,
-  UPGRADED_STOP_SPOT: 0x0a,
-  EXTRA_GATE_C: 0x16,
-  UPGRADED_GATE_A: 0x1e,
-  UPGRADED_GATE_B: 0x1f,
-  UPGRADED_GATE_C: 0x20,
-  PAINTING_STOP_SPOT: 0x72,
-  PLANE_4_LICENCE: 0xcb,
-} as const;
+export { IMPROVEMENT } from './layout';
+export type { StageLayout, ImprovementOffer } from './layout';
 
 export const ARCHES: StageLayout = {
+  stage: 1,
   gateTypes: [0, 1],
   runwayType: 1,
   gasStationType: 1,
-  backgroundDown: { resource: 'STAGES.ARCHES.BACKGROUND_DOWN', position: { x: 0, y: 160 }, scale: { x: 16, y: 16 } },
-  backgroundTop: { resource: 'STAGES.ARCHES.BACKGROUND_TOP', position: { x: 0, y: 34 } },
+  backdrop: {
+    horizon: 160,
+    layers: [
+      // The silhouette borrows the ground tile's top colour so the two join. The stage script
+      // passes a sand colour (0.87, 0.77, 0.60) to the stage start, which may be the real tint.
+      { resource: 'STAGES.ARCHES.BACKGROUND_TOP', position: { x: 0, y: 34 }, silhouette: { topRowOf: 'STAGES.ARCHES.BACKGROUND_DOWN' } },
+      { resource: 'STAGES.ARCHES.BACKGROUND_DOWN', position: { x: 0, y: 160 }, scale: { x: 16, y: 16 } },
+    ],
+  },
+  gateDecorations: [],
+  stopSpotSurfaces: { normal: ['STOPSPOT'], vip: ['STOPSPOT_VIP'] },
+  pontoons: false,
   decorations: [{ resource: 'STAGES.ARCHES.ARCH', position: { x: 403, y: 50 } }],
   gates: [
     { letter: 'A', position: { x: 40, y: 122 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_GATE_A },
@@ -90,7 +35,7 @@ export const ARCHES: StageLayout = {
   ],
   gasStation: { position: { x: 280, y: 120 }, minLevel: 3 },
   taxiNodes: [80, 110, 140, 170, 200].map((x) => ({ x, y: 220 })),
-  runways: [runway(1, 450, 225), runway(2, 495, 270)],
+  runways: [runway(1, 450, 225, 1), runway(2, 495, 270, 1)],
   stopSpots: [
     { position: { x: 180, y: 300 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_STOP_SPOT },
     { position: { x: 60, y: 300 }, requires: IMPROVEMENT.EXTRA_STOP_SPOT, replacedBy: IMPROVEMENT.PAINTING_STOP_SPOT },
@@ -99,13 +44,13 @@ export const ARCHES: StageLayout = {
   // (0x72, 60000) is left out until that place is implemented. Which title goes with 0x20 and the
   // prerequisites are inferred.
   improvements: [
-    { id: IMPROVEMENT.EXTRA_STOP_SPOT, price: 10000, titleId: 'IMPROVEMENTS.TITLES.EXTRA_STORAGE_PLACE', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.EXTRA_STORAGE_PLACE', icon: 'IMPROVEMENTS.STORAGE_PLACE' },
-    { id: IMPROVEMENT.UPGRADED_STOP_SPOT, price: 20000, titleId: 'IMPROVEMENTS.TITLES.VIP_STORAGE_PLACE', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.VIP_STORAGE_PLACE', icon: 'IMPROVEMENTS.VIP_STORAGE_PLACE' },
-    { id: IMPROVEMENT.EXTRA_GATE_C, price: 20000, titleId: 'IMPROVEMENTS.TITLES.EXTRA_GATE_C', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.EXTRA_GATE', icon: 'IMPROVEMENTS.GATE_0' },
-    { id: IMPROVEMENT.UPGRADED_GATE_A, price: 25000, titleId: 'IMPROVEMENTS.TITLES.IMPROVED_GATE_A', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.IMPROVED_GATE', icon: 'IMPROVEMENTS.GATE_1' },
-    { id: IMPROVEMENT.UPGRADED_GATE_B, price: 30000, titleId: 'IMPROVEMENTS.TITLES.IMPROVED_GATE_B', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.IMPROVED_GATE', icon: 'IMPROVEMENTS.GATE_1' },
-    { id: IMPROVEMENT.UPGRADED_GATE_C, price: 35000, titleId: 'IMPROVEMENTS.TITLES.IMPROVED_GATE_C', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.IMPROVED_GATE', icon: 'IMPROVEMENTS.GATE_1', requires: IMPROVEMENT.EXTRA_GATE_C },
-    { id: IMPROVEMENT.PLANE_4_LICENCE, price: 85000, titleId: 'IMPROVEMENTS.TITLES.PLANE_4_LICENCE', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.PLANE_4_LICENCE', icon: 'IMPROVEMENTS.PLANE_4' },
+    offer(IMPROVEMENT.EXTRA_STOP_SPOT, 10000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'STORAGE_PLACE'),
+    offer(IMPROVEMENT.UPGRADED_STOP_SPOT, 20000, 'VIP_STORAGE_PLACE', 'VIP_STORAGE_PLACE', 'VIP_STORAGE_PLACE'),
+    offer(IMPROVEMENT.EXTRA_GATE_C, 20000, 'EXTRA_GATE_C', 'EXTRA_GATE', 'GATE_0'),
+    offer(IMPROVEMENT.UPGRADED_GATE_A, 25000, 'IMPROVED_GATE_A', 'IMPROVED_GATE', 'GATE_1'),
+    offer(IMPROVEMENT.UPGRADED_GATE_B, 30000, 'IMPROVED_GATE_B', 'IMPROVED_GATE', 'GATE_1'),
+    offer(IMPROVEMENT.UPGRADED_GATE_C, 35000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_1', IMPROVEMENT.EXTRA_GATE_C),
+    offer(IMPROVEMENT.PLANE_4_LICENCE, 85000, 'PLANE_4_LICENCE', 'PLANE_4_LICENCE', 'PLANE_4'),
   ],
   extraPlaneLicence: IMPROVEMENT.PLANE_4_LICENCE,
 };

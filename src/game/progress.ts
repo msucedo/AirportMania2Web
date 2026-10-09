@@ -54,6 +54,18 @@ export class Progress {
     return level <= 1 || this.result(stage, level - 1).stars > 0;
   }
 
+  /** A stage opens once every level of the previous stage has been passed (our rule). */
+  stageUnlocked(stage: number, previousLevels: number): boolean {
+    if (stage <= 1) return true;
+    for (let level = 1; level <= previousLevels; level++) if (this.result(stage - 1, level).stars === 0) return false;
+    return true;
+  }
+
+  /** Improvements are bought per stage; ids repeat between stages. */
+  static improvementKey(stage: number, id: number): number {
+    return stage * 1000 + id;
+  }
+
   /**
    * Stores a finished level and pays for newly earned stars.
    * Paying `perStar` for each new star is an assumption based on the area's `PerStarAmount`.

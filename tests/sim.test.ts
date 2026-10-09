@@ -8,6 +8,7 @@ import type { XmlNode } from '../src/data/xml';
 import { Need, PlaneState, RULES, punctuality, roundScore } from '../src/game/sim/rules';
 import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulation';
 import { ARCHES } from '../src/game/stages/arches';
+import { ISLAND } from '../src/game/stages/island';
 
 const generated = path.resolve(__dirname, '../src/data/generated');
 const tree = (rel: string): XmlNode[] => JSON.parse(fs.readFileSync(path.join(generated, rel), 'utf8')) as XmlNode[];
@@ -438,6 +439,76 @@ describe('simulation, improvements', () => {
     runUntil(sim, () => plane.state === PlaneState.LOADING, 40);
     // LoadingTime 8 s at gate speed 1.5.
     expect(sim.time - started).toBeCloseTo(8 / 1.5, 1);
+  });
+});
+
+describe('simulation, stage 2 (island)', () => {
+  const stage2 = parseStageSchedule(tree('data/maps/stage_levels_02.json'));
+  const area2 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(2)!;
+  const island = (level = 1): Simulation =>
+    new Simulation({
+      layout: ISLAND,
+      schedule: findLevel(stage2, level, false),
+      goals: findGoals(area2, level, false),
+      planes,
+      gates,
+      runways,
+      gasStations,
+      level,
+      screenWidth: 480,
+    });
+
+  it('builds the island airport from its layout', () => {
+    const sim = island();
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type])).toEqual([
+      ['A', 2],
+      ['B', 2],
+    ]);
+    // Water runways have their node at the right end and planes leave to the left.
+    expect(sim.runways.map((r) => [r.node, r.direction, r.heading])).toEqual([
+      [{ x: 194, y: 195 }, -1, 180],
+      [{ x: 229, y: 250 }, -1, 180],
+    ]);
+    expect(sim.gasStations).toHaveLength(1);
+    expect(sim.gasStations[0]!.descriptor.type).toBe(2);
+    expect(sim.stopSpots).toHaveLength(1);
+    for (const runway of sim.runways) {
+      for (const place of [...sim.gates, ...sim.gasStations, ...sim.stopSpots]) {
+        expect(sim.graph.route(runway.taxiNode, place.taxiNode)).not.toBeNull();
+        expect(sim.graph.route(place.taxiNode, runway.taxiNode)).not.toBeNull();
+      }
+    }
+  });
+
+  it('lands from the left and takes off to the left', () => {
+    const sim = island();
+    runUntil(sim, () => sim.planes.length > 0, 60);
+    const plane = sim.planes[0]!;
+    const runway = sim.runways[0]!;
+    sim.addOrder(plane, runway);
+    runUntil(sim, () => plane.landing, 10);
+    expect(plane.x).toBeLessThan(runway.node.x);
+    expect(plane.facing).toBe(1);
+    runUntil(sim, () => plane.landed, 20);
+    expect({ x: plane.x, y: plane.y }).toEqual(runway.node);
+    expect(plane.heading).toBe(180);
+  });
+
+  it('plays a fuel plane through level 2-1', () => {
+    const sim = island();
+    runUntil(sim, () => sim.planes.some((p) => !p.gasDone), 200);
+    const plane = sim.planes.find((p) => !p.gasDone)!;
+    sim.addOrder(plane, sim.runways[0]!);
+    sim.addOrder(plane, sim.gates[0]!);
+    runUntil(sim, () => plane.unloaded, 80);
+    sim.addOrder(plane, sim.gasStations[0]!);
+    runUntil(sim, () => plane.gasDone, 80);
+    sim.addOrder(plane, sim.gates[1]!);
+    runUntil(sim, () => plane.state === PlaneState.LOADING, 60);
+    sim.addOrder(plane, sim.runways[1]!);
+    runUntil(sim, () => plane.gone, 80);
+    expect(plane.loaded).toBe(true);
+    expect(plane.x).toBeLessThan(0);
   });
 });
 

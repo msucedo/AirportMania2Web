@@ -6,7 +6,7 @@ import { TextureStore } from './engine/textures';
 import { LevelScene } from './game/levelScene';
 import { LevelSelect } from './game/levelSelect';
 import { Progress } from './game/progress';
-import { ARCHES } from './game/stages/arches';
+import { STAGES } from './game/stages';
 
 declare global {
   interface Window {
@@ -16,15 +16,17 @@ declare global {
   }
 }
 
-const STAGE = 1;
-
-/** Screens are separate page loads: `?level=N` plays a level, no level shows the stage screen. */
-function navigate(level: number | null): void {
+/**
+ * Screens are separate page loads: `?stage=S&level=N` plays a level, no level shows the stage
+ * screen. `?reset` is dropped on navigation so it only applies once.
+ */
+function navigate(stage: number, level: number | null): void {
   const params = new URLSearchParams(location.search);
+  params.delete('reset');
+  params.set('stage', String(stage));
   if (level === null) params.delete('level');
   else params.set('level', String(level));
-  const query = params.toString();
-  location.href = `${location.pathname}${query ? `?${query}` : ''}`;
+  location.href = `${location.pathname}?${params.toString()}`;
 }
 
 async function main(): Promise<void> {
@@ -39,28 +41,33 @@ async function main(): Promise<void> {
   if (params.has('reset')) progress.reset();
   window.progress = progress;
 
-  const levels = data.areas.get(STAGE)!.levelsCount;
+  const stageWanted = Number.parseInt(params.get('stage') ?? '1', 10);
+  const stage = STAGES.has(stageWanted) ? stageWanted : 1;
+  const layout = STAGES.get(stage)!;
+  const levels = data.areas.get(stage)!.levelsCount;
   const requested = Number.parseInt(params.get('level') ?? '', 10);
   const level = Number.isInteger(requested) && requested >= 1 && requested <= levels ? requested : null;
 
   if (level === null) {
     await LevelSelect.create(app, data, textures, {
-      stage: STAGE,
-      layout: ARCHES,
+      stage,
+      layout,
       strings: await data.strings(chosen),
       progress,
-      onPlay: navigate,
+      stages: [...STAGES.keys()].map((s) => ({ stage: s, open: progress.stageUnlocked(s, data.areas.get(s - 1)?.levelsCount ?? 0) })),
+      onPlay: (next) => navigate(stage, next),
+      onStage: (next) => navigate(next, null),
     });
   } else {
     const audio = new AudioPlayer(data.resources);
     audio.muted = params.has('mute');
     window.game = await LevelScene.create(app, data, textures, audio, {
-      stage: STAGE,
+      stage,
       level,
-      layout: ARCHES,
+      layout,
       language: chosen,
       progress,
-      onNavigate: navigate,
+      onNavigate: (next) => navigate(stage, next),
       showNodes: params.has('nodes'),
     });
   }
