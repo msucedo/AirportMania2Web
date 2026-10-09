@@ -208,7 +208,7 @@ export class LevelScene {
     }
     if (this.hud.contains(y)) return;
     if (first) {
-      this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.BONUS_X2']);
+      this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.BONUS_X2', 'SOUNDS.CASH']);
       for (const plane of new Set(this.sim.planes.map((p) => p.descriptor))) this.audio.preload(Object.values(plane.sounds).filter((id) => !id.includes('%')));
     }
     const chooser = this.paused ? undefined : [...this.choosers.values()].find((c) => c.contains(x, y));
@@ -526,6 +526,8 @@ export class LevelScene {
         this.planeSound(event.plane, 'Out');
         break;
       case 'score':
+        // Every award and penalty rings the till (0x5d2c, 0x5de0).
+        this.audio.play('SOUNDS.CASH');
         if (event.multiplier > 1) this.audio.play(`SOUNDS.BONUS_X${event.multiplier}`);
         break;
       default:

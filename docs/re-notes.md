@@ -890,8 +890,25 @@ State 0 with a phase in `plane+0x330` (`0x6f78`); the flight speed is 80 (`0x177
 - Phase 2: the mirror turn, `x = 100 − sin(πt)·80/1.5`, back to y 680 and scale 0.8, phase 0.
 - Stop spot touch area: ±35 × ±20 around its position (`0x7921e`, same in `0x78d44`).
 
+## Taxiing — confirmed
+
+State 3 (`0x74bc`): the plane accelerates at 200 px/s² (`0x1772b8`) towards its current node, up
+to 200 px/s (`0x1772bc`), and brakes at the same rate once the path left (`+0x234`) is no more
+than `v² / 400`. It arrives when the node is within 1 px along its direction of travel. Each
+node it heads for is marked taken (`node+0xc`), which the router (`0x46200`) reads; the web
+version does not model that.
+
+## Plane sounds by event — confirmed
+
+- Spoken need: see `Plane::say`. Landing: `GoingOut`, `Landing`, `TouchingLand` (see Landing).
+- Take-off run (`0x6110`): `Launching`. Giving up (`0x6a24`): `Out`.
+- Unloading (`0x6378`): the cached `Unloading` handle; loading (`0x62cc`): `Loading`.
+- Points awarded (`0x5d2c`, from the runway, gate, gas station and hangar) and the penalty for
+  giving up (`0x5de0`): `SOUNDS.CASH` (`plane+0x30`). A combo also plays `SOUNDS.BONUS_X%d`
+  (`0x4342c`, `0x6d71c`).
+
 ## Still unknown
 
-- Plane update (`0x6af0`): state 10; taxi speed.
+- Plane update (`0x6af0`): state 10.
 - Taxi node occupancy (set as planes claim nodes) and the stop-spot nodes: not modelled.
 - The exact loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
