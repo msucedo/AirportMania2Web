@@ -57,8 +57,11 @@ export interface StageLayout {
     layers: BackdropLayer[];
   };
   decorations: { resource: string; position: Point }[];
-  /** Extra sprites drawn with every gate, relative to it; `front` ones go over the planes. */
-  gateDecorations: { resource: string; offset: Point; front: boolean }[];
+  /**
+   * Extra sprites drawn with every gate, relative to it. One with a `depth` is sorted among the
+   * planes as if it stood that far below the gate, so it covers a plane docked there.
+   */
+  gateDecorations: { resource: string; offset: Point; depth?: number }[];
   gates: GateSlot[];
   gasStation: { position: Point; minLevel: number };
   /** Repair hangar, when the stage has one. */

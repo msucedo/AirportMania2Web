@@ -59,6 +59,8 @@ export interface PlaneDescriptor {
   pantoons: AttachedPart[];
   rail: { alwaysDown: boolean; parts: AttachedPart[] } | null;
   eyebrows: PairPlacement[];
+  /** In the back view the eyebrows are drawn behind the body instead of over it. */
+  eyebrowsBehindWhenBack: boolean;
   eyelashes: PairPlacement[];
   propellers: Propeller[][];
   bubble: Point;
@@ -142,6 +144,7 @@ function parsePlane(node: XmlNode): PlaneDescriptor {
     pantoons: byPerspective(child(node, 'Pantoons'), attached),
     rail: rail ? { alwaysDown: bool(rail, 'AlwaysDown'), parts: byPerspective(rail, attached) } : null,
     eyebrows: byPerspective(child(node, 'Eyebrows'), pair),
+    eyebrowsBehindWhenBack: bool(child(node, 'Eyebrows') ?? { t: '', a: {}, c: [] }, 'DrawEyeBrowsFirstWhenTurnedBack', false),
     eyelashes: byPerspective(child(node, 'Eyelashes'), pair),
     propellers,
     bubble: point(requireChild(node, 'BubblePosition')),

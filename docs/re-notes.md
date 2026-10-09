@@ -274,12 +274,19 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 
 ## Colours and sounds
 
-- Colour table: the gate and plane renderers read RGBA floats from `level + 0x1e0 + colour * 16`
-  (and a second set at `+0x270`). `0x12ddc` copies 0x120 bytes there from
-  `level + 0x300 + palette * 0x120`, with the palette index taken from the profile
-  (`0x827a8()+0x50`). Where that source table is filled has not been found: `0xf37c` and `0x12f90`
-  are not it. The only constant RGBA float data found is a long run of whites around `0x14c190`–`0x14c380`
-  (defaults, not a palette). The web version keeps placeholder tints.
+- Colour table (confirmed): the renderers read RGBA floats from `airport + 0x1e0 + colour * 16`
+  (main) and `+0x270` (shade), where `airport` is `*(0x2ef4() + 0xfc)`. `0x12ddc` copies 0x120
+  bytes there from `airport + 0x300 + palette * 0x120`, the palette index coming from the profile
+  (`0x827a8()+0x50`). `0xcc6ac` fills the source tables with immediates. Palette 0, main/shade:
+  0 `c8c8c8` (no colour), 1 blue `70a9ff`/`5d9eff`, 2 orange `ffb05a`/`ff7b00`, 3 green
+  `bde26c`/`8db92d`, 4 cyan `8ad8c1`/`60cdd7`, 5 pink `f38fe0`/`f389bb`, 6 yellow
+  `e3c53a`/`f9ff31`, 7 violet `c789f3`/`9764f3`, 8 `646464` (president). Palettes 1 and 2 are
+  flat, high-contrast sets for the colour help option and are not used by the web version.
+- Colour names map to indices in the order of the strings at `0x16bfb0`: BLUE, ORANGE, GREEN,
+  CYAN, PINK, YELLOW, VIOLET (1–7).
+- Two-colour draw (`0x84440`): the surface is drawn as one quad with per-vertex colours, main at
+  one corner, shade at the opposite one and their average at the other two. Which corner is which
+  is inferred from the rectangle fields (main top-left, shade bottom-right).
 - Sounds (confirmed ids): `SOUNDS.SELECT_PLANE`, `SOUNDS.PLACE_CLICK`, `SOUNDS.FORBIDDEN_CLICK`,
   `SOUNDS.QUEUE_CANCEL`, `SOUNDS.REROUTING` in the click handler; `SOUNDS.BONUS_X%1d` in the gate
   and runway; the plane's own sounds come from its descriptor's `Sounds` element. Which descriptor
@@ -311,11 +318,38 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 - Resources loaded by `0x45e4`: body layers per perspective, eyes, `PLANE.MOUTH.%d`, eyebrows and
   eyelashes (with female and remark variants), propellers, `INDICATORS.ENERGY.%d` (8 frames),
   thought bubbles `INDICATORS.THOUGHT_A`–`D` with `INDICATORS.ICONS.%d`, and the globe.
-- The draw (`0x89e0`) indexes every part array by `+0x324`. The energy bar offset is the
-  descriptor value times a 0..1 plane factor (`+0x29c`).
-- Not read: layer order, which energy frame is shown for which energy, mouth and eyebrow
-  selection, blinking, and the thought bubble's layout (its icon is the need code). The web
-  version assumes these.
+- Draw order (`0x89e0`, confirmed): shadow (alpha `1 - altitude / 50`, not drawn above 50);
+  when selected, the remark outlines of body, eyebrows, eyelashes and gear or pontoons, tinted
+  with the plane's colour pulsing to white by `clamp(sin(12 t) + 0.5)`; rear propellers; landing
+  gear; in the back view the eyelashes and, with `DrawEyeBrowsFirstWhenTurnedBack`, the eyebrows;
+  colour layer (two-colour draw); line art; dirt while a wash is pending; eyebrows; eyelashes
+  (females); mouth; eyes; front propellers (`0x963c`); pontoons; passenger icon; thought bubble
+  (`0x9740`); energy bar.
+- Energy bar: `v = min(7.99, energy * 8)`, nothing at or below 0. With `f = floor(v)`: if the
+  fraction is 0.5 or more frame `f` is drawn; otherwise frame `f - 1` and, over it, frame `f`
+  with alpha following a triangle wave of `fraction * 14`. It moves 16 px aside when a passenger
+  icon is shown.
+- Mood (`0x869a`): energy below 0.3 → 3, below 0.5 → 2, below 0.7 → 1, else 0. Mouths 0, 1, 2
+  and 4; eyebrow tilt 0°, 0°, 10° and 25°, approached at 50°/s (`0x1772cc`), the right eyebrow
+  mirrored.
+- Mouth animations override the mood mouth (`plane+0x40`, frames per second and mouth indices):
+  talking `0x13d798` (16 fps: 9 10 11 7 8 7 10 9 10 11 7 8 7 10), played with the plane's voice
+  (`0x5bd4`, `0x5f28`, `0x6a24`); cheering `0x13d848` (14 fps: 5 6 6 6 6 6 6 6 6 5) from
+  `Plane::addEnergy` (`0x9b18`), which also raises the eyebrows, turns the eyes for a second and
+  schedules a blink within 0.5 s; whistling `0x13d7f0` (6 fps, mouths 12–17) with `Whistle1/2`
+  from `0x5fd0`, for a plane above 0.5 energy in a state not identified (not in the web version).
+- Eyebrow raise (`+0x200`/`+0x204`): the value climbs at 3/s to 1 and falls back; the eyebrows
+  move up by `6 * v^0.7`, at most 3 px, and the tilt is scaled by `min(0.5, v^0.7)` meanwhile.
+- Eyes: shut while the blink timer is at or under 0.1 s; the timer restarts at a random 5–10 s
+  (`0x1772c4`, `0x1772c0`). They shift by the descriptor's `Movement` times a 0..1 value
+  (`+0x29c`, 4/s) that is on while the plane waits with no orders or just spoke or cheered.
+- Propellers: two frames, `(floor(t * 15) + number) % 2`. Landing gear: three frames advanced by
+  `speed * dt * 0.2` on the ground; drawn squashed by `g * (2 - g)` while folding; folded on
+  entering state 12 unless `AlwaysDown`. Pontoons replace the gear when `plane+0x24c` is set.
+- Energy drain (`0x8906`): the rate is doubled for planes with a special passenger and
+  multiplied by the place's factor (`place+0x6c`) and the profile's difficulty (`+0x48`).
+- Web version: gear fold rate (4/s) and selection fade are assumed; dirt, the passenger icon and
+  the whistle are not drawn; the thought bubble layout is still the assumed one.
 
 ## Gate, runway and order flag drawing
 
@@ -467,5 +501,4 @@ Vtable `0x17a8e8`, kind 5.
 - Where exactly a landing plane stops and when the runway is freed; the simulation stops it at the runway node.
 - Whether a busy front place makes the plane wait (assumed) and the queue reordering at `0x797e`.
 - How the level ends relative to `TotalTime`; `PATIENCE_VALUES.*` / `SPEED_VALUES.*`.
-- Plane and gate tint colours: the source of the colour table (see above).
 - Whether the renderer really uses `.cgf` grey images as opacity masks; clouds and sky lights.

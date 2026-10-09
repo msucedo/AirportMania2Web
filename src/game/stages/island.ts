@@ -26,8 +26,8 @@ export const ISLAND: StageLayout = {
   },
   decorations: [],
   gateDecorations: [
-    { resource: 'GATES.STOPSPOT_ISLAND_BACK', offset: { x: -25, y: 30 }, front: false },
-    { resource: 'GATES.STOPSPOT_ISLAND_FRONT', offset: { x: -25, y: 30 }, front: true },
+    { resource: 'GATES.STOPSPOT_ISLAND_BACK', offset: { x: -25, y: 30 } },
+    { resource: 'GATES.STOPSPOT_ISLAND_FRONT', offset: { x: -25, y: 30 }, depth: 35 },
   ],
   gates: [
     { letter: 'A', position: { x: 135, y: 135 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_GATE_A },

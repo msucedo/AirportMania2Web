@@ -68,6 +68,34 @@ export class TextureStore {
     return texture;
   }
 
+  /**
+   * A surface multiplied by a colour that runs from `main` at the top-left corner to `shade` at
+   * the bottom-right one, as the engine's two-colour draw does with per-vertex colours (0x84440).
+   */
+  gradient(id: string, main: number, shade: number): Texture {
+    const key = `${id}#${main.toString(16)}-${shade.toString(16)}`;
+    const cached = this.textures.get(key);
+    if (cached) return cached;
+    const image = this.pixels(id);
+    const data = image.data;
+    const from = [main >> 16, (main >> 8) & 0xff, main & 0xff];
+    const to = [shade >> 16, (shade >> 8) & 0xff, shade & 0xff];
+    for (let y = 0; y < image.height; y++) {
+      for (let x = 0; x < image.width; x++) {
+        const t = (x / image.width + y / image.height) / 2;
+        const i = (y * image.width + x) * 4;
+        for (let c = 0; c < 3; c++) data[i + c] = (data[i + c]! * (from[c]! + (to[c]! - from[c]!) * t)) / 255;
+      }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    canvas.getContext('2d')!.putImageData(image, 0, 0);
+    const texture = Texture.from(canvas);
+    this.textures.set(key, texture);
+    return texture;
+  }
+
   /** Average colour of one pixel row of a surface, as 0xRRGGBB. */
   rowColor(id: string, row: number): number {
     const image = this.pixels(id);

@@ -6,6 +6,7 @@ import { loadFonts } from '../engine/fonts';
 import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
+import { paletteColor } from './palette';
 import { PlaneView, planeSurfaceIds } from './planeView';
 import type { Progress } from './progress';
 import { FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
@@ -18,10 +19,7 @@ import { PlaneState } from './sim/rules';
 import { Simulation, type Gate, type Hangar, type Plane, type SimEvent } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
-// Tints are placeholders: the original colour table is compiled into the binary and not read yet.
-const PROVISIONAL_TINTS: Record<string, number> = { BLUE: 0x4aa3ff, PINK: 0xff7fc0, GREEN: 0x6fd36f, CYAN: 0x5fe0e0 };
-const NEUTRAL_TINT = 0xd0d0d0;
-const tintOf = (color: PlaneColor | null): number => (color ? (PROVISIONAL_TINTS[color] ?? NEUTRAL_TINT) : NEUTRAL_TINT);
+const tintOf = (color: PlaneColor | null): number => paletteColor(color).main;
 
 const STEP = 1 / 60;
 
@@ -115,7 +113,7 @@ export class LevelScene {
       ids.add(`RUNWAY.NUMBER_${runway.number}`);
     }
     for (const spawn of schedule.planes) {
-      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, layout.pontoons)) ids.add(id);
+      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, spawn.sex === 'FEMALE', layout.pontoons)) ids.add(id);
     }
     const [strings] = await Promise.all([
       data.strings(options.language),
@@ -152,6 +150,7 @@ export class LevelScene {
     const voiced = pattern.includes('%s');
     const pitch = voiced ? (plane.sex === 'MALE' ? plane.descriptor.pitch.male : plane.descriptor.pitch.female) : 1;
     this.audio.play(pattern.replace('%s', plane.sex), { pitch });
+    if (voiced) this.planeViews.get(plane.id)?.talk();
   }
 
   /** Advances the simulation in fixed steps and redraws. */
@@ -214,7 +213,12 @@ export class LevelScene {
       for (const extra of layout.gateDecorations) {
         const sprite = this.textures.sprite(extra.resource);
         sprite.position.set(gate.position.x + extra.offset.x, gate.position.y + extra.offset.y);
-        (extra.front ? this.overlay : this.ground).addChild(sprite);
+        if (extra.depth === undefined) this.ground.addChild(sprite);
+        else {
+          // Sorted with the planes; the half pixel puts it over a plane docked at the same depth.
+          sprite.zIndex = gate.position.y + extra.depth + 0.5;
+          this.planeLayer.addChild(sprite);
+        }
       }
       const view = new GateView(this.textures, gate, gate.letter.charCodeAt(0) - 65);
       this.ground.addChild(view);
@@ -353,7 +357,7 @@ export class LevelScene {
         continue;
       }
       if (!view) {
-        view = new PlaneView(this.textures, plane.descriptor, tintOf(plane.color), this.options.layout.pontoons);
+        view = new PlaneView(this.textures, plane.descriptor, paletteColor(plane.color), plane.sex === 'FEMALE', this.options.layout.pontoons);
         this.planeLayer.addChild(view);
         this.planeViews.set(plane.id, view);
       }
@@ -366,7 +370,16 @@ export class LevelScene {
       const draining = plane.state === PlaneState.FLYING || plane.state === PlaneState.WAITING;
       // The bubble shows what the plane wants next while it has no orders (0x5f28).
       const idle = draining && !plane.landing && plane.queue.length === 0;
-      view.update(seconds, plane.heading, plane.altitude, plane.scale, plane.selected, draining ? plane.energy : null, idle ? plane.need : null);
+      view.update(seconds, {
+        heading: plane.heading,
+        altitude: plane.altitude,
+        scale: plane.scale,
+        selected: plane.selected,
+        energy: plane.energy,
+        need: idle ? plane.need : null,
+        idle: plane.state === PlaneState.WAITING && plane.queue.length === 0,
+        gearDown: plane.state !== PlaneState.AIRBORNE && (plane.state !== PlaneState.FLYING || plane.landing),
+      });
     }
     this.planeLayer.sortableChildren = true;
 
