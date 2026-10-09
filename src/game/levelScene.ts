@@ -1,4 +1,4 @@
-import { Container, Graphics, type Application, type FederatedPointerEvent } from 'pixi.js';
+import { Container, Graphics, type Application, type Sprite, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
 import type { Language, Strings } from '../data/strings';
@@ -52,7 +52,7 @@ export class LevelScene {
   /** Per plane: where it was last frame and how long until its next ring on the water. */
   private readonly wakes = new Map<number, { x: number; y: number; next: number }>();
   private readonly stationViews: GasStationView[] = [];
-  private readonly hangarBars: { hangar: Hangar; bar: Graphics }[] = [];
+  private readonly hangarPanels: { hangar: Hangar; panel: Container; ticks: Sprite[] }[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating = new FloatingTexts();
   private readonly hud: Hud;
@@ -115,6 +115,8 @@ export class LevelScene {
     for (const hangar of sim.hangars) {
       ids.add(hangar.descriptor.surfaces.back);
       ids.add(hangar.descriptor.surfaces.front);
+      ids.add('HANGARS.PROGRESS');
+      ids.add('HANGARS.PROGRESS_TICK');
     }
     for (const runway of sim.runways) {
       ids.add(runway.descriptor.backSurface);
@@ -238,10 +240,19 @@ export class LevelScene {
       back.position.copyFrom(hangar.position);
       const front = this.textures.sprite(hangar.descriptor.surfaces.front);
       front.position.copyFrom(hangar.position);
-      const bar = new Graphics();
+      // Checklist shown while a plane is serviced (0x47710): a panel and four ticks down it.
+      const panel = new Container();
+      panel.position.set(hangar.position.x + 34, hangar.position.y + 20);
+      panel.addChild(this.textures.sprite('HANGARS.PROGRESS'));
+      const ticks = [0, 1, 2, 3].map((i) => {
+        const tick = this.textures.sprite('HANGARS.PROGRESS_TICK');
+        tick.position.set(-9 + 2 * i, -10 + 7 * i);
+        panel.addChild(tick);
+        return tick;
+      });
       this.ground.addChild(back);
-      this.overlay.addChild(front, bar);
-      this.hangarBars.push({ hangar, bar });
+      this.overlay.addChild(front, panel);
+      this.hangarPanels.push({ hangar, panel, ticks });
     }
     for (const station of this.sim.gasStations) {
       const view = new GasStationView(this.textures, station);
@@ -347,15 +358,17 @@ export class LevelScene {
     this.rings?.update(elapsed);
     for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
-    for (const { hangar, bar } of this.hangarBars) {
-      // Plain progress bar: the original uses HANGARS.PROGRESS sprites that this stage's group does not ship.
-      bar.clear();
+    for (const { hangar, panel, ticks } of this.hangarPanels) {
       const plane = hangar.plane;
-      if (hangar.use === 'working' && plane) {
-        const fraction = Math.min(1, hangar.progress / plane.descriptor.times.servicing);
-        bar.rect(hangar.position.x - 21, hangar.position.y - 56, 42, 6).fill(0x1b2a3a);
-        bar.rect(hangar.position.x - 20, hangar.position.y - 55, 40 * fraction, 4).fill(0xffb347);
-      }
+      panel.visible = hangar.use === 'working' && plane !== null;
+      if (!panel.visible || !plane) continue;
+      ticks.forEach((tick, i) => {
+        // A tick lands at each quarter of the job and pops in with a wobble.
+        const since = hangar.progress * 4 - (plane.descriptor.times.servicing - 1) * (i + 1);
+        tick.visible = since >= 0;
+        const t = since * 2;
+        tick.scale.set(since < 0.5 ? t * (Math.sin(t * Math.PI * 4) + 1) * (1 - t) + t : 1);
+      });
     }
     const selected = this.sim.selected;
     this.flags.update(selected, selected ? tintOf(selected.color) : 0xffffff);

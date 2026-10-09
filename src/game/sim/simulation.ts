@@ -79,8 +79,10 @@ export interface Hangar extends PlaceBase {
   kind: 'hangar';
   position: Point;
   descriptor: HangarDescriptor;
-  /** Original `hangar+0x78`: 0 free, 1 reserved, 2 working, 3/4 finished and waiting for the plane to leave. */
-  use: 'free' | 'reserved' | 'working' | 'done';
+  /** Original `hangar+0x78`: 0 free, 1 reserved, 2 working, 3 plane rolling out, 4 paid and waiting to leave. */
+  use: 'free' | 'reserved' | 'working' | 'leaving' | 'done';
+  /** Where a serviced plane waits (`hangar+0x88`). */
+  exitTaxiNode: TaxiNode;
   /** Seconds of the plane's servicing time already worked off. */
   progress: number;
 }
@@ -260,13 +262,15 @@ export class Simulation {
       const { x, y } = layout.hangar.position;
       const node = { x: x + hangarDescriptor.node.x, y: y + hangarDescriptor.node.y };
       const click = hangarDescriptor.click;
+      const hangarNodes = this.graph.addHangar(node);
       this.hangars.push({
         kind: 'hangar',
         id: 'hangar',
         position: layout.hangar.position,
         descriptor: hangarDescriptor,
         node,
-        taxiNode: this.graph.addHangar(node),
+        taxiNode: hangarNodes.hangar,
+        exitTaxiNode: hangarNodes.exit,
         click: { x1: x + click.x1, y1: y + click.y1, x2: x + click.x2, y2: y + click.y2 },
         plane: null,
         use: 'free',
@@ -640,6 +644,8 @@ export class Simulation {
     if (this.busy(place, plane)) return;
     plane.queue.shift();
     const previous = plane.place;
+    // A serviced plane stands at the hangar's exit node, not inside it.
+    const from = previous?.kind === 'hangar' && previous.use === 'done' ? previous.exitTaxiNode : previous?.taxiNode;
     // The original frees a place once its plane is no longer waiting on it.
     if (previous && previous !== place && previous.plane === plane) this.release(previous);
     this.reserve(place, plane);
@@ -659,7 +665,7 @@ export class Simulation {
     }
     plane.state = PlaneState.TAXIING;
     plane.speed = 0;
-    const route = previous ? this.graph.route(previous.taxiNode, place.taxiNode) : null;
+    const route = from ? this.graph.route(from, place.taxiNode) : null;
     // Skip the node the plane is standing on; fall back to a straight line if no route exists.
     plane.path = route ? route.slice(1).map((n) => ({ x: n.x, y: n.y })) : [place.node];
   }
@@ -717,7 +723,12 @@ export class Simulation {
     }
     if (place.kind === 'gate') this.gateArrival(place, plane);
     else if (place.kind === 'gasStation') this.gasStationArrival(place, plane);
-    else if (place.kind === 'hangar') {
+    else if (place.kind === 'hangar' && place.use === 'leaving') {
+      // Out at the exit node: the hangar pays and waits for the plane to move on (0x472f4).
+      place.use = 'done';
+      plane.state = PlaneState.WAITING;
+      this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.hangar), 1, 'service');
+    } else if (place.kind === 'hangar') {
       // `Hangar::planeArrived` (0x47234).
       place.progress = 0;
       place.use = 'working';
@@ -886,9 +897,8 @@ export class Simulation {
   }
 
   /**
-   * `Hangar::update` (0x473dc). The original then sends the plane to an exit node and pays the
-   * points (0x472f4) once it is waiting there; here the plane waits at the hangar node and is paid
-   * at once.
+   * `Hangar::update` (0x473dc): when the work is done the plane rolls out to the exit node, and
+   * the points are paid once it is waiting there (0x472f4, handled on arrival in `updateTaxi`).
    */
   private updateHangar(hangar: Hangar, dt: number): void {
     const plane = hangar.plane;
@@ -896,13 +906,14 @@ export class Simulation {
     hangar.progress += hangar.descriptor.speed * dt;
     if (hangar.progress <= plane.descriptor.times.servicing) return;
 
-    hangar.use = 'done';
+    hangar.use = 'leaving';
     // `Plane::servicingFinished` (0x66c8).
     plane.serviceDone = true;
-    plane.state = PlaneState.WAITING;
     plane.need = !plane.gasDone ? Need.GAS : plane.luggageDone ? Need.LOAD : Need.LUGGAGE;
+    plane.state = PlaneState.TAXIING;
+    plane.speed = 0;
+    plane.path = [{ x: hangar.exitTaxiNode.x, y: hangar.exitTaxiNode.y }];
     this.emit({ type: 'serviceFinishedAtHangar', plane, hangar });
-    this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.hangar), 1, 'service');
   }
 
   /** Place virtual slot 9 (gate `0x435c0`, runway `0x6db0c`, gas station `0x40dcc`). */

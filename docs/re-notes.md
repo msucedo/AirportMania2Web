@@ -530,8 +530,14 @@ Vtable `0x17a8e8`, kind 5.
   goes to state 4; it frees itself when the plane leaves state 2.
 - The gas station and the gate accept an unloaded plane with servicing pending only if a hangar
   is already in its itinerary.
-- Web version: the plane waits at the hangar node instead of rolling to an exit node, is paid at
-  once, and the hangar's own taxi nodes are a guess.
+- Constructor (`0x46c14`): besides the place node at position + `NodePosition` it adds the exit
+  node (`+0x88`) 10 px right and 20 px below it, and pass-through nodes at (−10, +30) and
+  (+50, +30). Which pairs are linked is assumed in the web version.
+- Draw (`0x47678`): while a plane is serviced, `HANGARS.PROGRESS` at position + (34, 20) and four
+  `HANGARS.PROGRESS_TICK`s at (−9, −10), (−7, −3), (−5, 4) and (−3, 11) from it. Tick i (1–4)
+  shows once `progress × 4 ≥ (ServicingTime − 1) × i` and pops in over half a unit of that value.
+- Web version: the plane is drawn at the middle of the building while it is serviced instead of
+  being walked in.
 
 ## Still unknown
 

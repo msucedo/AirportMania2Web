@@ -35,7 +35,7 @@ try {
   await sleep(500); await page.screenshot({ path: `${outDir}/H-wants-service.png` });
   await page.evaluate(() => { const sim = window.game.sim; sim.addOrder(window.servicePlane, sim.hangars[0]); });
   log('in the hangar', await until('in hangar', 'window.servicePlane.state === 6'));
-  await page.evaluate(() => { const sim = window.game.sim; for (let i = 0; i < 180; i++) sim.update(1 / 60); });
+  await page.evaluate(() => { const sim = window.game.sim; for (let i = 0; i < 330; i++) sim.update(1 / 60); });
   await sleep(400); await page.screenshot({ path: `${outDir}/H-in-hangar.png` });
   log('service done', await until('service done', 'window.servicePlane.serviceDone'));
   console.log('problems:', problems.length ? problems : 'none');

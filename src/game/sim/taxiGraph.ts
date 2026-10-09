@@ -100,17 +100,20 @@ export class TaxiGraph {
   }
 
   /**
-   * A hangar's node with two pass-through nodes in front. The constructor (0x46c14) builds its own
-   * nodes and five links that have not been read; this mirrors the gas station's arrangement.
+   * A hangar's node and the nodes its constructor adds (0x46e44): the exit node 10 px right and
+   * 20 px below, where a serviced plane waits, and two pass-through nodes beside it. The pairs
+   * linked are assumed.
    */
-  addHangar(node: Point): TaxiNode {
+  addHangar(node: Point): { hangar: TaxiNode; exit: TaxiNode } {
     const hangar = this.addNode(node, true);
-    const right = this.addNode({ x: node.x + 22, y: node.y + 12 }, false);
-    const left = this.addNode({ x: node.x - 22, y: node.y + 12 }, false);
-    this.link(hangar, right);
-    this.link(hangar, left);
-    this.link(right, left);
-    return hangar;
+    const exit = this.addNode({ x: node.x + 10, y: node.y + 20 }, false);
+    const left = this.addNode({ x: node.x - 10, y: node.y + 30 }, false);
+    const right = this.addNode({ x: node.x + 50, y: node.y + 30 }, false);
+    this.link(hangar, exit);
+    this.link(exit, left);
+    this.link(exit, right);
+    this.link(left, right);
+    return { hangar, exit };
   }
 
   /**

@@ -539,6 +539,10 @@ describe('simulation, stage 2 (island)', () => {
     const started = sim.time;
     runUntil(sim, () => plane.serviceDone, 60, events);
     expect(sim.time - started).toBeCloseTo(plane.descriptor.times.servicing, 1);
+    // It rolls out to the exit node and is paid there.
+    expect(events.some((e) => e.type === 'score' && e.reason === 'service')).toBe(false);
+    runUntil(sim, () => plane.state === PlaneState.WAITING, 10, events);
+    expect({ x: plane.x, y: plane.y }).toEqual({ x: 190, y: 137 });
     expect(plane.need).toBe(needsGas ? Need.GAS : Need.LOAD);
     const award = events.filter((e) => e.type === 'score' && e.reason === 'service' && e.plane === plane) as { points: number }[];
     expect(award).toHaveLength(1);
