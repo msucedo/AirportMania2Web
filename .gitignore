@@ -6,3 +6,5 @@ src/data/generated/
 
 # Reverse-engineering work directory (binary and disassembly).
 .re/
+.tools/
+public/assets-hd/

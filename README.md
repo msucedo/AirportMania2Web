@@ -41,6 +41,16 @@ The rules come from the original binary. What was read, what is assumed and what
 placeholder (some draw details, the payout rule) is tracked
 in `docs/re-notes.md` and `src/game/sim/rules.ts`.
 
+## Sharper images (optional)
+
+The original art is made for a 480×320 screen. `python3 tools/upscale-assets.py` builds an
+enlarged copy of every image with Real-ESRGAN (`realesrgan-x4plus-anime`, stored at twice the
+size in `public/assets-hd/`, which is not committed). When that folder exists the game uses it;
+`?hd=0` switches back to the original pixels and `?hd=1` on again, and the choice is remembered.
+The enlarged art is an interpretation by the model, not the original drawing. The script needs
+Pillow and the Real-ESRGAN command-line build in `.tools/realesrgan/`; restart the dev server
+after running it.
+
 ## Layout
 
 - `tools/import-assets.mjs` — copies assets and converts the data XML to JSON.

@@ -2,7 +2,7 @@ import { loadGameData } from './data/load';
 import { isLanguage } from './data/strings';
 import { AudioPlayer } from './engine/audio';
 import { createScreen } from './engine/screen';
-import { TextureStore } from './engine/textures';
+import { TextureStore, type EnlargedImages } from './engine/textures';
 import { LevelScene } from './game/levelScene';
 import { MainMenu } from './game/mainMenu';
 import { loadSettings, saveSettings } from './game/settings';
@@ -41,13 +41,30 @@ function navigate(stage: number | null, level: number | null, map?: number | '')
   location.href = `${location.pathname}?${params.toString()}`;
 }
 
+/** The enlarged images, if tools/upscale-assets.py has been run; otherwise the originals are used. */
+async function enlargedImages(): Promise<EnlargedImages | null> {
+  try {
+    const response = await fetch('assets-hd/manifest.json');
+    if (!response.ok) return null;
+    const manifest = (await response.json()) as { scale: number; files: string[] };
+    return { baseUrl: 'assets-hd/', scale: manifest.scale, files: new Set(manifest.files) };
+  } catch {
+    return null;
+  }
+}
+
 async function main(): Promise<void> {
   const host = document.getElementById('game')!;
   const params = new URLSearchParams(location.search);
   const data = await loadGameData();
   const app = await createScreen(host);
-  const textures = new TextureStore(data.resources);
   let settings = loadSettings();
+  // `?hd=0` and `?hd=1` switch the enlarged images off and on, and the choice is kept.
+  if (params.has('hd')) {
+    settings = { ...settings, enlarged: params.get('hd') !== '0' };
+    saveSettings(settings);
+  }
+  const textures = new TextureStore(data.resources, settings.enlarged ? await enlargedImages() : null);
   // `?lang=` overrides the language chosen in the options, for trying one out.
   const language = params.get('lang');
   const chosen = isLanguage(language) ? language : settings.language;

@@ -8,9 +8,11 @@ export interface Settings {
   sound: number;
   music: number;
   language: Language;
+  /** Use the enlarged images when they have been generated. */
+  enlarged: boolean;
 }
 
-const DEFAULTS: Settings = { sound: 1, music: 1, language: 'spanish' };
+const DEFAULTS: Settings = { sound: 1, music: 1, language: 'spanish', enlarged: true };
 const unit = (value: unknown, fallback: number): number => (typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : fallback);
 
 /** Reads stored settings, falling back to the defaults for anything missing or malformed. */
@@ -21,6 +23,7 @@ export function parseSettings(raw: string | null): Settings {
       sound: unit(stored.sound, DEFAULTS.sound),
       music: unit(stored.music, DEFAULTS.music),
       language: typeof stored.language === 'string' && isLanguage(stored.language) ? stored.language : DEFAULTS.language,
+      enlarged: typeof stored.enlarged === 'boolean' ? stored.enlarged : DEFAULTS.enlarged,
     };
   } catch {
     return { ...DEFAULTS };

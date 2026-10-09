@@ -88,9 +88,9 @@ describe('progress', () => {
 describe('settings', () => {
   it('falls back to the defaults for missing or malformed values', async () => {
     const { parseSettings } = await import('../src/game/settings');
-    expect(parseSettings(null)).toEqual({ sound: 1, music: 1, language: 'spanish' });
-    expect(parseSettings('not json')).toEqual({ sound: 1, music: 1, language: 'spanish' });
-    expect(parseSettings('{"sound":0.25,"music":7,"language":"klingon"}')).toEqual({ sound: 0.25, music: 1, language: 'spanish' });
-    expect(parseSettings('{"music":0,"language":"german"}')).toEqual({ sound: 1, music: 0, language: 'german' });
+    expect(parseSettings(null)).toEqual({ sound: 1, music: 1, language: 'spanish', enlarged: true });
+    expect(parseSettings('not json')).toEqual({ sound: 1, music: 1, language: 'spanish', enlarged: true });
+    expect(parseSettings('{"sound":0.25,"music":7,"language":"klingon"}')).toEqual({ sound: 0.25, music: 1, language: 'spanish', enlarged: true });
+    expect(parseSettings('{"music":0,"language":"german","enlarged":false}')).toEqual({ sound: 1, music: 0, language: 'german', enlarged: false });
   });
 });

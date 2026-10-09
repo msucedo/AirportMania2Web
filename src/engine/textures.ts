@@ -1,4 +1,4 @@
-import { Assets, Sprite, Texture } from 'pixi.js';
+import { Assets, CanvasSource, Sprite, Texture } from 'pixi.js';
 import type { Blending, Resources } from '../data/resources';
 
 const BLEND_MODES: Record<Blending, 'normal' | 'add'> = {
@@ -8,34 +8,59 @@ const BLEND_MODES: Record<Blending, 'normal' | 'add'> = {
   DECAL: 'normal',
 };
 
+/**
+ * An optional set of enlarged images (see tools/upscale-assets.py): the files that have one, and
+ * how many times larger they are. They are drawn at the original's size, with more pixels.
+ */
+export interface EnlargedImages {
+  baseUrl: string;
+  scale: number;
+  files: ReadonlySet<string>;
+}
+
+/** A texture made from a canvas that holds `resolution` pixels per unit of the game's layout. */
+function fromCanvas(canvas: HTMLCanvasElement, resolution: number): Texture {
+  return new Texture({ source: new CanvasSource({ resource: canvas, resolution }) });
+}
+
 /** Joins a colour image with the greyscale image that holds its opacity. */
 function withOpacity(color: Texture, opacity: Texture): Texture {
   const canvas = document.createElement('canvas');
-  canvas.width = color.width;
-  canvas.height = color.height;
+  canvas.width = color.source.pixelWidth;
+  canvas.height = color.source.pixelHeight;
   const context = canvas.getContext('2d', { willReadFrequently: true })!;
-  context.drawImage(opacity.source.resource as CanvasImageSource, 0, 0);
+  context.drawImage(opacity.source.resource as CanvasImageSource, 0, 0, canvas.width, canvas.height);
   const mask = context.getImageData(0, 0, canvas.width, canvas.height).data;
   context.drawImage(color.source.resource as CanvasImageSource, 0, 0);
   const image = context.getImageData(0, 0, canvas.width, canvas.height);
   for (let i = 0; i < mask.length; i += 4) image.data[i + 3] = mask[i]!;
   context.putImageData(image, 0, 0);
-  return Texture.from(canvas);
+  return fromCanvas(canvas, color.source.resolution);
 }
 
 /** Loads surfaces by resource id and builds sprites that honour their anchor and blending. */
 export class TextureStore {
   private readonly textures = new Map<string, Texture>();
 
-  constructor(private readonly resources: Resources) {}
+  constructor(
+    private readonly resources: Resources,
+    private readonly enlarged: EnlargedImages | null = null,
+  ) {}
+
+  /** Loads one image file, in its enlarged version when there is one. */
+  private file(file: string): Promise<Texture> {
+    const { enlarged } = this;
+    if (enlarged?.files.has(file)) return Assets.load<Texture>({ src: enlarged.baseUrl + file, data: { resolution: enlarged.scale } });
+    return Assets.load<Texture>(this.resources.url(file));
+  }
 
   async load(ids: Iterable<string>): Promise<void> {
     const pending: Promise<void>[] = [];
     for (const id of ids) {
       if (this.textures.has(id)) continue;
       const def = this.resources.surface(id);
-      const color = Assets.load<Texture>(this.resources.url(def.file));
-      const loaded = def.alpha ? Promise.all([color, Assets.load<Texture>(this.resources.url(def.alpha))]).then(([c, a]) => withOpacity(c, a)) : color;
+      const color = this.file(def.file);
+      const loaded = def.alpha ? Promise.all([color, this.file(def.alpha)]).then(([c, a]) => withOpacity(c, a)) : color;
       pending.push(
         loaded.then((texture) => {
           this.textures.set(id, texture);
@@ -55,8 +80,8 @@ export class TextureStore {
   private pixels(id: string): ImageData {
     const texture = this.texture(id);
     const canvas = document.createElement('canvas');
-    canvas.width = texture.width;
-    canvas.height = texture.height;
+    canvas.width = texture.source.pixelWidth;
+    canvas.height = texture.source.pixelHeight;
     const context = canvas.getContext('2d', { willReadFrequently: true })!;
     context.drawImage(texture.source.resource as CanvasImageSource, 0, 0);
     return context.getImageData(0, 0, canvas.width, canvas.height);
@@ -85,14 +110,15 @@ export class TextureStore {
     canvas.width = image.width;
     canvas.height = image.height;
     canvas.getContext('2d')!.putImageData(image, 0, 0);
-    const texture = Texture.from(canvas);
+    const texture = fromCanvas(canvas, this.texture(id).source.resolution);
     this.textures.set(key, texture);
     return texture;
   }
 
-  /** Average colour of one pixel row of a surface, as 0xRRGGBB. */
-  rowColor(id: string, row: number): number {
+  /** Average colour of one row of a surface, counted in the original's pixels, as 0xRRGGBB. */
+  rowColor(id: string, originalRow: number): number {
     const image = this.pixels(id);
+    const row = Math.min(image.height - 1, Math.round(originalRow * this.texture(id).source.resolution));
     let r = 0;
     let g = 0;
     let b = 0;
