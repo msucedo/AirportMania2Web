@@ -602,8 +602,11 @@ Vtable `0x17a8e8`, kind 5.
   and gives the price back. Sounds: `SOUNDS.IMPROVEMENTS_SCREEN`, `BUY_SOMETHING`, `CANNOT`,
   `CASH`. A hidden button adds 1,000,000 for the tester profile.
 - Not read: the list of items (a scrolling list widget, `0x4ca54`), the description's box, the
-  "try me" marker (`0x4da44`), and when the dialog is opened. The web version opens it before a
-  level whenever that level has funds or improvements, and reloads the level after a change.
+  "try me" marker (`0x4da44`).
+- The dialog object is made once at start-up (`0x4be20`, kept at `app+0x1b4`) and shown by
+  `Level::start` (`0xfe8c`) with `MUSICS.SHOPPING` before every level except the tutorial and
+  level 1 of stage 1; leaving it starts the level. The web version does the same and reloads the
+  level after a purchase or sale, to rebuild the airport.
 
 ## Main menu (`0x597b0`)
 

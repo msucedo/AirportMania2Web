@@ -8,7 +8,7 @@ assets: they are imported from your own extracted copy and are never committed.
 ```sh
 npm install
 npm run import-assets            # reads ~/Desktop/AirportMania2_Assets (or pass a path)
-npm run dev                      # http://localhost:5173  (?map opens the world map, ?map=2 centres it on a stage and ?stage=2&level=3 opens a level directly, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
+npm run dev                      # http://localhost:5173  (?map opens the world map, ?map=2 centres it on a stage and ?stage=2&level=3 opens a level directly, ?go skips the shop before a level, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
 npm test
 ```
 

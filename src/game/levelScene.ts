@@ -148,14 +148,17 @@ export class LevelScene {
 
     const scene = new LevelScene(textures, audio, strings, options, sim);
     app.stage.addChild(scene.root);
-    // The shop comes before the level whenever there is money to spend or something to sell.
-    const record = options.progress.record(options.stage, options.level);
-    if (!options.skipShop && layout.improvements.length > 0 && (record.funds > 0 || record.improvements.length > 0)) scene.openShop();
+    const levelMusic = (): void => audio.playMusic(`${area.music}.LOOP`, `${area.music}.INTRO`);
+    // The shop comes before every level except the very first (`Level::start`, 0xfe8c), with its
+    // own music. Music starts on the first press, once the browser allows audio.
+    const shop = !options.skipShop && layout.improvements.length > 0 && !(options.stage === 1 && options.level === 1);
+    if (shop) {
+      audio.playMusic('MUSICS.SHOPPING');
+      scene.openShop(levelMusic);
+    } else levelMusic();
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
     app.stage.on('pointerdown', (event: FederatedPointerEvent) => scene.press(event.global.x, event.global.y));
-    // The level music starts on the first press, once the browser allows audio.
-    audio.playMusic(`${area.music}.LOOP`, `${area.music}.INTRO`);
     app.ticker.add((ticker) => scene.frame(ticker.deltaMS / 1000));
     return scene;
   }
@@ -173,7 +176,7 @@ export class LevelScene {
   }
 
   /** The improvements shop for this level; a purchase or sale means building the airport again. */
-  private openShop(): void {
+  private openShop(onLeave: () => void): void {
     const { progress, stage, level, layout } = this.options;
     this.paused = true;
     this.audio.preload(IMPROVEMENTS_SOUNDS);
@@ -181,6 +184,7 @@ export class LevelScene {
       if (shop.changed) return this.options.onRebuild();
       this.dialog = null;
       this.paused = false;
+      onLeave();
       setTimeout(() => shop.destroy({ children: true }));
     });
     this.dialog = shop;
