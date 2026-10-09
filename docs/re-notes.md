@@ -278,7 +278,8 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   (and a second set at `+0x270`). `0x12ddc` copies 0x120 bytes there from
   `level + 0x300 + palette * 0x120`, with the palette index taken from the profile
   (`0x827a8()+0x50`). Where that source table is filled has not been found: `0xf37c` and `0x12f90`
-  are not it, and the binary holds no constant RGBA table other than nine whites at `0x14c2f0`.
+  are not it. The only constant RGBA float data found is a long run of whites around `0x14c190`–`0x14c380`
+  (defaults, not a palette). The web version keeps placeholder tints.
 - Sounds (confirmed ids): `SOUNDS.SELECT_PLANE`, `SOUNDS.PLACE_CLICK`, `SOUNDS.FORBIDDEN_CLICK`,
   `SOUNDS.QUEUE_CANCEL`, `SOUNDS.REROUTING` in the click handler; `SOUNDS.BONUS_X%1d` in the gate
   and runway; the plane's own sounds come from its descriptor's `Sounds` element. Which descriptor
@@ -344,6 +345,19 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 - The final report dialog layout is not reconstructed; the web summary uses the original
   strings, fonts and star sprites in its own layout.
 
+## Stage backdrop
+
+- `0x135f4(level, 82.0)` creates a `Sky` object (class name string `Sky`, constructor `0x74558`):
+  it sets up eight lights at fixed x positions (26, 93, 195, 240, 362, 523, 699, 764) and
+  `0x74358` draws colour bands across the 480 px width using components such as (0.6, 0.9, 1.0).
+  The exact band layout has not been read; the web version draws a gradient in those blues.
+- `0xcda08(82, 5)` spawns the clouds (`AMBIENT.CLOUD_1`–`3`). Not implemented yet.
+- `STAGES.ARCHES.BACKGROUND_TOP` is created as a plain `StaticImage` (`0x83e84`) at (0, 34). The
+  file is an 8-bit grey image; the web version treats it as a silhouette (brightness = opacity)
+  drawn in the colour of the ground tile's top row, which joins the ground without a seam. That
+  interpretation fits the art but is not confirmed in the renderer.
+- `STAGES.ARCHES.ARCH` is a `StaticZImage` (`0x842fc`) with a depth value of 600.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.
@@ -353,4 +367,4 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 - Whether a busy front place makes the plane wait (assumed) and the queue reordering at `0x797e`.
 - How the level ends relative to `TotalTime`; `PATIENCE_VALUES.*` / `SPEED_VALUES.*`.
 - Plane and gate tint colours: the source of the colour table (see above).
-- How `.cgf` greyscale backgrounds are composited.
+- Whether the renderer really uses `.cgf` grey images as opacity masks; clouds and sky lights.

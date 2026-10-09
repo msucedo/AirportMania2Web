@@ -15,8 +15,12 @@ npm test
 ## Status
 
 Stage 1, level 1 is playable: select a plane, send it to a runway, then to a gate (it unloads and
-loads there), then to a runway to take off. Orders can be queued. The rules come from the original binary; what was read and what
-is still a placeholder is tracked in `docs/re-notes.md` and `src/game/sim/rules.ts`.
+loads there), then to a runway to take off. Orders can be queued. It is drawn with the original
+HUD, fonts, texts, indicators and backdrop, and plays the original sounds and music.
+
+The rules come from the original binary. What was read, what is assumed and what is still a
+placeholder (plane colours, some draw details) is tracked in `docs/re-notes.md` and
+`src/game/sim/rules.ts`.
 
 ## Layout
 

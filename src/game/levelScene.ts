@@ -1,4 +1,4 @@
-import { Container, Graphics, type Application, type FederatedPointerEvent } from 'pixi.js';
+import { Container, Graphics, Sprite, type Application, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
 import type { Language, Strings } from '../data/strings';
@@ -145,12 +145,24 @@ export class LevelScene {
     down.position.copyFrom(layout.backgroundDown.position);
     down.scale.copyFrom(layout.backgroundDown.scale);
 
-    // The upper background is a greyscale mask in the original. Until its compositing is known,
-    // the ground tile is extended up to the HUD and the mask is left out.
-    const upper = this.textures.sprite(layout.backgroundDown.resource);
-    upper.position.set(0, HUD_HEIGHT);
-    upper.scale.set(layout.backgroundDown.scale.x, (layout.backgroundDown.position.y - HUD_HEIGHT) / upper.texture.height);
-    this.ground.addChild(upper, down);
+    // Behind everything the original draws a `Sky` object and clouds; the band colours have not been
+    // matched exactly, so this is a plain gradient in the same light blues.
+    const horizon = layout.backgroundDown.position.y;
+    const sky = new Graphics();
+    const bands = 24;
+    for (let i = 0; i < bands; i++) {
+      const t = i / (bands - 1);
+      const mix = (from: number, to: number): number => Math.round(from + (to - from) * t);
+      const color = (mix(0x5c, 0x99) << 16) | (mix(0xb4, 0xe6) << 8) | mix(0xf0, 0xff);
+      sky.rect(0, (horizon * i) / bands, SCREEN_WIDTH, horizon / bands + 1).fill(color);
+    }
+
+    // The upper background is an 8-bit grey image used as a silhouette: white is ground, black is
+    // sky. It is drawn in the colour of the ground tile's top edge so the two join seamlessly.
+    const upper = new Sprite(this.textures.alphaMask(layout.backgroundTop.resource));
+    upper.position.copyFrom(layout.backgroundTop.position);
+    upper.tint = this.textures.rowColor(layout.backgroundDown.resource, 0);
+    this.ground.addChild(sky, upper, down);
 
     for (const runway of this.sim.runways) {
       const sprite = this.textures.sprite(runway.descriptor.backSurface);
