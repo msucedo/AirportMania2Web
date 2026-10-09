@@ -1,11 +1,14 @@
-import { Container, Graphics, Text, type Application, type FederatedPointerEvent } from 'pixi.js';
+import { Container, Graphics, type Application, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
+import type { Language, Strings } from '../data/strings';
 import { loadFonts } from '../engine/fonts';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../engine/screen';
+import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { PlaneView, planeSurfaceIds } from './planeView';
+import { FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
+import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
@@ -20,15 +23,11 @@ const tintOf = (color: PlaneColor | null): number => (color ? (PROVISIONAL_TINTS
 
 const STEP = 1 / 60;
 
-interface FloatingText {
-  text: Text;
-  age: number;
-}
-
 export interface LevelOptions {
   stage: number;
   level: number;
   layout: StageLayout;
+  language: Language;
   showNodes?: boolean;
 }
 
@@ -42,7 +41,7 @@ export class LevelScene {
   private readonly gateViews: { gate: Gate; view: GateView }[] = [];
   private readonly flags: OrderFlags;
   private readonly planeViews = new Map<number, PlaneView>();
-  private readonly floating: FloatingText[] = [];
+  private readonly floating = new FloatingTexts();
   private readonly hud: Hud;
   private accumulator = 0;
   private endShown = false;
@@ -51,6 +50,7 @@ export class LevelScene {
   private constructor(
     private readonly textures: TextureStore,
     private readonly audio: AudioPlayer,
+    private readonly strings: Strings,
     private readonly options: LevelOptions,
     sim: Simulation,
   ) {
@@ -58,7 +58,7 @@ export class LevelScene {
     this.hud = new Hud(textures, sim.goals);
     this.hud.onPause = () => (this.paused = !this.paused);
     this.flags = new OrderFlags(textures);
-    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.hud);
+    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.floating, this.hud);
     this.build();
   }
 
@@ -78,7 +78,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT', ...HUD_SURFACES, ...ORDER_FLAG_SURFACES]);
+    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT', ...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES]);
     for (const decoration of layout.decorations) ids.add(decoration.resource);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
@@ -90,9 +90,13 @@ export class LevelScene {
     for (const spawn of schedule.planes) {
       for (const id of planeSurfaceIds(data.planes.get(spawn.type)!)) ids.add(id);
     }
-    await Promise.all([textures.load(ids), loadFonts(data.resources, [HUD_FONT])]);
+    const [strings] = await Promise.all([
+      data.strings(options.language),
+      textures.load(ids),
+      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT]),
+    ]);
 
-    const scene = new LevelScene(textures, audio, options, sim);
+    const scene = new LevelScene(textures, audio, strings, options, sim);
     app.stage.addChild(scene.root);
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
@@ -190,15 +194,16 @@ export class LevelScene {
     this.playEvent(event);
     switch (event.type) {
       case 'score':
-        if (event.points > 0) {
-          const label = event.multiplier > 1 ? `+${event.points}  x${event.multiplier}` : `+${event.points}`;
-          this.float(label, event.plane, 0xffe066, -30);
-        } else if (event.points < 0) {
-          this.float(String(event.points), event.plane, 0xff6b6b, -30);
-        }
+        if (event.points > 0) this.float(String(event.points), event.plane, 'score', -30);
+        else if (event.points < 0) this.float(String(event.points), event.plane, 'penalty', -30);
+        // The bonus text sits where the original puts it, 50 px above the plane.
+        if (event.multiplier > 1) this.float(this.strings.t('IN_GAME.BONUS_X', event.multiplier), event.plane, 'message', -66);
         break;
       case 'punctuality':
-        this.float(event.result.replace('_', ' '), event.plane, event.result === 'LATE' ? 0xff6b6b : 0x9be37a, -50);
+        this.float(this.strings.t(`IN_GAME.${event.result}`), event.plane, 'message', -50);
+        break;
+      case 'queueCancelled':
+        this.float(this.strings.t('IN_GAME.QUEUE_CANCELED'), event.plane, 'message', -50);
         break;
       default:
         break;
@@ -243,12 +248,11 @@ export class LevelScene {
     }
   }
 
-  private float(label: string, plane: Plane, fill: number, offsetY: number): void {
-    const text = new Text({ text: label, style: { fontFamily: 'sans-serif', fontSize: 12, fontWeight: 'bold', fill, stroke: { color: 0x000000, width: 3 } } });
-    text.anchor.set(0.5);
-    text.position.set(plane.x, plane.y - plane.altitude + offsetY);
-    this.overlay.addChild(text);
-    this.floating.push({ text, age: 0 });
+  private float(label: string, plane: Plane, style: 'score' | 'penalty' | 'message', offsetY: number): void {
+    // Keep the text on screen for planes near the edges or still above the HUD.
+    const x = Math.max(40, Math.min(SCREEN_WIDTH - 40, plane.x));
+    const y = Math.max(HUD_HEIGHT + 12, plane.y - plane.altitude + offsetY);
+    this.floating.show(label, x, y, style);
   }
 
   private draw(seconds: number): void {
@@ -277,16 +281,7 @@ export class LevelScene {
     }
     this.planeLayer.sortableChildren = true;
 
-    for (let i = this.floating.length - 1; i >= 0; i--) {
-      const item = this.floating[i]!;
-      item.age += seconds;
-      item.text.y -= 18 * seconds;
-      item.text.alpha = Math.max(0, 1 - item.age / 1.4);
-      if (item.age >= 1.4) {
-        item.text.destroy();
-        this.floating.splice(i, 1);
-      }
-    }
+    this.floating.update(seconds);
 
     const remaining = Math.max(0, Math.ceil(this.sim.totalTime - this.sim.time));
     this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds);
@@ -296,25 +291,11 @@ export class LevelScene {
 
   private showEnd(): void {
     this.endShown = true;
-    const { score, goals } = this.sim;
-    const tiers: [string, number][] = [
-      ['PERFECT', goals.perfect],
-      ['SUPREME', goals.supreme],
-      ['MASTER', goals.master],
-      ['EXPERT', goals.expert],
-      ['GOAL', goals.goal],
-    ];
-    const reached = tiers.find(([, value]) => score >= value)?.[0] ?? 'FAILED';
-    const report = reached === 'FAILED' ? 'FAIL' : reached;
-    this.audio.playMusic(`MUSICS.FINAL_REPORT.${report}`);
-    this.audio.play(`SOUNDS.FINAL_REPORT.${report}`);
-    const panel = new Graphics().roundRect(110, 100, 260, 120, 10).fill({ color: 0x000000, alpha: 0.8 });
-    const text = new Text({
-      text: `Level complete\nScore ${score}\n${reached}`,
-      style: { fontFamily: 'sans-serif', fontSize: 18, fill: 0xffffff, align: 'center', lineHeight: 28 },
-    });
-    text.anchor.set(0.5);
-    text.position.set(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-    this.overlay.addChild(panel, text);
+    const tier = tierFor(this.sim.score, this.sim.goals);
+    this.audio.playMusic(`MUSICS.FINAL_REPORT.${tier}`);
+    this.audio.play(`SOUNDS.FINAL_REPORT.${tier}`);
+    const report = new FinalReport(this.textures, this.strings, this.sim, this.options.level);
+    report.onReplay = () => window.location.reload();
+    this.root.addChild(report);
   }
 }

@@ -330,6 +330,20 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   runway number position, flag offsets, hover label and combo arrows are assumed or
   missing in the web version.
 
+## Texts and fonts
+
+- Strings live in `data/languages/<language>.xml` as nested `NameSpace` elements; ids are the
+  dotted path (`IN_GAME.EARLY`, `SCORE.GOAL_SCORE`, `FINAL_REPORT_DIALOG.PLANES_SERVED`).
+  `&br;` is a line break and `%d` / `%s` are filled printf-style.
+- Cached fonts (from `resources.xml`): `FONTS.SCORE` is Kenyan Coffee Bold 14 with
+  `MoneyEffect`; `FONTS.MAIN` is Brady Bunch 14 with `GoldOrangeEffect`; `FONTS.WHITE` is Teen
+  Bold 11 with `WhiteSilverEffect`. The effects are gradient renderings whose colours have not
+  been read; the web version uses flat fills with an outline.
+- Floating texts: points use `FONTS.SCORE` (`0x5d2c`), negative points `FONTS.SCORE_NEGATIVE`
+  (`0x5de0`), punctuality and bonus texts `FONTS.MAIN`, 50 px above the plane (`0x6110`).
+- The final report dialog layout is not reconstructed; the web summary uses the original
+  strings, fonts and star sprites in its own layout.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.

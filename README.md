@@ -8,7 +8,7 @@ assets: they are imported from your own extracted copy and are never committed.
 ```sh
 npm install
 npm run import-assets            # reads ~/Desktop/AirportMania2_Assets (or pass a path)
-npm run dev                      # http://localhost:5173  (?nodes shows the taxi graph, ?mute disables audio)
+npm run dev                      # http://localhost:5173  (?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
 npm test
 ```
 

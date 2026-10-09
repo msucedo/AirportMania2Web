@@ -222,15 +222,15 @@ for (const rel of [...diskFiles.values()].sort()) {
   if (rel === 'resources.xml') continue;
   if (!/\.(xml|cfg)$/i.test(rel)) continue;
   if (rel.startsWith('data/languages/')) {
-    // Languages become flat { id: text } tables; "&br;" is the engine's line break marker.
+    // Languages become flat { "NAMESPACE.NAME": text } tables; "&br;" is the engine's line break marker.
     const table = {};
-    const collect = (nodes) => {
+    const collect = (nodes, prefix) => {
       for (const n of nodes) {
-        if (n.t === 'String') table[n.a.Name] = (n.x ?? '').replaceAll('&br;', '\n');
-        else collect(n.c);
+        if (n.t === 'String') table[joinName(prefix, n.a.Name)] = (n.x ?? '').replaceAll('&br;', '\n');
+        else collect(n.c, n.t === 'NameSpace' ? joinName(prefix, n.a.Name) : prefix);
       }
     };
-    collect(readXml(path.join(srcRoot, rel)));
+    collect(readXml(path.join(srcRoot, rel)), '');
     writeJson(rel.replace(/\.xml$/i, '.json'), table);
   } else {
     writeJson(rel.replace(/\.(xml|cfg)$/i, '.json'), readXml(path.join(srcRoot, rel)));

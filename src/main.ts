@@ -1,4 +1,5 @@
 import { loadGameData } from './data/load';
+import { isLanguage } from './data/strings';
 import { AudioPlayer } from './engine/audio';
 import { createScreen } from './engine/screen';
 import { TextureStore } from './engine/textures';
@@ -19,6 +20,7 @@ async function main(): Promise<void> {
   const app = await createScreen(host);
   const textures = new TextureStore(data.resources);
 
+  const language = params.get('lang');
   const audio = new AudioPlayer(data.resources);
   audio.muted = params.has('mute');
 
@@ -26,6 +28,7 @@ async function main(): Promise<void> {
     stage: 1,
     level: 1,
     layout: ARCHES,
+    language: isLanguage(language) ? language : 'spanish',
     showNodes: params.has('nodes'),
   });
   document.body.dataset.ready = 'true';

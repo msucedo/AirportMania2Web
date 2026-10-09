@@ -65,6 +65,10 @@ try {
   await click(400, 225);                       // runway 1, queued while loading
   s = await waitFor('take-off', (s) => s.plane.state === 11); log('taking off', s); await sleep(400); await shot('5-takeoff');
   s = await waitFor('departed', (s) => s.plane.gone); log('departed', s);
+  // Fast-forward the rest of the level (the other planes are ignored and leave) to see the report.
+  await page.evaluate(() => { const sim = window.game.sim; for (let i = 0; i < 60 * 600 && !sim.ended; i++) sim.update(1 / 60); });
+  await sleep(600); await shot('6-report');
+  s = await state(); console.log('level end'.padEnd(22), `t=${s.time.toFixed(1)} score=${s.score}`);
   console.log(`audio: ${audio.ogg} ogg requests, ${audio.failed} failed`);
   console.log('problems:', problems.length ? problems : 'none');
 } finally {
