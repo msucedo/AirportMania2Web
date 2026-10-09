@@ -538,7 +538,7 @@ export class LevelScene {
 
     this.floating.update(seconds);
 
-    const remaining = Math.max(0, Math.ceil(this.sim.totalTime - this.sim.time));
+    const remaining = this.sim.totalTime > 0 ? Math.max(0, this.sim.totalTime - this.sim.time) / this.sim.totalTime : 0;
     this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds);
 
     if (this.sim.ended && !this.endShown) this.showEnd();

@@ -3,6 +3,7 @@ import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace } from '../src/game/planeView';
 import { markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
+import { clockDigits, goalBarFraction } from '../src/game/view/hud';
 import { comboArrows } from '../src/game/view/runwayView';
 import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
@@ -110,5 +111,24 @@ describe('plane balloons', () => {
   it('puts the thought cloud 50 px aside, above or below', () => {
     expect(thoughtPlace(1)).toEqual({ x: 50, y: -80, flipX: false, flipY: false });
     expect(thoughtPlace(2)).toEqual({ x: -50, y: 15, flipX: true, flipY: true });
+  });
+});
+
+describe('in-game bar', () => {
+  const goals = { number: 1, extraPlane: false, fogs: 0, ices: 0, sands: 0, goal: 1000, expert: 2000, master: 3000, supreme: 4000, perfect: 5000 };
+  it('fills the goal bar tier by tier, quickly at first within each', () => {
+    expect(goalBarFraction(0, goals)).toBe(0);
+    expect(goalBarFraction(1000, goals)).toBeCloseTo(0.2);
+    expect(goalBarFraction(500, goals)).toBeCloseTo(0.2 * Math.pow(0.5, 0.6));
+    expect(goalBarFraction(1500, goals)).toBeCloseTo(0.2 + 0.2 * Math.pow(0.5, 0.6));
+    expect(goalBarFraction(9000, goals)).toBe(1);
+    expect(goalBarFraction(-300, goals)).toBe(0);
+  });
+
+  it('reads the time left as three base-9 digits', () => {
+    expect(clockDigits(1)).toEqual([9, 9, 9]);
+    expect(clockDigits(0.5)).toEqual([4, 4, 4]);
+    expect(clockDigits(1 / 9)).toEqual([1, 0, 0]);
+    expect(clockDigits(0)).toEqual([0, 0, 0]);
   });
 });

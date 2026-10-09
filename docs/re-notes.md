@@ -299,14 +299,33 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   `BLUE_ORANGE_DISC`, `NO_MORE_TIME`, `BAR_SEPARATOR`, `PROGRESS_BAR_EFFECT`, the money sign and
   the fonts `FONTS.ULTRA` and `FONTS.WHITE`. `0x4eba4` is its draw; `0x514cc` builds the goal
   panel (`SCORE_GOAL_BACK`, `LEVEL_NUMBER`, `SCORE.BEST_SCORE`); `0x87994` the menu button.
-- Confirmed from the draw: the goal progress bar is the rectangle x 194..313, y 4..15
-  (`0x4f476`), and a pulsing effect driven by a sine.
-- Measured on `ingamegui.png` (426×35), not read from code: the score window has eight cells
-  11 px apart starting at x = 82, y 6..15; the progress slot interior is x 196..313.
-- Digit strips are 13×244 reels: "-" then 0–9 then 0 again, one glyph every 20 px.
-- Not read: when red or black digits are used, the fill colours, where the separators sit, what
-  the radar disc and the notched right-hand section show, and the reel animation. The web HUD
-  approximates these.
+- Update (`0x4e89c`) and draw (`0x4eba4`), confirmed:
+  - Score reels: eight structures of (position, target, speed) at `+0x390`, reel 0 the units.
+    Reel i is drawn at x `158 − 11 i`, y 2, showing 12×18 px of its strip from row `position`;
+    the black strip for a score of 0 or more, the red one below. A digit d is at row
+    `20 (d + 1)`; row 0 is the dash a reel starts on. A new score sets the target of each of its
+    digits, and a negative one puts the dash on the leftmost reel. Reels move 200 px/s, upwards
+    when the score rose, wrapping over 200 px, and stop on reaching the target.
+  - Goal bar: y 4–15 from x 194, 119 px long. With t tiers reached, the bar stands at
+    `194 + 119 (f^0.6 (G[t] − G[t−1]) + G[t−1]) / G[last]`, f being the progress inside the
+    current tier (`level+0x1ac`); 313 when every tier is reached, when the whole bar pulses with
+    `sin(10 t)`. Segments up to there are drawn per tier and the rest at half strength, with
+    colours from a table filled at run time (`0x181314`, also used for the goal plates), which has
+    not been found. `PROGRESS_BAR_EFFECT` slides at the bar's end.
+  - `GUI.INGAMEGUI.BACK` is drawn over reels and bar, then `BAR_SEPARATOR` at
+    `floor(194 + 119 G[i] / G[last] − width / 2)` for every goal but the last, then the menu
+    button (`0x87994`).
+  - Clock: `r = (TotalTime − time) / TotalTime` read as three base-9 digits, `floor(9 r)`,
+    `floor(81 r) mod 9` and `floor(729 r) mod 9` (all 9 at the start). The constructor
+    (`0x4e4f0`) builds nine points every π/8 round the lower half of a circle centred on
+    (34.5, 0), from the left end, for three rings: radii 22.5–29 and 7–15.5 textured with
+    `BLUE_ORANGE_DISC` and 15–23 with `YELLOW_DISC`. Each ring is drawn as a strip of
+    `2 + 2 d` points for its digit d (18 at most): the outer ring takes the first digit, the
+    yellow one the second and the inner one the third. The segment being lost fades.
+  - `NO_MORE_TIME` blinks once the time is up.
+- Web version: bar colours are ours; a reel beyond the score's digits goes back to the dash; the
+  fading of the clock's last segment and `NO_MORE_TIME` are not drawn; the numeric clock the web
+  version had, which the original does not, is gone.
 
 ## Plane drawing
 
