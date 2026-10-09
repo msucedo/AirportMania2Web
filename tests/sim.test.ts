@@ -568,6 +568,59 @@ describe('simulation, improvements', () => {
     expect(sim.serveCoffee()).toBe(false);
   });
 
+  it('skips a free stop spot when the place after it can be taken at once', () => {
+    const sim = withImprovements();
+    const events: SimEvent[] = [];
+    run(sim, 1.1, events);
+    const plane = sim.planes[0]!;
+    sim.addOrder(plane, sim.runways[0]!);
+    sim.addOrder(plane, sim.stopSpots[0]!);
+    sim.addOrder(plane, sim.gates[0]!);
+    runUntil(sim, () => plane.state === PlaneState.UNLOADING, 40, events);
+    expect(events.some((e) => e.type === 'parked')).toBe(false);
+    expect(sim.stopSpots[0]!.use).toBe('free');
+  });
+
+  it('parks on the stop spot while the place after it is taken', () => {
+    const sim = withImprovements();
+    run(sim, 23.2);
+    const [first, second] = sim.planes as [Plane, Plane];
+    sim.addOrder(first, sim.runways[0]!);
+    sim.addOrder(first, sim.gates[0]!);
+    runUntil(sim, () => first.state === PlaneState.UNLOADING, 40);
+    const events: SimEvent[] = [];
+    sim.addOrder(second, sim.runways[1]!);
+    sim.addOrder(second, sim.stopSpots[0]!);
+    sim.addOrder(second, sim.gates[0]!);
+    runUntil(sim, () => events.some((e) => e.type === 'parked'), 40, events);
+    expect(second.place).toBe(sim.stopSpots[0]);
+  });
+
+  it('lets planes waiting for each other swap places', () => {
+    const sim = withImprovements();
+    run(sim, 23.2);
+    const [atGate, parked] = sim.planes as [Plane, Plane];
+    const gate = sim.gates[0]!;
+    const spot = sim.stopSpots[0]!;
+    sim.addOrder(atGate, sim.runways[0]!);
+    sim.addOrder(atGate, gate);
+    sim.addOrder(parked, sim.runways[1]!);
+    sim.addOrder(parked, spot);
+    runUntil(sim, () => atGate.loaded && atGate.state === PlaneState.WAITING && spot.use === 'occupied' && parked.state === PlaneState.WAITING, 80);
+
+    // The parked plane alone just waits for the gate.
+    expect(sim.addOrder(parked, gate)).toBe(true);
+    run(sim, 2);
+    expect(parked.place).toBe(spot);
+    expect(parked.state).toBe(PlaneState.WAITING);
+    // Once the plane at the gate wants the stop spot, both set off together.
+    expect(sim.addOrder(atGate, spot)).toBe(true);
+    run(sim, 2 * DT);
+    expect([atGate.state, parked.state]).toEqual([PlaneState.TAXIING, PlaneState.TAXIING]);
+    runUntil(sim, () => spot.use === 'occupied' && parked.state === PlaneState.UNLOADING, 30);
+    expect([atGate.place, parked.place]).toEqual([spot, gate]);
+  });
+
   it('unloads faster at an upgraded gate', () => {
     const sim = withImprovements(0x1e);
     run(sim, 1.1);

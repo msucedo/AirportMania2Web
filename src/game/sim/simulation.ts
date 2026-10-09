@@ -789,17 +789,21 @@ export class Simulation {
 
   /** Starts the first queued order once its place can take the plane (update, `0x7952` onwards). */
   private startNextOrder(plane: Plane): void {
+    const waiting = plane.state === PlaneState.WAITING;
+    if (waiting) this.skipParking(plane);
     const place = plane.queue[0]!;
     if (!this.canEnter(place, plane)) {
       plane.queue.length = 0;
       this.emit({ type: 'queueCancelled', plane });
       return;
     }
-    if (this.busy(place, plane)) return;
+    if (this.busy(place, plane)) {
+      if (waiting) this.resolveCircle(plane);
+      return;
+    }
     plane.queue.shift();
     const previous = plane.place;
-    // A serviced plane stands at the hangar's exit node, not inside it.
-    const from = previous?.kind === 'hangar' && previous.use === 'done' ? previous.exitTaxiNode : previous?.taxiNode;
+    const from = this.standingNode(plane);
     // The original frees a place once its plane is no longer waiting on it.
     if (previous && previous !== place && previous.plane === plane) this.release(previous);
     this.reserve(place, plane);
@@ -820,6 +824,52 @@ export class Simulation {
     const route = from ? this.graph.route(from, place.taxiNode) : null;
     // Skip the node the plane is standing on; fall back to a straight line if no route exists.
     plane.path = route ? route.slice(1).map((n) => ({ x: n.x, y: n.y })) : [place.node];
+  }
+
+  /** Where a plane on the ground sets off from: the node of the place it stands on. */
+  private standingNode(plane: Plane): TaxiNode | undefined {
+    const place = plane.place;
+    // A serviced plane stands at the hangar's exit node, not inside it.
+    return place?.kind === 'hangar' && place.use === 'done' ? place.exitTaxiNode : place?.taxiNode;
+  }
+
+  /**
+   * 0x797e: stop spots at the head of the queue are only somewhere to wait. If they are free and
+   * the place after them can be taken right now, the plane goes straight there.
+   */
+  private skipParking(plane: Plane): void {
+    const { queue } = plane;
+    let next = 0;
+    while (next < queue.length && queue[next]!.kind === 'stopSpot' && !this.busy(queue[next]!, plane)) next++;
+    if (next === 0 || next === queue.length) return;
+    const place = queue[next]!;
+    if (this.busy(place, plane) || !this.canEnter(place, plane)) return;
+    const from = this.standingNode(plane);
+    if (from && this.graph.route(from, place.taxiNode) === null) return;
+    queue.splice(0, next);
+  }
+
+  /**
+   * 0x7ab4: planes waiting for each other's places. Starting from this plane, each next place
+   * must be taken by a waiting plane with orders of its own; if the chain comes back to where
+   * this plane stands, every place in it is freed and all of them set off at once.
+   */
+  private resolveCircle(plane: Plane): void {
+    const chain: Place[] = [];
+    let current = plane;
+    for (;;) {
+      const place = current.queue[0];
+      if (!place || !this.busy(place, current) || !this.canEnter(place, current)) return;
+      const occupant = place.plane;
+      if (!occupant || occupant.state !== PlaneState.WAITING || occupant.queue.length === 0) return;
+      if (chain.includes(place)) return;
+      chain.push(place);
+      if (place === plane.place) break;
+      current = occupant;
+    }
+    const movers = chain.map((place) => place.plane!);
+    for (const place of chain) this.release(place);
+    for (const mover of movers) this.startNextOrder(mover);
   }
 
   /** The landing, phase by phase (0x7eb2). */

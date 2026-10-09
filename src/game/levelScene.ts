@@ -302,8 +302,8 @@ export class LevelScene {
 
   /** The plane says what it needs, in the voice of its mood (0x5bd4). */
   private speak(plane: Plane): void {
-    const mood = plane.energy < 0.3 ? 'TalkMad' : plane.energy < 0.5 ? 'TalkUpset' : plane.energy < 0.7 ? 'TalkNormal' : 'TalkHappy';
-    this.planeSound(plane, mood);
+    // Content or merely impatient it makes its "cannot" sound; upset or furious it complains.
+    this.planeSound(plane, plane.energy < 0.3 ? 'TalkMad' : plane.energy < 0.5 ? 'TalkUpset' : 'Cannot');
     this.planeViews.get(plane.id)?.speak(plane.need);
   }
 
@@ -475,6 +475,9 @@ export class LevelScene {
         break;
       case 'queueCancelled':
         this.audio.play('SOUNDS.QUEUE_CANCEL');
+        // 0x7a08: it says what it needs, and its "cannot" sound follows.
+        this.speak(event.plane);
+        this.planeSound(event.plane, 'Cannot');
         break;
       case 'landingStarted':
         this.planeSound(event.plane, 'GoingOut');

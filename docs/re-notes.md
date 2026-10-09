@@ -402,8 +402,10 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   0x17 at take-off (`0x7cfc`).
 - The icon is drawn (`0x93e2`) 36 px to the left of the energy bar's place, at its height, and
   the bar moves 16 px to the right; it swells for a quarter of a second every two.
-- `Plane::say(icon)` (`0x5bd4`): plays the voice for the mood (`TalkHappy`, `TalkNormal`,
-  `TalkUpset`, `TalkMad`), runs the talking mouth, turns the eyes for a second and shows the
+- `Plane::say(icon)` (`0x5bd4`): plays a sound by mood (`plane+0x25c`): the `Cannot` sound
+  (`plane+0x2c`) for moods 0 and 1, `TalkUpset` (`+0x1c`) for 2 and `TalkMad` (`+0x20`) for 3.
+  The plane also caches `TalkHappy` (`+0x14`), `TalkNormal` (`+0x18`), `Loading` (`+0x24`) and
+  `Unloading` (`+0x28`). It runs the talking mouth, turns the eyes for a second and shows the
   icon in the speech balloon for two seconds. It is called with the plane's need when an order
   is given to an idle plane (state 0 or 2, empty queue) for a place it cannot enter (`0x5b10`),
   and when the next queued order turns out impossible (`0x7340`, `0x7a10`).
@@ -858,9 +860,25 @@ State 13, with a phase in `plane+0x330` and a clock in `+0x314` (`0x7eb2`). Posi
 - Web version: the plane's pitch (`+0x2fc`: −5 at phase 2, rising 5/s) and the dust are not
   drawn.
 
+## Orders of a plane waiting on the ground — confirmed
+
+State 2 with a queue (`0x7952`):
+
+- Skipping parking (`0x797e`, behind a flag at `0x1772d4` that is always 1): entries are walked
+  from the front while the place answers 1 on slot 17 (stop spots and painting stop spots; gates
+  and runways answer 0) and is free. If the entry reached is free, accepts the plane (slot 15)
+  and can be routed to (`0x6aa8`), the entries before it are erased.
+- The front place refuses the plane (slot 15): the plane says its need, the queue is emptied and
+  the `Cannot` sound plays (`0x7a08`).
+- The front place is busy: the plane waits, unless there is a circle (`0x7ab4`). From this
+  plane, the place wanted must be busy, accept the asker, and be held by a plane in state 2 with
+  orders of its own; that plane's first order is looked at next. A place met twice stops the
+  search. If the chain reaches the place this plane stands on (`+0x344`), every place in it is
+  released and every plane in it starts its order (`0x6594`); award counter 0x18 gets the count.
+- Otherwise, if a route exists, the order starts (`0x6594`).
+
 ## Still unknown
 
 - Plane update (`0x6af0`): state 10; taxi speed.
 - Taxi node occupancy (set as planes claim nodes) and the stop-spot nodes: not modelled.
 - The exact loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
-- Whether a busy front place makes the plane wait (assumed) and the queue reordering at `0x797e`.
