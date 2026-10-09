@@ -15,7 +15,7 @@ import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PlaneState } from './sim/rules';
-import { Simulation, type Gate, type Plane, type SimEvent } from './sim/simulation';
+import { Simulation, type Gate, type Hangar, type Plane, type SimEvent } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
 // Tints are placeholders: the original colour table is compiled into the binary and not read yet.
@@ -46,6 +46,7 @@ export class LevelScene {
   private readonly gateViews: { gate: Gate; view: GateView }[] = [];
   private readonly flags: OrderFlags;
   private readonly stationViews: GasStationView[] = [];
+  private readonly hangarBars: { hangar: Hangar; bar: Graphics }[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating = new FloatingTexts();
   private readonly hud: Hud;
@@ -89,6 +90,7 @@ export class LevelScene {
       gates: data.gates,
       runways: data.runways,
       gasStations: data.gasStations,
+      hangars: data.hangars,
       level: options.level,
       screenWidth: SCREEN_WIDTH,
     });
@@ -104,6 +106,10 @@ export class LevelScene {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
     for (const station of sim.gasStations) for (const id of gasStationSurfaceIds(station)) ids.add(id);
+    for (const hangar of sim.hangars) {
+      ids.add(hangar.descriptor.surfaces.back);
+      ids.add(hangar.descriptor.surfaces.front);
+    }
     for (const runway of sim.runways) {
       ids.add(runway.descriptor.backSurface);
       ids.add(`RUNWAY.NUMBER_${runway.number}`);
@@ -214,6 +220,17 @@ export class LevelScene {
       this.ground.addChild(view);
       this.gateViews.push({ gate, view });
     }
+    for (const hangar of this.sim.hangars) {
+      // The plane goes in between the two halves: back under the planes, front over them.
+      const back = this.textures.sprite(hangar.descriptor.surfaces.back);
+      back.position.copyFrom(hangar.position);
+      const front = this.textures.sprite(hangar.descriptor.surfaces.front);
+      front.position.copyFrom(hangar.position);
+      const bar = new Graphics();
+      this.ground.addChild(back);
+      this.overlay.addChild(front, bar);
+      this.hangarBars.push({ hangar, bar });
+    }
     for (const station of this.sim.gasStations) {
       const view = new GasStationView(this.textures, station);
       this.ground.addChild(view);
@@ -289,6 +306,9 @@ export class LevelScene {
       case 'fuelingStarted':
         this.audio.play('SOUNDS.FUELING');
         break;
+      case 'serviceStartedAtHangar':
+        this.audio.play('SOUNDS.REPAIRING_START');
+        break;
       case 'leftAngry':
         this.planeSound(event.plane, 'Out');
         break;
@@ -310,6 +330,16 @@ export class LevelScene {
   private draw(seconds: number): void {
     for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, tintOf(gate.lastColor));
     for (const view of this.stationViews) view.update();
+    for (const { hangar, bar } of this.hangarBars) {
+      // Plain progress bar: the original uses HANGARS.PROGRESS sprites that this stage's group does not ship.
+      bar.clear();
+      const plane = hangar.plane;
+      if (hangar.use === 'working' && plane) {
+        const fraction = Math.min(1, hangar.progress / plane.descriptor.times.servicing);
+        bar.rect(hangar.position.x - 21, hangar.position.y - 56, 42, 6).fill(0x1b2a3a);
+        bar.rect(hangar.position.x - 20, hangar.position.y - 55, 40 * fraction, 4).fill(0xffb347);
+      }
+    }
     const selected = this.sim.selected;
     this.flags.update(selected, selected ? tintOf(selected.color) : 0xffffff);
 
@@ -327,7 +357,11 @@ export class LevelScene {
         this.planeLayer.addChild(view);
         this.planeViews.set(plane.id, view);
       }
-      view.position.set(plane.x, plane.y);
+      // While it is being serviced the plane sits inside the hangar, behind its front half. The
+      // original walks it in; here it is simply drawn at the building's centre.
+      const inside = plane.state === PlaneState.IN_HANGAR && plane.place?.kind === 'hangar' ? plane.place : null;
+      if (inside) view.position.set(inside.position.x, inside.position.y + 8);
+      else view.position.set(plane.x, plane.y);
       view.zIndex = plane.altitude > 0 ? 10000 : plane.y;
       const draining = plane.state === PlaneState.FLYING || plane.state === PlaneState.WAITING;
       // The bubble shows what the plane wants next while it has no orders (0x5f28).

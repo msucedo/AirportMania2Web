@@ -413,6 +413,52 @@ data and assets.
   goals. That link is inferred from the data (`ExtraPlane="4"`, `ExtraPlaneNumber="4"`).
 - A level opens when the previous one has at least one star: assumed.
 
+## Stage scripts beyond Arches
+
+`tools/re/stage_calls.py <start> <end> [addr=NAME …]` lists the builder calls of a compiled stage
+script with the constants set up before each one. On Arches it reproduces the layout read by hand.
+
+Builder entry points (first argument is the airport): `0x1328c` image, `0x13de4` scaled image,
+`0x1404c` z-image, `0x135f4` sky, `0xcda08` clouds, `0x13458` improvement (id in r1, price in r2,
+sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructor `0x46c04`),
+`0x1434c` gas station, `0x1440c` runway (r2 = descriptor type, r3 = number, then flag),
+`0x144e4` stop spot, `0x145a8` painting stop spot, `0x147f8` taxi node, `0x14808` linked node pair.
+`0x12ddc` starts the stage with an RGBA colour: (0.87, 0.77, 0.60) for the tutorial and Arches,
+(0.76, 0.56, 0.21) for the island. What that colour tints has not been confirmed.
+
+### Stage 2, the island (`0xcf414`, helpers `0xcf1c0` gate + dock and `0xcf370` water runway)
+
+- Backdrop calls in order: sky and clouds at 65; `STAGES.ISLAND.WATER` at y 159, scale 16×15;
+  `STAGES.ISLAND.SEA` at (0, 55); `STAGES.ISLAND.BACKGROUND_TOP` (8-bit grey) at (0, 40);
+  `STAGES.ISLAND.BACKGROUND_DOWN` at (335, 160). The web version rearranges these (see
+  `src/game/stages/island.ts`) because the compositing of the grey image is unknown.
+- Gates A (135, 135), B (385, 195), C (435, 255), descriptor types 2 and 3, each with dock
+  sprites at (−25, +30). Gas station type 2 at (52, 105). Hangar at (180, 90) from level 3.
+- Runways 1 (50, 195) and 2 (85, 250), descriptor type 2, created with flag 0: node at the right
+  end, planes leave to the left. One taxi node at (280, 195).
+- Stop spots at (60, 300), (170, 300) and (280, 300); which improvement adds which is inferred.
+- Improvements (id, price): `0x01` 17000, `0x02` 25000, `0x0a` 40000, `0x72` 95000,
+  `0x16` 35000, `0x1e` 35000, `0x1f` 40000, `0x74` 50000 (coffee and cake), `0xcc` 120000
+  (plane 5 licence), `0x20` 45000.
+
+## Hangar — confirmed
+
+Vtable `0x17a8e8`, kind 5.
+
+- Slot 11 (`0x4785c`): refused when servicing is done or not needed, when the plane has not
+  unloaded, or when the itinerary already has a hangar.
+- Slot 15 (`0x4735c`): landed, unloaded and servicing still pending.
+- Slot 12 (`0x47234`): plane state 6, hangar state 2, 0.25 energy.
+- Slot 6 (`0x473dc`): progress grows by hangar `Speed` × dt; above `ServicingTime` the hangar
+  goes to state 3 and calls `Plane::servicingFinished` (`0x66c8`: service done, need 3 if gas is
+  pending, else 5 or 6, target node = the hangar's exit node, plane state 3). When that plane is
+  waiting (state 2) `0x472f4` pays `floor(clamp(energy) * HangarPoints / 5) * 5` and the hangar
+  goes to state 4; it frees itself when the plane leaves state 2.
+- The gas station and the gate accept an unloaded plane with servicing pending only if a hangar
+  is already in its itinerary.
+- Web version: the plane waits at the hangar node instead of rolling to an exit node, is paid at
+  once, and the hangar's own taxi nodes are a guess.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.

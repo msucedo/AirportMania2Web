@@ -43,6 +43,15 @@ export interface GasStationDescriptor {
   click: Rect;
 }
 
+export interface HangarDescriptor {
+  type: number;
+  /** Multiplier applied to servicing speed. */
+  speed: number;
+  surfaces: { back: string; front: string; remark: string };
+  node: Point;
+  click: Rect;
+}
+
 function rect(n: XmlNode): Rect {
   return { x1: num(n, 'x1'), y1: num(n, 'y1'), x2: num(n, 'x2'), y2: num(n, 'y2') };
 }
@@ -91,6 +100,21 @@ export function parseGasStationTable(tree: XmlNode[]): Map<number, GasStationDes
       click: rect(requireChild(node, 'Rectangle')),
     };
     table.set(station.type, station);
+  }
+  return table;
+}
+
+export function parseHangarTable(tree: XmlNode[]): Map<number, HangarDescriptor> {
+  const table = new Map<number, HangarDescriptor>();
+  for (const node of children(root(tree, 'HangarDescriptorTable'), 'Hangar')) {
+    const hangar: HangarDescriptor = {
+      type: num(node, 'Type'),
+      speed: num(node, 'Speed'),
+      surfaces: { back: str(node, 'BackSurfaceResource'), front: str(node, 'FrontSurfaceResource'), remark: str(node, 'RemarkSurfaceResource') },
+      node: point(requireChild(node, 'NodePosition')),
+      click: rect(requireChild(node, 'ClickRectangle')),
+    };
+    table.set(hangar.type, hangar);
   }
   return table;
 }

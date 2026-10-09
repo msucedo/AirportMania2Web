@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseGasStationTable, parseGateTable, parseRunwayTable } from '../src/data/airport';
+import { parseGasStationTable, parseGateTable, parseHangarTable, parseRunwayTable } from '../src/data/airport';
 import { findGoals, findLevel, parseLevelsDb, parseStageSchedule } from '../src/data/levels';
 import { parsePlaneTable } from '../src/data/planes';
 import type { XmlNode } from '../src/data/xml';
@@ -17,6 +17,7 @@ const planes = parsePlaneTable(tree('data/descriptors/plane_descriptor_table.jso
 const gates = parseGateTable(tree('data/descriptors/gate_descriptor_table.json'));
 const runways = parseRunwayTable(tree('data/descriptors/runway_descriptor_table.json'));
 const gasStations = parseGasStationTable(tree('data/descriptors/gas_station_descriptor_table.json'));
+const hangars = parseHangarTable(tree('data/descriptors/hangar_descriptor_table.json'));
 const stage = parseStageSchedule(tree('data/maps/stage_levels_01.json'));
 const area = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(1)!;
 
@@ -454,6 +455,7 @@ describe('simulation, stage 2 (island)', () => {
       gates,
       runways,
       gasStations,
+      hangars,
       level,
       screenWidth: 480,
     });
@@ -510,5 +512,48 @@ describe('simulation, stage 2 (island)', () => {
     expect(plane.loaded).toBe(true);
     expect(plane.x).toBeLessThan(0);
   });
-});
 
+  it('has a hangar from level 3 and services a plane before fuel and loading', () => {
+    expect(island(2).hangars).toHaveLength(0);
+    const sim = island(3);
+    expect(sim.hangars).toHaveLength(1);
+    const hangar = sim.hangars[0]!;
+    expect(hangar.node).toEqual({ x: 180, y: 117 });
+    const events: SimEvent[] = [];
+    runUntil(sim, () => sim.planes.some((p) => !p.serviceDone), 300, events);
+    const plane = sim.planes.find((p) => !p.serviceDone)!;
+    const needsGas = !plane.gasDone;
+
+    sim.addOrder(plane, sim.runways[0]!);
+    // Not before unloading.
+    expect(sim.addOrder(plane, hangar)).toBe(false);
+    sim.addOrder(plane, sim.gates[0]!);
+    runUntil(sim, () => plane.unloaded, 80, events);
+    expect(plane.need).toBe(Need.SERVICE);
+    // Fuel and loading are refused until servicing is done or queued.
+    if (needsGas) expect(sim.addOrder(plane, sim.gasStations[0]!)).toBe(false);
+    expect(sim.addOrder(plane, sim.runways[0]!)).toBe(false);
+
+    expect(sim.addOrder(plane, hangar)).toBe(true);
+    runUntil(sim, () => plane.state === PlaneState.IN_HANGAR, 40, events);
+    const started = sim.time;
+    runUntil(sim, () => plane.serviceDone, 60, events);
+    expect(sim.time - started).toBeCloseTo(plane.descriptor.times.servicing, 1);
+    expect(plane.need).toBe(needsGas ? Need.GAS : Need.LOAD);
+    const award = events.filter((e) => e.type === 'score' && e.reason === 'service' && e.plane === plane) as { points: number }[];
+    expect(award).toHaveLength(1);
+    expect(award[0]!.points).toBeLessThanOrEqual(plane.descriptor.points.hangar);
+    expect(sim.addOrder(plane, hangar)).toBe(false);
+
+    if (needsGas) {
+      expect(sim.addOrder(plane, sim.gasStations[0]!)).toBe(true);
+      runUntil(sim, () => plane.gasDone, 80, events);
+      expect(hangar.use).toBe('free');
+    }
+    expect(sim.addOrder(plane, sim.gates[1]!)).toBe(true);
+    runUntil(sim, () => plane.state === PlaneState.LOADING, 60, events);
+    sim.addOrder(plane, sim.runways[1]!);
+    runUntil(sim, () => plane.gone, 80, events);
+    expect(plane.loaded).toBe(true);
+  });
+});

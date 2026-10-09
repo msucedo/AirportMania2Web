@@ -9,6 +9,7 @@ export const PlaneState = {
   TAXIING: 3,
   LOADING: 4,
   UNLOADING: 5,
+  IN_HANGAR: 6,
   FUELING: 7,
   TAKING_OFF: 11,
   /** In the air after the take-off run. */

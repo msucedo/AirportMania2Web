@@ -100,6 +100,20 @@ export class TaxiGraph {
   }
 
   /**
+   * A hangar's node with two pass-through nodes in front. The constructor (0x46c14) builds its own
+   * nodes and five links that have not been read; this mirrors the gas station's arrangement.
+   */
+  addHangar(node: Point): TaxiNode {
+    const hangar = this.addNode(node, true);
+    const right = this.addNode({ x: node.x + 22, y: node.y + 12 }, false);
+    const left = this.addNode({ x: node.x - 22, y: node.y + 12 }, false);
+    this.link(hangar, right);
+    this.link(hangar, left);
+    this.link(right, left);
+    return hangar;
+  }
+
+  /**
    * A stop spot's node and the pass-through nodes around it. The constructor (0x794bc) creates six
    * nodes at these offsets and makes five links; which pairs it links has not been read, so each
    * is linked to the spot here.

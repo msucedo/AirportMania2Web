@@ -40,6 +40,7 @@ export const ISLAND: StageLayout = {
     },
   ],
   gasStation: { position: { x: 52, y: 105 }, minLevel: 1 },
+  hangar: { position: { x: 180, y: 90 }, type: 0, minLevel: 3 },
   taxiNodes: [{ x: 280, y: 195 }],
   // Water runways are created with flag 0: the node is at the right end and planes leave leftwards.
   runways: [runway(1, 50, 195, 0), runway(2, 85, 250, 0)],

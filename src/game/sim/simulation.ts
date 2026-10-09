@@ -1,4 +1,4 @@
-import type { GasStationDescriptor, GateDescriptor, RunwayDescriptor } from '../../data/airport';
+import type { GasStationDescriptor, GateDescriptor, HangarDescriptor, RunwayDescriptor } from '../../data/airport';
 import type { LevelGoals, LevelSchedule, PlaneColor, PlaneSpawn, Sex } from '../../data/levels';
 import type { PlaneDescriptor } from '../../data/planes';
 import type { Point } from '../../data/xml';
@@ -75,6 +75,16 @@ export interface GasStation extends PlaceBase {
   progress: number;
 }
 
+export interface Hangar extends PlaceBase {
+  kind: 'hangar';
+  position: Point;
+  descriptor: HangarDescriptor;
+  /** Original `hangar+0x78`: 0 free, 1 reserved, 2 working, 3/4 finished and waiting for the plane to leave. */
+  use: 'free' | 'reserved' | 'working' | 'done';
+  /** Seconds of the plane's servicing time already worked off. */
+  progress: number;
+}
+
 export interface StopSpot extends PlaceBase {
   kind: 'stopSpot';
   position: Point;
@@ -85,7 +95,7 @@ export interface StopSpot extends PlaceBase {
   use: 'free' | 'reserved' | 'occupied';
 }
 
-export type Place = Gate | Runway | GasStation | StopSpot;
+export type Place = Gate | Runway | GasStation | Hangar | StopSpot;
 
 export interface Plane {
   id: number;
@@ -137,7 +147,9 @@ export type SimEvent =
   | { type: 'order'; plane: Plane; place: Place }
   | { type: 'forbidden' }
   | { type: 'queueCancelled'; plane: Plane }
-  | { type: 'score'; plane: Plane; points: number; multiplier: number; reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'left' }
+  | { type: 'score'; plane: Plane; points: number; multiplier: number; reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'service' | 'left' }
+  | { type: 'serviceStartedAtHangar'; plane: Plane; hangar: Hangar }
+  | { type: 'serviceFinishedAtHangar'; plane: Plane; hangar: Hangar }
   | { type: 'parked'; plane: Plane; spot: StopSpot }
   | { type: 'fuelingStarted'; plane: Plane; station: GasStation }
   | { type: 'fuelingFinished'; plane: Plane; station: GasStation }
@@ -158,6 +170,7 @@ export interface SimulationConfig {
   gates: Map<number, GateDescriptor>;
   runways: Map<number, RunwayDescriptor>;
   gasStations?: Map<number, GasStationDescriptor>;
+  hangars?: Map<number, HangarDescriptor>;
   /** Level number within the stage; some places only exist from a given level. */
   level?: number;
   /** Improvement ids the player owns. */
@@ -175,6 +188,7 @@ export class Simulation {
   readonly gates: Gate[] = [];
   readonly runways: Runway[] = [];
   readonly gasStations: GasStation[] = [];
+  readonly hangars: Hangar[] = [];
   readonly stopSpots: StopSpot[] = [];
   readonly counts: Record<'unload' | 'takeOff', Record<Punctuality, number>> = {
     unload: { EARLY: 0, ON_TIME: 0, LATE: 0 },
@@ -241,6 +255,24 @@ export class Simulation {
         progress: 0,
       });
     }
+    const hangarDescriptor = layout.hangar ? config.hangars?.get(layout.hangar.type) : undefined;
+    if (layout.hangar && hangarDescriptor && (config.level ?? 1) >= layout.hangar.minLevel) {
+      const { x, y } = layout.hangar.position;
+      const node = { x: x + hangarDescriptor.node.x, y: y + hangarDescriptor.node.y };
+      const click = hangarDescriptor.click;
+      this.hangars.push({
+        kind: 'hangar',
+        id: 'hangar',
+        position: layout.hangar.position,
+        descriptor: hangarDescriptor,
+        node,
+        taxiNode: this.graph.addHangar(node),
+        click: { x1: x + click.x1, y1: y + click.y1, x2: x + click.x2, y2: y + click.y2 },
+        plane: null,
+        use: 'free',
+        progress: 0,
+      });
+    }
     for (const node of layout.taxiNodes) this.graph.addNode(node, false);
 
     const runwayDescriptor = config.runways.get(layout.runwayType);
@@ -295,7 +327,7 @@ export class Simulation {
   }
 
   get places(): Place[] {
-    return [...this.gates, ...this.gasStations, ...this.stopSpots, ...this.runways];
+    return [...this.gates, ...this.gasStations, ...this.hangars, ...this.stopSpots, ...this.runways];
   }
 
   get goals(): LevelGoals {
@@ -402,18 +434,23 @@ export class Simulation {
       if (plane.unloaded) return !plane.landed || !this.itineraryHas(plane, 'runway');
       return !this.itineraryHas(plane, 'gate');
     }
+    if (place.kind === 'hangar') {
+      // 0x4785c: only for a plane that has unloaded and still needs servicing.
+      return !plane.serviceDone && plane.unloaded;
+    }
     if (place.kind === 'gasStation') {
       // 0x410d0: only for a plane that has unloaded and still needs fuel. Hangar service, when
-      // needed, has to come first; there is no hangar in this stage.
+      // needed, has to be done or queued first.
       if (plane.gasDone || !plane.unloaded) return false;
-      return plane.serviceDone;
+      return plane.serviceDone || this.itineraryHas(plane, 'hangar');
     }
     if (!plane.unloaded) return plane.landed || this.itineraryHas(plane, 'runway');
     // 0x43e04: an unloaded plane returns to a gate to load, with every pending service already
     // done or queued before it.
     if (plane.loaded) return false;
     if (!plane.gasDone && !this.itineraryHas(plane, 'gasStation')) return false;
-    return plane.serviceDone && plane.luggageDone;
+    if (!plane.serviceDone && !this.itineraryHas(plane, 'hangar')) return false;
+    return plane.luggageDone;
   }
 
   /** Place virtual slot 15 (gate `0x43530`, runway `0x6da34`, gas station `0x40d4c`): may the plane go there now? */
@@ -421,6 +458,7 @@ export class Simulation {
     if (place.kind === 'runway') return !plane.landed || (plane.unloaded && plane.loaded);
     if (place.kind === 'gasStation') return plane.landed && plane.unloaded && plane.serviceDone && !plane.gasDone;
     if (place.kind === 'stopSpot') return plane.landed;
+    if (place.kind === 'hangar') return plane.landed && plane.unloaded && !plane.serviceDone;
     if (!plane.landed || plane.loaded) return false;
     return !plane.unloaded || (plane.serviceDone && plane.gasDone && plane.luggageDone);
   }
@@ -437,7 +475,7 @@ export class Simulation {
     if (place.kind === 'gate') {
       place.samePlane = place.plane === plane;
       place.service = 'reserved';
-    } else if (place.kind === 'gasStation' || place.kind === 'stopSpot') {
+    } else if (place.kind === 'gasStation' || place.kind === 'stopSpot' || place.kind === 'hangar') {
       place.use = 'reserved';
     } else {
       place.use = plane.state === PlaneState.FLYING ? 'landing' : 'takeOffReserved';
@@ -456,6 +494,7 @@ export class Simulation {
     for (const runway of this.runways) this.updateRunway(runway, dt);
     for (const gate of this.gates) this.updateGate(gate, dt);
     for (const station of this.gasStations) this.updateGasStation(station, dt);
+    for (const hangar of this.hangars) this.updateHangar(hangar, dt);
     for (const plane of this.planes) if (!plane.gone) this.updatePlane(plane, dt);
 
     const active = this.planes.some((p) => !p.gone);
@@ -678,7 +717,14 @@ export class Simulation {
     }
     if (place.kind === 'gate') this.gateArrival(place, plane);
     else if (place.kind === 'gasStation') this.gasStationArrival(place, plane);
-    else if (place.kind === 'stopSpot') {
+    else if (place.kind === 'hangar') {
+      // `Hangar::planeArrived` (0x47234).
+      place.progress = 0;
+      place.use = 'working';
+      plane.state = PlaneState.IN_HANGAR;
+      this.emit({ type: 'serviceStartedAtHangar', plane, hangar: place });
+      this.addEnergy(plane, RULES.energyBoost);
+    } else if (place.kind === 'stopSpot') {
       // `StopSpot::planeArrived` (0x79788): the plane simply waits there.
       place.use = 'occupied';
       plane.state = PlaneState.WAITING;
@@ -839,6 +885,26 @@ export class Simulation {
     this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.gasStation), 1, 'gas');
   }
 
+  /**
+   * `Hangar::update` (0x473dc). The original then sends the plane to an exit node and pays the
+   * points (0x472f4) once it is waiting there; here the plane waits at the hangar node and is paid
+   * at once.
+   */
+  private updateHangar(hangar: Hangar, dt: number): void {
+    const plane = hangar.plane;
+    if (!plane || hangar.use !== 'working') return;
+    hangar.progress += hangar.descriptor.speed * dt;
+    if (hangar.progress <= plane.descriptor.times.servicing) return;
+
+    hangar.use = 'done';
+    // `Plane::servicingFinished` (0x66c8).
+    plane.serviceDone = true;
+    plane.state = PlaneState.WAITING;
+    plane.need = !plane.gasDone ? Need.GAS : plane.luggageDone ? Need.LOAD : Need.LUGGAGE;
+    this.emit({ type: 'serviceFinishedAtHangar', plane, hangar });
+    this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.hangar), 1, 'service');
+  }
+
   /** Place virtual slot 9 (gate `0x435c0`, runway `0x6db0c`, gas station `0x40dcc`). */
   private release(place: Place): void {
     place.plane = null;
@@ -852,7 +918,7 @@ export class Simulation {
     plane.energy = Math.min(RULES.maxEnergy, plane.energy + amount);
   }
 
-  private addScore(plane: Plane, points: number, multiplier: number, reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'left'): void {
+  private addScore(plane: Plane, points: number, multiplier: number, reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'service' | 'left'): void {
     this.score += points;
     this.emit({ type: 'score', plane, points, multiplier, reason });
   }

@@ -61,6 +61,8 @@ export interface StageLayout {
   gateDecorations: { resource: string; offset: Point; front: boolean }[];
   gates: GateSlot[];
   gasStation: { position: Point; minLevel: number };
+  /** Repair hangar, when the stage has one. */
+  hangar: { position: Point; type: number; minLevel: number } | null;
   taxiNodes: Point[];
   runways: RunwaySlot[];
   stopSpots: { position: Point; requires: number | null; upgradedBy?: number; replacedBy?: number }[];

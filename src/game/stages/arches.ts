@@ -34,6 +34,7 @@ export const ARCHES: StageLayout = {
     },
   ],
   gasStation: { position: { x: 280, y: 120 }, minLevel: 3 },
+  hangar: null,
   taxiNodes: [80, 110, 140, 170, 200].map((x) => ({ x, y: 220 })),
   runways: [runway(1, 450, 225, 1), runway(2, 495, 270, 1)],
   stopSpots: [
