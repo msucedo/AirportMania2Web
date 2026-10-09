@@ -102,6 +102,12 @@ export const RULES = {
    */
   coffee: { recharge: 50, energy: 0.5 },
 
+  /**
+   * Seconds before the end of the level is considered: after the time runs out (longer when a
+   * plane is on the ground) and after finding a plane that still holds the level (0x11864).
+   */
+  levelEnd: { afterTimeOver: 3, afterTimeOverLanded: 10, retry: 6, retryLanded: 10 },
+
   /** Taxiing accelerates towards the next node, is capped, and brakes for the final target. */
   taxiAcceleration: 200,
   taxiMaxSpeed: 200,
@@ -117,8 +123,6 @@ export const PROVISIONAL = {
   taxiIgnoresNodeOccupancy: true,
   /** How far past the screen edge a flying plane goes before turning back. */
   flightTurnMargin: 60,
-  /** Seconds after the last scheduled arrival before an empty airport ends the level. */
-  endGrace: 2,
 } as const;
 
 export function clamp01(value: number): number {

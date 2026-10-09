@@ -197,6 +197,7 @@ export type SimEvent =
   | { type: 'takeOff'; plane: Plane; runway: Runway }
   | { type: 'leftAngry'; plane: Plane }
   | { type: 'departed'; plane: Plane }
+  | { type: 'timeOver' }
   | { type: 'levelEnd'; score: number };
 
 export interface SimulationConfig {
@@ -243,7 +244,10 @@ export class Simulation {
   private readonly pending: PlaneSpawn[];
   private nextPlaneId = 1;
   private events: SimEvent[] = [];
-  private lastActivity = 0;
+  /** The level's time has run out (`level+0x90`); play goes on until the airport is done. */
+  timeOver = false;
+  /** Seconds until the end of the level is next considered (`level+0x1dc`). */
+  private endDelay = 0;
 
   constructor(private readonly config: SimulationConfig) {
     const owned = config.improvements ?? new Set<number>();
@@ -555,12 +559,7 @@ export class Simulation {
     }
     for (const plane of this.planes) if (!plane.gone) this.updatePlane(plane, dt);
 
-    const active = this.planes.some((p) => !p.gone);
-    if (active || this.pending.length > 0) this.lastActivity = this.time;
-    else if (this.time - this.lastActivity >= PROVISIONAL.endGrace) {
-      this.ended = true;
-      this.emit({ type: 'levelEnd', score: this.score });
-    }
+    this.updateEnd(dt);
   }
 
   /**
@@ -573,6 +572,31 @@ export class Simulation {
     if (!booth || !booth.ready || booth.job || !plane) return [];
     if (spot.use !== 'occupied' || plane.state !== PlaneState.WAITING) return [];
     return this.colors.filter((color) => color !== plane.color);
+  }
+
+  /**
+   * The end of the level (0x117da). When the time runs out play goes on: the level is over once
+   * no plane holds it, and one holds it while it has energy left or, exhausted, is anywhere but
+   * waiting on the ground. The check is repeated after a delay that depends on what was found.
+   */
+  private updateEnd(dt: number): void {
+    const end = RULES.levelEnd;
+    if (!this.timeOver) {
+      if (this.time <= this.totalTime) return;
+      this.timeOver = true;
+      this.endDelay = this.planes.some((p) => !p.gone && p.landed) ? end.afterTimeOverLanded : end.afterTimeOver;
+      this.emit({ type: 'timeOver' });
+      return;
+    }
+    this.endDelay = Math.max(0, this.endDelay - dt);
+    if (this.endDelay > 0) return;
+    const holder = this.planes.find((p) => !p.gone && (p.energy > 0 || !(p.landed && p.state === PlaneState.WAITING)));
+    if (holder) {
+      this.endDelay = holder.energy <= 0 && holder.landed ? end.retryLanded : end.retry;
+      return;
+    }
+    this.ended = true;
+    this.emit({ type: 'levelEnd', score: this.score });
   }
 
   /**

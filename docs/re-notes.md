@@ -811,6 +811,20 @@ Vtable `0x17a8e8`, kind 5.
 - Web version: dragging scrolls the map; both dialogs use the original texts and buttons in a
   layout of ours where the positions are not known.
 
+## End of the level — confirmed
+
+In the playing state of the level update (`0x117c6`):
+
+- `level+0x88` is the elapsed time, advanced by `dt × profile+0x48`, and `level+0x130` the
+  level's `TotalTime`. When it passes it, `+0x90` is set, `SOUNDS.TIME_OVER` plays and
+  `+0x1dc` is set to 3 s, or 10 s if any plane has landed. Play goes on.
+- `+0x1dc` counts down (`0x11e00`). At zero the planes are scanned: the first one with energy
+  above zero sets it to 6 s; an exhausted one is skipped if it has landed and is waiting
+  (state 2), otherwise it sets 10 s (landed) or 6 s. With nobody holding it, `0x10684` ends the
+  level.
+- `+0x8c` counts the seconds played after the time ran out (reported to the awards, code 0x29).
+- Web version: the profile's factor at `+0x48` is taken as 1.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.
@@ -818,4 +832,4 @@ Vtable `0x17a8e8`, kind 5.
 - The exact loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
 - Where exactly a landing plane stops and when the runway is freed; the simulation stops it at the runway node.
 - Whether a busy front place makes the plane wait (assumed) and the queue reordering at `0x797e`.
-- How the level ends relative to `TotalTime`; `PATIENCE_VALUES.*` / `SPEED_VALUES.*`.
+- `PATIENCE_VALUES.*` / `SPEED_VALUES.*`.

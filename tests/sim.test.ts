@@ -262,6 +262,43 @@ describe('simulation, level 1-1', () => {
   });
 });
 
+describe('simulation, end of the level', () => {
+  it('goes on after the time runs out while a plane still has energy', () => {
+    const sim = newSim();
+    const events: SimEvent[] = [];
+    // Park every plane as it comes, so they are all on the ground with energy to spare.
+    runUntil(
+      sim,
+      () => {
+        for (const plane of sim.planes) if (!plane.landed && !plane.landing && plane.queue.length === 0) sim.addOrder(plane, sim.runways[plane.id % 2]!);
+        return sim.timeOver;
+      },
+      80,
+      events,
+    );
+    expect(sim.time).toBeCloseTo(sim.totalTime, 1);
+    expect(events.filter((e) => e.type === 'timeOver')).toHaveLength(1);
+    // Ten seconds on, a plane with energy left still holds the level.
+    run(sim, 12, events);
+    expect(sim.ended).toBe(false);
+    // Exhausted planes waiting on the ground do not hold it; one still in the air does until
+    // it has given up and gone.
+    for (const plane of sim.planes) if (!plane.gone) plane.energy = RULES.minEnergy;
+    expect(sim.planes.some((p) => !p.gone && p.landed && p.state === PlaneState.WAITING)).toBe(true);
+    runUntil(sim, () => sim.ended, 60, events);
+    expect(sim.planes.some((p) => !p.gone && p.landed)).toBe(true);
+    expect(events.at(-1)).toMatchObject({ type: 'levelEnd' });
+  });
+
+  it('waits three seconds after the time runs out on an empty airport', () => {
+    const sim = newSim();
+    const events = runUntil(sim, () => sim.ended, 400);
+    const at = (type: string): number => events.findIndex((e) => e.type === type);
+    expect(at('timeOver')).toBeGreaterThan(-1);
+    expect(at('levelEnd')).toBeGreaterThan(at('timeOver'));
+  });
+});
+
 describe('simulation, level 1-3 (fuel)', () => {
   it('has a gas station from level 3 on, wired into the taxi graph', () => {
     expect(newSim(1).gasStations).toHaveLength(0);

@@ -488,6 +488,9 @@ export class LevelScene {
       case 'fuelingStarted':
         this.audio.play('SOUNDS.FUELING');
         break;
+      case 'timeOver':
+        this.audio.play('SOUNDS.TIME_OVER');
+        break;
       case 'coffeeReady':
         this.audio.play('SOUNDS.CAKE_AND_COFFEE_READY');
         break;
