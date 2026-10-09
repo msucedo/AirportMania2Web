@@ -382,11 +382,30 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 
 ## Stage backdrop
 
-- `0x135f4(level, 82.0)` creates a `Sky` object (class name string `Sky`, constructor `0x74558`):
-  it sets up eight lights at fixed x positions (26, 93, 195, 240, 362, 523, 699, 764) and
-  `0x74358` draws colour bands across the 480 px width using components such as (0.6, 0.9, 1.0).
-  The exact band layout has not been read; the web version draws a gradient in those blues.
-- `0xcda08(82, 5)` spawns the clouds (`AMBIENT.CLOUD_1`–`3`). Not implemented yet.
+- `0x135f4(level, height)` creates a `Sky` object (constructor `0x74558`, vtable `0x17b768`).
+  It draws six vertices across 480 px: the top colour at y 0, the middle one at half its height
+  and the bottom one at its height (`0x74be0`). Height is 82 on Arches and 65 on the island.
+- Day cycle (confirmed): `0x74358` fills seven keyframes of three RGBA colours and a duration
+  (60, 10, 30, 10, 60, 20, 30 s): day, late afternoon, sunset twice, night twice and dawn. The
+  update (`0x74b3c`) advances a 0..1 blend by `dt / duration` and `0x74928` mixes the current
+  keyframe with the next. A level starts at keyframe 0, so it turns to night after 110 s.
+- On entering a keyframe (`0x74b90`): 1 starts the sun, 3 shows the stars, 4 starts the moon and
+  5 hides the stars.
+- Stars (`0x295fc`, eight added by `0x296f0`): x 26, 93, 195, 240, 362, 523, 699, 767; y at
+  0.15, 0.22, 0.375, 0.12, 0.295, 0.305, 0.385, 0.215 of the height; sizes 9, 9, 12, 14, 13, 15,
+  10, 11 px. They fade at 0.1 per second and their size follows
+  `0.8 + 0.2 * sin(2π (t / 2 + random phase))` (`0x29968`).
+- Sun (`0x29bc8`, `0x29c10`): a 0..1 value advancing 0.025 per second; position
+  (`400 − 300 v^0.25`, `450 v − 200`); `AMBIENT.SUNRAY` behind it rotated `300 v` degrees and
+  scaled `1 + 0.025 sin(200 v)`.
+- Moon (`0x29dc0`, `0x29e08`): 0.02 per second, position (`700 − 150 v⁴`, `350 − 400 v`). On a
+  480 px screen it is never in view, so the web version leaves it out, as it does the three stars
+  beyond x 480.
+- Clouds, `0xcda08(height, speed 5)`: six `MovingImage`s (`0x7232c`, draw `0x72440`) with a loop
+  of `2 × 1300 / speed` seconds. Each is at x `−100 + speed × ((t + offset) mod loop)` and is
+  drawn only in the first half of the loop. Surfaces 1, 2, 3, 1, 2, 3; y at 0.275, 0.325, 0.175,
+  0.275, 0.225, 0.325 of the height (floored); offsets 0.3, 0.65, 1, 1.3, 1.55, 1.92 half-loops.
+- Nothing was found that darkens the airport at night; the web version does not either.
 - `STAGES.ARCHES.BACKGROUND_TOP` is created as a plain `StaticImage` (`0x83e84`) at (0, 34). The
   file is an 8-bit grey image; the web version treats it as a silhouette (brightness = opacity)
   drawn in the colour of the ground tile's top row, which joins the ground without a seam. That
@@ -501,4 +520,4 @@ Vtable `0x17a8e8`, kind 5.
 - Where exactly a landing plane stops and when the runway is freed; the simulation stops it at the runway node.
 - Whether a busy front place makes the plane wait (assumed) and the queue reordering at `0x797e`.
 - How the level ends relative to `TotalTime`; `PATIENCE_VALUES.*` / `SPEED_VALUES.*`.
-- Whether the renderer really uses `.cgf` grey images as opacity masks; clouds and sky lights.
+- Whether the renderer really uses `.cgf` grey images as opacity masks.

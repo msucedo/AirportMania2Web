@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor } from '../src/game/planeView';
+import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 
 describe('plane drawing rules', () => {
   it('picks the perspective and mirroring from the heading', () => {
@@ -36,5 +37,24 @@ describe('plane drawing rules', () => {
     expect(paletteColor('VIOLET').main).toBe(0xc789f3);
     expect(paletteColor(null).main).toBe(0xc8c8c8);
     expect(paletteColor('NOPE')).toEqual(paletteColor(null));
+  });
+});
+
+describe('sky', () => {
+  it('runs from day through sunset to night and back in 220 seconds', () => {
+    expect(skyPhaseAt(0)).toEqual({ phase: 0, blend: 0 });
+    expect(skyPhaseAt(30)).toEqual({ phase: 0, blend: 0.5 });
+    expect(skyPhaseAt(65)).toEqual({ phase: 1, blend: 0.5 });
+    expect(skyPhaseAt(110).phase).toBe(4);
+    expect(skyPhaseAt(220)).toEqual({ phase: 0, blend: 0 });
+    expect(skyColorsAt(0)).toEqual(['rgb(153,229,255)', 'rgb(178,229,255)', 'rgb(229,229,255)']);
+    expect(skyColorsAt(110)[0]).toBe('rgb(0,0,0)');
+  });
+
+  it('drifts each cloud across during half of its loop', () => {
+    expect(cloudX(0, 0.3)).toBeCloseTo(290);
+    expect(cloudX(10, 0.3)).toBeCloseTo(340);
+    expect(cloudX(0, 1)).toBeNull();
+    expect(cloudX(260, 1)).toBeCloseTo(-100);
   });
 });

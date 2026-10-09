@@ -11,6 +11,7 @@ export const ARCHES: StageLayout = {
   runwayType: 1,
   gasStationType: 1,
   backdrop: {
+    sky: 82,
     horizon: 160,
     layers: [
       // The silhouette borrows the ground tile's top colour so the two join. The stage script

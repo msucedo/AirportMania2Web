@@ -9,6 +9,7 @@ export const ISLAND: StageLayout = {
   runwayType: 2,
   gasStationType: 2,
   backdrop: {
+    sky: 65,
     horizon: 159,
     // The script creates, in this order: the water tile at y 159 (scale 16×15), the sea strip at
     // y 55, the grey upper background at y 40 and the land image at (335, 160). How the engine

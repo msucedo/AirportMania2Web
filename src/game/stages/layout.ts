@@ -52,7 +52,9 @@ export interface StageLayout {
   runwayType: number;
   gasStationType: number;
   backdrop: {
-    /** Screen y where the sky gradient ends. */
+    /** Height given to the original `Sky` object: its gradient and clouds fit in it. */
+    sky: number;
+    /** Screen y down to which the sky's bottom colour is kept painted, behind the backdrop layers. */
     horizon: number;
     layers: BackdropLayer[];
   };

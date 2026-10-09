@@ -7,6 +7,7 @@ import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { paletteColor } from './palette';
+import { SKY_SURFACES, SkyView } from './view/sky';
 import { PlaneView, planeSurfaceIds } from './planeView';
 import type { Progress } from './progress';
 import { FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
@@ -43,6 +44,7 @@ export class LevelScene {
   private readonly overlay = new Container();
   private readonly gateViews: { gate: Gate; view: GateView }[] = [];
   private readonly flags: OrderFlags;
+  private sky!: SkyView;
   private readonly stationViews: GasStationView[] = [];
   private readonly hangarBars: { hangar: Hangar; bar: Graphics }[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
@@ -93,7 +95,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES]);
+    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES]);
     for (const layer of layout.backdrop.layers) {
       ids.add(layer.resource);
       if (typeof layer.silhouette === 'object') ids.add(layer.silhouette.topRowOf);
@@ -167,18 +169,9 @@ export class LevelScene {
 
   private build(): void {
     const { layout } = this.options;
-    // Behind everything the original draws a `Sky` object and clouds; the band colours have not been
-    // matched exactly, so this is a plain gradient in the same light blues.
     const { horizon, layers } = layout.backdrop;
-    const sky = new Graphics();
-    const bands = 24;
-    for (let i = 0; i < bands; i++) {
-      const t = i / (bands - 1);
-      const mix = (from: number, to: number): number => Math.round(from + (to - from) * t);
-      const color = (mix(0x5c, 0x99) << 16) | (mix(0xb4, 0xe6) << 8) | mix(0xf0, 0xff);
-      sky.rect(0, (horizon * i) / bands, SCREEN_WIDTH, horizon / bands + 1).fill(color);
-    }
-    this.ground.addChild(sky);
+    this.sky = new SkyView(this.textures, layout.backdrop.sky, horizon);
+    this.ground.addChild(this.sky);
 
     for (const layer of layers) {
       let sprite: Sprite;
@@ -333,6 +326,7 @@ export class LevelScene {
 
   private draw(seconds: number): void {
     for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, tintOf(gate.lastColor));
+    this.sky.update(this.paused ? 0 : seconds);
     for (const view of this.stationViews) view.update();
     for (const { hangar, bar } of this.hangarBars) {
       // Plain progress bar: the original uses HANGARS.PROGRESS sprites that this stage's group does not ship.

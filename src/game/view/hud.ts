@@ -43,7 +43,11 @@ export class Hud extends Container {
     private readonly goals: LevelGoals,
   ) {
     super();
-    this.addChild(textures.sprite('GUI.INGAMEGUI.BACK'));
+    // The score window is a hole in the background image and the digit strips are opaque, so the
+    // reels close it; cells with no digit are backed with the strips' own paper colour.
+    const paper = new Graphics();
+    paper.rect(SCORE.x - 3, SCORE.y - 2, SCORE.cells * SCORE.pitch + 4, SCORE.size + 4).fill(textures.rowColor('GUI.INGAMEGUI.BLACK_NUMBERS', 18));
+    this.addChild(paper, textures.sprite('GUI.INGAMEGUI.BACK'));
 
     this.glyphs = {
       black: this.digitTextures('GUI.INGAMEGUI.BLACK_NUMBERS'),
