@@ -53,11 +53,11 @@ try {
   await clickPlane();
   s = await waitFor('selected', (s) => s.plane.selected); log('selected in flight', s); await shot('1-flying-selected');
   await click(400, 225);                       // runway 1
-  s = await waitFor('landing', (s) => s.plane.landing); await sleep(2600); await shot('2-landing');
+  s = await waitFor('landing', (s) => s.plane.landing); await sleep(1200); await shot('2-landing');
   // The gate can be queued while the plane is still landing.
   await click(40, 122);                        // gate A
   await sleep(150); await shot('2a-queued');
-  s = await waitFor('landed', (s) => s.plane.state !== 0); log('landed', s); await sleep(700); await shot('2b-taxi');
+  s = await waitFor('landed', (s) => s.plane.state !== 0 && s.plane.state !== 13); log('landed', s); await sleep(700); await shot('2b-taxi');
   s = await waitFor('unloading', (s) => s.plane.state === 5); log('unloading at gate A', s); await sleep(2500); await shot('3-unloading');
   // Loading follows on the same gate without a new order.
   s = await waitFor('loading', (s) => s.plane.state === 4); log('loading at gate A', s); await sleep(1500); await shot('4-loading');

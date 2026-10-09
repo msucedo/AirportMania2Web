@@ -158,10 +158,14 @@ export interface Plane {
   loaded: boolean;
   need: number;
   selected: boolean;
-  /** True during the landing approach, which the original still runs in state 0. */
+  /** True from the order to land until the plane has stopped on the runway (state 13). */
   landing: boolean;
-  /** Seconds left in the current landing descent. */
-  descent: number;
+  /**
+   * The landing under way (`plane+0x330`): 0 leaving the screen, 2 gliding down, 3 the moment
+   * after touching down, 4 braking. `time` is the phase's clock; `vx`, `vy` and `ax` the speed
+   * and acceleration.
+   */
+  approach: { phase: 0 | 2 | 3 | 4; time: number; vx: number; vy: number; ax: number } | null;
   /** Ground speed while taxiing or on the take-off run. */
   speed: number;
   /** Remaining taxi waypoints, ending at the target place's node. */
@@ -193,6 +197,9 @@ export type SimEvent =
   | { type: 'passengerDelivered'; plane: Plane; passenger: 'PREGNANT' | 'ORGAN' }
   | { type: 'serviceStarted'; plane: Plane; gate: Gate; service: 'unloading' | 'loading' }
   | { type: 'serviceFinished'; plane: Plane; gate: Gate; service: 'unloading' | 'loading' }
+  | { type: 'landingStarted'; plane: Plane; runway: Runway }
+  | { type: 'landingApproach'; plane: Plane; runway: Runway }
+  | { type: 'touchdown'; plane: Plane; runway: Runway }
   | { type: 'landed'; plane: Plane; runway: Runway }
   | { type: 'takeOff'; plane: Plane; runway: Runway }
   | { type: 'leftAngry'; plane: Plane }
@@ -684,7 +691,7 @@ export class Simulation {
       need: Need.LAND,
       selected: false,
       landing: false,
-      descent: 0,
+      approach: null,
       speed: 0,
       path: [],
       timer: 0,
@@ -698,8 +705,10 @@ export class Simulation {
     this.drainEnergy(plane, dt);
     switch (plane.state) {
       case PlaneState.FLYING:
-        if (plane.landing) this.updateLanding(plane, dt);
-        else this.updateFlying(plane, dt);
+        this.updateFlying(plane, dt);
+        break;
+      case PlaneState.LANDING:
+        this.updateLanding(plane, dt);
         break;
       case PlaneState.LEAVING_ANGRY:
         plane.heading = plane.facing > 0 ? 180 : 0;
@@ -754,7 +763,7 @@ export class Simulation {
     if (plane.queue.length > 0) {
       this.startNextOrder(plane);
       // Keep circling while the runway is taken.
-      if (plane.landing) return;
+      if (plane.state !== PlaneState.FLYING) return;
     }
     plane.heading = plane.facing > 0 ? 180 : 0;
     plane.x += plane.facing * RULES.flightSpeed * dt;
@@ -797,15 +806,13 @@ export class Simulation {
     plane.place = place;
 
     if (plane.state === PlaneState.FLYING) {
+      // 0x73c6: the plane keeps its speed and accelerates towards the side it will come back
+      // from; runways with heading 0 are approached from the right.
       const runway = place as Runway;
       plane.landing = true;
-      // Runways with heading 0 are approached from node.x + 750 moving left (0x7fb0-0x8054).
-      plane.facing = runway.direction > 0 ? -1 : 1;
-      plane.x = runway.node.x + runway.direction * RULES.landingApproachDistance;
-      plane.y = runway.node.y;
-      plane.scale = 1;
-      plane.altitude = RULES.flightAltitude;
-      plane.descent = RULES.flightAltitude / RULES.landingSpeed;
+      plane.state = PlaneState.LANDING;
+      plane.approach = { phase: 0, time: 0, vx: plane.facing * RULES.flightSpeed, vy: 0, ax: runway.direction * RULES.landing.leaveAcceleration };
+      this.emit({ type: 'landingStarted', plane, runway });
       return;
     }
     plane.state = PlaneState.TAXIING;
@@ -815,14 +822,66 @@ export class Simulation {
     plane.path = route ? route.slice(1).map((n) => ({ x: n.x, y: n.y })) : [place.node];
   }
 
+  /** The landing, phase by phase (0x7eb2). */
   private updateLanding(plane: Plane, dt: number): void {
     const runway = plane.place as Runway;
-    plane.descent = Math.max(0, plane.descent - dt);
-    plane.altitude = RULES.landingSpeed * plane.descent;
-    plane.heading = plane.facing > 0 ? 180 : 0;
-    plane.x += plane.facing * RULES.landingSpeed * dt;
-    const passed = plane.facing > 0 ? plane.x >= runway.node.x : plane.x <= runway.node.x;
-    if (!passed) return;
+    const approach = plane.approach!;
+    const rule = RULES.landing;
+    if (approach.phase === 0) {
+      approach.time += dt;
+      plane.scale = Math.min(1, plane.scale + rule.scaleRate * dt);
+      if (approach.time < rule.dipTime) approach.vy = rule.dipFactor * (approach.time - rule.dipTime) ** 2;
+      approach.vx += approach.ax * dt;
+      plane.x += approach.vx * dt;
+      plane.y += approach.vy * dt;
+      if (approach.vx !== 0) plane.facing = approach.vx > 0 ? 1 : -1;
+      plane.heading = plane.facing > 0 ? 180 : 0;
+      if (plane.x >= -rule.leaveMargin && plane.x <= this.config.screenWidth + rule.leaveMargin) return;
+      // 0x7f68: it comes back in line with the runway.
+      approach.phase = 2;
+      approach.time = 0;
+      plane.facing = runway.direction > 0 ? -1 : 1;
+      plane.heading = plane.facing > 0 ? 180 : 0;
+      approach.vx = plane.facing * RULES.landingSpeed;
+      approach.vy = 0;
+      approach.ax = 0;
+      plane.x = runway.node.x + runway.direction * RULES.landingApproachDistance;
+      plane.y = runway.node.y;
+      plane.scale = 1;
+      plane.altitude = rule.approachAltitude;
+      this.emit({ type: 'landingApproach', plane, runway });
+      return;
+    }
+    approach.vx += approach.ax * dt;
+    plane.x += approach.vx * dt;
+    if (approach.phase === 2) {
+      approach.time += (RULES.landingSpeed / rule.glideDistance) * dt;
+      if (approach.time < 1) {
+        plane.altitude = (rule.approachAltitude / 2) * (Math.cos(Math.PI * approach.time) + 1);
+        return;
+      }
+      // 0x8108: touch-down. The braking is the one that stops it exactly on the node.
+      const distance = Math.abs(runway.node.x - plane.x);
+      approach.phase = 3;
+      approach.time = 0;
+      plane.altitude = 0;
+      approach.ax = distance > 0 ? (-Math.sign(approach.vx) * approach.vx ** 2) / (2 * distance) : 0;
+      this.emit({ type: 'touchdown', plane, runway });
+      return;
+    }
+    if (approach.phase === 3) {
+      // A slight bounce for a quarter of a second.
+      approach.time += dt / rule.bounceTime;
+      const t = Math.min(1, approach.time) * rule.bounceTime;
+      plane.altitude = approach.time < 1 ? rule.bounceSpeed * t - (rule.bounceSpeed / 2) * t * t : 0;
+      if (approach.time >= 1) {
+        approach.phase = 4;
+        approach.time = 0;
+      }
+    } else approach.time += dt;
+    // 0x82de: done once the node is no longer ahead.
+    if ((runway.node.x - plane.x) * approach.vx > 0) return;
+    plane.approach = null;
     plane.x = runway.node.x;
     plane.altitude = 0;
     plane.heading = runway.heading;
@@ -833,8 +892,7 @@ export class Simulation {
       plane.passenger = null;
     }
     plane.need = Need.UNLOAD;
-    plane.state = PlaneState.LANDED;
-    this.runwayUsed(runway, plane);
+    this.runwayUsed(runway, plane, true);
   }
 
   private updateTaxi(plane: Plane, dt: number): void {
@@ -894,9 +952,8 @@ export class Simulation {
   }
 
   /** `Runway::planeDone` (0x6d584): scores a landing or starts a take-off. */
-  private runwayUsed(runway: Runway, plane: Plane): void {
+  private runwayUsed(runway: Runway, plane: Plane, landing = false): void {
     const base = roundScore(clamp01(plane.energy) * plane.descriptor.points.runway);
-    const landing = plane.state === PlaneState.LANDED;
     const track = landing ? runway.landings : runway.takeOffs;
 
     let multiplier = 1;

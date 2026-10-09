@@ -476,7 +476,13 @@ export class LevelScene {
       case 'queueCancelled':
         this.audio.play('SOUNDS.QUEUE_CANCEL');
         break;
-      case 'landed':
+      case 'landingStarted':
+        this.planeSound(event.plane, 'GoingOut');
+        break;
+      case 'landingApproach':
+        this.planeSound(event.plane, 'Landing');
+        break;
+      case 'touchdown':
         this.planeSound(event.plane, 'TouchingLand');
         break;
       case 'serviceStarted':
@@ -608,7 +614,7 @@ export class LevelScene {
         corner: this.balloonCorner(plane),
         passenger: plane.passenger,
         idle: plane.state === PlaneState.WAITING && plane.queue.length === 0,
-        gearDown: plane.state !== PlaneState.AIRBORNE && (plane.state !== PlaneState.FLYING || plane.landing),
+        gearDown: this.gearDown(plane),
       });
     }
     this.planeLayer.sortableChildren = true;
@@ -649,6 +655,19 @@ export class LevelScene {
         item.destroy({ children: true });
       }
     }
+  }
+
+  /**
+   * The gear is up in the air. On the way down it comes out when little of the glide is left
+   * (`plane+0x250`, 0x80a2).
+   */
+  private gearDown(plane: Plane): boolean {
+    if (plane.state === PlaneState.FLYING || plane.state === PlaneState.AIRBORNE) return false;
+    const approach = plane.approach;
+    if (!approach) return true;
+    if (approach.phase === 0) return false;
+    if (approach.phase !== 2) return true;
+    return ((1 - approach.time) * RULES.landing.glideDistance) / RULES.landingSpeed < RULES.landing.gearTime;
   }
 
   private showEnd(): void {

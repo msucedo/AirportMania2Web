@@ -16,7 +16,8 @@ export const PlaneState = {
   TAKING_OFF: 11,
   /** In the air after the take-off run. */
   AIRBORNE: 12,
-  LANDED: 13,
+  /** Landing, from the order to the stop on the runway (0x73c6); it costs no energy. */
+  LANDING: 13,
 } as const;
 export type PlaneState = (typeof PlaneState)[keyof typeof PlaneState];
 
@@ -62,6 +63,14 @@ export const RULES = {
   landingSpeed: 250,
   /** A landing plane starts this far from the runway node. */
   landingApproachDistance: 750,
+  /**
+   * The landing (state 13, 0x7eb2). The plane first flies off the screen, accelerating at
+   * `leaveAcceleration` and dipping for `dipTime` seconds, until it is `leaveMargin` beyond an
+   * edge. It comes back `landingApproachDistance` from the runway node at `landingSpeed`,
+   * `approachAltitude` up, and comes down over `glideDistance`; from there it brakes to stop on
+   * the node. The scale grows to 1 at `scaleRate` per second on the way out.
+   */
+  landing: { leaveAcceleration: 150, dipTime: 1.5, dipFactor: 50, leaveMargin: 500, scaleRate: 0.2, approachAltitude: 200, glideDistance: 600, bounceSpeed: 10, bounceTime: 0.25, gearTime: 0.6 },
   /** Take-off run: constant acceleration from standstill, in px/s². */
   takeOffAcceleration: 200,
   /** Run length after which the plane leaves the ground. */

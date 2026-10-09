@@ -116,9 +116,43 @@ describe('simulation, level 1-1', () => {
     const plane = sim.planes[0]!;
     sim.addOrder(plane, sim.runways[0]!);
     runUntil(sim, () => plane.landing, 5);
-    expect(plane.state).toBe(PlaneState.FLYING);
+    expect(plane.state).toBe(PlaneState.LANDING);
     expect(sim.addOrder(plane, sim.gates[0]!)).toBe(true);
     runUntil(sim, () => plane.state === PlaneState.UNLOADING, 30);
+  });
+
+  it('lands by leaving the screen, gliding down and braking onto the runway node', () => {
+    const sim = newSim();
+    const events: SimEvent[] = [];
+    run(sim, 1.1, events);
+    const plane = sim.planes[0]!;
+    const runway = sim.runways[0]!;
+    sim.addOrder(plane, runway);
+    run(sim, DT, events);
+    expect(plane.approach).toMatchObject({ phase: 0 });
+    // It leaves by the side it will come back from, and the landing costs no energy.
+    const energy = plane.energy;
+    runUntil(sim, () => plane.approach?.phase === 2, 10, events);
+    expect(plane.energy).toBe(energy);
+    expect(Math.abs(plane.x - runway.node.x)).toBeCloseTo(RULES.landingApproachDistance, 0);
+    expect(plane.y).toBe(runway.node.y);
+    expect(plane.altitude).toBe(RULES.landing.approachAltitude);
+
+    // It glides 600 px in 2.4 s and touches down 150 px short of the node.
+    const from = sim.time;
+    runUntil(sim, () => plane.approach?.phase === 3, 5, events);
+    expect(sim.time - from).toBeCloseTo(2.4, 1);
+    expect(plane.altitude).toBe(0);
+    expect(Math.abs(plane.x - runway.node.x)).toBeCloseTo(150, -1);
+    expect(plane.landed).toBe(false);
+
+    // Braking takes it exactly to the node, where the landing counts.
+    runUntil(sim, () => plane.landed, 5, events);
+    expect(plane.x).toBe(runway.node.x);
+    expect(plane.state).toBe(PlaneState.WAITING);
+    expect(plane.approach).toBeNull();
+    const order = ['landingStarted', 'landingApproach', 'touchdown', 'landed'].map((type) => events.findIndex((e) => e.type === type));
+    expect(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1]!))).toBe(true);
   });
 
   it('makes a second plane circle until the runway it was sent to is free', () => {

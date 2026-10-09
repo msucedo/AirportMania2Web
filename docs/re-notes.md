@@ -105,7 +105,7 @@ descriptor `+0x8`.
 
 | State | Meaning | Set by | Confidence |
 |---|---|---|---|
-| 0 | flying, including the landing approach (so the plane stays selectable while landing) | constructor `0x5684` | confirmed |
+| 0 | flying, waiting for a landing order | constructor `0x5684` | confirmed |
 | 1 | leaving the airport: gave up (`0x6a24`, energy below 0 at a turn while flying) or 2 s after lift-off (`0x7d60`) | plane update `0x6af0` | confirmed |
 | 2 | waiting for orders | many (`0x630c`, `0x64ac`, `0x635c`, …) | confirmed |
 | 3 | taxiing to the next queued place | `0x6594`, `0x66c8` | confirmed |
@@ -113,11 +113,11 @@ descriptor `+0x8`.
 | 5 | unloading at a gate (first visit); queue cleared | `0x6378`, called by gate `0x43238` | confirmed |
 | 6 | in the hangar | `0x6698`, called by hangar | inferred |
 | 7, 9 | gas station phases | `0x6748` | inferred |
-| 8 | unknown | `0x6354` | unknown |
+| 8 | being repainted on a painting stop spot | `0x6354`, called by `0x68014` | confirmed |
 | 10 | unknown, set from `0x56b78` | `0x6820` | unknown |
 | 11 | taking off | `0x6110`, called by runway `0x6d584` | confirmed |
 | 12 | in the air after the take-off run | `0x7cc2` | confirmed |
-| 13 | touched down; the runway scores it | `0x6af0`, read by runway `0x6d584` | confirmed |
+| 13 | landing, from the order to the stop on the runway node (selectable, no energy drain) | `0x73c6` | confirmed |
 
 Need codes at `+0x264`: after unloading, 2, 3 or 5 when a service is still pending and 6 when
 none is (load at the gate); 7 after loading (take off). The flags `+0x26a`, `+0x26b`, `+0x26d`
@@ -825,11 +825,42 @@ In the playing state of the level update (`0x117c6`):
 - `+0x8c` counts the seconds played after the time ran out (reported to the awards, code 0x29).
 - Web version: the profile's factor at `+0x48` is taken as 1.
 
+## Patience and loading speed labels — confirmed
+
+The plane descriptor parser (`0xa9c4`) keeps `Patience` and `LoadingSpeed` as strings
+(`+0xa0`, `+0xa4`). They are text ids (`PATIENCE_VALUES.HIGH` → "Alta", `SPEED_VALUES.FAST` →
+"Rápida") for the plane's card, not rule inputs: how patient a plane is comes from its
+energy fall times and how fast it loads from `LoadingTime`.
+
+## Landing — confirmed
+
+State 13, with a phase in `plane+0x330` and a clock in `+0x314` (`0x7eb2`). Position is
+`+0x2d8/+0x2dc`, speed `+0x2e0/+0x2e4`, acceleration `+0x2e8/+0x2ec`, altitude `+0x2f0`.
+
+- Start (`0x738c`): the runway leaves the queue and is reserved, the `GoingOut` sound plays and
+  the acceleration is set to 150 px/s² towards the side the plane will come back from (+x when
+  `runway+0x34` is 0).
+- Phase 0: the plane flies off. For 1.5 s its vertical speed is `50·(t − 1.5)²`, a dip of about
+  56 px; the scale (`+0x290`) grows to 1 at 0.2/s. When x is below −500 or above the screen
+  width + 500: `Landing` sound, position = runway node ∓ 750 in x at the node's y, speed
+  ±250 (`0x1772e0`), no acceleration, phase 2.
+- Phase 2: the clock runs at 250/600 per second; altitude = `100·cos(πt) + 100`. The gear flag
+  `+0x250` is set when less than 0.6 s is left. At 1 (600 px on, 150 px short of the node):
+  altitude 0, `TouchingLand` sound, acceleration = `(pos − node)·v² / (2·d²)`, which stops it on
+  the node; altitude speed 10 and acceleration −10; phase 3.
+- Phase 3: a quarter of a second (clock at 4/s), with dust from `0x6870`; then phase 4.
+- Phase 4: until `(node − pos)·v ≤ 0`. Then the runway's slot 12 is called (it scores the
+  landing), the plane is put on the node, state 2, need 1 (unload), `+0x268` set, and a
+  pregnant passenger or an organ is delivered.
+- Plane sounds by descriptor offset: `+0x5c…+0x68` TalkHappy/Normal/Upset/Mad, `+0x6c` In,
+  `+0x70` Out, `+0x74` Cannot, `+0x78` Landing, `+0x7c` GoingOut, `+0x80` Launching, `+0x84`
+  TouchingLand, `+0x88` Loading, `+0x8c` Unloading, `+0x90` Whistle1, `+0x94` Whistle2.
+- Web version: the plane's pitch (`+0x2fc`: −5 at phase 2, rising 5/s) and the dust are not
+  drawn.
+
 ## Still unknown
 
-- Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.
+- Plane update (`0x6af0`): state 10; taxi speed.
 - Taxi node occupancy (set as planes claim nodes) and the stop-spot nodes: not modelled.
 - The exact loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
-- Where exactly a landing plane stops and when the runway is freed; the simulation stops it at the runway node.
 - Whether a busy front place makes the plane wait (assumed) and the queue reordering at `0x797e`.
-- `PATIENCE_VALUES.*` / `SPEED_VALUES.*`.
