@@ -1,10 +1,12 @@
 import { Container, Graphics, Sprite, Text, type Application, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
+import { loadFonts } from '../engine/fonts';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { PlaneView, planeSurfaceIds } from './planeView';
+import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { PlaneState } from './sim/rules';
 import { Simulation, type Gate, type Plane, type SimEvent } from './sim/simulation';
 import type { StageLayout } from './stages/arches';
@@ -15,7 +17,6 @@ const NEUTRAL_TINT = 0xd0d0d0;
 const tintOf = (color: PlaneColor | null): number => (color ? (PROVISIONAL_TINTS[color] ?? NEUTRAL_TINT) : NEUTRAL_TINT);
 
 const STEP = 1 / 60;
-const HUD_HEIGHT = 34;
 
 interface GateView {
   gate: Gate;
@@ -45,9 +46,10 @@ export class LevelScene {
   private readonly gateViews: GateView[] = [];
   private readonly planeViews = new Map<number, { view: PlaneView; marks: Graphics }>();
   private readonly floating: FloatingText[] = [];
-  private readonly hud: Text;
+  private readonly hud: Hud;
   private accumulator = 0;
   private endShown = false;
+  private paused = false;
 
   private constructor(
     private readonly textures: TextureStore,
@@ -56,9 +58,9 @@ export class LevelScene {
     sim: Simulation,
   ) {
     this.sim = sim;
-    this.hud = new Text({ text: '', style: { fontFamily: 'monospace', fontSize: 11, fill: 0xffffff } });
-    this.hud.position.set(6, 4);
-    this.root.addChild(this.ground, this.planeLayer, this.overlay);
+    this.hud = new Hud(textures, sim.goals);
+    this.hud.onPause = () => (this.paused = !this.paused);
+    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.hud);
     this.build();
   }
 
@@ -78,7 +80,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT']);
+    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT', ...HUD_SURFACES]);
     for (const decoration of layout.decorations) ids.add(decoration.resource);
     for (const gate of sim.gates) {
       ids.add(gate.descriptor.surfaces.color);
@@ -88,7 +90,7 @@ export class LevelScene {
     for (const spawn of schedule.planes) {
       for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, 0)) ids.add(id);
     }
-    await textures.load(ids);
+    await Promise.all([textures.load(ids), loadFonts(data.resources, [HUD_FONT])]);
 
     const scene = new LevelScene(textures, audio, options, sim);
     app.stage.addChild(scene.root);
@@ -104,6 +106,7 @@ export class LevelScene {
   press(x: number, y: number): void {
     const first = !this.audio.unlocked;
     this.audio.unlock();
+    if (this.hud.contains(y)) return;
     if (first) {
       this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.BONUS_X2']);
       for (const plane of new Set(this.sim.planes.map((p) => p.descriptor))) this.audio.preload(Object.values(plane.sounds).filter((id) => !id.includes('%')));
@@ -122,7 +125,7 @@ export class LevelScene {
 
   /** Advances the simulation in fixed steps and redraws. */
   frame(seconds: number): void {
-    this.accumulator += Math.min(seconds, 0.25);
+    if (!this.paused) this.accumulator += Math.min(seconds, 0.25);
     while (this.accumulator >= STEP) {
       this.sim.update(STEP);
       this.accumulator -= STEP;
@@ -182,8 +185,6 @@ export class LevelScene {
       this.overlay.addChild(marks);
     }
 
-    const hudBack = new Graphics().rect(0, 0, SCREEN_WIDTH, HUD_HEIGHT).fill(0x1b2a3a);
-    this.overlay.addChild(hudBack, this.hud);
   }
 
   private onEvent(event: SimEvent): void {
@@ -308,9 +309,8 @@ export class LevelScene {
       }
     }
 
-    const goals = this.sim.goals;
     const remaining = Math.max(0, Math.ceil(this.sim.totalTime - this.sim.time));
-    this.hud.text = `Score ${this.sim.score}   Goal ${goals.goal}   Expert ${goals.expert}\nTime ${remaining}s`;
+    this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds);
 
     if (this.sim.ended && !this.endShown) this.showEnd();
   }

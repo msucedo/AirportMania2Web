@@ -285,6 +285,21 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   slot plays at each moment is matched by name in the web version, not read from the binary.
 - Music: `<area music>.INTRO` then `.LOOP`; the final report uses `MUSICS.FINAL_REPORT.<tier>`.
 
+## In-game HUD (`InGameGUI`)
+
+- `0x4e25c` loads `GUI.INGAMEGUI.BACK`, `RED_NUMBERS`, `BLACK_NUMBERS`, `YELLOW_DISC`,
+  `BLUE_ORANGE_DISC`, `NO_MORE_TIME`, `BAR_SEPARATOR`, `PROGRESS_BAR_EFFECT`, the money sign and
+  the fonts `FONTS.ULTRA` and `FONTS.WHITE`. `0x4eba4` is its draw; `0x514cc` builds the goal
+  panel (`SCORE_GOAL_BACK`, `LEVEL_NUMBER`, `SCORE.BEST_SCORE`); `0x87994` the menu button.
+- Confirmed from the draw: the goal progress bar is the rectangle x 194..313, y 4..15
+  (`0x4f476`), and a pulsing effect driven by a sine.
+- Measured on `ingamegui.png` (426×35), not read from code: the score window has eight cells
+  11 px apart starting at x = 82, y 6..15; the progress slot interior is x 196..313.
+- Digit strips are 13×244 reels: "-" then 0–9 then 0 again, one glyph every 20 px.
+- Not read: when red or black digits are used, the fill colours, where the separators sit, what
+  the radar disc and the notched right-hand section show, and the reel animation. The web HUD
+  approximates these.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.

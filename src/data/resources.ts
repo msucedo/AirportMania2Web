@@ -31,6 +31,7 @@ export interface ResourcesData {
   surfaces: Record<string, SurfaceDef>;
   samples: Record<string, SampleDef>;
   files: Record<string, { file: string | null; language?: string }[]>;
+  fonts: Record<string, { file: string | null; ascentFactor?: number; languages?: string[] }[]>;
 }
 
 export class Resources {
@@ -49,6 +50,11 @@ export class Resources {
     if (!def) throw new Error(`Unknown surface "${id}"`);
     if (def.file === null) throw new Error(`Surface "${id}" has no file in the pack`);
     return def as SurfaceDef & { file: string };
+  }
+
+  /** File of a TrueType font resource, or null when the pack does not ship it. */
+  fontFile(id: string): string | null {
+    return this.data.fonts[id]?.find((f) => f.file)?.file ?? null;
   }
 
   hasSample(id: string): boolean {
