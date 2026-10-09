@@ -21,7 +21,7 @@ try {
   page.on('response', (r) => { if (r.url().endsWith('.ogg')) { audio.ogg++; if (r.status() >= 400) audio.failed++; } });
   page.on('console', (m) => { if (m.text().includes('Could not load sample')) problems.push('audio: ' + m.text()); });
   page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('favicon') && !m.text().includes('404')) problems.push('console: ' + m.text()); });
-  await page.goto(url, { waitUntil: 'load', timeout: 20000 });
+  await page.goto(url.includes('level=') ? url : url + (url.includes('?') ? '&' : '?') + 'level=1', { waitUntil: 'load', timeout: 20000 });
   await page.waitForFunction('document.body.dataset.ready || document.body.dataset.error', { timeout: 20000 });
   const error = await page.evaluate('document.body.dataset.error');
   if (error) throw new Error(error);

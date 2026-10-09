@@ -7,6 +7,7 @@ import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { PlaneView, planeSurfaceIds } from './planeView';
+import type { Progress } from './progress';
 import { FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
@@ -29,6 +30,9 @@ export interface LevelOptions {
   level: number;
   layout: StageLayout;
   language: Language;
+  progress: Progress;
+  /** Navigation: a level number, or null for the stage screen. */
+  onNavigate: (level: number | null) => void;
   showNodes?: boolean;
 }
 
@@ -55,6 +59,8 @@ export class LevelScene {
     private readonly strings: Strings,
     private readonly options: LevelOptions,
     sim: Simulation,
+    private readonly perStarAmount: number,
+    private readonly hasNextLevel: boolean,
   ) {
     this.sim = sim;
     this.hud = new Hud(textures, sim.goals);
@@ -69,11 +75,14 @@ export class LevelScene {
     const stage = await data.stage(options.stage);
     const area = data.areas.get(options.stage);
     if (!area) throw new Error(`Unknown stage ${options.stage}`);
-    const schedule = findLevel(stage, options.level, false);
+    // Owning the stage's plane licence switches every level to its extra-plane variant.
+    const extraPlane = options.progress.owns(layout.extraPlaneLicence);
+    const schedule = findLevel(stage, options.level, extraPlane);
     const sim = new Simulation({
       layout,
       schedule,
-      goals: findGoals(area, options.level, false),
+      goals: findGoals(area, options.level, extraPlane),
+      improvements: options.progress.improvements,
       planes: data.planes,
       gates: data.gates,
       runways: data.runways,
@@ -82,7 +91,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT', ...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES]);
+    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT', 'STOPSPOT_VIP', ...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES]);
     for (const decoration of layout.decorations) ids.add(decoration.resource);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
@@ -101,7 +110,7 @@ export class LevelScene {
       loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT]),
     ]);
 
-    const scene = new LevelScene(textures, audio, strings, options, sim);
+    const scene = new LevelScene(textures, audio, strings, options, sim, area.perStarAmount, options.level < area.levelsCount);
     app.stage.addChild(scene.root);
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
@@ -177,8 +186,8 @@ export class LevelScene {
       number.position.copyFrom(runway.node);
       this.ground.addChild(sprite, number);
     }
-    for (const spot of layout.stopSpots.filter((s) => s.requires === null)) {
-      const sprite = this.textures.sprite('STOPSPOT');
+    for (const spot of this.sim.stopSpots) {
+      const sprite = this.textures.sprite(spot.vip ? 'STOPSPOT_VIP' : 'STOPSPOT');
       sprite.position.copyFrom(spot.position);
       this.ground.addChild(sprite);
     }
@@ -322,8 +331,14 @@ export class LevelScene {
     const tier = tierFor(this.sim.score, this.sim.goals);
     this.audio.playMusic(`MUSICS.FINAL_REPORT.${tier}`);
     this.audio.play(`SOUNDS.FINAL_REPORT.${tier}`);
-    const report = new FinalReport(this.textures, this.strings, this.sim, this.options.level);
-    report.onReplay = () => window.location.reload();
+    const { progress, stage, level, onNavigate } = this.options;
+    const stars = ['FAIL', 'GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'].indexOf(tier);
+    const { earned } = progress.record(stage, level, this.sim.score, stars, this.perStarAmount);
+    const canAdvance = this.hasNextLevel && progress.unlocked(stage, level + 1);
+    const report = new FinalReport(this.textures, this.strings, this.sim, level, { earned, canAdvance });
+    report.onReplay = () => onNavigate(level);
+    report.onNext = () => onNavigate(level + 1);
+    report.onMenu = () => onNavigate(null);
     this.root.addChild(report);
   }
 }

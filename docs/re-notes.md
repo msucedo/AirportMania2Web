@@ -398,6 +398,21 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
     0.5 to the plain spot and 0.25 to the VIP one is inferred. It creates six pass-through nodes
     (offsets built from ±30, ±10, ±15) and five links whose pairing has not been read.
 
+## Game flow, progress and shop (web version)
+
+None of this is reconstructed from the original screens; it is our own flow built on original
+data and assets.
+
+- Screens are page loads: no `level` parameter shows the stage screen, `?level=N` plays a level.
+  Progress is kept in `localStorage` (`am2web.progress.v1`); `?reset` clears it.
+- Stars are the goals reached (0–5). Each newly earned star pays the area's `PerStarAmount`
+  (2000 in stage 1). That payout rule is an assumption; `StageClearAmount` is not used yet.
+- The shop lists the improvements the stage script registers for Arches, with its ids and prices
+  (see above). The original dialog also offers selling (`IMPROVEMENTS_DIALOG.SELL`); not done.
+- Owning the plane licence (`0xcb`) switches levels to their `HasExtraPlane="true"` schedule and
+  goals. That link is inferred from the data (`ExtraPlane="4"`, `ExtraPlaneNumber="4"`).
+- A level opens when the previous one has at least one star: assumed.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.

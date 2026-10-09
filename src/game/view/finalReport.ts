@@ -23,10 +23,19 @@ export function tierFor(score: number, goals: LevelGoals): Tier {
  * End-of-level summary with the original texts, fonts and star sprites. The layout is ours: the
  * original final report dialog has not been reconstructed.
  */
+export interface FinalReportExtras {
+  /** Funds paid for newly earned stars. */
+  earned: number;
+  /** Whether a following level exists and is now open. */
+  canAdvance: boolean;
+}
+
 export class FinalReport extends Container {
   onReplay: (() => void) | null = null;
+  onNext: (() => void) | null = null;
+  onMenu: (() => void) | null = null;
 
-  constructor(textures: TextureStore, strings: Strings, sim: Simulation, level: number) {
+  constructor(textures: TextureStore, strings: Strings, sim: Simulation, level: number, extras: FinalReportExtras) {
     super();
     const tier = tierFor(sim.score, sim.goals);
     const panel = { x: 90, y: 48, width: 300, height: 232 };
@@ -80,21 +89,34 @@ export class FinalReport extends Container {
       label(String(value), panel.x + panel.width - 16, y, 12, score, 0xffffff, 1);
     });
 
-    label(strings.t('FINAL_REPORT_DIALOG.LEVEL_SCORE'), panel.x + 16, panel.y + 184, 13, main, 0xffb52e, 0);
-    label(String(sim.score), panel.x + panel.width - 16, panel.y + 184, 18, score, sim.score < 0 ? 0xff6b5c : 0xffe45c, 1);
+    label(strings.t('FINAL_REPORT_DIALOG.LEVEL_SCORE'), panel.x + 16, panel.y + 178, 13, main, 0xffb52e, 0);
+    label(String(sim.score), panel.x + panel.width - 16, panel.y + 178, 18, score, sim.score < 0 ? 0xff6b5c : 0xffe45c, 1);
+    if (extras.earned > 0) {
+      label(strings.t('FINAL_REPORT_DIALOG.FUNDS'), panel.x + 16, panel.y + 194, 11, main, 0xffb52e, 0);
+      label(`+${extras.earned}`, panel.x + panel.width - 16, panel.y + 194, 13, score, 0x9be37a, 1);
+    }
 
-    const button = new Container();
-    button.position.set(centre, panel.y + 212);
-    const caption = new Text({ text: strings.t('FINAL_REPORT_DIALOG.REPLAY_LEVEL'), style: { fontFamily: main, fontSize: 13, fill: 0x1d2c3f } });
-    caption.anchor.set(0.5);
-    const width = Math.max(110, caption.width + 24);
-    button.addChild(new Graphics().roundRect(-width / 2, -11, width, 22, 8).fill(0xffb52e).stroke({ color: 0xffffff, width: 1 }), caption);
-    button.eventMode = 'static';
-    button.cursor = 'pointer';
-    button.on('pointerdown', (event) => {
-      event.stopPropagation();
-      this.onReplay?.();
+    const buttons: [string, () => void][] = [
+      [strings.t('FINAL_REPORT_DIALOG.MAINMENU_BUTTON'), () => this.onMenu?.()],
+      [strings.t('FINAL_REPORT_DIALOG.REPLAY_LEVEL'), () => this.onReplay?.()],
+    ];
+    if (extras.canAdvance) buttons.push([strings.t('FINAL_REPORT_DIALOG.NEXT_LEVEL'), () => this.onNext?.()]);
+    const slot = (panel.width - 16) / buttons.length;
+    buttons.forEach(([text, action], i) => {
+      const button = new Container();
+      button.position.set(panel.x + 8 + slot * (i + 0.5), panel.y + 214);
+      const caption = new Text({ text, style: { fontFamily: main, fontSize: 11, fill: 0x1d2c3f } });
+      caption.anchor.set(0.5);
+      const width = slot - 8;
+      if (caption.width > width - 10) caption.scale.set((width - 10) / caption.width);
+      button.addChild(new Graphics().roundRect(-width / 2, -11, width, 22, 8).fill(0xffb52e).stroke({ color: 0xffffff, width: 1 }), caption);
+      button.eventMode = 'static';
+      button.cursor = 'pointer';
+      button.on('pointerdown', (event) => {
+        event.stopPropagation();
+        action();
+      });
+      this.addChild(button);
     });
-    this.addChild(button);
   }
 }

@@ -22,6 +22,18 @@ export interface RunwaySlot {
   heading: number;
 }
 
+/** Something the player can buy for the stage between levels. */
+export interface ImprovementOffer {
+  id: number;
+  price: number;
+  titleId: string;
+  descriptionId: string;
+  /** Icon resource prefix; `.ACTIVE` and `.GRAYED` variants exist. */
+  icon: string;
+  /** Improvement that has to be owned first. */
+  requires?: number;
+}
+
 export interface StageLayout {
   /** Gate descriptor types: [normal, upgraded]. */
   gateTypes: [number, number];
@@ -35,6 +47,9 @@ export interface StageLayout {
   taxiNodes: Point[];
   runways: RunwaySlot[];
   stopSpots: { position: Point; requires: number | null; upgradedBy?: number; replacedBy?: number }[];
+  improvements: ImprovementOffer[];
+  /** Improvement that switches levels to their extra-plane variant. */
+  extraPlaneLicence: number;
 }
 
 const RUNWAY_NODE_OFFSET = 144;
@@ -53,6 +68,7 @@ export const IMPROVEMENT = {
   UPGRADED_GATE_B: 0x1f,
   UPGRADED_GATE_C: 0x20,
   PAINTING_STOP_SPOT: 0x72,
+  PLANE_4_LICENCE: 0xcb,
 } as const;
 
 export const ARCHES: StageLayout = {
@@ -79,4 +95,17 @@ export const ARCHES: StageLayout = {
     { position: { x: 180, y: 300 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_STOP_SPOT },
     { position: { x: 60, y: 300 }, requires: IMPROVEMENT.EXTRA_STOP_SPOT, replacedBy: IMPROVEMENT.PAINTING_STOP_SPOT },
   ],
+  // Ids and prices are the ones the stage script registers (0x13458). The painting stop spot
+  // (0x72, 60000) is left out until that place is implemented. Which title goes with 0x20 and the
+  // prerequisites are inferred.
+  improvements: [
+    { id: IMPROVEMENT.EXTRA_STOP_SPOT, price: 10000, titleId: 'IMPROVEMENTS.TITLES.EXTRA_STORAGE_PLACE', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.EXTRA_STORAGE_PLACE', icon: 'IMPROVEMENTS.STORAGE_PLACE' },
+    { id: IMPROVEMENT.UPGRADED_STOP_SPOT, price: 20000, titleId: 'IMPROVEMENTS.TITLES.VIP_STORAGE_PLACE', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.VIP_STORAGE_PLACE', icon: 'IMPROVEMENTS.VIP_STORAGE_PLACE' },
+    { id: IMPROVEMENT.EXTRA_GATE_C, price: 20000, titleId: 'IMPROVEMENTS.TITLES.EXTRA_GATE_C', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.EXTRA_GATE', icon: 'IMPROVEMENTS.GATE_0' },
+    { id: IMPROVEMENT.UPGRADED_GATE_A, price: 25000, titleId: 'IMPROVEMENTS.TITLES.IMPROVED_GATE_A', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.IMPROVED_GATE', icon: 'IMPROVEMENTS.GATE_1' },
+    { id: IMPROVEMENT.UPGRADED_GATE_B, price: 30000, titleId: 'IMPROVEMENTS.TITLES.IMPROVED_GATE_B', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.IMPROVED_GATE', icon: 'IMPROVEMENTS.GATE_1' },
+    { id: IMPROVEMENT.UPGRADED_GATE_C, price: 35000, titleId: 'IMPROVEMENTS.TITLES.IMPROVED_GATE_C', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.IMPROVED_GATE', icon: 'IMPROVEMENTS.GATE_1', requires: IMPROVEMENT.EXTRA_GATE_C },
+    { id: IMPROVEMENT.PLANE_4_LICENCE, price: 85000, titleId: 'IMPROVEMENTS.TITLES.PLANE_4_LICENCE', descriptionId: 'IMPROVEMENTS.DESCRIPTIONS.PLANE_4_LICENCE', icon: 'IMPROVEMENTS.PLANE_4' },
+  ],
+  extraPlaneLicence: IMPROVEMENT.PLANE_4_LICENCE,
 };

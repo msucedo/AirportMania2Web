@@ -396,3 +396,48 @@ describe('simulation, stop spot', () => {
   });
 });
 
+describe('simulation, improvements', () => {
+  const withImprovements = (...ids: number[]): Simulation =>
+    new Simulation({
+      layout: ARCHES,
+      schedule: findLevel(stage, 1, false),
+      goals: findGoals(area, 1, false),
+      planes,
+      gates,
+      runways,
+      gasStations,
+      level: 1,
+      improvements: new Set(ids),
+      screenWidth: 480,
+    });
+
+  it('adds gate C, upgrades gates and adds the second or VIP stop spot when owned', () => {
+    expect(withImprovements().gates.map((g) => g.letter)).toEqual(['A', 'B']);
+    const sim = withImprovements(0x16, 0x1e, 0x01, 0x0a);
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.descriptor.speed])).toEqual([
+      ['A', 1, 1.5],
+      ['B', 0, 1],
+      ['C', 0, 1],
+    ]);
+    expect(sim.stopSpots.map((spot) => [spot.vip, spot.drain])).toEqual([
+      [true, 0.25],
+      [false, 0.5],
+    ]);
+    // The new places are reachable on the taxi graph.
+    for (const place of [...sim.gates, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('unloads faster at an upgraded gate', () => {
+    const sim = withImprovements(0x1e);
+    run(sim, 1.1);
+    const plane = sim.planes[0]!;
+    sim.addOrder(plane, sim.runways[0]!);
+    sim.addOrder(plane, sim.gates[0]!);
+    runUntil(sim, () => plane.state === PlaneState.UNLOADING, 40);
+    const started = sim.time;
+    runUntil(sim, () => plane.state === PlaneState.LOADING, 40);
+    // LoadingTime 8 s at gate speed 1.5.
+    expect(sim.time - started).toBeCloseTo(8 / 1.5, 1);
+  });
+});
+
