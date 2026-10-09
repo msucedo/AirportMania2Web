@@ -7,6 +7,7 @@ import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { paletteColor } from './palette';
+import { RunwayView, runwaySurfaceIds } from './view/runwayView';
 import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
 import { PlaneView, planeSurfaceIds } from './planeView';
@@ -46,6 +47,7 @@ export class LevelScene {
   private readonly gateViews: { gate: Gate; view: GateView }[] = [];
   private readonly flags: OrderFlags;
   private sky!: SkyView;
+  private readonly runwayViews: RunwayView[] = [];
   private sparkles: SeaSparkles | null = null;
   private rings: WaterRings | null = null;
   private readonly buoys: BuoyLine[] = [];
@@ -119,8 +121,7 @@ export class LevelScene {
       ids.add('HANGARS.PROGRESS_TICK');
     }
     for (const runway of sim.runways) {
-      ids.add(runway.descriptor.backSurface);
-      ids.add(`RUNWAY.NUMBER_${runway.number}`);
+      for (const id of runwaySurfaceIds(runway)) ids.add(id);
     }
     for (const spawn of schedule.planes) {
       for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, spawn.sex === 'FEMALE', layout.pontoons)) ids.add(id);
@@ -198,18 +199,15 @@ export class LevelScene {
     }
 
     for (const runway of this.sim.runways) {
-      const sprite = this.textures.sprite(runway.descriptor.backSurface);
-      sprite.position.copyFrom(runway.position);
-      // The number is drawn at the end where planes stop; its exact place is not read from the binary.
-      const number = this.textures.sprite(`RUNWAY.NUMBER_${runway.number}`);
-      number.position.copyFrom(runway.node);
+      const view = new RunwayView(this.textures, runway);
+      this.runwayViews.push(view);
       // A water runway lies between two lines of buoys, set relative to it by the stage script (0xcf370).
       const buoys = layout.water
         ? [new BuoyLine(this.textures, runway.position.x - 186, runway.position.y - 27), new BuoyLine(this.textures, runway.position.x - 166, runway.position.y + 6)]
         : [];
       this.buoys.push(...buoys);
       if (buoys[0]) this.ground.addChild(buoys[0]);
-      this.ground.addChild(sprite, number);
+      this.ground.addChild(view);
       if (buoys[1]) this.ground.addChild(buoys[1]);
     }
     for (const spot of this.sim.stopSpots) {
@@ -358,6 +356,7 @@ export class LevelScene {
     this.rings?.update(elapsed);
     for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
+    for (const view of this.runwayViews) view.update();
     for (const { hangar, panel, ticks } of this.hangarPanels) {
       const plane = hangar.plane;
       panel.visible = hangar.use === 'working' && plane !== null;

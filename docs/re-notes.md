@@ -515,6 +515,19 @@ sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructo
   `STAGES.ISLAND.BUOY_MASK` is drawn at its resting place over it (`0x233e8`).
 - `0x138ac` → `0x5021c`, created right after the rings, has not been identified.
 
+## Runway drawing — confirmed (`0x6dd44`)
+
+- The strip is drawn at the runway position and its number twice: at (−152, −1) from it, and
+  turned 180° at (+152, +1).
+- Combo arrows, one row per kind (take-offs `+0x90` with count `+0xbc`, landings `+0x98` with
+  count `+0xb8`): `n = timer² × ComboTimeTotal` arrows starting 35 px from the runway node and
+  25 px apart towards the runway centre, the last one with alpha equal to the fraction left.
+  Take-offs use `INDICATORS.ARROWS.RUNWAY_COMBO_RIGHT` when the runway's direction flag (`+0xc0`)
+  is set and `_LEFT` otherwise; landings the opposite. With a count of 2 or more,
+  `INDICATORS.ARROWS.X2`–`X4` is drawn over the first arrow.
+- Not read: the block at `0x6de06`–`0x6de9a` (three items driven by `+0xa8`/`+0xac`, drawn by
+  `0x6e1f4`).
+
 ## Hangar — confirmed
 
 Vtable `0x17a8e8`, kind 5.

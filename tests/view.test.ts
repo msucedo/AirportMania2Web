@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor } from '../src/game/planeView';
+import { comboArrows } from '../src/game/view/runwayView';
 import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
 
@@ -66,5 +67,13 @@ describe('water', () => {
     expect(ringInterval(0, 0)).toBeCloseTo(0.7);
     expect(ringInterval(50, 1)).toBeCloseTo(0.1);
     expect(ringInterval(200, 1)).toBeCloseTo(0.07);
+  });
+});
+
+describe('runway combo arrows', () => {
+  it('shows up to one arrow per second of combo time, falling with the square of the timer', () => {
+    expect(comboArrows(1, 5)).toBe(5);
+    expect(comboArrows(0.5, 5)).toBeCloseTo(1.25);
+    expect(comboArrows(0, 5)).toBe(0);
   });
 });

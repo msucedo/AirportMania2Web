@@ -24,8 +24,12 @@ hangar and for fuel between unloading and loading. A landed plane can be parked 
 where it loses energy more slowly. Orders can be queued. It is drawn with the original HUD, fonts,
 texts, indicators and backdrops, and plays the original sounds.
 
+Planes have their full faces (mood, blinking, talking), landing gear, propellers and the original
+colours; the sky runs its day and night cycle with sun, stars and clouds; the island has its sea
+glints, rings and buoys; runways show their combo arrows.
+
 Not there yet: special passengers (transplant organ, pregnant), the painting stop spot, the coffee
-and cake improvement, water effects, the original menus and world map, and stages 3 to 10.
+and cake improvement, dirt and washing, the original menus and world map, and stages 3 to 10.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
 placeholder (some draw details, the payout rule) is tracked
