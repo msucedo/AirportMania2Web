@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Text, type Application, type FederatedPointerEvent } from 'pixi.js';
+import { Container, Graphics, Text, type Application, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
 import { loadFonts } from '../engine/fonts';
@@ -6,7 +6,9 @@ import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { PlaneView, planeSurfaceIds } from './planeView';
+import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
+import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PlaneState } from './sim/rules';
 import { Simulation, type Gate, type Plane, type SimEvent } from './sim/simulation';
 import type { StageLayout } from './stages/arches';
@@ -17,12 +19,6 @@ const NEUTRAL_TINT = 0xd0d0d0;
 const tintOf = (color: PlaneColor | null): number => (color ? (PROVISIONAL_TINTS[color] ?? NEUTRAL_TINT) : NEUTRAL_TINT);
 
 const STEP = 1 / 60;
-
-interface GateView {
-  gate: Gate;
-  color: Sprite;
-  bar: Graphics;
-}
 
 interface FloatingText {
   text: Text;
@@ -43,7 +39,8 @@ export class LevelScene {
   private readonly ground = new Container();
   private readonly planeLayer = new Container();
   private readonly overlay = new Container();
-  private readonly gateViews: GateView[] = [];
+  private readonly gateViews: { gate: Gate; view: GateView }[] = [];
+  private readonly flags: OrderFlags;
   private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating: FloatingText[] = [];
   private readonly hud: Hud;
@@ -60,7 +57,8 @@ export class LevelScene {
     this.sim = sim;
     this.hud = new Hud(textures, sim.goals);
     this.hud.onPause = () => (this.paused = !this.paused);
-    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.hud);
+    this.flags = new OrderFlags(textures);
+    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.hud);
     this.build();
   }
 
@@ -80,13 +78,15 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT', ...HUD_SURFACES]);
+    const ids = new Set<string>([layout.backgroundDown.resource, layout.backgroundTop.resource, 'STOPSPOT', ...HUD_SURFACES, ...ORDER_FLAG_SURFACES]);
     for (const decoration of layout.decorations) ids.add(decoration.resource);
-    for (const gate of sim.gates) {
-      ids.add(gate.descriptor.surfaces.color);
-      ids.add(gate.descriptor.surfaces.front);
+    sim.gates.forEach((gate) => {
+      for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
+    });
+    for (const runway of sim.runways) {
+      ids.add(runway.descriptor.backSurface);
+      ids.add(`RUNWAY.NUMBER_${runway.number}`);
     }
-    for (const runway of sim.runways) ids.add(runway.descriptor.backSurface);
     for (const spawn of schedule.planes) {
       for (const id of planeSurfaceIds(data.planes.get(spawn.type)!)) ids.add(id);
     }
@@ -151,7 +151,10 @@ export class LevelScene {
     for (const runway of this.sim.runways) {
       const sprite = this.textures.sprite(runway.descriptor.backSurface);
       sprite.position.copyFrom(runway.position);
-      this.ground.addChild(sprite);
+      // The number is drawn at the end where planes stop; its exact place is not read from the binary.
+      const number = this.textures.sprite(`RUNWAY.NUMBER_${runway.number}`);
+      number.position.copyFrom(runway.node);
+      this.ground.addChild(sprite, number);
     }
     for (const spot of layout.stopSpots.filter((s) => s.requires === null)) {
       const sprite = this.textures.sprite('STOPSPOT');
@@ -159,13 +162,9 @@ export class LevelScene {
       this.ground.addChild(sprite);
     }
     for (const gate of this.sim.gates) {
-      const view = new Container();
-      view.position.copyFrom(gate.position);
-      const color = this.textures.sprite(gate.descriptor.surfaces.color);
-      const bar = new Graphics();
-      view.addChild(color, this.textures.sprite(gate.descriptor.surfaces.front), bar);
+      const view = new GateView(this.textures, gate, gate.letter.charCodeAt(0) - 65);
       this.ground.addChild(view);
-      this.gateViews.push({ gate, color, bar });
+      this.gateViews.push({ gate, view });
     }
     for (const decoration of layout.decorations) {
       const sprite = this.textures.sprite(decoration.resource);
@@ -253,16 +252,9 @@ export class LevelScene {
   }
 
   private draw(seconds: number): void {
-    for (const { gate, color, bar } of this.gateViews) {
-      color.tint = tintOf(gate.lastColor);
-      bar.clear();
-      const plane = gate.plane;
-      if (plane && (gate.service === 'unloading' || gate.service === 'loading')) {
-        const fraction = Math.min(1, gate.progress / plane.descriptor.times.loading);
-        bar.rect(-20, -44, 40, 5).fill(0x000000);
-        bar.rect(-19, -43, 38 * fraction, 3).fill(gate.service === 'unloading' ? 0xffb347 : 0x7ad37a);
-      }
-    }
+    for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, tintOf(gate.lastColor));
+    const selected = this.sim.selected;
+    this.flags.update(selected, selected ? tintOf(selected.color) : 0xffffff);
 
     for (const plane of this.sim.planes) {
       let view = this.planeViews.get(plane.id);

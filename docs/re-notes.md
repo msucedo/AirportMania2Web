@@ -315,6 +315,21 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 - Not read: layer order, which energy frame is shown for which energy, mouth and eyebrow
   selection, blinking, and the thought bubble. The web version assumes these.
 
+## Gate, runway and order flag drawing
+
+- Gate resources (`0x42afc`): the letter comes from the descriptor's `LetterSurfaceResource`
+  with the gate index (`%s.%d`), plus `INDICATORS.UNLOADING_ICON`/`_BAR`, `LOADING_ICON`/`_BAR`,
+  `INDICATORS.X%d`, `GATES.ON_OVER_LABEL` (+ `_COLOR` and `GATES.LETTERS.LABEL.%d`) and the
+  descriptor's four-frame arrow animations. The letter sprite is authored to sit at the gate
+  centre (checked by composing the images).
+- Runway resources (`0x6cbf0`): `RUNWAY.REMARK`, `RUNWAY.NUMBER_%d`, the combo and "using"
+  arrows and `INDICATORS.ARROWS.X%d`.
+- Order flags (`0x6b720`): `INDICATORS.FLAGS.COLOR` plus `INDICATORS.FLAGS.NUMBERS.%d`; `0x6ba58`
+  places one when an order is added (called from `addOrder`).
+- Not read: the gate draw (`0x436e4`) and runway draw (`0x6dd44`), so the bar fill, arrow timing,
+  runway number position, flag offsets, hover label and combo arrows are assumed or
+  missing in the web version.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.
