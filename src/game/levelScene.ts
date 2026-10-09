@@ -10,6 +10,7 @@ import { paletteColor } from './palette';
 import type { StageRules } from './progress';
 import type { Settings } from './settings';
 import { IMPROVEMENTS_FONTS, IMPROVEMENTS_SOUNDS, ImprovementsDialog, improvementsSurfaceIds } from './view/improvementsDialog';
+import { LEVEL_INTRO_FONTS, LEVEL_INTRO_SURFACES, LevelIntro } from './view/levelIntro';
 import { StageClear } from './view/stageClear';
 import { GAME_MENU_SURFACES, GameMenu } from './view/gameMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
@@ -45,6 +46,8 @@ export interface LevelOptions {
   rules: StageRules;
   /** Skip the improvements shop before the level (used after a purchase rebuilds the airport). */
   skipShop?: boolean;
+  /** Skip the announcement of the level, for automated checks. */
+  skipIntro?: boolean;
   /** Asks for the level to be loaded again, straight into play. */
   onRebuild: () => void;
   /** Called when the player changes the options from the pause menu. */
@@ -117,7 +120,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), 'GUI.FINAL_REPORT.STAR_SMALL']);
+    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
     for (const layer of layout.backdrop.layers) {
       ids.add(layer.resource);
     }
@@ -143,7 +146,7 @@ export class LevelScene {
     const [strings] = await Promise.all([
       data.strings(options.language),
       textures.load(ids),
-      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS]),
+      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS, ...LEVEL_INTRO_FONTS]),
     ]);
 
     const scene = new LevelScene(textures, audio, strings, options, sim);
@@ -152,10 +155,15 @@ export class LevelScene {
     // The shop comes before every level except the very first (`Level::start`, 0xfe8c), with its
     // own music. Music starts on the first press, once the browser allows audio.
     const shop = !options.skipShop && layout.improvements.length > 0 && !(options.stage === 1 && options.level === 1);
+    // Then the level is announced with its goals (0x105bc) before it runs.
+    const begin = (): void => {
+      levelMusic();
+      if (!options.skipIntro) scene.openIntro();
+    };
     if (shop) {
       audio.playMusic('MUSICS.SHOPPING');
-      scene.openShop(levelMusic);
-    } else levelMusic();
+      scene.openShop(begin);
+    } else begin();
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
     app.stage.on('pointerdown', (event: FederatedPointerEvent) => scene.press(event.global.x, event.global.y));
@@ -176,6 +184,19 @@ export class LevelScene {
   }
 
   /** The improvements shop for this level; a purchase or sale means building the airport again. */
+  private openIntro(): void {
+    const { stage, level, progress } = this.options;
+    this.paused = true;
+    const intro = new LevelIntro(this.textures, this.strings, { stage, number: level, goals: this.sim.goals, best: progress.result(stage, level).best }, () => {
+      this.audio.unlock();
+      this.dialog = null;
+      this.paused = false;
+      setTimeout(() => intro.destroy({ children: true }));
+    });
+    this.dialog = intro;
+    this.root.addChild(intro);
+  }
+
   private openShop(onLeave: () => void): void {
     const { progress, stage, level, layout } = this.options;
     this.paused = true;

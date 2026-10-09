@@ -6,9 +6,9 @@ import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import { dialogButton, dialogFrame, dialogText } from './dialog';
 import { MAIN_FONT, SCORE_FONT } from './floatingText';
+import { goalRows } from './levelIntro';
 
 export const MAP_DIALOG_FONTS = ['FONTS.BLUE_STONE', 'FONTS.TEEN_BD', MAIN_FONT, SCORE_FONT];
-const GOALS = ['GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'] as const;
 
 /**
  * What the map shows for a level before playing it (dialog `0x64824`): "Stage S-L", the five
@@ -26,7 +26,7 @@ export class LevelDialog extends Container {
     onCancel: () => void,
   ) {
     super();
-    const size = { width: 420, height: 240 };
+    const size = { width: 420, height: 270 };
     const { overlay, panel } = dialogFrame(textures, size.width, size.height);
     const centre = new Container();
     centre.position.set(size.width / 2, size.height / 2);
@@ -38,21 +38,14 @@ export class LevelDialog extends Container {
       style: { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 20, fill: 0xffd75a, stroke: { color: 0x5a2a00, width: 3 } },
     });
     title.anchor.set(0.5);
-    title.position.set(0, -96);
+    title.position.set(0, -108);
     centre.addChild(title);
 
-    const white = fontFamily('FONTS.TEEN_BD');
     const money = fontFamily(SCORE_FONT);
-    const values = [level.goals.goal, level.goals.expert, level.goals.master, level.goals.supreme, level.goals.perfect];
-    GOALS.forEach((goal, i) => {
-      const y = -62 + i * 20;
-      dialogText(centre, strings.t(`SCORE.${goal}_SCORE`), -150, y, 11, white, 0);
-      dialogText(centre, String(values[i]), 150, y, 14, money, 1).style.fill = 0xffe45c;
-    });
-    if (level.best > 0) {
-      dialogText(centre, strings.t('SCORE.BEST_SCORE'), -150, 48, 13, fontFamily(MAIN_FONT), 0).style.fill = 0xffc23a;
-      dialogText(centre, String(level.best), 150, 48, 14, money, 1).style.fill = 0xffe45c;
-    }
+    // The same score rows the level opens with; their place in this dialog is assumed.
+    const rows = goalRows(textures, strings, level.goals, level.best);
+    rows.y = -66;
+    centre.addChild(rows);
     const y = size.height / 2 - 20;
     dialogButton(textures, audio, centre, { x: -100, y, width: 160, height: 36 }, strings.t('CANCEL'), money, onCancel);
     dialogButton(textures, audio, centre, { x: 100, y, width: 160, height: 36 }, strings.t('MAP.PLAY'), money, onPlay);

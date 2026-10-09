@@ -86,10 +86,18 @@ export class FinalReport extends Container {
     this.panel.position.set(BOX.width / 2, BOX.height / 2);
     panel.addChild(this.panel);
     this.addChild(overlay);
-    overlay.on('pointerdown', () => (this.held = true));
-    overlay.on('pointerup', () => (this.held = false));
-    overlay.on('pointerupoutside', () => (this.held = false));
-    overlay.eventMode = 'static';
+    // Holding anywhere hurries the report. Listened for on the window: the frame's artwork lies
+    // over the dialog's own touch area and takes the presses meant for it.
+    const press = (): void => void (this.held = true);
+    const release = (): void => void (this.held = false);
+    window.addEventListener('pointerdown', press);
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    this.on('destroyed', () => {
+      window.removeEventListener('pointerdown', press);
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+    });
 
     this.backdrop = textures.sprite(tier === 'FAIL' ? 'GUI.FINAL_REPORT.SPIRAL' : 'GUI.FINAL_REPORT.BACK_STAR');
     this.backdrop.scale.set(4);

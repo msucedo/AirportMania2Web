@@ -237,7 +237,7 @@ export class WorldMap {
   }
 
   static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: WorldMapOptions): Promise<WorldMap> {
-    const surfaces = [...DIALOG_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL', 'MAP.BACK', 'MAP.LEVEL_SELECTED', 'MAP.HERALDIC_RIBBON', 'MAP.HUD.BACK', 'MAP.HUD.REFLEXION'];
+    const surfaces = [...DIALOG_SURFACES, 'GUI.INGAMEGUI.SCORE_GOAL_BACK', 'GUI.FINAL_REPORT.STAR_SMALL', 'MAP.BACK', 'MAP.LEVEL_SELECTED', 'MAP.HERALDIC_RIBBON', 'MAP.HUD.BACK', 'MAP.HUD.REFLEXION'];
     for (let i = 0; i <= 6; i++) surfaces.push(`MAP.LEVELS.${i}`);
     for (const { stage } of STAGE_ICONS) surfaces.push(`MAP.STAGES.${stage}`);
     for (const button of BUTTONS) surfaces.push(`MAP.HUD.BUTTONS.${button.id}_ON`);

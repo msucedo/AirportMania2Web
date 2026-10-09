@@ -126,6 +126,7 @@ async function main(): Promise<void> {
       settings,
       rules: rules.get(stage)!,
       skipShop: params.has('go'),
+      skipIntro: params.has('nointro'),
       onRebuild: () => {
         const next = new URLSearchParams(location.search);
         next.set('go', '');

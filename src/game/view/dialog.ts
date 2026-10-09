@@ -9,19 +9,23 @@ export const DIALOG_SURFACES = ['GUI.DIALOGS.BACK.BOX', 'GUI.DIALOGS.BUTTON', 'G
  * A dialog over a dimmed screen, drawn with the original frame. Returns the whole overlay and the
  * panel to fill, whose origin is the frame's corner.
  */
-export function dialogFrame(textures: TextureStore, width: number, height: number): { overlay: Container; panel: Container } {
+export function dialogFrame(textures: TextureStore, width: number, height: number): { overlay: Container; panel: Container; blocker: Container } {
   const overlay = new Container();
-  // Dims the screen and keeps touches from reaching it.
   const shade = new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill({ color: 0x000000, alpha: 0.6 });
-  shade.eventMode = 'static';
+  // Keeps touches from reaching what is underneath. It is a node of its own with an explicit
+  // area, like the buttons: drawn shapes do not take presses reliably here.
+  const blocker = new Container();
+  blocker.hitArea = new Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+  blocker.eventMode = 'static';
+  blocker.on('pointerdown', (event) => event.stopPropagation());
   const panel = new Container();
   panel.position.set((SCREEN_WIDTH - width) / 2, (SCREEN_HEIGHT - height) / 2);
   const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BACK.BOX'), leftWidth: 24, rightWidth: 24, topHeight: 24, bottomHeight: 24 });
   frame.setSize(width, height);
   // The frame's own filling is translucent; a solid backing keeps the texts readable.
   panel.addChild(new Graphics().roundRect(4, 4, width - 8, height - 8, 20).fill({ color: 0x3b1d4d, alpha: 0.92 }), frame);
-  overlay.addChild(shade, panel);
-  return { overlay, panel };
+  overlay.addChild(shade, blocker, panel);
+  return { overlay, panel, blocker };
 }
 
 export function dialogText(panel: Container, value: string, x: number, y: number, size: number, family: string, anchorX = 0): Text {

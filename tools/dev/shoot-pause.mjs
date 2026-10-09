@@ -17,7 +17,7 @@ try {
   const problems = [];
   page.on('pageerror', (e) => problems.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('favicon') && !m.text().includes('404')) problems.push('console: ' + m.text()); });
-  await page.goto(base + '?stage=1&level=1&mute', { waitUntil: 'load', timeout: 20000 });
+  await page.goto(base + '?stage=1&level=1&mute&nointro', { waitUntil: 'load', timeout: 20000 });
   await page.waitForFunction('document.body.dataset.ready || document.body.dataset.error', { timeout: 20000 });
   const box = await page.evaluate(() => { const b = document.querySelector('canvas').getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; });
   const at = (gx, gy) => [box.x + (gx / 480) * box.w, box.y + (gy / 320) * box.h];

@@ -377,6 +377,21 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   been read; the web version uses flat fills with an outline.
 - Floating texts: points use `FONTS.SCORE` (`0x5d2c`), negative points `FONTS.SCORE_NEGATIVE`
   (`0x5de0`), punctuality and bonus texts `FONTS.MAIN`, 50 px above the plane (`0x6110`).
+## Level announcement (panel `0x514cc`, draw `0x51be8`)
+
+- After the shop, `0x105bc` opens the panel kept at `app+0x1ac` with the area's title and name
+  and the level number, and the level goes to state 3.
+- Draw, from the screen's centre: the title "<title> - <LEVEL_NUMBER>" in `FONTS.ULTRA` at y −100
+  (−80 when the level has no best score), 20 higher when more than four scores are listed; the
+  name 45 below in `FONTS.MAIN`; the first score row 50 below that, shifted 60 px left when the
+  level introduces something (a list drawn at the right, not read).
+- A score row (`0x51b18`): `GUI.INGAMEGUI.SCORE_GOAL_BACK` in the tier's colour, the tier name
+  (`0x12520`) in `FONTS.WHITE` at (−125, −2) and the amount in `FONTS.SCORE` right-aligned at 115.
+  Rows are 26 px apart; the best score follows 20 px further down in a darker plate.
+- Not read: the tier colours (a table at `0x181314` filled at run time), the list of what a level
+  introduces, and how the panel is dismissed. The web version uses its own colours and closes
+  the panel with a touch.
+
 ## Final report (dialog `0x3241c`, steps `0x328d4`)
 
 - `tools/re/args.py <start> <end> [targets]` traces constants into the arguments of each call;
