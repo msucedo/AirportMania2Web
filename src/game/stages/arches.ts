@@ -22,6 +22,7 @@ export const ARCHES: StageLayout = {
   gateDecorations: [],
   stopSpotSurfaces: { normal: ['STOPSPOT'], vip: ['STOPSPOT_VIP'] },
   pontoons: false,
+  runwayBalloonCorner: 0,
   water: false,
   decorations: [{ resource: 'STAGES.ARCHES.ARCH', position: { x: 403, y: 50 } }],
   gates: [

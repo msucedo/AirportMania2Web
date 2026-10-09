@@ -58,6 +58,8 @@ export interface StageLayout {
     /** Glints on the distant sea, drawn right after the layer with this index. */
     sparkles?: { afterLayer: number; area: SparkleArea };
   };
+  /** The balloon corner the stage script gives its runways (see `BalloonCorner`). */
+  runwayBalloonCorner: 0 | 1 | 2 | 3;
   /** Water stage: planes leave rings and each runway is marked by two lines of buoys. */
   water: boolean;
   decorations: { resource: string; position: Point }[];

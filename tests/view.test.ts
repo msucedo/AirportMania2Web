@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
-import { energyBar, moodFor, orientationFor } from '../src/game/planeView';
+import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace } from '../src/game/planeView';
 import { markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { comboArrows } from '../src/game/view/runwayView';
@@ -95,5 +95,20 @@ describe('final report', () => {
     expect(reportPercent(1, 3)).toBe(33);
     expect(reportPercent(0, 7)).toBe(0);
     expect(reportPercent(2, 0)).toBe(0);
+  });
+});
+
+describe('plane balloons', () => {
+  const bubble = { x: 45, y: 45 };
+  it('hangs the speech balloon up and to the right by default, mirrored for the other corners', () => {
+    expect(speechPlace(bubble, 5, 1, 1)).toEqual({ x: 45, y: -73, flipX: false, flipY: false });
+    expect(speechPlace(bubble, 5, 0, 1).x).toBe(50);
+    expect(speechPlace(bubble, 5, 1, 0)).toEqual({ x: -35, y: -73, flipX: true, flipY: false });
+    expect(speechPlace(bubble, 5, 1, 3)).toEqual({ x: 45, y: 22, flipX: false, flipY: true });
+  });
+
+  it('puts the thought cloud 50 px aside, above or below', () => {
+    expect(thoughtPlace(1)).toEqual({ x: 50, y: -80, flipX: false, flipY: false });
+    expect(thoughtPlace(2)).toEqual({ x: -50, y: 15, flipX: true, flipY: true });
   });
 });

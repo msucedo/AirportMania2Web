@@ -7,7 +7,32 @@ const ENERGY_FRAMES = 8;
 const NEED_ICONS = 9;
 const MOUTHS = 18;
 const GEAR_FRAMES = 3;
-const BUBBLE = ['INDICATORS.THOUGHT_A', 'INDICATORS.THOUGHT_B', 'INDICATORS.THOUGHT_C', 'INDICATORS.THOUGHT_D'];
+/** The thought cloud and its trail, largest first, and where each sits from the cloud (0x9950). */
+const THOUGHT = ['INDICATORS.THOUGHT_A', 'INDICATORS.THOUGHT_B', 'INDICATORS.THOUGHT_C', 'INDICATORS.THOUGHT_D'];
+const THOUGHT_OFFSETS: readonly (readonly [number, number])[] = [[0, 0], [-7, 15], [-13, 19], [-19, 18]];
+const SPEECH = ['INDICATORS.GLOBE'];
+
+/**
+ * Which way a plane's balloons hang (`plane+0x260`, taken from the place it is at): the balloon
+ * is mirrored to the left for 0 and 2 and hangs below the plane for 2 and 3. A plane that is
+ * nowhere yet uses 3.
+ */
+export type BalloonCorner = 0 | 1 | 2 | 3;
+
+/** Where the speech balloon goes from the plane's position (0x9764), and how it is mirrored. */
+export function speechPlace(bubble: { x: number; y: number }, bodyOffsetY: number, perspective: number, corner: BalloonCorner): { x: number; y: number; flipX: boolean; flipY: boolean } {
+  const left = corner === 0 || corner === 2;
+  const below = corner >= 2;
+  const reach = bubble.x + (perspective === 0 ? 5 : 0) - (left ? 10 : 0);
+  return { x: left ? -reach : reach, y: (below ? bubble.y : -5 - bubble.y) - (28 - bodyOffsetY), flipX: left, flipY: below };
+}
+
+/** Where the thought cloud goes (0x99b4): 50 px to one side, 80 above or 15 below. */
+export function thoughtPlace(corner: BalloonCorner): { x: number; y: number; flipX: boolean; flipY: boolean } {
+  const left = corner === 0 || corner === 2;
+  const below = corner >= 2;
+  return { x: left ? -50 : 50, y: below ? 15 : -80, flipX: left, flipY: below };
+}
 
 /** Mouth animations (`0x13d798`, `0x13d848`): frames per second and the mouth shown on each frame. */
 const MOUTH_SEQUENCES = {
@@ -33,7 +58,7 @@ export function planeSurfaceIds(plane: PlaneDescriptor, female: boolean, pontoon
   }
   for (let i = 0; i < ENERGY_FRAMES; i++) ids.push(`INDICATORS.ENERGY.${i}`);
   for (let i = 0; i < NEED_ICONS; i++) ids.push(`INDICATORS.ICONS.${i}`);
-  return [...ids, ...BUBBLE];
+  return [...ids, ...THOUGHT, ...SPEECH];
 }
 
 /**
@@ -111,8 +136,11 @@ export interface PlaneLook {
   scale: number;
   selected: boolean;
   energy: number;
-  /** Need code to show in the thought bubble, or null to hide it. */
+  /** What the plane asks for, shown in its speech balloon: a need code, or null for nothing. */
   need: number | null;
+  /** Icon of where it goes next, shown in its thought cloud while orders are queued; null for none. */
+  thought: number | null;
+  corner: BalloonCorner;
   /** Waiting with nothing to do: the eyes turn aside. */
   idle: boolean;
   gearDown: boolean;
@@ -121,7 +149,7 @@ export interface PlaneLook {
 /**
  * A plane drawn from its parts in the order of the original routine (0x89e0): shadow, selection
  * highlight, rear propellers, landing gear, coloured body, line art, eyebrows, eyelashes, mouth,
- * eyes, front propellers and pontoons, then the energy bar and the thought bubble.
+ * eyes, front propellers and pontoons, then the balloons (0x9740) and the energy bar.
  */
 export class PlaneView extends Container {
   private readonly shadow: Sprite;
@@ -129,8 +157,14 @@ export class PlaneView extends Container {
   private readonly poses: Pose[] = [];
   private readonly energySolid: Sprite;
   private readonly energyFlicker: Sprite;
-  private readonly bubble = new Container();
+  private readonly speech: Sprite;
   private readonly needIcon: Sprite;
+  private readonly puffs: Sprite[] = [];
+  private readonly thoughtIcon: Sprite;
+  private speechFade = 0;
+  private thoughtFade = 0;
+  private shownNeed = 0;
+  private shownThought = 0;
 
   private time = 0;
   /** Seconds until the next blink; the eyes are shut for its last 0.1 s (0x6e94). */
@@ -270,22 +304,13 @@ export class PlaneView extends Container {
     this.energyFlicker = textures.sprite('INDICATORS.ENERGY.7');
     this.addChild(this.energySolid, this.energyFlicker);
 
-    // Thought bubble: a cloud holding the need icon, trailed by three shrinking puffs towards the
-    // plane. The cloud sits at the descriptor's BubblePosition; the puff spacing is assumed.
-    const { x, y } = plane.bubble;
-    const cloud = textures.sprite(BUBBLE[0]!);
-    cloud.position.set(x, -y);
+    // Speech balloon with what the plane asks for, and thought cloud with where it goes next.
+    this.speech = textures.sprite(SPEECH[0]!);
     this.needIcon = textures.sprite('INDICATORS.ICONS.0');
-    this.needIcon.position.set(x, -y);
-    this.needIcon.scale.set(0.8);
-    this.bubble.addChild(cloud, this.needIcon);
-    BUBBLE.slice(1).forEach((id, i) => {
-      const puff = textures.sprite(id);
-      const t = 0.62 - i * 0.2;
-      puff.position.set(x * t, -y * t);
-      this.bubble.addChild(puff);
-    });
-    this.addChild(this.bubble);
+    this.thoughtIcon = textures.sprite('INDICATORS.ICONS.0');
+    // Drawn smallest first, so the cloud ends on top.
+    for (const id of [...THOUGHT].reverse()) this.puffs.push(textures.sprite(id));
+    this.addChild(this.speech, this.needIcon, ...this.puffs, this.thoughtIcon);
   }
 
   /** The plane speaks: its mouth runs the talking animation and the eyes turn aside (0x5bd4). */
@@ -405,11 +430,39 @@ export class PlaneView extends Container {
       }
     }
 
-    this.bubble.visible = look.need !== null && look.need < NEED_ICONS;
-    if (look.need !== null && this.bubble.visible) {
-      this.needIcon.texture = this.textures.texture(`INDICATORS.ICONS.${look.need}`);
-      this.bubble.y = -altitude;
-      this.bubble.scale.set(scale);
+    // Both balloons fade at 4 per second and show once past a quarter (0x9758, 0x9922).
+    const asks = look.need !== null && look.need < NEED_ICONS;
+    if (asks) this.shownNeed = look.need!;
+    this.speechFade = slide(this.speechFade, asks, 4, dt);
+    const speechAlpha = (this.speechFade - 0.25) / 0.75;
+    this.speech.visible = this.needIcon.visible = speechAlpha > 0;
+    if (speechAlpha > 0) {
+      const place = speechPlace(this.plane.bubble, this.plane.body.offsetY, perspective, look.corner);
+      this.speech.position.set(place.x, place.y - altitude);
+      this.speech.scale.set(place.flipX ? -1 : 1, place.flipY ? -1 : 1);
+      this.needIcon.position.copyFrom(this.speech.position);
+      this.needIcon.texture = this.textures.texture(`INDICATORS.ICONS.${this.shownNeed}`);
+      this.speech.alpha = this.needIcon.alpha = speechAlpha;
     }
+
+    const thinks = look.thought !== null;
+    if (thinks) this.shownThought = look.thought!;
+    this.thoughtFade = slide(this.thoughtFade, thinks, 4, dt);
+    const showing = this.thoughtFade > 0.25;
+    const cloud = thoughtPlace(look.corner);
+    // The trail appears puff by puff towards the cloud, then the icon inside it.
+    this.puffs.forEach((puff, i) => {
+      const alpha = Math.min(1, this.thoughtFade * 5 - (i + 1));
+      puff.visible = showing && alpha > 0;
+      const [x, y] = THOUGHT_OFFSETS[THOUGHT_OFFSETS.length - 1 - i]!;
+      puff.position.set(cloud.x + (cloud.flipX ? -x : x), cloud.y - altitude + (cloud.flipY ? -y : y));
+      puff.scale.set(cloud.flipX ? -1 : 1, cloud.flipY ? -1 : 1);
+      puff.alpha = Math.max(0, alpha);
+    });
+    const iconAlpha = this.thoughtFade * 4 - 3;
+    this.thoughtIcon.visible = showing && iconAlpha > 0;
+    this.thoughtIcon.position.set(cloud.x, cloud.y - altitude);
+    this.thoughtIcon.texture = this.textures.texture(`INDICATORS.ICONS.${this.shownThought}`);
+    this.thoughtIcon.alpha = Math.max(0, iconAlpha);
   }
 }

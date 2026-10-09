@@ -348,8 +348,27 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   entering state 12 unless `AlwaysDown`. Pontoons replace the gear when `plane+0x24c` is set.
 - Energy drain (`0x8906`): the rate is doubled for planes with a special passenger and
   multiplied by the place's factor (`place+0x6c`) and the profile's difficulty (`+0x48`).
-- Web version: gear fold rate (4/s) and selection fade are assumed; dirt, the passenger icon and
-  the whistle are not drawn; the thought bubble layout is still the assumed one.
+- Balloons (`0x9740`), drawn before the energy bar. Each has a 0..1 value sliding at 4/s and is
+  drawn above 0.25.
+  - Speech balloon `INDICATORS.GLOBE` with `INDICATORS.ICONS.<n>` (`+0x270`): on while the plane
+    waits (state 2) with no orders, showing its need, or while it speaks (`0x5bd4` sets a timer and
+    an icon). With the descriptor's `BubblePosition` (bx, by) and the corner `c` (`+0x260`):
+    `x = bx (+5 in perspective 0) (−10 for corners 0 and 2)`, negated and mirrored for corners 0
+    and 2; `y = −5 − by` above (corners 0, 1) or `by` below and flipped (2, 3), less
+    `28 − DespY`. Alpha `(v − 0.25) / 0.75`. `INDICATORS.GLOBE_NAG` flashes over it while the
+    speech timer runs from 1.8 to 1.3.
+  - Thought cloud `INDICATORS.THOUGHT_A`–`D`: on while the plane is flying or waiting with orders
+    queued. The cloud is 50 px aside (left for corners 0 and 2) and 80 px above or 15 below; the
+    trail D, C, B sits at (−19, 18), (−13, 19), (−7, 15) from it, mirrored the same way; puff i
+    of 4 has alpha `min(1, 5v − i)`; an image owned by the next place (`place+8`) is drawn in
+    the cloud with alpha `4v − 3`.
+  - The corner comes from the place the plane is at (`place+0x58`, `0x75f0`), given by the stage
+    scripts: 1 for gates, gas station and hangar, 0 for stop spots, 0 for Arches' runways and 1
+    for the island's (the last inferred from its helper); a new plane has 3.
+- Web version: gear fold rate (4/s) and selection fade are assumed; dirt, the passenger icon, the
+  whistle and the nag flash are not drawn; the need balloon also shows for planes still in the
+  air with no orders; the thought cloud shows the matching need icon in place of the place's
+  image, which has not been identified.
 
 ## Gate, runway and order flag drawing
 

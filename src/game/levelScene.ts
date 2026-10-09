@@ -16,7 +16,7 @@ import { GAME_MENU_SURFACES, GameMenu } from './view/gameMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
 import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
-import { PlaneView, planeSurfaceIds } from './planeView';
+import { PlaneView, planeSurfaceIds, type BalloonCorner } from './planeView';
 import type { Progress } from './progress';
 import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
@@ -24,7 +24,7 @@ import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
-import { PlaneState } from './sim/rules';
+import { Need, PlaneState } from './sim/rules';
 import { Simulation, type Gate, type Hangar, type Plane, type SimEvent } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
@@ -181,6 +181,31 @@ export class LevelScene {
       for (const plane of new Set(this.sim.planes.map((p) => p.descriptor))) this.audio.preload(Object.values(plane.sounds).filter((id) => !id.includes('%')));
     }
     this.sim.press(x, y);
+  }
+
+  /**
+   * Which way a plane's balloons hang: the stage scripts give every place a corner, which the
+   * plane takes on while it is there (0x75f0). Gates, the pump and the hangar use 1, stop spots 0
+   * and runways the stage's own value; a plane not yet anywhere keeps 3.
+   */
+  private balloonCorner(plane: Plane): BalloonCorner {
+    const place = plane.place;
+    if (!place) return 3;
+    if (place.kind === 'runway') return this.options.layout.runwayBalloonCorner;
+    return place.kind === 'stopSpot' ? 0 : 1;
+  }
+
+  /**
+   * Icon for the thought cloud: where the plane goes next. The original draws an image owned by
+   * the place (`place+8`), which has not been identified; the matching need icon stands in.
+   */
+  private destinationIcon(plane: Plane): number {
+    const next = plane.queue[0]!;
+    if (next.kind === 'runway') return plane.landed ? Need.TAKE_OFF : Need.LAND;
+    if (next.kind === 'gate') return plane.unloaded ? Need.LOAD : Need.UNLOAD;
+    if (next.kind === 'gasStation') return Need.GAS;
+    if (next.kind === 'hangar') return Need.SERVICE;
+    return 8;
   }
 
   /** The improvements shop for this level; a purchase or sale means building the airport again. */
@@ -503,6 +528,8 @@ export class LevelScene {
         selected: plane.selected,
         energy: plane.energy,
         need: idle ? plane.need : null,
+        thought: draining && plane.queue.length > 0 ? this.destinationIcon(plane) : null,
+        corner: this.balloonCorner(plane),
         idle: plane.state === PlaneState.WAITING && plane.queue.length === 0,
         gearDown: plane.state !== PlaneState.AIRBORNE && (plane.state !== PlaneState.FLYING || plane.landing),
       });
