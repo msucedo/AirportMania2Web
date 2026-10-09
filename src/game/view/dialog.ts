@@ -41,6 +41,8 @@ export function dialogButton(
   label: string,
   family: string,
   onPress: () => void,
+  /** Sound to play on a press; null when the action plays its own. */
+  sound: string | null = 'SOUNDS.CLICK',
 ): void {
   const { x, y, width, height = 40 } = at;
   const face = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BUTTON'), leftWidth: 18, rightWidth: 18, topHeight: 18, bottomHeight: 18 });
@@ -55,7 +57,7 @@ export function dialogButton(
   zone.on('pointerout', () => (face.texture = textures.texture('GUI.DIALOGS.BUTTON')));
   zone.on('pointerdown', (event) => {
     event.stopPropagation();
-    audio.play('SOUNDS.CLICK');
+    if (sound) audio.play(sound);
     onPress();
   });
   const text = new Text({ text: label, style: { fontFamily: family, fontSize: 14, fill: 0xffffff } });

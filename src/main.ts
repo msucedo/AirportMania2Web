@@ -4,12 +4,11 @@ import { AudioPlayer } from './engine/audio';
 import { createScreen } from './engine/screen';
 import { TextureStore } from './engine/textures';
 import { LevelScene } from './game/levelScene';
-import { LevelSelect } from './game/levelSelect';
 import { MainMenu } from './game/mainMenu';
 import { loadSettings, saveSettings } from './game/settings';
 import { OPTIONS_SURFACES, OptionsDialog } from './game/view/optionsDialog';
 import { WorldMap } from './game/worldMap';
-import { Progress } from './game/progress';
+import { Progress, type StageRules } from './game/progress';
 import { STAGES } from './game/stages';
 
 declare global {
@@ -28,6 +27,7 @@ function navigate(stage: number | null, level: number | null, map?: number | '')
   const params = new URLSearchParams(location.search);
   params.delete('reset');
   params.delete('map');
+  params.delete('go');
   if (stage === null) {
     params.delete('stage');
     params.delete('level');
@@ -57,7 +57,14 @@ async function main(): Promise<void> {
     player.setVolumes(settings.sound, settings.music);
     return player;
   };
-  const progress = Progress.load();
+  // Only the stages that can be played take part in the rules, so the last one opens nothing.
+  const rules = new Map<number, StageRules>(
+    [...STAGES.keys()].map((s) => {
+      const area = data.areas.get(s)!;
+      return [s, { levels: area.levelsCount, perStar: area.perStarAmount, clearBonus: area.stageClearAmount }];
+    }),
+  );
+  const progress = Progress.load(rules);
   if (params.has('reset')) progress.reset();
   window.progress = progress;
 
@@ -69,19 +76,19 @@ async function main(): Promise<void> {
   const level = Number.isInteger(requested) && requested >= 1 && requested <= levels ? requested : null;
 
   const playable = new Map([...STAGES.keys()].map((s) => [s, data.areas.get(s)!.levelsCount]));
-  if (params.has('map')) {
+  // A stage without a level is the map centred on it.
+  if (level === null && (params.has('map') || params.has('stage'))) {
     const audio = makeAudio();
-    const focus = Number.parseInt(params.get('map') ?? '', 10);
+    const focus = Number.parseInt(params.get('map') || params.get('stage') || '', 10);
     await WorldMap.create(app, data, textures, audio, {
       strings: await data.strings(chosen),
       progress,
       playable,
       focus: STAGES.has(focus) ? focus : null,
       onPlay: (s, l) => navigate(s, l),
-      onStage: (s) => navigate(s, null),
       onMenu: () => navigate(null, null),
     });
-  } else if (!params.has('stage') && level === null) {
+  } else if (level === null) {
     const audio = makeAudio();
     const strings = await data.strings(chosen);
     await textures.load(OPTIONS_SURFACES);
@@ -102,17 +109,6 @@ async function main(): Promise<void> {
         app.stage.addChild(dialog);
       },
     });
-  } else if (level === null) {
-    await LevelSelect.create(app, data, textures, {
-      stage,
-      layout,
-      strings: await data.strings(chosen),
-      progress,
-      stages: [...STAGES.keys()].map((s) => ({ stage: s, open: progress.stageUnlocked(s, data.areas.get(s - 1)?.levelsCount ?? 0) })),
-      onPlay: (next) => navigate(stage, next),
-      onStage: (next) => navigate(next, null),
-      onMenu: () => navigate(null, null, stage),
-    });
   } else {
     const audio = makeAudio();
     window.game = await LevelScene.create(app, data, textures, audio, {
@@ -121,9 +117,16 @@ async function main(): Promise<void> {
       layout,
       language: chosen,
       progress,
-      // Leaving a level goes back to the map; the next-level button goes straight on.
+      // Leaving a level goes back to the map; restarting loads it again.
       onNavigate: (next) => (next === null ? navigate(null, null, stage) : navigate(stage, next)),
       settings,
+      rules: rules.get(stage)!,
+      skipShop: params.has('go'),
+      onRebuild: () => {
+        const next = new URLSearchParams(location.search);
+        next.set('go', '');
+        location.search = next.toString();
+      },
       onSettings: (next) => {
         settings = next;
         saveSettings(next);

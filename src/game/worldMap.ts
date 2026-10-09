@@ -54,16 +54,14 @@ export interface WorldMapOptions {
   /** Stage to bring into view at the start; by default the one with the next level to play. */
   focus: number | null;
   onPlay: (stage: number, level: number) => void;
-  onStage: (stage: number) => void;
   onMenu: () => void;
 }
 
 /**
  * The world map: the original image with the stage icons, ribbons and level markers where the
  * map script and the level position table put them, and the bar with its four buttons. A level
- * is chosen by touching its marker and started with Play; touching a stage's icon opens its
- * improvements. Dragging scrolls the map. The original's drifting clouds, ships, wind and
- * satellites are not drawn, and the tutorial and awards buttons do nothing yet.
+ * is chosen by touching its marker and started with Play. Dragging scrolls the map. The
+ * original's drifting clouds, ships, wind and satellites are not drawn, and the tutorial and awards buttons do nothing yet.
  */
 export class WorldMap {
   readonly root = new Container();
@@ -88,11 +86,6 @@ export class WorldMap {
     for (const { stage, icon, ribbon } of STAGE_ICONS) {
       const picture = textures.sprite(`MAP.STAGES.${stage}`);
       picture.position.copyFrom(icon);
-      if (playable.has(stage) && this.stageOpen(stage)) {
-        picture.eventMode = 'static';
-        picture.cursor = 'pointer';
-        picture.on('pointertap', () => options.onStage(stage));
-      }
       const band = textures.sprite('MAP.HERALDIC_RIBBON');
       band.position.copyFrom(ribbon);
       const title = new Text({ text: strings.t(`STAGES.${stage}.TITLE`), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 20, fill: 0x5a4a2a } });
@@ -174,7 +167,7 @@ export class WorldMap {
   }
 
   private stageOpen(stage: number): boolean {
-    return this.options.progress.stageUnlocked(stage, this.options.playable.get(stage - 1) ?? 0);
+    return this.options.progress.stageUnlocked(stage);
   }
 
   private select(stage: number, level: number, at: Point): void {

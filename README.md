@@ -8,15 +8,20 @@ assets: they are imported from your own extracted copy and are never committed.
 ```sh
 npm install
 npm run import-assets            # reads ~/Desktop/AirportMania2_Assets (or pass a path)
-npm run dev                      # http://localhost:5173  (?map opens the world map, ?stage=2 a stage screen and ?stage=2&level=3 a level directly, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
+npm run dev                      # http://localhost:5173  (?map opens the world map, ?map=2 centres it on a stage and ?stage=2&level=3 opens a level directly, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
 npm test
 ```
 
 ## Status
 
-Options in the main menu set the sound and music volume and the language (eight are available). During a level the menu button pauses and offers the volumes, restarting and going back to the map. The game opens on the original main menu and world map: touch a level's marker and press Play. Touching a stage's icon opens its screen with the improvements shop. Two stages are playable (in the stage screen, arrows switch stage): Arches with six levels and the
-island with seven. Levels unlock in order, stars and best scores are saved in the browser, and the
-funds earned with stars buy each stage's improvements.
+The game opens on the original main menu and world map: touch a level's marker and press Play.
+Two stages are playable, Arches with six levels and the island with seven. Options in the main
+menu set the sound and music volume and the language (eight are available); during a level the
+menu button pauses and offers the volumes, restarting and going back to the map.
+
+Money works as in the original: a level's score is added to the funds of the next level, where
+the improvements shop opens before play; clearing a stage pays its stars and a bonus into the
+next stage. Progress is saved in the browser.
 
 In a level: select a plane, send it to a runway, then to a gate (it unloads and, if it needs
 nothing else, loads there), then to a runway to take off. Some planes ask for servicing in the
@@ -44,4 +49,4 @@ in `docs/re-notes.md` and `src/game/sim/rules.ts`.
 - `tools/re/` — helpers for reading the disassembly (`prepare.sh`, `reidx.py`, `stage_calls.py`).
 - `tools/dev/play.mjs` — plays the first plane in a headless browser and takes screenshots.
 - `tools/dev/shoot-level.mjs` — drives a plane that needs fuel through a level and takes screenshots.
-- `tools/dev/shoot-flow.mjs` — checks the stage screen, saved progress, the shop and the next level.
+- `tools/dev/shoot-flow.mjs` — checks a finished level, its report, saved progress, the shop and the next level.

@@ -7,7 +7,10 @@ import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
 import { paletteColor } from './palette';
+import type { StageRules } from './progress';
 import type { Settings } from './settings';
+import { IMPROVEMENTS_FONTS, IMPROVEMENTS_SOUNDS, ImprovementsDialog, improvementsSurfaceIds } from './view/improvementsDialog';
+import { StageClear } from './view/stageClear';
 import { OPTIONS_SURFACES, OptionsDialog } from './view/optionsDialog';
 import { PauseMenu } from './view/pauseMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
@@ -38,6 +41,12 @@ export interface LevelOptions {
   /** Navigation: a level number, or null for the stage screen. */
   onNavigate: (level: number | null) => void;
   settings: Settings;
+  /** The stage's rules for stars and rewards. */
+  rules: StageRules;
+  /** Skip the improvements shop before the level (used after a purchase rebuilds the airport). */
+  skipShop?: boolean;
+  /** Asks for the level to be loaded again, straight into play. */
+  onRebuild: () => void;
   /** Called when the player changes the options from the pause menu. */
   onSettings: (settings: Settings) => void;
   showNodes?: boolean;
@@ -76,7 +85,6 @@ export class LevelScene {
     private readonly strings: Strings,
     private readonly options: LevelOptions,
     sim: Simulation,
-    private readonly perStarAmount: number,
   ) {
     this.sim = sim;
     this.hud = new Hud(textures, sim.goals);
@@ -92,8 +100,7 @@ export class LevelScene {
     const area = data.areas.get(options.stage);
     if (!area) throw new Error(`Unknown stage ${options.stage}`);
     // Owning the stage's plane licence switches every level to its extra-plane variant.
-    const owned = new Set<number>();
-    for (const key of options.progress.improvements) if (Math.floor(key / 1000) === options.stage) owned.add(key % 1000);
+    const owned = options.progress.improvements(options.stage, options.level);
     const extraPlane = owned.has(layout.extraPlaneLicence);
     const schedule = findLevel(stage, options.level, extraPlane);
     const sim = new Simulation({
@@ -110,7 +117,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...OPTIONS_SURFACES]);
+    const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...OPTIONS_SURFACES, ...improvementsSurfaceIds(layout.improvements), 'GUI.FINAL_REPORT.STAR_SMALL']);
     for (const layer of layout.backdrop.layers) {
       ids.add(layer.resource);
     }
@@ -136,11 +143,14 @@ export class LevelScene {
     const [strings] = await Promise.all([
       data.strings(options.language),
       textures.load(ids),
-      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS]),
+      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS]),
     ]);
 
-    const scene = new LevelScene(textures, audio, strings, options, sim, area.perStarAmount);
+    const scene = new LevelScene(textures, audio, strings, options, sim);
     app.stage.addChild(scene.root);
+    // The shop comes before the level whenever there is money to spend or something to sell.
+    const record = options.progress.record(options.stage, options.level);
+    if (!options.skipShop && layout.improvements.length > 0 && (record.funds > 0 || record.improvements.length > 0)) scene.openShop();
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
     app.stage.on('pointerdown', (event: FederatedPointerEvent) => scene.press(event.global.x, event.global.y));
@@ -160,6 +170,21 @@ export class LevelScene {
       for (const plane of new Set(this.sim.planes.map((p) => p.descriptor))) this.audio.preload(Object.values(plane.sounds).filter((id) => !id.includes('%')));
     }
     this.sim.press(x, y);
+  }
+
+  /** The improvements shop for this level; a purchase or sale means building the airport again. */
+  private openShop(): void {
+    const { progress, stage, level, layout } = this.options;
+    this.paused = true;
+    this.audio.preload(IMPROVEMENTS_SOUNDS);
+    const shop = new ImprovementsDialog(this.textures, this.audio, this.strings, progress, stage, level, layout.improvements, () => {
+      if (shop.changed) return this.options.onRebuild();
+      this.dialog = null;
+      this.paused = false;
+      setTimeout(() => shop.destroy({ children: true }));
+    });
+    this.dialog = shop;
+    this.root.addChild(shop);
   }
 
   /** The menu button: stops the game and offers to go on, change the options, restart or leave. */
@@ -488,11 +513,19 @@ export class LevelScene {
     this.audio.play(`SOUNDS.FINAL_REPORT.${tier}`);
     const { progress, stage, level, onNavigate } = this.options;
     const stars = ['FAIL', 'GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'].indexOf(tier);
-    progress.record(stage, level, this.sim.score, stars, this.perStarAmount);
+    const cleared = progress.complete(stage, level, this.sim.score, stars);
     const report = new FinalReport(this.textures, this.audio, this.strings, this.sim);
-    // The original report only offers to go on, which leads back to the map.
-    report.onContinue = () => onNavigate(null);
-    this.report = report;
+    // The original report only offers to go on: to the stage's reward if this pass cleared it,
+    // then back to the map.
+    report.onContinue = () => {
+      if (!cleared) return onNavigate(null);
+      const rules = this.options.rules;
+      const summary = new StageClear(this.textures, this.audio, this.strings, { bonus: rules.clearBonus, stars: progress.stageStars(stage), funds: progress.stageReward(stage) }, () => onNavigate(null));
+      this.root.addChild(summary);
+      setTimeout(() => report.destroy({ children: true }));
+      this.report = null;
+    };
     this.root.addChild(report);
+    this.report = report;
   }
 }

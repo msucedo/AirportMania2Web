@@ -1,5 +1,5 @@
-// Checks the game flow: stage screen, a finished level recorded in the progress, buying an
-// improvement and seeing it in the next level. Usage: node tools/dev/shoot-flow.mjs <baseUrl> <outDir>
+// Checks the game flow: a finished level, its report and what it saves, then the shop before the
+// next level: buying an improvement and seeing it in the airport. Usage: node tools/dev/shoot-flow.mjs <baseUrl> <outDir>
 import { createRequire } from 'node:module';
 const require = createRequire(process.env.PUPPETEER_FROM ?? '/Users/msaucedo/Documents/code/node_modules/');
 const puppeteer = require('puppeteer-core');
@@ -29,10 +29,9 @@ try {
     const r = await page.evaluate(() => { const b = document.querySelector('canvas').getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; });
     await page.mouse.click(r.x + (gx / 480) * r.w, r.y + (gy / 320) * r.h);
   };
-  const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem('am2web.progress.v1') ?? 'null'));
+  const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem('am2web.progress.v2') ?? 'null'));
 
   await open('?reset&mute'); await shot('F0-main-menu');
-  await open('?stage=1&mute'); await shot('F1-stage-empty');
   // Play level 1 perfectly through the simulation API: every plane lands, uses a gate and leaves.
   await open('?level=1&mute');
   const result = await page.evaluate(() => {
@@ -54,19 +53,18 @@ try {
   await sleep(1500); await shot('F2-report-building'); await sleep(9000); await shot('F2-report');
   console.log('saved after level 1:', JSON.stringify(await saved()));
 
-  // Give the player funds, buy the first improvement on the stage screen and check level 2 has it.
-  await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('am2web.progress.v1')); d.funds = 50000; localStorage.setItem('am2web.progress.v1', JSON.stringify(d)); });
-  await open('?stage=1&mute'); await shot('F3-stage-funds');
-  await click(12 + 54, 130 + 34);            // first shop tile: extra stop spot
-  await sleep(200);
-  await click(12 + 2 * 114 + 54, 130 + 34);  // third tile: gate C
-  await sleep(300); await shot('F4-stage-bought');
-  console.log('saved after buying:', JSON.stringify(await saved()));
-  await click(240 - 72 * 2 + 30, 66);        // level 2 tile
-  await page.waitForFunction('location.search.includes("level=2")', { timeout: 10000 });
+  // Level 2 opens on the shop with the funds level 1 earned. The dialog is 430x270 centred, so
+  // its centre is (240, 160): Buy is at (-20, 120) from it and Exit at (140, 120).
+  await open('?stage=1&level=2&mute');
+  await sleep(600); await shot('F3-shop');
+  await click(240 - 20, 160 + 120);
+  await sleep(400); await shot('F4-shop-bought');
+  console.log('saved after buying:', JSON.stringify((await saved()).records['1-2']));
+  await click(240 + 140, 160 + 120);
+  await page.waitForFunction('location.search.includes("go")', { timeout: 10000 });
   await page.waitForFunction('document.body.dataset.ready', { timeout: 20000 });
   await sleep(1500); await shot('F5-level2');
-  console.log('level 2 airport:', JSON.stringify(await page.evaluate(() => ({ gates: window.game.sim.gates.map((g) => g.letter), stopSpots: window.game.sim.stopSpots.length }))));
+  console.log('level 2 airport:', JSON.stringify(await page.evaluate(() => ({ gates: window.game.sim.gates.map((g) => g.letter), stopSpots: window.game.sim.stopSpots.length, paused: window.game.paused }))));
   console.log('problems:', problems.length ? problems : 'none');
 } finally {
   await browser.close();

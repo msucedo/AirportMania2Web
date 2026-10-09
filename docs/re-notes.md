@@ -577,6 +577,34 @@ Vtable `0x17a8e8`, kind 5.
 - Web version: the plane is drawn at the middle of the building while it is serviced instead of
   being walked in.
 
+## Money, records and improvements — confirmed
+
+- The profile keeps one record per (stage, level), created on demand by `0x821b8`; a new record
+  copies the improvements of the level before. Fields: `+0xc` best score, `+0x10` funds,
+  `+0x38` tier (0 not passed, 1 goal … 5 perfect), `+0x3c` the improvements bought.
+- The score is the money. On passing a level (`0x34170`): the best score is raised if beaten;
+  if this is the furthest level reached, the next level's record gets a copy of this one's
+  improvements and `funds = funds + best score`; otherwise the amount the best score rose by is
+  added to the funds of the levels already opened after it.
+- Stars are `tier − 1`. When a tier improves (`0x119c2`) the stars gained, times this stage's
+  `PerStarAmount`, are added to the funds of every opened level of the next stage (`0x115a0`).
+- Clearing a stage shows dialog `0x7802c` (400×250): title, rule at y −65 (width 350),
+  `AREA_CLEAR_BONUS` with `StageClearAmount` at y −30, `STARS_EARNED` at y −10, rule at y 16,
+  `FUNDS` at y 60 with `stars × PerStarAmount + StageClearAmount`, labels at x −175 and values
+  right-aligned at 175. Its continue (`0x78a9c`) moves to the next stage, whose first level
+  starts with those funds and no improvements. Stage 1 starts with nothing.
+- Improvements dialog (`0x4c3c8`), frame 430×270: `IMPROVEMENTS_DIALOG.TEXT_SHORT` centred at
+  (55, −130) and the item title at (60, −100) in `FONTS.MAIN`; rules at y −115 and 65 (centre x
+  55, width 325); description in `FONTS.WHITE`; `COST` at (−110, 65) and `AVAILABLE` at
+  (−110, 95) with the amounts right-aligned at x 220 in `FONTS.SCORE`; Buy/Sell button at
+  (−20, 120) and Exit at (140, 120), both 125 wide. Buying (`0x4c020`) needs the level's funds to
+  cover the price, takes it and adds the id to the level's record; selling (`0x4bf08`) removes it
+  and gives the price back. Sounds: `SOUNDS.IMPROVEMENTS_SCREEN`, `BUY_SOMETHING`, `CANNOT`,
+  `CASH`. A hidden button adds 1,000,000 for the tester profile.
+- Not read: the list of items (a scrolling list widget, `0x4ca54`), the description's box, the
+  "try me" marker (`0x4da44`), and when the dialog is opened. The web version opens it before a
+  level whenever that level has funds or improvements, and reloads the level after a change.
+
 ## Main menu (`0x597b0`)
 
 - Built in this order: background (`0x5d138`), `MAIN_MENU.TOWER` at (36, 77) and
@@ -621,9 +649,8 @@ Vtable `0x17a8e8`, kind 5.
 - Also in the script and not drawn by the web version: `MAP.ISLAND_FRONT`, clouds
   (`0x61210`), wind streams (`0x60bec`), carrier waves, satellites and twinkling points
   (`0x60cc4`), the "coming soon" sign, and the level information dialog (`0x64824`).
-- Web version: dragging scrolls the map; touching a stage icon opens the stage screen with its
-  improvements, where the original has its own improvements screen; the chosen level's name and
-  best score are written over the bar.
+- Web version: dragging scrolls the map; the chosen level's name and best score are written
+  over the bar.
 
 ## Still unknown
 

@@ -1,0 +1,173 @@
+import { Container, Graphics, Rectangle, Text, type FederatedPointerEvent, type Sprite } from 'pixi.js';
+import type { Strings } from '../../data/strings';
+import type { AudioPlayer } from '../../engine/audio';
+import { fontFamily } from '../../engine/fonts';
+import type { TextureStore } from '../../engine/textures';
+import type { Progress } from '../progress';
+import type { ImprovementOffer } from '../stages/layout';
+import { DIALOG_SURFACES, dialogButton, dialogFrame } from './dialog';
+import { MAIN_FONT, SCORE_FONT } from './floatingText';
+
+const ROW_FONT = 'FONTS.TEEN_BD';
+export const IMPROVEMENTS_FONTS = [MAIN_FONT, SCORE_FONT, ROW_FONT];
+export const IMPROVEMENTS_SOUNDS = ['SOUNDS.IMPROVEMENTS_SCREEN', 'SOUNDS.BUY_SOMETHING', 'SOUNDS.CANNOT', 'SOUNDS.CASH', 'SOUNDS.CLICK'];
+
+export function improvementsSurfaceIds(offers: readonly ImprovementOffer[]): string[] {
+  return [...DIALOG_SURFACES, ...offers.flatMap((offer) => [`${offer.icon}.ACTIVE`, `${offer.icon}.GRAYED`])];
+}
+
+const BOX = { width: 430, height: 270 };
+/** The list of improvements: a scrolling column on the left. Its exact place has not been read. */
+const LIST = { x: -165, top: -122, bottom: 122, pitch: 44 };
+
+/**
+ * The shop of improvements, after the original dialog (`0x4c3c8`): a 430×270 box with the list
+ * on the left and, for the chosen one, its title, description and cost, the funds available, and
+ * the Buy or Sell and Exit buttons. Positions are from the centre of the box. Buying takes the
+ * price from the funds of the level about to be played and selling gives it back (`0x4c020`,
+ * `0x4bf08`). The list's layout and the description's box are approximations, and the two
+ * amounts are drawn 10 px left of the original's x 220 to stay inside the frame.
+ */
+export class ImprovementsDialog extends Container {
+  private readonly panel = new Container();
+  private readonly rows = new Container();
+  private readonly detail = new Container();
+  private chosen: ImprovementOffer;
+  /** True once something was bought or sold, so the airport has to be built again. */
+  changed = false;
+
+  constructor(
+    private readonly textures: TextureStore,
+    private readonly audio: AudioPlayer,
+    private readonly strings: Strings,
+    private readonly progress: Progress,
+    private readonly stage: number,
+    private readonly level: number,
+    private readonly offers: readonly ImprovementOffer[],
+    private readonly onExit: () => void,
+  ) {
+    super();
+    const { overlay, panel } = dialogFrame(textures, BOX.width, BOX.height);
+    this.panel.position.set(BOX.width / 2, BOX.height / 2);
+    panel.addChild(this.panel);
+    this.addChild(overlay);
+    this.chosen = offers[0]!;
+
+    const heading = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TEXT_SHORT'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 } } });
+    heading.anchor.set(0.5, 0.85);
+    heading.position.set(55, -116);
+    const rules = new Graphics();
+    rules.rect(55 - 162.5, -115.5, 325, 1).rect(55 - 162.5, 64.5, 325, 1).fill({ color: 0xffffff, alpha: 0.5 });
+    this.panel.addChild(heading, rules, this.detail);
+
+    // The list scrolls by dragging when it does not fit.
+    const clip = new Graphics().rect(LIST.x - 44, LIST.top, 88, LIST.bottom - LIST.top).fill(0xffffff);
+    this.rows.mask = clip;
+    const zone = new Container();
+    zone.hitArea = new Rectangle(LIST.x - 44, LIST.top, 88, LIST.bottom - LIST.top);
+    zone.eventMode = 'static';
+    let grab: { pointer: number; start: number; moved: boolean } | null = null;
+    const limit = Math.min(0, LIST.bottom - LIST.top - offers.length * LIST.pitch);
+    zone.on('pointerdown', (event: FederatedPointerEvent) => (grab = { pointer: event.global.y, start: this.rows.y, moved: false }));
+    zone.on('globalpointermove', (event: FederatedPointerEvent) => {
+      if (!grab) return;
+      const by = event.global.y - grab.pointer;
+      if (Math.abs(by) > 4) grab.moved = true;
+      if (grab.moved) this.rows.y = Math.max(limit, Math.min(0, grab.start + by));
+    });
+    const release = (event: FederatedPointerEvent): void => {
+      const held = grab;
+      grab = null;
+      if (!held || held.moved) return;
+      // A touch without dragging picks the row under it.
+      const index = Math.floor((this.panel.toLocal(event.global).y - LIST.top - this.rows.y) / LIST.pitch);
+      const offer = offers[index];
+      if (!offer) return;
+      this.chosen = offer;
+      audio.play('SOUNDS.CLICK');
+      this.refresh();
+    };
+    zone.on('pointerup', release);
+    zone.on('pointerupoutside', () => (grab = null));
+    this.panel.addChild(clip, this.rows, zone);
+
+    this.refresh();
+    audio.play('SOUNDS.IMPROVEMENTS_SCREEN');
+  }
+
+  private owned(offer: ImprovementOffer): boolean {
+    return this.progress.improvements(this.stage, this.level).has(offer.id);
+  }
+
+  /** Some improvements build on another one, which has to be bought first. */
+  private available(offer: ImprovementOffer): boolean {
+    return offer.requires === undefined || this.progress.improvements(this.stage, this.level).has(offer.requires);
+  }
+
+  private refresh(): void {
+    const { strings, textures } = this;
+    for (const child of this.rows.removeChildren()) child.destroy({ children: true });
+    this.offers.forEach((offer, i) => {
+      const lit = this.owned(offer) || this.available(offer);
+      const icon: Sprite = textures.sprite(`${offer.icon}.${lit ? 'ACTIVE' : 'GRAYED'}`);
+      icon.position.set(LIST.x, LIST.top + LIST.pitch * (i + 0.5));
+      if (offer === this.chosen) this.rows.addChild(new Graphics().roundRect(LIST.x - 43, LIST.top + LIST.pitch * i + 1, 86, LIST.pitch - 2, 8).fill({ color: 0xffc23a, alpha: 0.35 }));
+      this.rows.addChild(icon);
+      if (this.owned(offer)) {
+        const tick = new Text({ text: '✓', style: { fontFamily: 'sans-serif', fontSize: 18, fontWeight: 'bold', fill: 0x7be36a, stroke: { color: 0x103010, width: 3 } } });
+        tick.anchor.set(0.5);
+        tick.position.set(LIST.x + 30, LIST.top + LIST.pitch * (i + 0.5) + 8);
+        this.rows.addChild(tick);
+      }
+    });
+
+    for (const child of this.detail.removeChildren()) child.destroy({ children: true });
+    const offer = this.chosen;
+    const text = (value: string, x: number, y: number, family: string, size: number, anchorX: number, fill = 0xffffff): Text => {
+      const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: { color: 0x2a1030, width: 2 } } });
+      node.anchor.set(anchorX, 0.85);
+      node.position.set(x, y);
+      this.detail.addChild(node);
+      return node;
+    };
+    const title = text(strings.t(offer.titleId), 60, -86, fontFamily(MAIN_FONT), 14, 0.5, 0xffe9a8);
+    if (title.width > 310) title.scale.set(310 / title.width);
+    const description = new Text({
+      text: strings.t(offer.descriptionId),
+      style: { fontFamily: fontFamily(ROW_FONT), fontSize: 10, fill: 0xffffff, wordWrap: true, wordWrapWidth: 310, align: 'center', lineHeight: 13 },
+    });
+    description.anchor.set(0.5, 0);
+    description.position.set(55, -78);
+    // Long texts shrink to stay above the cost line.
+    if (description.height > 118) description.scale.set(118 / description.height);
+    this.detail.addChild(description);
+
+    const money = fontFamily(SCORE_FONT);
+    text(strings.t('IMPROVEMENTS_DIALOG.COST'), -110, 63, fontFamily(MAIN_FONT), 13, 0, 0xffc23a);
+    text(String(offer.price), 210, 63, money, 14, 1, 0xffe45c);
+    text(strings.t('IMPROVEMENTS_DIALOG.AVAILABLE'), -110, 95, fontFamily(MAIN_FONT), 13, 0, 0xffc23a);
+    text(String(this.progress.funds(this.stage, this.level)), 210, 95, money, 14, 1, 0xffe45c);
+
+    const owned = this.owned(offer);
+    dialogButton(textures, this.audio, this.detail, { x: -20, y: 120, width: 125, height: 30 }, strings.t(owned ? 'IMPROVEMENTS_DIALOG.SELL' : 'IMPROVEMENTS_DIALOG.BUY'), money, () => this.trade(offer), null);
+    dialogButton(textures, this.audio, this.detail, { x: 140, y: 120, width: 125, height: 30 }, strings.t('IMPROVEMENTS_DIALOG.FINISH'), money, () => this.onExit());
+  }
+
+  private trade(offer: ImprovementOffer): void {
+    const { progress, stage, level } = this;
+    if (this.owned(offer)) {
+      // Selling something others were built on takes those with it.
+      for (const other of this.offers) if (other.requires === offer.id && this.owned(other)) progress.sell(stage, level, other.id, other.price);
+      progress.sell(stage, level, offer.id, offer.price);
+      this.audio.play('SOUNDS.CASH');
+    } else if (this.available(offer) && progress.buy(stage, level, offer.id, offer.price)) {
+      this.audio.play('SOUNDS.BUY_SOMETHING');
+    } else {
+      this.audio.play('SOUNDS.CANNOT');
+      return;
+    }
+    this.changed = true;
+    // Rebuilt after the touch that caused it has been dispatched.
+    setTimeout(() => this.refresh());
+  }
+}
