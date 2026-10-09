@@ -28,7 +28,7 @@ Not there yet: special passengers (transplant organ, pregnant), the painting sto
 and cake improvement, water effects, the original menus and world map, and stages 3 to 10.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
-placeholder (plane colours, some draw details, backdrop compositing, the payout rule) is tracked
+placeholder (some draw details, the payout rule) is tracked
 in `docs/re-notes.md` and `src/game/sim/rules.ts`.
 
 ## Layout

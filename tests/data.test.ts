@@ -29,8 +29,10 @@ describe('resources', () => {
     expect(ids.filter((id) => !exists(id))).toEqual([]);
   });
 
-  it('maps .cgf surfaces to the renamed .png', () => {
-    expect(resources.surface('STAGES.ARCHES.BACKGROUND_TOP').file).toBe('data/graphics/stages/arches/back_top.png');
+  it('maps .cgf surfaces to their colour image and opacity mask', () => {
+    const surface = resources.surface('STAGES.ARCHES.BACKGROUND_TOP');
+    expect(surface.file).toBe('data/graphics/stages/arches/back_top.jpg');
+    expect(surface.alpha).toBe('data/graphics/stages/arches/back_top.alpha.png');
   });
 
   it('keeps the gates namespace intact despite the unclosed <Surface> in the source', () => {

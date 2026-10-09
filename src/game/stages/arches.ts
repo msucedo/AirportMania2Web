@@ -7,6 +7,7 @@ export type { StageLayout, ImprovementOffer } from './layout';
 
 export const ARCHES: StageLayout = {
   stage: 1,
+  neutralColor: 0xddc499,
   gateTypes: [0, 1],
   runwayType: 1,
   gasStationType: 1,
@@ -14,9 +15,7 @@ export const ARCHES: StageLayout = {
     sky: 82,
     horizon: 160,
     layers: [
-      // The silhouette borrows the ground tile's top colour so the two join. The stage script
-      // passes a sand colour (0.87, 0.77, 0.60) to the stage start, which may be the real tint.
-      { resource: 'STAGES.ARCHES.BACKGROUND_TOP', position: { x: 0, y: 34 }, silhouette: { topRowOf: 'STAGES.ARCHES.BACKGROUND_DOWN' } },
+      { resource: 'STAGES.ARCHES.BACKGROUND_TOP', position: { x: 0, y: 34 } },
       { resource: 'STAGES.ARCHES.BACKGROUND_DOWN', position: { x: 0, y: 160 }, scale: { x: 16, y: 16 } },
     ],
   },

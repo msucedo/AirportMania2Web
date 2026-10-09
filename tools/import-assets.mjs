@@ -1,5 +1,5 @@
 // Imports the extracted game assets into the project:
-//   - copies every file to public/assets/ (renaming .cgf, which are plain PNGs, to .png)
+//   - copies every file to public/assets/, splitting each .cgf into its two images (see splitCgf)
 //   - flattens resources.xml into src/data/generated/resources.json
 //   - converts the data XMLs into generic JSON trees under src/data/generated/
 //
@@ -82,15 +82,31 @@ function walk(dir, rel = '') {
 }
 walk(srcRoot);
 
-const outPathFor = (rel) => rel.replace(/\.cgf$/i, '.png');
+// A .cgf is an 8-bit grey PNG holding the opacity, followed in the same file by a JPEG holding
+// the colours (loader 0x977a0). They are written apart and joined again when the texture loads.
+const outPathFor = (rel) => rel.replace(/\.cgf$/i, '.jpg');
+const alphaPathFor = (rel) => rel.replace(/\.cgf$/i, '.alpha.png');
+function splitCgf(buffer, rel) {
+  const end = buffer.indexOf('IEND');
+  if (end < 0 || buffer.readUInt16BE(end + 8) !== 0xffd8) throw new Error(`${rel}: not a PNG followed by a JPEG`);
+  return { alpha: buffer.subarray(0, end + 8), color: buffer.subarray(end + 8) };
+}
 
 fs.rmSync(publicRoot, { recursive: true, force: true });
 fs.rmSync(generatedRoot, { recursive: true, force: true });
 let copied = 0;
+let split = 0;
 for (const rel of diskFiles.values()) {
   const dst = path.join(publicRoot, outPathFor(rel));
   fs.mkdirSync(path.dirname(dst), { recursive: true });
-  fs.copyFileSync(path.join(srcRoot, rel), dst);
+  if (/\.cgf$/i.test(rel)) {
+    const { alpha, color } = splitCgf(fs.readFileSync(path.join(srcRoot, rel)), rel);
+    fs.writeFileSync(dst, color);
+    fs.writeFileSync(path.join(publicRoot, alphaPathFor(rel)), alpha);
+    split++;
+  } else {
+    fs.copyFileSync(path.join(srcRoot, rel), dst);
+  }
   copied++;
 }
 
@@ -152,6 +168,7 @@ function visit(node, ctx) {
         centered: isTrue(a.Centered),
         blending: a.Blending ?? ctx.atlas?.blending ?? 'ALPHA',
       };
+      if (file && /\.cgf$/i.test(a.File)) surface.alpha = file.replace(/\.jpg$/, '.alpha.png');
       if (isTrue(a.NoClip)) surface.noClip = true;
       if (a.X !== undefined) surface.x = num(a.X);
       if (a.Y !== undefined) surface.y = num(a.Y);
@@ -242,7 +259,7 @@ for (const rel of [...diskFiles.values()].sort()) {
 
 const count = (o) => Object.keys(o).length;
 console.log(`source:      ${srcRoot}`);
-console.log(`copied:      ${copied} files -> public/assets/`);
+console.log(`copied:      ${copied} files -> public/assets/ (${split} .cgf split into colour and opacity)`);
 console.log(`converted:   ${converted} data files -> src/data/generated/`);
 console.log(
   `resources:   ${count(resources.groups)} groups, ${count(resources.surfaces)} surfaces, ` +

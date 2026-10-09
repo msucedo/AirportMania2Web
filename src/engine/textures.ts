@@ -8,6 +8,21 @@ const BLEND_MODES: Record<Blending, 'normal' | 'add'> = {
   DECAL: 'normal',
 };
 
+/** Joins a colour image with the greyscale image that holds its opacity. */
+function withOpacity(color: Texture, opacity: Texture): Texture {
+  const canvas = document.createElement('canvas');
+  canvas.width = color.width;
+  canvas.height = color.height;
+  const context = canvas.getContext('2d', { willReadFrequently: true })!;
+  context.drawImage(opacity.source.resource as CanvasImageSource, 0, 0);
+  const mask = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  context.drawImage(color.source.resource as CanvasImageSource, 0, 0);
+  const image = context.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < mask.length; i += 4) image.data[i + 3] = mask[i]!;
+  context.putImageData(image, 0, 0);
+  return Texture.from(canvas);
+}
+
 /** Loads surfaces by resource id and builds sprites that honour their anchor and blending. */
 export class TextureStore {
   private readonly textures = new Map<string, Texture>();
@@ -18,9 +33,11 @@ export class TextureStore {
     const pending: Promise<void>[] = [];
     for (const id of ids) {
       if (this.textures.has(id)) continue;
-      const url = this.resources.url(this.resources.surface(id).file);
+      const def = this.resources.surface(id);
+      const color = Assets.load<Texture>(this.resources.url(def.file));
+      const loaded = def.alpha ? Promise.all([color, Assets.load<Texture>(this.resources.url(def.alpha))]).then(([c, a]) => withOpacity(c, a)) : color;
       pending.push(
-        Assets.load<Texture>(url).then((texture) => {
+        loaded.then((texture) => {
           this.textures.set(id, texture);
         }),
       );
@@ -43,29 +60,6 @@ export class TextureStore {
     const context = canvas.getContext('2d', { willReadFrequently: true })!;
     context.drawImage(texture.source.resource as CanvasImageSource, 0, 0);
     return context.getImageData(0, 0, canvas.width, canvas.height);
-  }
-
-  /**
-   * A white texture whose opacity is the brightness of a greyscale surface. The game ships a few
-   * 8-bit grey images (`.cgf`) that act as silhouettes to be drawn in a colour.
-   */
-  alphaMask(id: string): Texture {
-    const key = `${id}#mask`;
-    const cached = this.textures.get(key);
-    if (cached) return cached;
-    const image = this.pixels(id);
-    const data = image.data;
-    for (let i = 0; i < data.length; i += 4) {
-      data[i + 3] = data[i]!;
-      data[i] = data[i + 1] = data[i + 2] = 255;
-    }
-    const canvas = document.createElement('canvas');
-    canvas.width = image.width;
-    canvas.height = image.height;
-    canvas.getContext('2d')!.putImageData(image, 0, 0);
-    const texture = Texture.from(canvas);
-    this.textures.set(key, texture);
-    return texture;
   }
 
   /**

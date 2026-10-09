@@ -406,10 +406,14 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   drawn only in the first half of the loop. Surfaces 1, 2, 3, 1, 2, 3; y at 0.275, 0.325, 0.175,
   0.275, 0.225, 0.325 of the height (floored); offsets 0.3, 0.65, 1, 1.3, 1.55, 1.92 half-loops.
 - Nothing was found that darkens the airport at night; the web version does not either.
-- `STAGES.ARCHES.BACKGROUND_TOP` is created as a plain `StaticImage` (`0x83e84`) at (0, 34). The
-  file is an 8-bit grey image; the web version treats it as a silhouette (brightness = opacity)
-  drawn in the colour of the ground tile's top row, which joins the ground without a seam. That
-  interpretation fits the art but is not confirmed in the renderer.
+- `.cgf` files (confirmed, loader `0x977a0` chosen by extension in `0x9705c`): an 8-bit grey PNG
+  with the opacity, followed in the same file by a JPEG with the colours. The importer splits
+  them and the texture store joins them again. `STAGES.*.BACKGROUND_TOP` are such files: the
+  full painted scenery above the ground tile, drawn as a plain `StaticImage` (`0x83e84`), at
+  (0, 34) on Arches and (0, 40) on the island.
+- The colour each stage script sets before `0x12ddc` is not a backdrop tint: it overwrites entry
+  0 of the colour table (`+0x300` and `+0x390`), the colour of a gate no plane has used yet.
+  Arches (0.867, 0.769, 0.6), island (0.761, 0.561, 0.212).
 - `STAGES.ARCHES.ARCH` is a `StaticZImage` (`0x842fc`) with a depth value of 600.
 
 ## Needs, schedule flags and the gas station — confirmed
@@ -476,15 +480,13 @@ Builder entry points (first argument is the airport): `0x1328c` image, `0x13de4`
 sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructor `0x46c04`),
 `0x1434c` gas station, `0x1440c` runway (r2 = descriptor type, r3 = number, then flag),
 `0x144e4` stop spot, `0x145a8` painting stop spot, `0x147f8` taxi node, `0x14808` linked node pair.
-`0x12ddc` starts the stage with an RGBA colour: (0.87, 0.77, 0.60) for the tutorial and Arches,
-(0.76, 0.56, 0.21) for the island. What that colour tints has not been confirmed.
+`0x12ddc` starts the stage; the colour set just before it is the stage's neutral gate colour.
 
 ### Stage 2, the island (`0xcf414`, helpers `0xcf1c0` gate + dock and `0xcf370` water runway)
 
 - Backdrop calls in order: sky and clouds at 65; `STAGES.ISLAND.WATER` at y 159, scale 16×15;
   `STAGES.ISLAND.SEA` at (0, 55); `STAGES.ISLAND.BACKGROUND_TOP` (8-bit grey) at (0, 40);
-  `STAGES.ISLAND.BACKGROUND_DOWN` at (335, 160). The web version rearranges these (see
-  `src/game/stages/island.ts`) because the compositing of the grey image is unknown.
+  `STAGES.ISLAND.BACKGROUND_DOWN` at (335, 160).
 - Gates A (135, 135), B (385, 195), C (435, 255), descriptor types 2 and 3, each with dock
   sprites at (−25, +30). Gas station type 2 at (52, 105). Hangar at (180, 90) from level 3.
 - Runways 1 (50, 195) and 2 (85, 250), descriptor type 2, created with flag 0: node at the right
@@ -520,4 +522,3 @@ Vtable `0x17a8e8`, kind 5.
 - Where exactly a landing plane stops and when the runway is freed; the simulation stops it at the runway node.
 - Whether a busy front place makes the plane wait (assumed) and the queue reordering at `0x797e`.
 - How the level ends relative to `TotalTime`; `PATIENCE_VALUES.*` / `SPEED_VALUES.*`.
-- Whether the renderer really uses `.cgf` grey images as opacity masks.

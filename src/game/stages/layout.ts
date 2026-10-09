@@ -38,15 +38,12 @@ export interface BackdropLayer {
   resource: string;
   position: Point;
   scale?: Point;
-  /**
-   * Draw an 8-bit grey image as a silhouette in this colour. `groundTop` borrows the colour of
-   * the top row of another surface.
-   */
-  silhouette?: number | { topRowOf: string };
 }
 
 export interface StageLayout {
   stage: number;
+  /** Colour of a gate nobody has used yet: each stage script overwrites entry 0 of the colour table. */
+  neutralColor: number;
   /** Gate descriptor types: [normal, upgraded]. */
   gateTypes: [number, number];
   runwayType: number;

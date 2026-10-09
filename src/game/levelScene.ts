@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, type Application, type FederatedPointerEvent } from 'pixi.js';
+import { Container, Graphics, type Application, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
 import type { Language, Strings } from '../data/strings';
@@ -98,7 +98,6 @@ export class LevelScene {
     const ids = new Set<string>([...HUD_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES]);
     for (const layer of layout.backdrop.layers) {
       ids.add(layer.resource);
-      if (typeof layer.silhouette === 'object') ids.add(layer.silhouette.topRowOf);
     }
     for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip]) ids.add(id);
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
@@ -174,14 +173,7 @@ export class LevelScene {
     this.ground.addChild(this.sky);
 
     for (const layer of layers) {
-      let sprite: Sprite;
-      if (layer.silhouette === undefined) {
-        sprite = this.textures.sprite(layer.resource);
-      } else {
-        // An 8-bit grey image used as a silhouette: white is land, black is sky.
-        sprite = new Sprite(this.textures.alphaMask(layer.resource));
-        sprite.tint = typeof layer.silhouette === 'number' ? layer.silhouette : this.textures.rowColor(layer.silhouette.topRowOf, 0);
-      }
+      const sprite = this.textures.sprite(layer.resource);
       sprite.position.copyFrom(layer.position);
       if (layer.scale) sprite.scale.copyFrom(layer.scale);
       this.ground.addChild(sprite);
@@ -325,7 +317,7 @@ export class LevelScene {
   }
 
   private draw(seconds: number): void {
-    for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, tintOf(gate.lastColor));
+    for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, gate.lastColor ? tintOf(gate.lastColor) : this.options.layout.neutralColor);
     this.sky.update(this.paused ? 0 : seconds);
     for (const view of this.stationViews) view.update();
     for (const { hangar, bar } of this.hangarBars) {

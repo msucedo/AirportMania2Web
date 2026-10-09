@@ -8,6 +8,8 @@ export interface SurfaceDef {
   /** True when the sprite's origin is its centre instead of its top-left corner. */
   centered: boolean;
   blending: Blending;
+  /** Greyscale image holding the opacity, for surfaces whose colours come from a JPEG. */
+  alpha?: string;
   noClip?: boolean;
   x?: number;
   y?: number;
