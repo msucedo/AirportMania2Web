@@ -384,10 +384,28 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   - The corner comes from the place the plane is at (`place+0x58`, `0x75f0`), given by the stage
     scripts: 1 for gates, gas station and hangar, 0 for stop spots, 0 for Arches' runways and 1
     for the island's (the last inferred from its helper); a new plane has 3.
-- Web version: gear fold rate (4/s) and selection fade are assumed; dirt, the passenger icon, the
-  whistle and the nag flash are not drawn; the need balloon also shows for planes still in the
-  air with no orders; the thought cloud shows the matching need icon in place of the place's
-  image, which has not been identified.
+- Web version: gear fold rate (4/s) and selection fade are assumed; dirt, the whistle and the
+  nag flash are not drawn; the thought cloud shows the matching need icon in place of the
+  place's image, which has not been identified.
+
+## Special passengers and speech — confirmed
+
+- `plane+0x228`: 0 none, 1 president, 2 pregnant, 3 transplant organ, from the level file's
+  `Passengers`. The loader (`0x4cb8`) takes the icon `PRESIDENT`, `PREGNANT` or `ORGANBAG` and
+  gives the president's plane colour 8.
+- While a passenger is aboard the energy falls at twice the rate (`0x8920`).
+- When the plane has landed and goes to waiting (`0x8378`), a pregnant passenger or an organ is
+  delivered: an award counter is raised (`0x9db0`, codes 0x15 and 0x16) and the field is cleared,
+  so the hurry ends there. The president stays; leaving without being furious raises counter
+  0x17 at take-off (`0x7cfc`).
+- The icon is drawn (`0x93e2`) 36 px to the left of the energy bar's place, at its height, and
+  the bar moves 16 px to the right; it swells for a quarter of a second every two.
+- `Plane::say(icon)` (`0x5bd4`): plays the voice for the mood (`TalkHappy`, `TalkNormal`,
+  `TalkUpset`, `TalkMad`), runs the talking mouth, turns the eyes for a second and shows the
+  icon in the speech balloon for two seconds. It is called with the plane's need when an order
+  is given to an idle plane (state 0 or 2, empty queue) for a place it cannot enter (`0x5b10`),
+  and when the next queued order turns out impossible (`0x7340`, `0x7a10`).
+- Web version: the award counters are not kept.
 
 ## Gate, runway and order flag drawing
 
