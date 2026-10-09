@@ -12,7 +12,7 @@ import { parseLevelsDb, parseStageSchedule, type AreaInfo, type StageSchedule } 
 import { parsePlaneTable, type PlaneDescriptor } from './planes';
 import { Resources, type ResourcesData } from './resources';
 import { Strings, type Language } from './strings';
-import type { XmlNode } from './xml';
+import type { Point, XmlNode } from './xml';
 
 export interface GameData {
   resources: Resources;
@@ -23,6 +23,8 @@ export interface GameData {
   hangars: Map<number, HangarDescriptor>;
   areas: Map<number, AreaInfo>;
   stage(number: number): Promise<StageSchedule>;
+  /** Where each level's marker sits on the world map, in map pixels: `positions.get(stage)[level - 1]`. */
+  levelPositions(): Promise<Map<number, Point[]>>;
   strings(language: Language): Promise<Strings>;
 }
 
@@ -55,6 +57,17 @@ export async function loadGameData(): Promise<GameData> {
     areas: parseLevelsDb(levelsDb),
     stage: async (number) =>
       parseStageSchedule(await json<XmlNode[]>(`data/maps/stage_levels_${String(number).padStart(2, '0')}.json`)),
+    levelPositions: async () => {
+      const table = new Map<number, Point[]>();
+      // The table lists some levels twice; the entries agree.
+      for (const node of await json<XmlNode[]>('data/descriptors/levels_position.json')) {
+        if (node.t !== 'Level') continue;
+        const levels = table.get(Number(node.a.StageNumber)) ?? [];
+        levels[Number(node.a.LevelNumber) - 1] = { x: Number.parseFloat(node.a.X!), y: Number.parseFloat(node.a.Y!) };
+        table.set(Number(node.a.StageNumber), levels);
+      }
+      return table;
+    },
     strings: async (language) => new Strings(language, await json<Record<string, string>>(`data/languages/${language}.json`)),
   };
 }

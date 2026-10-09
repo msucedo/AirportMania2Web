@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor } from '../src/game/planeView';
+import { markerImage } from '../src/game/worldMap';
 import { comboArrows } from '../src/game/view/runwayView';
 import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
@@ -75,5 +76,14 @@ describe('runway combo arrows', () => {
     expect(comboArrows(1, 5)).toBe(5);
     expect(comboArrows(0.5, 5)).toBeCloseTo(1.25);
     expect(comboArrows(0, 5)).toBe(0);
+  });
+});
+
+describe('world map markers', () => {
+  it('shows a level as not reached, next to play, or by the score tier it was passed with', () => {
+    expect(markerImage(0, false)).toBe(0);
+    expect(markerImage(0, true)).toBe(1);
+    expect(markerImage(1, false)).toBe(2);
+    expect(markerImage(5, false)).toBe(6);
   });
 });

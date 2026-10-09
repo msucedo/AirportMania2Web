@@ -1,4 +1,4 @@
-// Captures the main menu, hovers and presses Play, and reports where that leads.
+// Captures the main menu and the world map, and follows Play from the menu to a level.
 // Usage: node tools/dev/shoot-menu.mjs <baseUrl> <outDir>
 import { createRequire } from 'node:module';
 const require = createRequire(process.env.PUPPETEER_FROM ?? '/Users/msaucedo/Documents/code/node_modules/');
@@ -29,10 +29,15 @@ try {
   await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 20000 }), page.mouse.click(...at(359, 161))]);
   await page.waitForFunction('document.body.dataset.ready || document.body.dataset.error', { timeout: 20000 });
   console.log('after Play:', new URL(page.url()).search);
-  await sleep(400);
-  const back = at(24, 311);
-  await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 20000 }), page.mouse.click(...back)]);
-  console.log('after Menu:', new URL(page.url()).search);
+  await sleep(600);
+  await page.screenshot({ path: `${outDir}/M3-map.png` });
+  // Drag the map to the left and back, then start the selected level with the bar's Play button.
+  await page.mouse.move(...at(300, 120)); await page.mouse.down(); await page.mouse.move(...at(60, 120), { steps: 8 }); await page.mouse.up();
+  await sleep(300);
+  await page.screenshot({ path: `${outDir}/M4-map-scrolled.png` });
+  await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 20000 }), page.mouse.click(...at(419, 295))]);
+  await page.waitForFunction('document.body.dataset.ready || document.body.dataset.error', { timeout: 20000 });
+  console.log('after map Play:', new URL(page.url()).search);
   console.log('problems:', problems.length ? problems : 'none');
 } finally {
   await browser.close();

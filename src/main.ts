@@ -6,6 +6,7 @@ import { TextureStore } from './engine/textures';
 import { LevelScene } from './game/levelScene';
 import { LevelSelect } from './game/levelSelect';
 import { MainMenu } from './game/mainMenu';
+import { WorldMap } from './game/worldMap';
 import { Progress } from './game/progress';
 import { STAGES } from './game/stages';
 
@@ -18,15 +19,17 @@ declare global {
 }
 
 /**
- * Screens are separate page loads: no parameters shows the main menu, `?stage=S` the stage screen
- * and `?stage=S&level=N` plays a level. `?reset` is dropped on navigation so it only applies once.
+ * Screens are separate page loads: no parameters shows the main menu, `?map` the world map
+ * (`?map=S` centred on a stage), `?stage=S` a stage's screen and `?stage=S&level=N` plays a level. `?reset` is dropped on navigation so it only applies once.
  */
-function navigate(stage: number | null, level: number | null): void {
+function navigate(stage: number | null, level: number | null, map?: number | ''): void {
   const params = new URLSearchParams(location.search);
   params.delete('reset');
+  params.delete('map');
   if (stage === null) {
     params.delete('stage');
     params.delete('level');
+    if (map !== undefined) params.set('map', String(map));
     location.href = `${location.pathname}?${params.toString()}`;
     return;
   }
@@ -55,14 +58,27 @@ async function main(): Promise<void> {
   const requested = Number.parseInt(params.get('level') ?? '', 10);
   const level = Number.isInteger(requested) && requested >= 1 && requested <= levels ? requested : null;
 
-  if (!params.has('stage') && level === null) {
+  const playable = new Map([...STAGES.keys()].map((s) => [s, data.areas.get(s)!.levelsCount]));
+  if (params.has('map')) {
+    const audio = new AudioPlayer(data.resources);
+    audio.muted = params.has('mute');
+    const focus = Number.parseInt(params.get('map') ?? '', 10);
+    await WorldMap.create(app, data, textures, audio, {
+      strings: await data.strings(chosen),
+      progress,
+      playable,
+      focus: STAGES.has(focus) ? focus : null,
+      onPlay: (s, l) => navigate(s, l),
+      onStage: (s) => navigate(s, null),
+      onMenu: () => navigate(null, null),
+    });
+  } else if (!params.has('stage') && level === null) {
     const audio = new AudioPlayer(data.resources);
     audio.muted = params.has('mute');
     await MainMenu.create(app, data, textures, audio, {
       strings: await data.strings(chosen),
       enabled: ['PLAY'],
-      // Play opens the furthest stage reached.
-      onSelect: () => navigate([...STAGES.keys()].filter((s) => progress.stageUnlocked(s, data.areas.get(s - 1)?.levelsCount ?? 0)).pop() ?? 1, null),
+      onSelect: () => navigate(null, null, ''),
     });
   } else if (level === null) {
     await LevelSelect.create(app, data, textures, {
@@ -73,7 +89,7 @@ async function main(): Promise<void> {
       stages: [...STAGES.keys()].map((s) => ({ stage: s, open: progress.stageUnlocked(s, data.areas.get(s - 1)?.levelsCount ?? 0) })),
       onPlay: (next) => navigate(stage, next),
       onStage: (next) => navigate(next, null),
-      onMenu: () => navigate(null, null),
+      onMenu: () => navigate(null, null, stage),
     });
   } else {
     const audio = new AudioPlayer(data.resources);
@@ -84,7 +100,8 @@ async function main(): Promise<void> {
       layout,
       language: chosen,
       progress,
-      onNavigate: (next) => navigate(stage, next),
+      // Leaving a level goes back to the map; the next-level button goes straight on.
+      onNavigate: (next) => (next === null ? navigate(null, null, stage) : navigate(stage, next)),
       showNodes: params.has('nodes'),
     });
   }

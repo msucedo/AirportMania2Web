@@ -43,7 +43,7 @@ export class LevelSelect {
     const { strings, stage } = options;
     this.root.addChild(new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill(0x1d2c3f));
     this.text(`${strings.t(`STAGES.${stage}.TITLE`)} - ${strings.t(`STAGES.${stage}.NAME`)}`, SCREEN_WIDTH / 2, 16, 15, this.main, 0xffb52e, 0.5, SCREEN_WIDTH - 110);
-    const menu = this.text(`\u2039 ${strings.t('MAP.MAIN_MENU')}`, 8, SCREEN_HEIGHT - 9, 11, this.small, 0xffe45c, 0);
+    const menu = this.text(`\u2039 ${strings.t('FINISH_GAME_DIALOG.MAP')}`, 8, SCREEN_HEIGHT - 9, 11, this.small, 0xffe45c, 0);
     menu.eventMode = 'static';
     menu.cursor = 'pointer';
     menu.on('pointerdown', () => options.onMenu());

@@ -567,6 +567,32 @@ Vtable `0x17a8e8`, kind 5.
   dialogs behind Users, Options and Credits. The web menu shows the scene in place, with only
   Play working, and leaves out the badge and the promotional buttons.
 
+## World map (script `0xccc8c`)
+
+- `tools/re/calls.py <start> <end>` lists every call of a compiled script with the constants
+  set up before it; it was used to read this one.
+- The map image is 2040×510 and everything on it is placed in its pixels. Drawn at half size it
+  spans the 480×320 screen above the bar; that scale is inferred from the fit, not read.
+- Stage icons, `0x60218(map, stage, levels, x, y)` (`MAP.STAGES.%d`, stage 5 through `0x60408`
+  with a propeller): 1 (151, 260), 2 (280, 68), 3 (526, 255), 4 (661, 63), 5 (901, 144),
+  6 (1011, 323), 7 (1209, 144), 8 (1360, 323), 9 (1591, 98), 10 (1864, 344).
+- Ribbons, `0x6052c(map, stage, x, y)` (`MAP.HERALDIC_RIBBON` with a text, taken to be the
+  stage title): y 351, 136, 323, 128, 196, 396, 216, 386, 169, 428 at the icons' x.
+- Level markers come from `LEVELS_POSITION_TABLE` (`0x606bc`; some levels are listed twice).
+  Marker image (`0x5dc9e`): `MAP.LEVELS.0` for a level not reached, `1` for the profile's
+  current level, and `tier + 1` (2–6) for a level passed, tiers running from goal to perfect.
+  `MAP.LEVEL_SELECTED` marks the chosen one.
+- Bar: `MAP.HUD.BACK` at (0, 261) and `MAP.HUD.REFLEXION` at (8, 269) (`0x609b8`); four buttons
+  (`0x60e50`) across x 5–122, 122–240, 240–357 and 357–480, y 267–321, with the labels
+  `MAP.MAIN_MENU`, `MAP.TUTORIAL`, `MAP.AWARDS_ROOM` and `MAP.PLAY` centred at y 305 and the
+  `…_ON` images shown when pressed.
+- Also in the script and not drawn by the web version: `MAP.ISLAND_FRONT`, clouds
+  (`0x61210`), wind streams (`0x60bec`), carrier waves, satellites and twinkling points
+  (`0x60cc4`), the "coming soon" sign, and the level information dialog (`0x64824`).
+- Web version: dragging scrolls the map; touching a stage icon opens the stage screen with its
+  improvements, where the original has its own improvements screen; the chosen level's name and
+  best score are written over the bar.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): transitions for landing and states 8, 10, 12, 13; taxi speed.

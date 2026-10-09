@@ -8,13 +8,13 @@ assets: they are imported from your own extracted copy and are never committed.
 ```sh
 npm install
 npm run import-assets            # reads ~/Desktop/AirportMania2_Assets (or pass a path)
-npm run dev                      # http://localhost:5173  (?stage=2 opens a stage screen and ?stage=2&level=3 a level directly, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
+npm run dev                      # http://localhost:5173  (?map opens the world map, ?stage=2 a stage screen and ?stage=2&level=3 a level directly, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
 npm test
 ```
 
 ## Status
 
-The game opens on the original main menu. Two stages are playable from a stage screen (arrows switch stage): Arches with six levels and the
+The game opens on the original main menu and world map: touch a level's marker and press Play. Touching a stage's icon opens its screen with the improvements shop. Two stages are playable (in the stage screen, arrows switch stage): Arches with six levels and the
 island with seven. Levels unlock in order, stars and best scores are saved in the browser, and the
 funds earned with stars buy each stage's improvements.
 
