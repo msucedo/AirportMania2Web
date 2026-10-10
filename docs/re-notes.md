@@ -938,8 +938,37 @@ less, `GUI.INGAMEGUI.NO_MORE_TIME` (`hud+0x3f8`) is drawn at (14, 0) with opacit
 `0.5 + 0.5·sin(11·t)`. Which clock `t` is has not been identified; the web version uses the
 bar's own.
 
-## Still unknown
+## Stages 1 and 2: what is still approximate
 
-- Plane update (`0x6af0`): state 10.
-- Taxi node occupancy (set as planes claim nodes) and the stop-spot nodes: not modelled.
-- The exact loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
+Everything else in these two stages is read from the binary and noted above with its address.
+This is what is not, as of the fifth milestone.
+
+Rules:
+
+- The profile's factor at `+0x48` (it scales the level clock and the energy drain) is taken
+  as 1.
+- Taxi node occupancy (`node+0xc`, read by the router `0x46200`) and the stop spots' own
+  pass-through nodes are not modelled; planes can overlap while taxiing.
+- The loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
+- Plane state 10 (set from `0x56b78`) is unknown; it has not been seen to matter here.
+- The service tab acts when the finger goes down, not when it is lifted.
+- The number `0x13458` stores with each improvement (2, 3, 4 or 1000) and the stage options
+  `0x6e`–`0x70` are not understood; prerequisites between improvements are inferred.
+
+Drawing:
+
+- Planes: dirt, the whistle, the nag flash of the balloon, the pitch on landing, landing dust,
+  and the mark on planes a service tab would reach are not drawn. The thought cloud shows the
+  need icon in place of the place's own image.
+- Gate: the hover label; the first part of its draw routine has not been read. Runway draw
+  (`0x6dd44`): number position, combo arrows and order flag offsets are assumed.
+- Tier colours (table at `0x181314`, filled at run time), the font effects (gradients), the
+  shop's item list layout (`0x4ca54`), the interiors of the map dialogs, how the level
+  announcement is dismissed and what a level "introduces".
+- Turning direction of the paint chooser's ring and of the spray can; the clock that blinks
+  the time-over light; whether the airport darkens at night.
+- Award counters (`0x9db0`) are not kept; Help, Users, Credits, Tutorial and Awards are not
+  built.
+
+Checked end to end by `tools/dev/play-all.mjs`, which plays the thirteen levels in order and
+verifies that each can be passed and that funds, stars and the opening of stage 2 chain.

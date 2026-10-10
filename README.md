@@ -60,4 +60,5 @@ after running it.
 - `tools/re/` — helpers for reading the disassembly (`prepare.sh`, `reidx.py`, `stage_calls.py`).
 - `tools/dev/play.mjs` — plays the first plane in a headless browser and takes screenshots.
 - `tools/dev/shoot-level.mjs` — drives a plane that needs fuel through a level and takes screenshots.
+- `tools/dev/play-all.mjs` — plays every level of stages 1 and 2 in order and checks that each can be passed and that progress chains.
 - `tools/dev/shoot-flow.mjs` — checks a finished level, its report, saved progress, the shop and the next level.
