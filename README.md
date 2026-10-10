@@ -41,8 +41,8 @@ hints, goals and reports.
 The awards are earned as in the original and shown in the awards room, reached from the map;
 its sparkles, the curtains' opening and the online leaderboard are not there.
 The stages' animated scenery is drawn (clouds, stars, the aurora, snow, Santa's sleigh, bats,
-the skies of the Moon and Mars), and so are the wash, the luggage conveyor and the deicer. The
-smoke planes leave on the runway is not; `docs/re-notes.md` lists what is still approximate.
+the skies of the Moon and Mars), and so are the wash, the luggage conveyor, the deicer and the
+smoke planes leave on the runway; `docs/re-notes.md` lists what is still approximate.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
 placeholder (some draw details, the payout rule) is tracked

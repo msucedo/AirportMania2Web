@@ -1,3 +1,5 @@
+import { puffPeriod, smokeAlpha, smokes } from '../src/game/view/smokeTail';
+import { PlaneState } from '../src/game/sim/rules';
 import { deicerPose } from '../src/game/view/iceView';
 import { parcelMarks, parcelPose } from '../src/game/view/luggageView';
 import { dirtAlpha, rollerPose, splashPose, starPose, washElapsed, waterPose } from '../src/game/view/washView';
@@ -517,6 +519,29 @@ describe('scenery', () => {
     expect(deicerPose(0.25, 1).air).toBeCloseTo(10, 4);
     expect(deicerPose(0.375, 1).air).toBeCloseTo(15, 4);
     expect(deicerPose(1.1, 1).air).toBeCloseTo(24, 4);
+  });
+
+  it('lets smoke go as a plane touches down and brakes, and as it starts its take-off run', () => {
+    const landing = (phase: number, time: number) => ({ approach: { phase, time } as never, state: PlaneState.WAITING, speed: 0 });
+    expect(smokes(landing(2, 0.9))).toBe(false);
+    expect(smokes(landing(3, 0.5))).toBe(true);
+    expect(smokes(landing(4, 0.99))).toBe(true);
+    expect(smokes(landing(4, 1))).toBe(false);
+    const running = (speed: number) => ({ approach: null, state: PlaneState.TAKING_OFF, speed });
+    // At 200 px/s² the first 100 px of the run end at 200 px/s.
+    expect(smokes(running(150))).toBe(true);
+    expect(smokes(running(200))).toBe(false);
+    expect(smokes({ approach: null, state: PlaneState.WAITING, speed: 0 })).toBe(false);
+  });
+
+  it('puffs faster the faster the plane goes, each puff whole for the second half of its half second', () => {
+    expect(puffPeriod(0)).toBeCloseTo(1 / 20, 6);
+    expect(puffPeriod(250)).toBeCloseTo(1 / 45, 6);
+    expect(puffPeriod(1e6)).toBe(0.005);
+    expect(smokeAlpha(0)).toBe(0);
+    expect(smokeAlpha(0.25)).toBe(0.5);
+    expect(smokeAlpha(0.5)).toBe(1);
+    expect(smokeAlpha(0.99)).toBe(1);
   });
 });
 

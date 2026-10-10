@@ -30,6 +30,7 @@ import { SAND_SURFACES, SandBrush, SandView } from './view/sandView';
 import { hintFor, hintImages } from './sim/hints';
 import { AWARD, awardSound, awardText } from './awards';
 import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView';
+import { SMOKE_SURFACES, SmokeTails } from './view/smokeTail';
 import { helpSurfaces } from './help';
 import { HELP_FONTS, HELP_SURFACES, HelpDialog } from './view/helpDialog';
 import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
@@ -107,6 +108,7 @@ export class LevelScene {
   private readonly sandViews: SandView[] = [];
   private readonly sandBrushes: SandBrush[] = [];
   private readonly washViews: WashView[] = [];
+  private smokeTails: SmokeTails | null = null;
   private readonly luggageViews: LuggageView[] = [];
   /** The anti-fog machines' fans and the deicers' motors, by kind and runway number. */
   private readonly fans = new Map<string, ReturnType<AudioPlayer['loop']>>();
@@ -177,7 +179,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
+    const ids = new Set<string>([...SMOKE_SURFACES, ...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
     for (const entry of backdropOf(layout, options.level).layers) {
       if (isScenery(entry)) for (const id of scenerySurfaceIds(entry)) ids.add(id);
       else ids.add(entry.resource);
@@ -840,6 +842,8 @@ export class LevelScene {
     for (const sand of this.sandViews) sand.update();
     for (const brush of this.sandBrushes) brush.update(elapsed);
     for (const wash of this.washViews) wash.update(elapsed);
+    this.smokeTails ??= new SmokeTails(this.textures, this.planeLayer);
+    this.smokeTails.update(elapsed, this.sim.planes);
     for (const luggage of this.luggageViews) luggage.update();
     if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);

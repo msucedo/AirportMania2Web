@@ -915,15 +915,26 @@ State 13, with a phase in `plane+0x330` and a clock in `+0x314` (`0x7eb2`). Posi
   `0x7d34`) it is `10·t²`. The plane's transform (`0x8584`) applies it as a rotation between a
   translation of (0, 25) and one of (0, `OffsetY` − 28), before the mirroring for planes facing
   right, so the body turns about a point 25 px above its origin.
-- The dust is a smoke tail (`0x6870`, class `SmokeTail` made by `0x757c0` and kept at
-  `plane+0x278`; the plane's update calls it at three points and `0x757b8` ends it). Each
-  call hands `0x758b0` the plane's place, its speed (`+0x30c`, `+0x310`), its depth less one
-  and a strength that grows with the square of the speed over 200 (nothing under 0.2). The
-  tail lets go puffs at `20 + 0.1·speed` a second (globals `0x178b34`, `0x178b38`) along the
-  way travelled. A puff (`0x75b1c`, `EFFECTS.SMOKE`) drifts at up to 7 px/s, starts at a random
-  angle turning at up to 45°/s, grows, and lasts half a second (its clock runs at 2/s).
-- Web version: the smoke tail is not drawn; how the strength sets a puff's size and opacity
-  (`0x75ee8`) and the head of `0x6870` have not been read. That positive pitch lifts the nose is taken
+- The dust is a smoke tail (class `SmokeTail`, made by `0x757c0` and kept at `plane+0x278`;
+  `0x757b8` ends it). The plane's update calls `0x6870` unless `app[0xfc]+0x780` is set: in
+  phase 3 (`0x8234`), in phase 4 while its clock is under 1 s (`0x82da`), and on the take-off
+  run while `½·a·t²` is under 100 (`0x7cac`).
+  - `0x6870(plane, dt)` takes the speed at the middle of the step, on screen:
+    (`vx + ax·dt/2`, `vy + ay·dt/2` less the altitude's own), and a strength from it
+    (speed/200, over ten times the altitude when that is above 1, kept between 0.2 and 1), and
+    hands `0x758b0` the plane's place (`+0x30c`, `+0x310`), its depth less one, the speed and
+    the strength.
+  - `0x758b0`: the tail's clock (`+0x14`) loses dt; while it is under zero a puff is made
+    where the tail is, aged by what the clock has overrun, the place moves on by the speed
+    times the period, and the clock gains the period: `max(0.005, 1/(20 + 0.1·speed))`
+    (globals `0x178b34`, `0x178b38`). The strength is multiplied by a literal 0 and added to
+    1, so every puff is made with 1.
+  - Puff (`0x75b1c`, `EFFECTS.SMOKE`): speed (`rand·14 − 7`, `−rand·7`), angle `rand·360`,
+    spin `rand·90 − 45`, scale `0.2 + 0.3·p` growing at `0.3·p` a second (p the 1 above), a
+    clock rising at 2 a second to 1. Drawn (`0x75d44`) scaled, turned, with opacity twice
+    the clock under a half and `2 − clock` after.
+- Web version: the speed is taken from the plane's movement on screen between frames, and the
+  flag at `+0x780` is not looked at. That positive pitch lifts the nose is taken
   from the values making sense that way round, not from the engine's rotation sign.
 
 ## Orders of a plane waiting on the ground — confirmed
@@ -1742,7 +1753,7 @@ Rules:
 
 Drawing:
 
-- Planes: landing dust,
+- Planes:
   and the mark on planes a service tab would reach are not drawn.
 - Gate: the hover label; the first part of its draw routine has not been read. Order flag
   offsets are assumed.
