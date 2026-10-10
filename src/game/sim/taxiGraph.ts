@@ -100,6 +100,21 @@ export class TaxiGraph {
   }
 
   /**
+   * A luggage conveyor's node and the nodes its constructor adds (0x567f0–0x568ba): two
+   * pass-through nodes linked to it and to each other, and a barrier between two more.
+   */
+  addLuggage(node: Point, aux: readonly [Point, Point], barrier: readonly [Point, Point]): TaxiNode {
+    const conveyor = this.addNode(node, true);
+    const first = this.addNode(aux[0], false);
+    const second = this.addNode(aux[1], false);
+    this.link(conveyor, first);
+    this.link(conveyor, second);
+    this.link(first, second);
+    this.link(this.addNode(barrier[0], true), this.addNode(barrier[1], true));
+    return conveyor;
+  }
+
+  /**
    * A hangar's node and the nodes its constructor adds (0x46e44): the exit node 10 px right and
    * 20 px below, where a serviced plane waits, and two pass-through nodes beside it. The pairs
    * linked are assumed.

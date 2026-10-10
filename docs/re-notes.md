@@ -1255,11 +1255,11 @@ animation.
   - Marks, at `ParcerMarksPosition`: with r the plane's loading time less the clock, one
     `LUGGAGES.PARCEL_MARK` for each second of r, each 10 px above the last; the one for the
     last part of a second has opacity `max(0, 2r − 1)`.
-- The constructor (`0x563fc` on, from `0x56600`) makes two taxi nodes of its own from
-  `AuxNode1` and `AuxNode2` (`0x41338`) and links them (`0x45ff4`, `0x45d58`), with
-  `BarrierNode1` and `BarrierNode2`.
-- Web version: those nodes and links are not built; planes reach the conveyor through the
-  stage's own nodes.
+- Taxi nodes (constructor, `0x567f0`–`0x568ba`): besides its own node, a pass-through node
+  (`0x45ff4` with flag 0) at each of `AuxNode1` and `AuxNode2` (descriptor `+0x18`, `+0x20`),
+  linked (`0x45d58`) to its node and to each other; and a node with flag 1 at each of
+  `BarrierNode1` and `BarrierNode2` (`+0x28`, `+0x30`), linked to each other. All from the
+  conveyor's place.
 
 ## Runway ice — confirmed
 

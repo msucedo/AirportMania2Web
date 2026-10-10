@@ -106,6 +106,9 @@ export interface LuggageDescriptor {
   animation: { resource: string; position: Point; frames: number; speed: number; parcels: boolean; parcelsFlip: boolean };
   /** Added to its height for the depth it is sorted at (`DespZ`). */
   depthOffset: number;
+  /** Its two pass-through taxi nodes and the two ends of its barrier, from its place. */
+  auxNodes: [Point, Point];
+  barrierNodes: [Point, Point];
   parcelMarks: Point;
 }
 
@@ -123,6 +126,8 @@ export function parseLuggageTable(tree: XmlNode[]): Map<number, LuggageDescripto
       click: rect(requireChild(node, 'ClickRectangle')),
       animation: { resource: str(animation, 'Resource'), position: point(animation), frames: num(animation, 'frames'), parcels: animation.a.Parcels === 'true', parcelsFlip: animation.a.ParcelsFlip === 'true', speed: Number.parseFloat(str(animation, 'speed')) },
       parcelMarks: point(requireChild(node, 'ParcerMarksPosition')),
+      auxNodes: [point(requireChild(node, 'AuxNode1')), point(requireChild(node, 'AuxNode2'))],
+      barrierNodes: [point(requireChild(node, 'BarrierNode1')), point(requireChild(node, 'BarrierNode2'))],
     };
     table.set(luggage.type, luggage);
   }

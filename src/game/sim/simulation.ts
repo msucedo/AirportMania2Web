@@ -465,7 +465,8 @@ export class Simulation {
     const luggageDescriptor = luggageType !== undefined ? config.luggages?.get(luggageType) : undefined;
     if (layout.luggage && luggageDescriptor && (config.level ?? 1) >= layout.luggage.minLevel) {
       const { x, y } = layout.luggage.position;
-      const node = { x: x + luggageDescriptor.node.x, y: y + luggageDescriptor.node.y };
+      const from = (point: Point): Point => ({ x: x + point.x, y: y + point.y });
+      const node = from(luggageDescriptor.node);
       const click = luggageDescriptor.click;
       this.luggages.push({
         kind: 'luggage',
@@ -473,9 +474,7 @@ export class Simulation {
         position: layout.luggage.position,
         descriptor: luggageDescriptor,
         node,
-        // Its own nodes (`AuxNode1`, `AuxNode2` and the barrier nodes) have not been read; it
-        // joins the taxi graph the way the gas station does.
-        taxiNode: this.graph.addGasStation(node),
+        taxiNode: this.graph.addLuggage(node, [from(luggageDescriptor.auxNodes[0]), from(luggageDescriptor.auxNodes[1])], [from(luggageDescriptor.barrierNodes[0]), from(luggageDescriptor.barrierNodes[1])]),
         click: { x1: x + click.x1, y1: y + click.y1, x2: x + click.x2, y2: y + click.y2 },
         plane: null,
         use: 'free',
