@@ -1,6 +1,8 @@
 // Player progress, kept in the browser. The rules are the original's (profile code around
 // 0x821b8, 0x34170, 0x115a0 and 0x78a9c); the storage format is ours.
 
+import { AWARD, COUNTED, awardsThatFollow, levelEndEvents, takeAward, type AwardsData, type LevelFacts, type LevelStanding } from './awards';
+
 export const PROGRESS_KEY = 'am2web.progress.v2';
 const OLD_KEY = 'am2web.progress.v1';
 
@@ -15,6 +17,8 @@ export interface LevelRecord {
   tier: number;
   funds: number;
   improvements: number[];
+  /** Fewest planes lost in any play of it, for the awards; unknown for levels played before they were kept. */
+  lost?: number;
 }
 
 /** What the rules need to know about a stage. */
@@ -26,6 +30,9 @@ export interface StageRules {
 
 export interface ProgressData {
   records: Record<string, LevelRecord>;
+  awards?: AwardsData;
+  /** Repairs and washes done over all games. */
+  counts?: { repairs: number; washes: number };
 }
 
 /** Stars a level is worth: none for the goal up to four for a perfect score (0x78442). */
@@ -136,10 +143,11 @@ export class Progress {
    * gained, at this stage's rate, into every opened level of the next stage (0x115a0).
    * Returns true when this pass cleared the stage for the first time.
    */
-  complete(stage: number, level: number, score: number, tier: number): boolean {
+  complete(stage: number, level: number, score: number, tier: number, lost = 0): boolean {
     const rules = this.stages.get(stage);
     if (!rules || tier < 1) return false;
     const current = this.ensure(stage, level);
+    current.lost = Math.min(current.lost ?? lost, lost);
     const firstPass = current.tier === 0;
     const gained = Math.max(0, score - current.best);
     current.best = Math.max(current.best, score);
@@ -168,6 +176,48 @@ export class Progress {
     }
     this.save();
     return cleared;
+  }
+
+  /** What the user has of each award. */
+  get awards(): Readonly<AwardsData> {
+    return this.data.awards ?? {};
+  }
+
+  /**
+   * An event of the game for the awards, in a level of a stage. Returns the awards it earned,
+   * those that follow from them included. In the tutorial only the diploma can be earned.
+   */
+  award(id: number, value: number, stage: number, level: number): number[] {
+    if (stage === 0 && id !== AWARD.DIPLOMA) return [];
+    const data = (this.data.awards ??= {});
+    if (!takeAward(data, id, value, stage, level)) return [];
+    const earned = [id];
+    for (const next of awardsThatFollow(data, Math.max(...this.stages.keys()))) if (takeAward(data, next, 0, stage, level)) earned.push(next);
+    this.save();
+    return earned;
+  }
+
+  /** A repair or a wash done: counted over all games, with an event for its medal at the counts read. */
+  count(what: 'repairs' | 'washes', stage: number, level: number): number[] {
+    const counts = (this.data.counts ??= { repairs: 0, washes: 0 });
+    const count = ++counts[what];
+    this.save();
+    return (COUNTED[what].at as readonly number[]).includes(count) ? this.award(COUNTED[what].award, count, stage, level) : [];
+  }
+
+  /** The awards the end of a passed level gives (0x11654). Call it after `complete`. */
+  levelEnd(stage: number, level: number, facts: LevelFacts): number[] {
+    const rules = this.stages.get(stage);
+    if (!rules) return [];
+    const levels: LevelStanding[] = [];
+    for (let l = 1; l <= rules.levels; l++) {
+      const record = this.record(stage, l);
+      levels.push({ tier: record.tier, lost: record.lost ?? 1, improvements: record.improvements.length });
+    }
+    const stages = Math.max(...this.stages.keys());
+    const earned: number[] = [];
+    for (const id of levelEndEvents(facts, { stage, level, stages }, levels, this.awards)) earned.push(...this.award(id, 0, stage, level));
+    return earned;
   }
 
   /** Stars earned over a whole stage. */

@@ -5,6 +5,7 @@ import type { Point } from '../../data/xml';
 import { COLOR_NAMES } from '../palette';
 import { IMPROVEMENT, type BonusEvent, type StageLayout } from '../stages/layout';
 import { TaxiGraph, type TaxiNode } from './taxiGraph';
+import { AWARD } from '../awards';
 import { Need, PlaneState, RULES, UNSELECTABLE_STATES, clamp01, punctuality, roundScore, type Punctuality } from './rules';
 import { Hint } from './hints';
 
@@ -315,6 +316,10 @@ export type SimEvent =
   | { type: 'leftAngry'; plane: Plane }
   | { type: 'departed'; plane: Plane }
   | { type: 'timeOver' }
+  /** An event for the awards (posted through 0x9db0): the award's id and a value. */
+  | { type: 'award'; id: number; value: number }
+  /** A repair or a wash finished: the profile counts them over all games (0x66c8, 0x67c8). */
+  | { type: 'counted'; what: 'repairs' | 'washes' }
   | { type: 'levelEnd'; score: number };
 
 export interface SimulationConfig {
@@ -354,6 +359,9 @@ export class Simulation {
   private bonusDelay = 0;
   /** Balloons still to be released and the seconds until the next one. */
   private balloonsLeft = 0;
+  /** A balloon got away unpopped; and the balloons are over. */
+  private bonusMissed = false;
+  private bonusOver = false;
   private balloonTimer = 0;
   readonly balloons: Balloon[] = [];
   readonly coins: Coin[] = [];
@@ -993,7 +1001,15 @@ export class Simulation {
     for (let i = this.balloons.length - 1; i >= 0; i--) {
       const balloon = this.balloons[i]!;
       balloon.y -= rule.balloons.rise * dt;
-      if (balloon.y < rule.balloons.goneY) this.balloons.splice(i, 1);
+      if (balloon.y < rule.balloons.goneY) {
+        this.balloons.splice(i, 1);
+        this.bonusMissed = true;
+      }
+    }
+    // 0x21bcc: the balloons are over and none got away.
+    if (this.bonus?.kind === 'balloons' && !this.bonusOver && this.bonusDelay <= 0 && this.balloonsLeft === 0 && this.balloons.length === 0) {
+      this.bonusOver = true;
+      if (!this.bonusMissed) this.emit({ type: 'award', id: AWARD.BONUS_SEIZING, value: 0 });
     }
 
     const helicopter = this.helicopter;
@@ -1005,6 +1021,8 @@ export class Simulation {
       helicopter.x = helicopter.fromLeft ? h.leftEdge + h.pace * t : h.rightEdge - h.pace * t;
       helicopter.y = h.y + 15 * Math.sin(1.5 * t + helicopter.phases[0]) + 20 * Math.sin(t + helicopter.phases[1]);
       if (helicopter.x < h.leftEdge || helicopter.x > h.rightEdge) {
+        // 0x49700: it leaves having dropped six coins or more.
+        if (helicopter.released >= 6) this.emit({ type: 'award', id: AWARD.BONUS_SEIZING, value: 0 });
         this.helicopter = null;
         this.emit({ type: 'helicopterLeft' });
       }
@@ -1022,7 +1040,7 @@ export class Simulation {
           // 0x25de0: the amount goes to the score, with its number floating up and the till.
           coin.phase = 2;
           coin.scale = 1;
-          this.score += coin.amount;
+          this.gain(coin.amount);
           this.emit({ type: 'bonusPaid', x: coin.x, y: coin.y, amount: coin.amount });
         }
       } else {
@@ -1137,6 +1155,7 @@ export class Simulation {
     plane.state = PlaneState.WAITING;
     this.addEnergy(plane, RULES.wash.energy);
     this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.washing), 1, 'service');
+    this.emit({ type: 'counted', what: 'washes' });
     this.emit({ type: 'washDone', plane, spot });
   }
 
@@ -1252,6 +1271,8 @@ export class Simulation {
         plane.altitude += RULES.climbRate * dt;
         if (plane.timer >= RULES.airborneTime) {
           this.planesServed++;
+          // 0x7cfc: the president leaves, and not furious (mood 3 is energy under 0.3).
+          if (plane.passenger === 'PRESIDENT' && plane.energy >= 0.3) this.emit({ type: 'award', id: AWARD.PRESIDENTIAL_DISTINGUISHED_SERVICE, value: 0 });
           this.emit({ type: 'departed', plane });
           this.remove(plane);
         }
@@ -1415,6 +1436,8 @@ export class Simulation {
     const movers = chain.map((place) => place.plane!);
     for (const place of chain) this.release(place);
     for (const mover of movers) this.startNextOrder(mover);
+    // 0x7c02: how many planes changed places at once.
+    this.emit({ type: 'award', id: AWARD.SWITCH_A_ROO, value: movers.length });
   }
 
   /** The landing, phase by phase (0x7eb2). */
@@ -1490,8 +1513,12 @@ export class Simulation {
     plane.landed = true;
     if (plane.passenger === 'PREGNANT' || plane.passenger === 'ORGAN') {
       this.emit({ type: 'passengerDelivered', plane, passenger: plane.passenger });
+      // 0x8388, 0x839e: the baby delivered or the organ brought in time.
+      this.emit({ type: 'award', id: plane.passenger === 'PREGNANT' ? AWARD.BABY_DELIVERY_ASSISTANCE : AWARD.TRANSPLANT_EMERGENCY, value: 0 });
       plane.passenger = null;
     }
+    // 0x83d4: a plane of this type has been landed.
+    this.emit({ type: 'award', id: plane.descriptor.type, value: 0 });
     plane.need = Need.UNLOAD;
     this.runwayUsed(runway, plane, true);
   }
@@ -1537,6 +1564,7 @@ export class Simulation {
       place.use = 'done';
       plane.state = PlaneState.WAITING;
       this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.hangar), 1, 'service');
+      this.emit({ type: 'counted', what: 'repairs' });
     } else if (place.kind === 'hangar') {
       // `Hangar::planeArrived` (0x47234).
       place.progress = 0;
@@ -1645,7 +1673,11 @@ export class Simulation {
     advance(runway.landings, step, combo.landingDecay);
     for (const track of [runway.takeOffs, runway.landings]) {
       if (track.value === 1) track.active = false;
-      if (track.value === 0 && track.count >= 2) track.count = 0;
+      if (track.value === 0 && track.count >= 2) {
+        // 0x6dc6a, 0x6dc9e: a combo of four or more, as it ends.
+        if (track.count >= 4) this.emit({ type: 'award', id: AWARD.SUPER_RUNWAY_COORDINATOR, value: track.count });
+        track.count = 0;
+      }
     }
 
     // A take-off frees the runway at once and arms its combo timer.
@@ -1773,8 +1805,20 @@ export class Simulation {
   }
 
   private addScore(plane: Plane, points: number, multiplier: number, reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'service' | 'left'): void {
-    this.score += points;
+    this.gain(points);
     this.emit({ type: 'score', plane, points, multiplier, reason });
+  }
+
+  /** Adds to the score (0xfffc), with the two awards that watch it. */
+  private gain(points: number): void {
+    const before = this.score;
+    // A level's score passing a million.
+    if (before <= 999_999 && before + points >= 1_000_001) this.emit({ type: 'award', id: AWARD.MILLION_POINTS, value: 0 });
+    this.score = before + points;
+    // 0x11f08: the goal reached after the time has run out, with the seconds played since.
+    if (this.timeOver && before < this.goals.goal && this.score >= this.goals.goal) {
+      this.emit({ type: 'award', id: AWARD.FLYING_TIME, value: Math.trunc(this.time - this.totalTime) });
+    }
   }
 
   private offScreen(plane: Plane): boolean {

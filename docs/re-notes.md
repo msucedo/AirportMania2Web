@@ -1808,3 +1808,80 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   user becomes the current one, who is current after a deletion (the first left), and that the
   note's and the question's texts are centred in their boxes (their text call's second flag
   is 0 where the hint's is 1). The browser's keyboard stands in for the device's.
+
+## Awards — rules confirmed; the room is not built yet
+
+- The room is laid out by `data/descriptors/awards_room_descriptor_table.xml`
+  (`AWARDS.DESCRIPTOR_TABLE`, parsed by `0x1d5f8`): `DiplomaAward`, `PigAward`, `ClockAward`,
+  13 `MedalAward` (ids 1–13, each with a `TextID`), 5 `SpecialTrophyAward` (ids 1, 2, 6, 4, 3),
+  20 `AirplaneTrophyAward` and `AwardShine`/`Shine` entries; the `MiniGamePinAward`s are
+  commented out. The room is wider than the screen (x up to about 920).
+- Award classes: base `0x1b1e4(award, kind?, textId, rect, x, y, 100)`; diploma `0x1b9a4`
+  (`AWARDS_ROOM.DIPLOMA`, `AWARDS.DIPLOMA`, touch rect ±60 × ±45), pig `0x1ba4c`
+  (`AWARDS.STINGY_MANIAC`), clock `0x1bb18` (`AWARDS.FLYING_TIME`), plane trophy `0x1bcd8`
+  (`AWARDS.PLANE_%d`, `AWARDS_ROOM.PLANES_TROPHIES.%d`), special trophy `0x1bf08`, medal
+  `0x1c090` (heads bronze/silver/gold, `TAILS.%d`, `SILHOUETTE_%d`, `ICONS.%d`); description
+  dialogs `0x1c428`, `0x1c6d8`. Room: images `0x1e114`, build `0x1e1b4`, update `0x1e6f0`,
+  draw `0x1ed68`, `0x1f2d4`.
+- State (`0x1b6cc`): the profile (`0x827a8`) keeps 20 bytes per award id from `+0x58`: for
+  awards of kind 3 the number at `+0x58 + 20·id`; for kinds 1 and 2 the length of the vector
+  of 8-byte entries at `+0x5c + 20·id`. `0x1b70c` picks the sound by award id and `0x1b798` a
+  number from 2 to 6 by id.
+- Earning: the game posts events `{id, value}` to an event manager (`0x9d60()`, post
+  `0x9db0`; listing the 26 sites: `tools/re/sites.py 0x9db0`). Every award listens
+  (`0x1cfc8`) and takes the events whose id is its own (`0x1b3c8` → `0x1b3f8`), unless
+  `app[0xfc]+0x128` is set and the id is not 0. A new award is then announced (`0x318e4`).
+- Award ids, from the sites: 0 diploma; 1–20 the plane of that type; 21–33 the medals 1–13;
+  34–39 the special trophies 1–6; 40 and 41 the pig and the clock (by elimination).
+  - `0x7f7de` (tutorial's end): {0, 0}.
+  - `0x83e2` (plane, `0x6af0`): {plane type `+0xc`, 0}; `0x83b4`: {21 or 22, 0}; `0x7d26`:
+    {23, 0}; `0x7c18`: {24, length of a vector}.
+  - `0x6dc7a`, `0x6dcae` (runway, `0x6db18`): {25, combo count} when the count at `+0xbc`
+    or `+0xb8` is 4 or more.
+  - `0x671e` (hangar done): the profile's `+0x34` is counted up, and {29, count} posted as it
+    passes 50, 100 and 250. `0x67fe` (wash done): `+0x3c`, {33, count} at 25, 50 and 100.
+  - `0x21bee`, `0x49716`, `0x592a8`, `0xbcbca` (bonuses): {32, 0}.
+  - `0x10032` (score, `0xfffc`): {35, 0} when a total reaches 1 000 001.
+  - End of level (`0x11654`): {28, n}, {26, 0}, {34, 0}, {30, 0}, {31, 0}, {27, 0}, {40, 0},
+    {36, 0}; `0x11d94`: {41, seconds}; `0x10d50`: {a running id, 10}; `0x114e4`: {39, 0} when
+    every medal (ids 21–33) is at level 2, and {37, 0}.
+- Taking an event (`0x1b3f8`), by the award's kind (`+0x28`); the profile's record is a flag
+  (`+0x54`), a value (`+0x58`) and a list of {level, stage} pairs (`+0x5c`):
+  - kind 0: once only; the flag is set and the value kept.
+  - kind 1: once per stage (the pair {0, stage} must be new).
+  - kind 2: once per level of a stage (the pair {level, stage} must be new).
+  - kind 3: only when the value beats the one kept; the pair is added.
+  What an award counts (`0x1b6cc`): the pairs for kinds 1 and 2, the value for kind 3.
+- Kinds: diploma, plane and special trophies 0; pig 1; clock 3; medals by id (`0x1c266`): 21,
+  22, 23, 26, 28 and 32 are kind 2; 24, 25, 29 and 33 kind 3; 27, 30 and 31 kind 1.
+- A medal is bronze once earned, silver from its first threshold and gold from its second
+  (`0x1c404`, thresholds `+0x6c`, `+0x70` set at `0x1c2a2`): 21: 3, 6; 22: 3, 7; 23: 2, 3;
+  24: 4, 6; 25: 10, 15; 26: 20, 48; 27: 4, 9; 28: 8, 16; 29: 100, 250; 30: 4, 9; 31: 4, 9;
+  32: 8, 24; 33: 50, 100.
+- Conditions, as read at each site:
+  - Landing done (`0x8378`): a pregnant passenger posts 21 and an organ 22; then the plane's
+    type is posted. The president posts 23 as the plane leaves (`0x7cfc`) unless its mood is 3.
+  - Planes changing places (`0x7ab4`) post 24 with how many they were.
+  - A runway combo posts 25 with its count when it is 4 or more.
+  - Balloons (`0x21bcc`): 32 when they are over and the flag at `+0x34` is clear; helicopter
+    (`0x49700`): 32 when it leaves with `+0x50` at 6 or more and that flag clear. Two other
+    bonus classes (`0x59140`, `0xbca34`) post it at 7.
+  - Score (`0xfffc`): 35 when a level's score, at 999 999 or less, reaches 1 000 001 or more.
+  - The goal reached with the time already over (`0x11f08`, `+0x90` set and `+0x70` clear):
+    41 with the whole seconds played since (`+0x8c`).
+  - End of level (`0x11a30` on): 28 when every gate's combo (`+0xc4`) is 4; 26 when no plane
+    was lost and the planes (`+0x134`) equal both `+0x140` and `+0x14c`; 34 on the last level
+    of the last stage (`app+0x248`). Then, if the stage has been played through: 30 when every
+    level's tier (`record+0x38`) is 4 or more, 31 when 5, 27 when every level's fewest lost
+    planes (`record+0x18`) is 0, 40 when no level has improvements (`record+3`). With 34
+    earned: 36 when 30 has been earned in every stage.
+  - `0x114e4`: 39 when every medal is gold; 37 when 31 has been earned in every stage. 38
+    (Game Master) is posted nowhere found.
+- Web version: awards and the two counts are kept with the user's progress. Taken, not read:
+  that `app[0xfc]+0x128` is the tutorial (only the diploma is earned there), that the diploma is
+  for passing the academy's third day, that the bonus flag `+0x34` means a balloon got away
+  (and nothing for the helicopter), that `+0x140`/`+0x14c` are the early arrivals and
+  departures, that `+0x70` plays no part, and that the end-of-level events are for a passed
+  level. The combo's event is posted when the port resets the combo. Levels played before the
+  fewest lost planes were kept do not count for Friendly Skies until played again. Awards are
+  earned but not announced or shown yet.

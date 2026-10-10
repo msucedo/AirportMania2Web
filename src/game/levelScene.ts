@@ -28,6 +28,7 @@ import { FOG_SURFACES, FogView } from './view/fogView';
 import { ICE_SURFACES, IceView } from './view/iceView';
 import { SAND_SURFACES, SandBrush, SandView } from './view/sandView';
 import { hintFor, hintImages } from './sim/hints';
+import { AWARD } from './awards';
 import { helpSurfaces } from './help';
 import { HELP_FONTS, HELP_SURFACES, HelpDialog } from './view/helpDialog';
 import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
@@ -120,6 +121,8 @@ export class LevelScene {
   private goalsPanel: GoalsPanel | null = null;
   /** Hints raised by the game itself and not yet shown. */
   private readonly hints: TutorialHint[] = [];
+  /** Awards earned in this play, in order. */
+  readonly awardsEarned: number[] = [];
 
   private constructor(
     private readonly textures: TextureStore,
@@ -426,6 +429,11 @@ export class LevelScene {
     this.root.addChild(menu);
   }
 
+  /** Awards just earned: kept for the level, to be announced. */
+  private earn(ids: readonly number[]): void {
+    this.awardsEarned.push(...ids);
+  }
+
   /** The plane says what it needs, in the voice of its mood (0x5bd4). */
   private speak(plane: Plane): void {
     // Content or merely impatient it makes its "cannot" sound; upset or furious it complains.
@@ -674,6 +682,12 @@ export class LevelScene {
         break;
       case 'timeOver':
         this.audio.play('SOUNDS.TIME_OVER');
+        break;
+      case 'award':
+        this.earn(this.options.progress.award(event.id, event.value, this.options.stage, this.options.level));
+        break;
+      case 'counted':
+        this.earn(this.options.progress.count(event.what, this.options.stage, this.options.level));
         break;
       case 'balloonPopped':
         // 0x22150: the pop is pitched a little differently each time.
@@ -938,6 +952,8 @@ export class LevelScene {
    */
   private showTutorialEnd(tutorial: Tutorial): void {
     tutorial.finish();
+    // 0x7f7d2: the academy's diploma, taken here to be for passing its last day.
+    if (tutorial.day === 3 && tutorial.passed(this.sim.score)) this.earn(this.options.progress.award(AWARD.DIPLOMA, 0, 0, this.options.level));
     if (this.goalsPanel) this.goalsPanel.visibleNow = false;
     const { level, onNavigate, onMainMenu } = this.options;
     const report = new TutorialReport(this.textures, this.audio, this.strings, tutorial.day, tutorial.passed(this.sim.score), {
@@ -957,7 +973,12 @@ export class LevelScene {
     this.audio.play(`SOUNDS.FINAL_REPORT.${tier}`);
     const { progress, stage, level, onNavigate } = this.options;
     const stars = ['FAIL', 'GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'].indexOf(tier);
-    const cleared = progress.complete(stage, level, this.sim.score, stars);
+    const cleared = progress.complete(stage, level, this.sim.score, stars, this.sim.planesLost);
+    // 0x11a30: what the end of a passed level gives.
+    if (stars > 0) {
+      const { unload, takeOff } = this.sim.counts;
+      this.earn(progress.levelEnd(stage, level, { planes: this.sim.planes.length, lost: this.sim.planesLost, earlyArrivals: unload.EARLY, earlyDepartures: takeOff.EARLY, gateCombos: this.sim.gates.map((gate) => gate.combo) }));
+    }
     const report = new FinalReport(this.textures, this.audio, this.strings, this.sim);
     // The original report only offers to go on: to the stage's reward if this pass cleared it,
     // then back to the map.

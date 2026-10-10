@@ -142,4 +142,42 @@ describe('settings', () => {
     expect(parseSettings('{"sound":0.25,"music":7,"language":"klingon"}')).toEqual({ sound: 0.25, music: 1, language: 'spanish', enlarged: true });
     expect(parseSettings('{"music":0,"language":"german","enlarged":false}')).toEqual({ sound: 1, music: 0, language: 'german', enlarged: false });
   });
+
+  it('counts repairs and washes over all games and posts their medal at the counts read', () => {
+    const progress = Progress.load(RULES);
+    const earned: number[][] = [];
+    for (let n = 1; n <= 100; n++) {
+      const got = progress.count('repairs', 1, 1);
+      if (got.length > 0) earned.push([n, ...got]);
+    }
+    // Bronze at fifty, and a better value at a hundred.
+    expect(earned).toEqual([[50, 29], [100, 29]]);
+    expect(progress.awards[29]!.value).toBe(100);
+    for (let n = 1; n <= 24; n++) expect(progress.count('washes', 1, 1)).toEqual([]);
+    expect(progress.count('washes', 1, 1)).toEqual([33]);
+  });
+
+  it('earns nothing but the diploma in the tutorial', () => {
+    const progress = Progress.load(RULES);
+    expect(progress.award(1, 0, 0, 1)).toEqual([]);
+    expect(progress.award(0, 0, 0, 3)).toEqual([0]);
+    expect(progress.award(0, 0, 0, 3)).toEqual([]);
+    expect(progress.award(1, 0, 1, 1)).toEqual([1]);
+  });
+
+  it('gives the awards of a stage when its last level is passed', () => {
+    const progress = Progress.load(RULES);
+    const facts = { planes: 5, lost: 0, earlyArrivals: 0, earlyDepartures: 0, gateCombos: [1] };
+    progress.complete(1, 1, 9000, 4, 0);
+    expect(progress.levelEnd(1, 1, facts)).toEqual([]);
+    progress.complete(1, 2, 9000, 5, 1);
+    expect(progress.levelEnd(1, 2, { ...facts, lost: 1 })).toEqual([]);
+    progress.complete(1, 3, 9000, 4, 0);
+    // Supreme or better throughout, nothing bought, but a plane was lost in the second level.
+    expect(progress.levelEnd(1, 3, facts)).toEqual([30, 40]);
+    // Played again without losing any: the fewest lost is what counts.
+    progress.complete(1, 2, 9000, 5, 0);
+    expect(progress.levelEnd(1, 2, facts)).toEqual([27]);
+  });
 });
+
