@@ -1250,8 +1250,13 @@ animation.
   (`airport+0xac`) a deicer (`0x2ac90`, `SOUNDS.DE_ICER_WORKING`) comes 2 s in and ends it 7 s
   later (`0x2ad80`).
 - Drawn (`0x4b9d4`) as `RUNWAY.FROZEN` over the runway, with the fade as opacity.
-- Web version: the deicer's draw (`0x2ae50`) has only been read in part; it is shown rocking
-  over the runway.
+- Deicer (`0x2ac90`, images `DEICER` and `AIR`, depth the runway's y). Update (`0x2ad80`): a
+  clock counts up; it comes over half a second (fade + 2·dt), works until the clock passes 7,
+  then ends the ice and goes as fast. Draw (`0x2ae50`): turned `20·sin(5t) − 13` degrees,
+  stretched by `1 + sin(2πf)·(1 − f)·f` across and `1 + sin(3πf)·(1 − f)·f` down, at the
+  runway's place plus (`80 + 90·cos(0.5t)`, −15), opacity 2f. Under it, in its own frame, a
+  window 40 by 30 of `AIR` at half size from (−42, −8), starting `40t` px along the picture,
+  kept between 10 and 30 by steps of 20.
 
 ## Runway sand — confirmed
 

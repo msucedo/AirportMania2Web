@@ -536,7 +536,7 @@ export class LevelScene {
       const view = new RunwayView(this.textures, runway);
       this.runwayViews.push(view);
       if (this.sim.hazardSchedule.some((h) => h.kind === 'ice')) {
-        const ice = new IceView(this.textures, runway);
+        const ice = new IceView(this.textures, runway, this.planeLayer);
         this.iceViews.push(ice);
         this.ground.addChild(ice);
       }

@@ -1,3 +1,4 @@
+import { deicerPose } from '../src/game/view/iceView';
 import { parcelMarks, parcelPose } from '../src/game/view/luggageView';
 import { dirtAlpha, rollerPose, splashPose, starPose, washElapsed, waterPose } from '../src/game/view/washView';
 import { describe, expect, it } from 'vitest';
@@ -498,6 +499,24 @@ describe('scenery', () => {
     expect(marks[2]!.y).toBe(-20);
     expect(marks[2]!.alpha).toBeCloseTo(0.5, 5);
     expect(parcelMarks(0.4)).toEqual([{ y: 0, alpha: 0 }]);
+  });
+
+  it('sweeps the deicer along the runway, rocking, with its air running under it', () => {
+    const start = deicerPose(0, 1);
+    expect(start).toMatchObject({ x: 170, y: -15, angle: -13, scaleX: 1, scaleY: 1, alpha: 1, air: 20 });
+    // It swings between 10 px left of the runway's centre and 170 px right, once every 4π seconds.
+    expect(deicerPose(2 * Math.PI, 1).x).toBeCloseTo(-10, 4);
+    expect(deicerPose(Math.PI / 10, 1).angle).toBeCloseTo(7, 4);
+    // Half way in it is solid already and stretched: wider by nothing, taller by a quarter less.
+    const coming = deicerPose(0, 0.5);
+    expect(coming.alpha).toBe(1);
+    expect(coming.scaleX).toBeCloseTo(1, 5);
+    expect(coming.scaleY).toBeCloseTo(0.75, 5);
+    expect(deicerPose(0, 0.25).alpha).toBe(0.5);
+    // The air's window runs 40 px a second and wraps every 20 px, between 10 and 30.
+    expect(deicerPose(0.25, 1).air).toBeCloseTo(10, 4);
+    expect(deicerPose(0.375, 1).air).toBeCloseTo(15, 4);
+    expect(deicerPose(1.1, 1).air).toBeCloseTo(24, 4);
   });
 });
 
