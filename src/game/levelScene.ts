@@ -608,18 +608,27 @@ export class LevelScene {
         panel.addChild(tick);
         return tick;
       });
-      this.ground.addChild(back);
-      this.overlay.addChild(front, panel);
+      // 0x46d1e: the hangar is sorted at its node's height plus its offset, and its back half
+      // (a static image, 0x46e30) 50 behind that; planes go between the two.
+      const depth = hangar.position.y + hangar.descriptor.node.y + hangar.descriptor.depthOffset;
+      back.zIndex = depth - 50;
+      front.zIndex = depth;
+      panel.zIndex = depth;
+      this.planeLayer.addChild(back, front, panel);
       this.hangarPanels.push({ hangar, panel, ticks });
     }
     for (const station of this.sim.gasStations) {
       const view = new GasStationView(this.textures, station);
-      this.ground.addChild(view);
+      // 0x4091a: sorted at its node's height plus its offset.
+      view.zIndex = station.position.y + station.descriptor.node.y + station.descriptor.depthOffset;
+      this.planeLayer.addChild(view);
       this.stationViews.push(view);
     }
     for (const luggage of this.sim.luggages) {
       const view = new LuggageView(this.textures, luggage);
-      this.ground.addChild(view);
+      // 0x567a4: sorted at its height plus its offset.
+      view.zIndex = luggage.position.y + luggage.descriptor.depthOffset;
+      this.planeLayer.addChild(view);
       this.luggageViews.push(view);
     }
     for (const decoration of layout.decorations) {
@@ -874,7 +883,7 @@ export class LevelScene {
       const inside = plane.state === PlaneState.IN_HANGAR && plane.place?.kind === 'hangar' ? plane.place : null;
       if (inside) view.position.set(inside.position.x, inside.position.y + 8);
       else view.position.set(plane.x, plane.y);
-      view.zIndex = plane.altitude > 0 ? 10000 : plane.y;
+      view.zIndex = plane.altitude > 0 ? 10000 : inside ? view.y : plane.y;
       if (this.rings && elapsed > 0) {
         // On the water a plane leaves rings, the faster it moves the closer together (0x6cb2).
         const wake = this.wakes.get(plane.id) ?? { x: plane.x, y: plane.y, next: 0 };

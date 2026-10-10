@@ -1683,6 +1683,14 @@ place and plane; only what is added later (the service tabs) lies over them.
   station, luggage conveyor, stop spots and runways are still drawn in fixed layers under the
   planes; their depths have not been read.
 
+- Depths set by the places' constructors (`object+4`):
+  - runway (`0x6d0c6`) and stop spot (`0x78f66`): y − 1000, so under everything sorted;
+  - gate (`0x43094`): y + `DespZ`; luggage conveyor (`0x567a4`): y + `DespZ`;
+  - gas station (`0x40924`): y + its node's y + `Z` (−20 in every descriptor);
+  - hangar (`0x46d50`): y + its node's y + `DespZ`, with its back half a static image of its
+    own 50 behind that (`0x46e12`), so a plane inside is drawn between the two.
+- Web version: a plane being serviced is drawn at the hangar's centre and sorted there.
+
 ## Stage 3: what is still approximate
 
 - Fog: the machine's wobble.

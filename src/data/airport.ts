@@ -39,6 +39,8 @@ export interface GasStationDescriptor {
   /** Multiplier applied to fueling speed. */
   speed: number;
   surfaces: { back: string; remark: string; spot: string };
+  /** Added to its node's height for the depth it is sorted at (`Z`). */
+  depthOffset: number;
   node: Point;
   click: Rect;
 }
@@ -48,6 +50,8 @@ export interface HangarDescriptor {
   /** Multiplier applied to servicing speed. */
   speed: number;
   surfaces: { back: string; front: string; remark: string };
+  /** Added to its node's height for the depth it is sorted at (`DespZ`). */
+  depthOffset: number;
   node: Point;
   click: Rect;
 }
@@ -100,6 +104,8 @@ export interface LuggageDescriptor {
   click: Rect;
   /** The conveyor's animation: frames `<resource>.<n>` at an offset, at `speed` frames a second. */
   animation: { resource: string; position: Point; frames: number; speed: number; parcels: boolean; parcelsFlip: boolean };
+  /** Added to its height for the depth it is sorted at (`DespZ`). */
+  depthOffset: number;
   parcelMarks: Point;
 }
 
@@ -110,6 +116,7 @@ export function parseLuggageTable(tree: XmlNode[]): Map<number, LuggageDescripto
     const luggage: LuggageDescriptor = {
       type: num(node, 'Type'),
       speed: num(node, 'Speed'),
+      depthOffset: num(node, 'DespZ'),
       surfaces: { back: str(node, 'BackSurfaceResource'), front: str(node, 'FrontSurfaceResource'), remark: str(node, 'RemarkSurfaceResource'), spot: str(node, 'SpotSurfaceResource') },
       sound: str(node, 'SoundResource'),
       node: point(requireChild(node, 'NodePosition')),
@@ -128,6 +135,7 @@ export function parseGasStationTable(tree: XmlNode[]): Map<number, GasStationDes
     const station: GasStationDescriptor = {
       type: num(node, 'Type'),
       speed: num(node, 'Speed'),
+      depthOffset: num(node, 'Z'),
       surfaces: { back: str(node, 'BackSurfaceResource'), remark: str(node, 'RemarkSurfaceResource'), spot: str(node, 'SurfaceSpotResource') },
       node: point(requireChild(node, 'NodePosition')),
       click: rect(requireChild(node, 'Rectangle')),
@@ -143,6 +151,7 @@ export function parseHangarTable(tree: XmlNode[]): Map<number, HangarDescriptor>
     const hangar: HangarDescriptor = {
       type: num(node, 'Type'),
       speed: num(node, 'Speed'),
+      depthOffset: num(node, 'DespZ'),
       surfaces: { back: str(node, 'BackSurfaceResource'), front: str(node, 'FrontSurfaceResource'), remark: str(node, 'RemarkSurfaceResource') },
       node: point(requireChild(node, 'NodePosition')),
       click: rect(requireChild(node, 'ClickRectangle')),
