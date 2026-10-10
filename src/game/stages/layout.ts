@@ -106,7 +106,12 @@ export interface StageLayout {
   /** Repair hangar, when the stage has one. */
   hangar: { position: Point; type: number; minLevel: number; improved?: { improvement: number; type: number } } | null;
   /** Luggage conveyor, when the stage has one. */
-  luggage?: { position: Point; type: number; minLevel: number } | null;
+  luggage?: { position: Point; type: number; minLevel: number; improved?: { improvement: number; type: number } } | null;
+  /**
+   * The stage's fog is space gas (`airport+0x7c`, the first argument of 0x12f90): it is drawn
+   * green and it is the anti space gas, not the anti-fog, that clears it.
+   */
+  spaceGas?: boolean;
   taxiNodes: Point[];
   /**
    * Pairs of terminal nodes the stage links by hand (0x14808). No plane can pass through them, so
@@ -169,9 +174,11 @@ export const IMPROVEMENT = {
   VIP_RUNWAY: 0x3c,
   IMPROVED_HANGAR: 0x50,
   IMPROVED_GAS_STATION: 0x5a,
+  IMPROVED_LUGGAGE: 0x64,
   DEICER: 0x6e,
   ANTI_FOG: 0x6f,
   ANTI_SAND: 0x70,
+  ANTI_SPACE_GAS: 0x71,
   PAINTING_STOP_SPOT: 0x72,
   IN_FLIGHT_MOVIES: 0x73,
   COFFEE_AND_CAKE: 0x74,
@@ -184,6 +191,7 @@ export const IMPROVEMENT = {
   PLANE_9_LICENCE: 0xd0,
   PLANE_14_LICENCE: 0xd5,
   PLANE_15_LICENCE: 0xd6,
+  PLANE_19_LICENCE: 0xda,
 } as const;
 
 const offer = (

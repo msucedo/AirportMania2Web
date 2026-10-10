@@ -1,4 +1,4 @@
-// Plays every level of stages 1 to 8 in order, buying improvements as the funds allow, through the simulation API and checks that each
+// Plays every level of stages 1 to 9 in order, buying improvements as the funds allow, through the simulation API and checks that each
 // can be passed and that progress chains: the next level opens with this one's score as funds,
 // and clearing a stage opens the next. Usage: node tools/dev/play-all.mjs <baseUrl>
 import { createRequire } from 'node:module';
@@ -6,7 +6,7 @@ const require = createRequire(process.env.PUPPETEER_FROM ?? '/Users/msaucedo/Doc
 const puppeteer = require('puppeteer-core');
 
 const [base] = process.argv.slice(2);
-const LEVELS = [[1, 6], [2, 7], [3, 8], [4, 8], [5, 8], [6, 9], [7, 10], [8, 11]];
+const LEVELS = [[1, 6], [2, 7], [3, 8], [4, 8], [5, 8], [6, 9], [7, 10], [8, 11], [9, 12]];
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: true,

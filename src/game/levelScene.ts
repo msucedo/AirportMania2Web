@@ -403,7 +403,7 @@ export class LevelScene {
         this.ground.addChild(ice);
       }
       if (this.sim.hazardSchedule.some((h) => h.kind === 'fog')) {
-        const fog = new FogView(this.textures, runway);
+        const fog = new FogView(this.textures, runway, layout.spaceGas === true);
         this.fogViews.push(fog);
         this.planeLayer.addChild(fog);
       }

@@ -1329,6 +1329,36 @@ animation.
   4 and 5; 6 and 5 on 6; 3 and 5 on 7; 6 and 2 on 8; 1 and 5 on 9; 6 and 5 on 10; 5 and 7 on 11.
 - Web version: the islands and the sea are not drawn.
 
+## Stage 9 ("Moon") — read with the emulated script (`0xdef50`)
+
+- Twelve levels, with fog, ice and sand together and no bonus events (the script makes no
+  balloons and no helicopter on any level).
+- Gates of descriptor types 21, 22 (improved) and 23 (improved again): A (345, 150), B
+  (380, 190), C (415, 230), D (450, 270).
+- Gas station type 9 at (35, 110), or 11 with `0x5a`; hangar type 7 at (120, 95), or 12 with
+  `0x50`; luggage conveyor type 6 at (343, 90), or 7 with the improved luggage `0x64` (new).
+- Taxi nodes (205, 160), (235, 190), (265, 220), (295, 250), (250, 156), (240, 140),
+  (365, 300), (375, 315), (355, 315); no linked pair.
+- Runways of type 6: (−5, 195), (20, 230), (45, 265); with `0x35`, (0, 180), (25, 210),
+  (50, 240), (75, 270). Stop spots as before, with corner 1.
+- Space gas: the script ends with `0x12f90(airport, 1, …)`, which sets `airport+0x7c`, and
+  passes "owns `0x71`" (anti space gas) where the other stages pass "owns `0x6f`". With the
+  flag the fog is drawn in the colour (0.624, 1, 0.686) (`0x3a672`) and the hint is 14 instead
+  of 11.
+- Backdrop: no sky object but a backdrop of space (`0x136a8`, class at `0x664fc`): `SPACE`
+  drawn at four times its size, then about 119 `AMBIENT.STAR` and five bodies (`EARTH`,
+  `GALAXY_0`, `NEBULA`, `SATURN`, `GALAXY_1`) drifting by (−620, −100) every 333 s and
+  wrapping (`0x665d4`). Then `BACKGROUND_DOWN` at (0, 173) scaled 16×19, `BACKGROUND_TOP` at
+  (0, 45) and `AIRPORT` at (327, 45) with depth 100. The neutral gate colour is
+  (0.902, 0.933, 1).
+- Offers in the order registered: `0x01` 95000 (try from level 2), `0x77` 610000, `0x02`
+  140000, `0x0a` 280000, `0x72` 610000, `0x16` 285000, `0x17` 315000, `0x1e` 260000, `0x1f`
+  290000, `0x20` 300000, `0x21` 310000, `0x28` 250000, `0x29` 260000, `0x2a` 260000, `0x35`
+  570000, `0x3c` 620000, `0x50` 565000, `0x5a` 565000, `0x64` 565000, `0x74` 305000, `0x73`
+  305000, anti space gas `0x71` 305000, deicer 455000, anti-sand 410000, licence `0xda`
+  920000, `0x2b` 270000.
+- Web version: the stars and the five bodies of the backdrop are not drawn.
+
 ## Drawing order of the airport's objects — confirmed
 
 - Every object of the airport is kept in one list (`airport+0x14`, added by `0xa3490`), which
@@ -1368,7 +1398,7 @@ events can be read the same way. Builders not yet named, by script:
 | 6 | `0xd77ac` | Africa | none beyond `0x14738` (built, see above) |
 | 7 | `0xd9e00` | Antarctic | `0x13808` (aurora), stars (built, see above) |
 | 8 | `0xdc5b8` | Carrier | `0x13c3c` (sea), `0x14c3c`, `0x14d08`, `0x14dd4`, `0x14ea0` (built, see above) |
-| 9 | `0xdef50` | Moon | `0x136a8` |
+| 9 | `0xdef50` | Moon | `0x136a8` (space backdrop; built, see above) |
 | 10 | `0xe18c4` | Mars | `0x13758` |
 
 `0x14738` (luggage) is in every script from stage 4 on. The levels database also gives later

@@ -15,6 +15,7 @@ import { ARCHES } from '../src/game/stages/arches';
 import { CARRIER } from '../src/game/stages/carrier';
 import { ISLAND } from '../src/game/stages/island';
 import { MONSTERS } from '../src/game/stages/monsters';
+import { MOON } from '../src/game/stages/moon';
 import { NORTH_POLE } from '../src/game/stages/northPole';
 
 const generated = path.resolve(__dirname, '../src/data/generated');
@@ -1500,6 +1501,77 @@ describe('simulation, stage 8 (carrier)', () => {
   });
 });
 
+describe('simulation, stage 9 (moon)', () => {
+  const stage9 = parseStageSchedule(tree('data/maps/stage_levels_09.json'));
+  const area9 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(9)!;
+  const moon = (level = 1, owned: number[] = [], random?: () => number): Simulation =>
+    new Simulation({ layout: MOON, schedule: findLevel(stage9, level, false), goals: findGoals(area9, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, random: random ?? FIXED_DICE });
+  const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  it('builds the airport the stage script builds', () => {
+    const sim = moon();
+    expect(area9.levelsCount).toBe(12);
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 21, { x: 345, y: 150 }],
+      ['B', 21, { x: 380, y: 190 }],
+    ]);
+    expect(sim.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 6, { x: -5, y: 195 }],
+      [2, 6, { x: 20, y: 230 }],
+      [3, 6, { x: 45, y: 265 }],
+    ]);
+    expect([sim.gasStations[0]!.position, sim.hangars[0]!.position, sim.luggages[0]!.position]).toEqual([
+      { x: 35, y: 110 },
+      { x: 120, y: 95 },
+      { x: 343, y: 90 },
+    ]);
+    expect([sim.gasStations[0]!.descriptor.type, sim.hangars[0]!.descriptor.type, sim.luggages[0]!.descriptor.type]).toEqual([9, 7, 6]);
+    for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.luggages, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+
+    const full = moon(1, [0x35, 0x3c, 0x50, 0x5a, 0x64, 0x16, 0x17]);
+    expect([full.gasStations[0]!.descriptor.type, full.hangars[0]!.descriptor.type, full.luggages[0]!.descriptor.type]).toEqual([11, 12, 7]);
+    expect(full.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 7, { x: 0, y: 180 }],
+      [2, 6, { x: 25, y: 210 }],
+      [3, 6, { x: 50, y: 240 }],
+      [4, 6, { x: 75, y: 270 }],
+    ]);
+    // The improved conveyor loads luggage faster.
+    expect(full.luggages[0]!.descriptor.speed).toBeGreaterThan(sim.luggages[0]!.descriptor.speed);
+    for (const place of [...full.gates, ...full.gasStations, ...full.hangars, ...full.luggages, ...full.stopSpots]) expect(full.graph.route(full.runways[3]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('clears its fog, which is space gas, with the anti space gas and not the anti-fog', () => {
+    expect([moon(1, [0x6f]).machines.fog, moon(1, [0x71]).machines.fog]).toEqual([false, true]);
+    // Elsewhere it is the other way round.
+    const stage6 = parseStageSchedule(tree('data/maps/stage_levels_06.json'));
+    const area6 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(6)!;
+    const africa = (owned: number[]) => new Simulation({ layout: AFRICA, schedule: findLevel(stage6, 1, false), goals: findGoals(area6, 1, false), planes, gates, runways, gasStations, hangars, luggages, level: 1, improvements: new Set(owned), screenWidth: 480 });
+    expect([africa([0x6f]).machines.fog, africa([0x71]).machines.fog]).toEqual([true, false]);
+  });
+
+  it('has fog, ice and sand together, and no bonus events', () => {
+    expect(LEVELS.map((level) => { const g = findGoals(area9, level, false); return [g.fogs, g.ices, g.sands]; })).toEqual([
+      [0, 0, 0],
+      [0, 0, 0],
+      [1, 0, 1],
+      [3, 3, 3],
+      [3, 4, 4],
+      [5, 6, 6],
+      [3, 4, 5],
+      [4, 5, 4],
+      [8, 6, 5],
+      [6, 4, 9],
+      [5, 8, 5],
+      [8, 5, 8],
+    ]);
+    let seed = 11;
+    const varied = (): number => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    expect(new Set(moon(6, [], varied).hazardSchedule.map((h) => h.kind))).toEqual(new Set(['fog', 'ice', 'sand']));
+    expect(LEVELS.map((level) => moon(level).bonus?.kind ?? null)).toEqual(LEVELS.map(() => null));
+  });
+});
+
 describe('stage layouts', () => {
   it('give stop spots the balloon corner each stage script passes', () => {
     expect([...STAGES.values()].map((layout) => [layout.stage, layout.stopSpotBalloonCorner ?? 0])).toEqual([
@@ -1511,6 +1583,7 @@ describe('stage layouts', () => {
       [6, 1],
       [7, 1],
       [8, 0],
+      [9, 1],
     ]);
   });
 });

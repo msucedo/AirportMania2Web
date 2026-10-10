@@ -446,7 +446,8 @@ export class Simulation {
         progress: 0,
       });
     }
-    const luggageDescriptor = layout.luggage ? config.luggages?.get(layout.luggage.type) : undefined;
+    const luggageType = layout.luggage?.improved && owned.has(layout.luggage.improved.improvement) ? layout.luggage.improved.type : layout.luggage?.type;
+    const luggageDescriptor = luggageType !== undefined ? config.luggages?.get(luggageType) : undefined;
     if (layout.luggage && luggageDescriptor && (config.level ?? 1) >= layout.luggage.minLevel) {
       const { x, y } = layout.luggage.position;
       const node = { x: x + luggageDescriptor.node.x, y: y + luggageDescriptor.node.y };
@@ -558,7 +559,8 @@ export class Simulation {
       if (this.bonus.kind === 'balloons') this.balloonsLeft = RULES.bonus.balloons.count;
       else this.helicopterDue = true;
     }
-    this.machines = { fog: owned.has(IMPROVEMENT.ANTI_FOG), ice: owned.has(IMPROVEMENT.DEICER), sand: owned.has(IMPROVEMENT.ANTI_SAND) };
+    // 0x12f90 is told what clears the fog: the anti-fog, or the anti space gas where the fog is space gas.
+    this.machines = { fog: owned.has(layout.spaceGas ? IMPROVEMENT.ANTI_SPACE_GAS : IMPROVEMENT.ANTI_FOG), ice: owned.has(IMPROVEMENT.DEICER), sand: owned.has(IMPROVEMENT.ANTI_SAND) };
     this.scheduleHazards('fog', config.goals.fogs);
     this.scheduleHazards('ice', config.goals.ices);
     this.scheduleHazards('sand', config.goals.sands);

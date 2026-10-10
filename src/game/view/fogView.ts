@@ -7,6 +7,8 @@ import type { Runway } from '../sim/simulation';
 
 export const FOG_SURFACES = ['FOG', 'ANTI_FOG.BASE', 'ANTI_FOG.NOSE', 'ANTI_FOG.PROPELLER'];
 
+export const SPACE_GAS_TINT = 0x9fffaf;
+
 /** Where the five puffs sit along the runway, from its centre. */
 const PUFFS = [-128, -64, 0, 64, 128];
 
@@ -25,6 +27,7 @@ export class FogView extends Container {
   constructor(
     textures: TextureStore,
     private readonly runway: Runway,
+    spaceGas = false,
   ) {
     super();
     this.position.copyFrom(runway.position);
@@ -32,6 +35,8 @@ export class FogView extends Container {
     this.zIndex = runway.position.y + 4;
     this.puffs = PUFFS.map((x) => {
       const puff = textures.sprite('FOG');
+      // Space gas is the same fog drawn in the colour (0.624, 1, 0.686) (0x3a672).
+      if (spaceGas) puff.tint = SPACE_GAS_TINT;
       // Each puff leans about a point 30 px below its centre.
       puff.pivot.set(0, 30);
       puff.position.set(x, -20 + 30);
