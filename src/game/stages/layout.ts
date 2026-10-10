@@ -192,6 +192,7 @@ export const IMPROVEMENT = {
   PLANE_14_LICENCE: 0xd5,
   PLANE_15_LICENCE: 0xd6,
   PLANE_19_LICENCE: 0xda,
+  PLANE_20_LICENCE: 0xdb,
 } as const;
 
 const offer = (

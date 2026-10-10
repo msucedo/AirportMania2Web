@@ -33,7 +33,7 @@ STACK, STACK_SIZE = 0x60000000, 0x100000
 HEAP, HEAP_SIZE = 0x40000000, 0x1000000
 TRAP = 0x70000000
 # Code that belongs to the stage scripts and their local helpers, and so is run for real.
-NATIVE = (0xce178, 0xe4704)
+NATIVE = (0xcde40, 0xe4704)  # from the tutorial's script to the end of Mars's
 # Engine code that is also run for real: the level's random generator (a Mersenne Twister the
 # script seeds with stage * 100 + level), whose numbers decide when the bonus events start.
 ALSO_NATIVE = ((0xa2724, 0xa2888),)

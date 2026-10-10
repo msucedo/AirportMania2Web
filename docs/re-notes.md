@@ -1359,6 +1359,34 @@ animation.
   920000, `0x2b` 270000.
 - Web version: the stars and the five bodies of the backdrop are not drawn.
 
+## Stage 10 ("Mars") — read with the emulated script (`0xe18c4`)
+
+- Thirteen levels, with space gas, ice and sand and no bonus events.
+- Gates of descriptor types 25, 26 (improved) and 27 (improved again): A (333, 125), B
+  (370, 170), C (407, 215), D (444, 260).
+- Gas station type 13 at (143, 97), or 14 with `0x5a`; hangar type 14 at (238, 80), or 15 with
+  `0x50`; luggage conveyor type 8 at (50, 93), or 9 with `0x64`.
+- Taxi nodes (220, 165), (240, 190), (260, 215), (280, 240), (300, 265), (345, 300),
+  (355, 315), (335, 315); no linked pair.
+- Runways of type 6: (20, 185), (45, 220), (70, 255); with `0x35`, (15, 175), (35, 205),
+  (55, 235), (75, 265). The VIP runway `0x3c` makes runway 1 of type 9 here, not 7. Stop spots
+  as before, with corner 1. Space gas as on the Moon.
+- Backdrop: no sky object but a sky of its own (`0x13758`, class "MarsSky" at `0xcbffc`): the
+  image `SKY` over a grid of 30 by 20 points, 480 px wide and as high as the script says (70)
+  (`0xcbea4`), whose texture coordinates ripple with time (`0xcc0bc`). Then `BACKGROUND_TOP`
+  at (0, 51); eight pieces of ground at y 130, scaled (±1, 2): `BACKGROUND_DOWN_1` at x 0,
+  `_2` at 62, `_1` mirrored at 186, `_2` mirrored at 248, `_1` at 248, `_2` at 310, `_1`
+  mirrored at 434, `_2` mirrored at 496; `TOWER` at (300, 10) and `AIRPORT` at (347, 65), both
+  plain images. The neutral gate colour is (0.902, 0.933, 1).
+- Offers in the order registered, none with a level to try it from: `0x01` 95000, `0x77`
+  310000, `0x02` 140000, `0x0a` 280000, `0x72` 610000, `0x16` 330000, `0x17` 340000, `0x1e`
+  280000, `0x1f` 290000, `0x20` 300000, `0x21` 310000, `0x28` 230000, `0x29` 240000, `0x2a`
+  250000, `0x35` 570000, `0x3c` 410000, `0x50` 500000, `0x5a` 500000, `0x64` 500000, `0x74`
+  305000, `0x73` 305000, anti space gas `0x71` 355000, deicer 425000, anti-sand 510000,
+  licence `0xdb` 720000, `0x2b` 260000.
+- Web version: the sky is drawn stretched over its rectangle, without the ripple; which part
+  of the texture the grid shows at rest has not been worked out.
+
 ## Drawing order of the airport's objects — confirmed
 
 - Every object of the airport is kept in one list (`airport+0x14`, added by `0xa3490`), which
@@ -1386,7 +1414,7 @@ animation.
 - The balloon corner of its runways is taken to be the island's.
 - Everything listed for stages 1 and 2 below applies here too.
 
-## The remaining stage scripts — surveyed, not built
+## The stage scripts' own builders
 
 Every script runs to the end in `tools/re/stage_layout.py`, so their layouts, offers and bonus
 events can be read the same way. Builders not yet named, by script:
@@ -1399,7 +1427,7 @@ events can be read the same way. Builders not yet named, by script:
 | 7 | `0xd9e00` | Antarctic | `0x13808` (aurora), stars (built, see above) |
 | 8 | `0xdc5b8` | Carrier | `0x13c3c` (sea), `0x14c3c`, `0x14d08`, `0x14dd4`, `0x14ea0` (built, see above) |
 | 9 | `0xdef50` | Moon | `0x136a8` (space backdrop; built, see above) |
-| 10 | `0xe18c4` | Mars | `0x13758` |
+| 10 | `0xe18c4` | Mars | `0x13758` (its own sky; built, see above) |
 
 `0x14738` (luggage) is in every script from stage 4 on. The levels database also gives later
 levels ice and sand on the runways (kinds 1 and 2 of the same schedule as fog, created by

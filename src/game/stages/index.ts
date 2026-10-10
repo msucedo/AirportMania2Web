@@ -5,11 +5,12 @@ import { ARCHES } from './arches';
 import { CARRIER } from './carrier';
 import { ISLAND } from './island';
 import type { StageLayout } from './layout';
+import { MARS } from './mars';
 import { MONSTERS } from './monsters';
 import { MOON } from './moon';
 import { NORTH_POLE } from './northPole';
 
-/** Stages whose layout has been recovered so far, by stage number. */
+/** The ten stages, by stage number. */
 export const STAGES: ReadonlyMap<number, StageLayout> = new Map([
   [ARCHES.stage, ARCHES],
   [ISLAND.stage, ISLAND],
@@ -20,4 +21,5 @@ export const STAGES: ReadonlyMap<number, StageLayout> = new Map([
   [ANTARCTIC.stage, ANTARCTIC],
   [CARRIER.stage, CARRIER],
   [MOON.stage, MOON],
+  [MARS.stage, MARS],
 ]);

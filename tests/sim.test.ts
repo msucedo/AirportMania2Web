@@ -14,6 +14,7 @@ import { ANTARCTIC } from '../src/game/stages/antarctic';
 import { ARCHES } from '../src/game/stages/arches';
 import { CARRIER } from '../src/game/stages/carrier';
 import { ISLAND } from '../src/game/stages/island';
+import { MARS } from '../src/game/stages/mars';
 import { MONSTERS } from '../src/game/stages/monsters';
 import { MOON } from '../src/game/stages/moon';
 import { NORTH_POLE } from '../src/game/stages/northPole';
@@ -1572,6 +1573,72 @@ describe('simulation, stage 9 (moon)', () => {
   });
 });
 
+describe('simulation, stage 10 (mars)', () => {
+  const stage10 = parseStageSchedule(tree('data/maps/stage_levels_10.json'));
+  const area10 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(10)!;
+  const mars = (level = 1, owned: number[] = []): Simulation =>
+    new Simulation({ layout: MARS, schedule: findLevel(stage10, level, false), goals: findGoals(area10, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, random: FIXED_DICE });
+  const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
+  it('builds the airport the stage script builds', () => {
+    const sim = mars();
+    expect(area10.levelsCount).toBe(13);
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 25, { x: 333, y: 125 }],
+      ['B', 25, { x: 370, y: 170 }],
+    ]);
+    expect(sim.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 6, { x: 20, y: 185 }],
+      [2, 6, { x: 45, y: 220 }],
+      [3, 6, { x: 70, y: 255 }],
+    ]);
+    expect([sim.gasStations[0]!.position, sim.hangars[0]!.position, sim.luggages[0]!.position]).toEqual([
+      { x: 143, y: 97 },
+      { x: 238, y: 80 },
+      { x: 50, y: 93 },
+    ]);
+    expect([sim.gasStations[0]!.descriptor.type, sim.hangars[0]!.descriptor.type, sim.luggages[0]!.descriptor.type]).toEqual([13, 14, 8]);
+    for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.luggages, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+
+    const full = mars(1, [0x35, 0x3c, 0x50, 0x5a, 0x64, 0x16, 0x17, 0x28]);
+    expect([full.gasStations[0]!.descriptor.type, full.hangars[0]!.descriptor.type, full.luggages[0]!.descriptor.type]).toEqual([14, 15, 9]);
+    // Its VIP runway is of type 9, not the 7 of the stages before.
+    expect(full.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 9, { x: 15, y: 175 }],
+      [2, 6, { x: 35, y: 205 }],
+      [3, 6, { x: 55, y: 235 }],
+      [4, 6, { x: 75, y: 265 }],
+    ]);
+    expect(full.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 27, { x: 333, y: 125 }],
+      ['B', 25, { x: 370, y: 170 }],
+      ['C', 25, { x: 407, y: 215 }],
+      ['D', 25, { x: 444, y: 260 }],
+    ]);
+    for (const place of [...full.gates, ...full.gasStations, ...full.hangars, ...full.luggages, ...full.stopSpots]) expect(full.graph.route(full.runways[3]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('has space gas, ice and sand, and no bonus events', () => {
+    expect(mars(1, [0x71]).machines).toEqual({ fog: true, ice: false, sand: false });
+    expect(LEVELS.map((level) => { const g = findGoals(area10, level, false); return [g.fogs, g.ices, g.sands]; })).toEqual([
+      [0, 0, 0],
+      [0, 0, 0],
+      [1, 0, 1],
+      [3, 2, 1],
+      [2, 3, 2],
+      [8, 2, 2],
+      [3, 5, 4],
+      [3, 4, 7],
+      [8, 5, 5],
+      [6, 9, 5],
+      [7, 3, 7],
+      [9, 9, 9],
+      [3, 3, 11],
+    ]);
+    expect(LEVELS.map((level) => mars(level).bonus?.kind ?? null)).toEqual(LEVELS.map(() => null));
+  });
+});
+
 describe('stage layouts', () => {
   it('give stop spots the balloon corner each stage script passes', () => {
     expect([...STAGES.values()].map((layout) => [layout.stage, layout.stopSpotBalloonCorner ?? 0])).toEqual([
@@ -1584,6 +1651,7 @@ describe('stage layouts', () => {
       [7, 1],
       [8, 0],
       [9, 1],
+      [10, 1],
     ]);
   });
 });
