@@ -11,6 +11,8 @@ export interface GateSlot {
   requires: number[] | null;
   /** Improvement that switches the gate to its upgraded descriptor. */
   upgradedBy: number;
+  /** Where the upgraded gate goes, when the stage script puts it somewhere else. */
+  upgradedPosition?: Point;
 }
 
 export interface RunwaySlot {

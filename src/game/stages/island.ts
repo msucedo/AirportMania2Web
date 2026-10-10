@@ -1,7 +1,8 @@
 import { IMPROVEMENT, offer, runway, type StageLayout } from './layout';
 
 // Stage 2 layout ("Tiki-Taka" island), read from the stage script 0xcf414 and its helpers
-// 0xcf1c0 (gate with its dock) and 0xcf370 (water runway). See docs/re-notes.md.
+// 0xcf1c0 (gate with its dock) and 0xcf370 (water runway), and checked against a run of the
+// script in the emulator (tools/re/stage_layout.py). See docs/re-notes.md.
 
 export const ISLAND: StageLayout = {
   stage: 2,
@@ -27,8 +28,9 @@ export const ISLAND: StageLayout = {
     { resource: 'GATES.STOPSPOT_ISLAND_FRONT', offset: { x: -25, y: 30 }, depth: 35 },
   ],
   gates: [
-    { letter: 'A', position: { x: 135, y: 135 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_GATE_A },
-    { letter: 'B', position: { x: 385, y: 195 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_GATE_B },
+    { letter: 'A', position: { x: 335, y: 135 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_GATE_A },
+    // The script puts the upgraded gate B five pixels lower than the plain one.
+    { letter: 'B', position: { x: 385, y: 190 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_GATE_B, upgradedPosition: { x: 385, y: 195 } },
     {
       letter: 'C',
       position: { x: 435, y: 255 },
@@ -38,7 +40,11 @@ export const ISLAND: StageLayout = {
   ],
   gasStation: { position: { x: 52, y: 105 }, minLevel: 1 },
   hangar: { position: { x: 180, y: 90 }, type: 0, minLevel: 3 },
-  taxiNodes: [{ x: 280, y: 195 }],
+  taxiNodes: [
+    { x: 280, y: 195 },
+    { x: 300, y: 225 },
+    { x: 320, y: 255 },
+  ],
   // Water runways are created with flag 0: the node is at the right end and planes leave leftwards.
   runways: [runway(1, 50, 195, 0), runway(2, 85, 250, 0)],
   // 0xd0100: the spot at 60 needs the second extra place, or is the painting spot when that is

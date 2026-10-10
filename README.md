@@ -57,7 +57,9 @@ after running it.
 - `src/data/` — typed loaders for resources, planes, gates, runways and levels.
 - `src/game/sim/` — deterministic simulation, independent of rendering.
 - `src/game/levelScene.ts` — PixiJS view, input and HUD.
-- `tools/re/` — helpers for reading the disassembly (`prepare.sh`, `reidx.py`, `stage_calls.py`).
+- `tools/re/` — helpers for reading the disassembly (`prepare.sh`, `reidx.py`, `stage_calls.py`), and
+  `stage_layout.py`, which runs a stage script in an emulator and lists what it builds (needs
+  `python3 -m venv .tools/venv && .tools/venv/bin/pip install unicorn`).
 - `tools/dev/play.mjs` — plays the first plane in a headless browser and takes screenshots.
 - `tools/dev/shoot-level.mjs` — drives a plane that needs fuel through a level and takes screenshots.
 - `tools/dev/play-all.mjs` — plays every level of stages 1 and 2 in order and checks that each can be passed and that progress chains.

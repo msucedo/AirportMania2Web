@@ -673,10 +673,11 @@ sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructo
 - Backdrop calls in order: sky and clouds at 65; `STAGES.ISLAND.WATER` at y 159, scale 16×15;
   `STAGES.ISLAND.SEA` at (0, 55); `STAGES.ISLAND.BACKGROUND_TOP` (8-bit grey) at (0, 40);
   `STAGES.ISLAND.BACKGROUND_DOWN` at (335, 160).
-- Gates A (135, 135), B (385, 195), C (435, 255), descriptor types 2 and 3, each with dock
-  sprites at (−25, +30). Gas station type 2 at (52, 105). Hangar at (180, 90) from level 3.
+- Gates A (335, 135), B (385, 190) or (385, 195) when upgraded, C (435, 255), descriptor types
+  2 and 3, each with dock sprites at (−25, +30). (An earlier hand reading had gate A at x 135
+  and missed that the upgraded gate B sits 5 px lower; the emulated run settled both.) Gas station type 2 at (52, 105). Hangar at (180, 90) from level 3.
 - Runways 1 (50, 195) and 2 (85, 250), descriptor type 2, created with flag 0: node at the right
-  end, planes leave to the left. One taxi node at (280, 195).
+  end, planes leave to the left. Taxi nodes at (280, 195), (300, 225) and (320, 255).
 - Stop spots (`0xd0100`, confirmed): (280, 300) always, VIP with `0x0a`; (170, 300) with `0x01`;
   (60, 300) with `0x02`, or the painting stop spot there when `0x72` is owned, whether or not
   `0x02` is. Arches does the same at (60, 300) with `0x01` (`0xcebba`).
@@ -967,6 +968,23 @@ After the body's front image the plane draw (`0x9220`) draws the dirt image of t
 (`plane+0x88 + 4·pose`) while `plane+0x26c` is clear. The constructor sets that byte from the
 schedule's `NeedWash` (clear when the plane needs a wash); in state 9, the wash, the dirt fades
 out. No plane in stages 1 and 2 needs a wash, so it never shows there.
+
+## Reading a stage script by running it
+
+`tools/re/stage_layout.py` runs a compiled stage script in the Unicorn emulator (installed in
+`.tools/venv`). The image is mapped at its own addresses, the script gets a made-up airport,
+application, profile (stage at `+0x1c`, level at `+0x20`) and level record (owned improvements
+at `+0x3c…+0x40`), and every call that leaves the scripts' code (`0xce178`–`0xe4704`) is
+intercepted: its registers and outgoing stack words are written down, following pointers to
+positions and texts, and it returns a blank object. Virtual calls on those objects land on a
+trap page. `--all` runs it again once per improvement id the script tests and lists what each
+one adds, removes or changes; `--level` shows what depends on the level.
+
+- Checked against Arches (`0xce178`): it reproduces the layout already confirmed by hand.
+- On the island (`0xcf414`) it corrected gate A's x, gate B's two positions and the number of
+  taxi nodes.
+- Limits: what a builder does with its arguments still has to be read; a call whose return
+  value the script tests gets a blank object, which may take a branch the game would not.
 
 ## Stages 1 and 2: what is still approximate
 

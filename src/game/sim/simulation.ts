@@ -270,16 +270,18 @@ export class Simulation {
 
     for (const slot of layout.gates) {
       if (slot.requires && !slot.requires.some((id) => owned.has(id))) continue;
-      const type = layout.gateTypes[owned.has(slot.upgradedBy) ? 1 : 0];
+      const upgraded = owned.has(slot.upgradedBy);
+      const type = layout.gateTypes[upgraded ? 1 : 0];
       const descriptor = config.gates.get(type);
       if (!descriptor) throw new Error(`Missing gate descriptor ${type}`);
-      const { x, y } = slot.position;
+      const position = (upgraded && slot.upgradedPosition) || slot.position;
+      const { x, y } = position;
       const node = { x: x + descriptor.node.x, y: y + descriptor.node.y };
       this.gates.push({
         kind: 'gate',
         id: `gate-${slot.letter}`,
         letter: slot.letter,
-        position: slot.position,
+        position,
         descriptor,
         node,
         taxiNode: this.graph.addGate(
