@@ -14,10 +14,21 @@ export const AIRBORNE: StageLayout = {
   backdrop: {
     sky: 140,
     horizon: 155,
-    // In the order the script creates them. Between the first and the second it also makes five
-    // scrolling clouds, four ranges of scrolling mountains and two propellers, not drawn yet.
+    // In the order the script creates them: under the airport five bands of cloud slide by,
+    // the nearer the faster, with four mountain tops passing between them, and two propellers turn.
     layers: [
       { resource: 'STAGES.AIRBORNE.BACKGROUND_DOWN', position: { x: 0, y: 155 }, scale: { x: 16, y: 16 } },
+      { scenery: 'cloudBand', resource: 'STAGES.AIRBORNE.CLOUDS.0', period: 50, y: 82, left: 270, right: 480 },
+      { scenery: 'moving', resource: 'STAGES.AIRBORNE.MOUNTAINS.0', x: 500, y: 81, loop: 250, span: 45, speed: -6.5, offset: 50 },
+      { scenery: 'moving', resource: 'STAGES.AIRBORNE.MOUNTAINS.1', x: 500, y: 81, loop: 250, span: 45, speed: -6.5, offset: 175 },
+      { scenery: 'cloudBand', resource: 'STAGES.AIRBORNE.CLOUDS.1', period: 30, y: 85, left: 270, right: 480 },
+      { scenery: 'moving', resource: 'STAGES.AIRBORNE.MOUNTAINS.2', x: 500, y: 90, loop: 150, span: 33, speed: -9, offset: 25 },
+      { scenery: 'cloudBand', resource: 'STAGES.AIRBORNE.CLOUDS.2', period: 20, y: 89, left: 270, right: 480 },
+      { scenery: 'moving', resource: 'STAGES.AIRBORNE.MOUNTAINS.3', x: 500, y: 92, loop: 150, span: 21, speed: -16, offset: 100 },
+      { scenery: 'cloudBand', resource: 'STAGES.AIRBORNE.CLOUDS.3', period: 12, y: 96, left: 300, right: 480 },
+      { scenery: 'cloudBand', resource: 'STAGES.AIRBORNE.CLOUDS.4', period: 12, y: 106, left: 400, right: 480 },
+      { scenery: 'propeller', resource: 'STAGES.AIRBORNE.PROPELLER', position: { x: 89, y: 65 }, scale: { x: 0.4, y: 1 } },
+      { scenery: 'propeller', resource: 'STAGES.AIRBORNE.PROPELLER', position: { x: 274, y: 76 }, scale: { x: 0.6, y: 1.4 } },
       { resource: 'STAGES.AIRBORNE.BACKGROUND_TOP', position: { x: 0, y: 44 } },
       { resource: 'STAGES.AIRBORNE.HANGAR_BACK', position: { x: 0, y: 56 } },
       { resource: 'STAGES.AIRBORNE.AIRPORT', position: { x: 360, y: 90 } },

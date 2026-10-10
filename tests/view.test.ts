@@ -9,6 +9,7 @@ import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
 import { brushPose, patchAlpha, puffAlpha } from '../src/game/view/sandView';
 import { markPop, panelTop } from '../src/game/view/tutorialViews';
+import { cloudBandPose, movingImageX, propellerAngle } from '../src/game/view/scenery/airborne';
 import { auroraPoints, starThrob } from '../src/game/view/scenery/night';
 import { flagLean, horizonPose, horizonX } from '../src/game/view/scenery/simple';
 import { glintSlide } from '../src/game/view/waterEffects';
@@ -257,5 +258,38 @@ describe('scenery', () => {
     expect(Array.from(auroraPoints(495))).toEqual(Array.from(points));
     expect(auroraPoints(100)[middle + 3]).toBeCloseTo(points[middle + 3]!, 3);
     expect(Array.from(auroraPoints(30))).not.toEqual(Array.from(points));
+  });
+
+  it('shows a moving image only for the first part of each loop', () => {
+    // A mountain of the Airborne stage: 250 s loop, 45 s in view, 6.5 px a second leftwards.
+    const mountain = { x: 500, loop: 250, span: 45, speed: -6.5, offset: 50 };
+    expect(movingImageX(0, mountain)).toBeNull();
+    // Its clock is 50 s ahead, so it comes round just after 200 s (not at 200 exactly: the
+    // clock starts again only once it has passed the loop).
+    expect(movingImageX(200, mountain)).toBeNull();
+    expect(movingImageX(201, mountain)).toBe(493.5);
+    expect(movingImageX(220, mountain)).toBe(370);
+    expect(movingImageX(244.9, mountain)).toBeCloseTo(500 - 6.5 * 44.9, 4);
+    expect(movingImageX(245, mountain)).toBeNull();
+    // A cloud of the sky: from 100 px left of the screen, in view for half its loop.
+    const cloud = { x: -100, loop: 520, span: 260, speed: 5, offset: 0 };
+    expect(movingImageX(0, cloud)).toBe(-100);
+    expect(movingImageX(100, cloud)).toBe(400);
+    expect(movingImageX(230, cloud)).toBeNull();
+  });
+
+  it('slides a band of cloud one image width a period, bobbing more the faster it is', () => {
+    expect(cloudBandPose(0, 50, 240)).toEqual({ slide: 0, sink: 2.4 });
+    expect(cloudBandPose(25, 50, 240).slide).toBe(120);
+    expect(cloudBandPose(50, 50, 240).slide).toBe(0);
+    // A quarter of the bob's 10π seconds on, it is at its lowest: twice the resting sink.
+    expect(cloudBandPose(2.5 * Math.PI, 12, 240).sink).toBeCloseTo(20, 5);
+    expect(cloudBandPose(7.5 * Math.PI, 12, 240).sink).toBeCloseTo(0, 5);
+  });
+
+  it('turns a propeller ten times a second', () => {
+    expect(propellerAngle(0)).toBe(0);
+    expect(propellerAngle(0.025)).toBeCloseTo(90, 5);
+    expect(propellerAngle(0.1)).toBeCloseTo(0, 5);
   });
 });

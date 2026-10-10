@@ -62,14 +62,21 @@ export interface BackdropLayer {
  * - `horizon`: an image passing along the horizon, `start` seconds into a loop of `loop` seconds
  *   at `speed` px a second (0x14c3c and its like);
  * - `star`: a star `size` px across that throbs (0x13b8c);
- * - `aurora`: the Antarctic's aurora (0x13808).
+ * - `aurora`: the Antarctic's aurora (0x13808);
+ * - `moving`: an image that crosses for the first `span` seconds of every `loop` (0x14b5c);
+ * - `cloudBand`: a band of cloud sliding left, one image width every `period` seconds, cut off
+ *   at `left` (0x14858);
+ * - `propeller`: a spinning propeller squeezed by `scale` (0x14928).
  */
 export type SceneryItem =
   | { scenery: 'sea'; area: SparkleArea }
   | { scenery: 'flag'; resource: string; position: Point }
   | { scenery: 'horizon'; resource: string; y: number; loop: number; speed: number; start: number }
   | { scenery: 'star'; position: Point; size: number }
-  | { scenery: 'aurora'; resource: string };
+  | { scenery: 'aurora'; resource: string }
+  | { scenery: 'moving'; resource: string; x: number; y: number; loop: number; span: number; speed: number; offset: number }
+  | { scenery: 'cloudBand'; resource: string; period: number; y: number; left: number; right: number }
+  | { scenery: 'propeller'; resource: string; position: Point; scale: Point };
 
 /** What a stage script puts behind the airport, in the order it makes it: images and scenery. */
 export type BackdropEntry = BackdropLayer | SceneryItem;

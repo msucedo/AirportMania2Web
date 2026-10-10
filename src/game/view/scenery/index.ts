@@ -2,6 +2,7 @@ import type { Container } from 'pixi.js';
 import type { TextureStore } from '../../../engine/textures';
 import type { SceneryItem } from '../../stages/layout';
 import { SeaSparkles } from '../waterEffects';
+import { CloudBandView, MovingImageView, PropellerView } from './airborne';
 import { AuroraView, StarView } from './night';
 import { FlagView, HorizonObjectView } from './simple';
 
@@ -23,6 +24,9 @@ export function scenerySurfaceIds(item: SceneryItem): string[] {
     case 'flag':
     case 'horizon':
     case 'aurora':
+    case 'moving':
+    case 'cloudBand':
+    case 'propeller':
       return [item.resource];
     case 'star':
       return ['AMBIENT.STAR'];
@@ -49,6 +53,18 @@ export function createScenery(textures: TextureStore, item: SceneryItem): Scener
     }
     case 'aurora': {
       const view = new AuroraView(textures, item.resource);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'moving': {
+      const view = new MovingImageView(textures, item);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'cloudBand': {
+      const view = new CloudBandView(textures, item);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'propeller': {
+      const view = new PropellerView(textures, item.resource, item.position, item.scale);
       return { view, update: (dt) => view.update(dt) };
     }
   }

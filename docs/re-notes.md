@@ -1190,8 +1190,6 @@ one adds, removes or changes; `--level` shows what depends on the level.
 - Bonus events: balloons on level 2 (39.9 s, 1500) and level 8 (118.3 s, 2000), helicopter
   from the left on level 6 (134.3 s, coins of 1500).
 - Fog per level, from the levels database: 1 on level 3, 2 on levels 4, 5, 7 and 8, 4 on 6.
-- Web version: the scrolling clouds (`0x14858` ×5), the two propellers (`0x14928`) and the
-  four `0x14b5c` pieces of scenery are not drawn; only their arguments have been read.
 
 ## Luggage conveyor — confirmed
 
@@ -1538,6 +1536,23 @@ list in that order (`backdrop.layers`) and makes a view for each piece
   `x = 800·i/148 + 1.6c − 1.1b`; `n = (x − 400)/400`; the top point is at `80n² − 20` and the
   bottom one at `120 − 60n² + (2c + 2.5b + 3a)·(1 − 0.8n²)`. The image runs along the strip
   (`u = i/148`, top edge above, bottom edge below; `0x75024`).
+
+- Moving image (`0x14b5c(x, y, loop, span, speed, offset, image)` → class `MovingImage`
+  `0x7232c`, draw `0x72440`): a clock `frac(t / loop)·loop + offset`, less `floor(loop)` once
+  it is past `loop`; x is `x + speed·clock`; drawn while −200 < x < 1000 and the clock is below
+  `span`. The sky's clouds are six of these (`0xcda08`: x −100, loop `2·1300/speed`, span half
+  of it). The Airborne stage has four mountain tops, all from x 500:
+  `MOUNTAINS.0` y 81, loop 250, span 45, speed −6.5, offset 50; `.1` the same with offset 175;
+  `.2` y 90, loop 150, span 33, speed −9, offset 25; `.3` y 92, loop 150, span 21, speed −16,
+  offset 100. They are made before `BACKGROUND_TOP`, which covers where they stop.
+- Band of cloud (`0x14858(index, period, y, left, right)` → class `0x71e50`, draw `0x72038`):
+  `STAGES.AIRBORNE.CLOUDS.<index>`, 240 px wide, drawn three times side by side from
+  `left − slide`, the first cut off at `left`, with `slide = frac(t / period)·240`, at
+  `y + (24 / period)·5·(1 + sin(0.2·t))`. Five bands: period 50 y 82, 30 y 85 and 20 y 89 from
+  left 270; 12 y 96 from 300; 12 y 106 from 400; right 480 for all.
+- Propeller (`0x14928(position, scale)` → class `0x3418`, draw `0x34f8`):
+  `STAGES.AIRBORNE.PROPELLER` turned by `360·frac(10·t)` degrees, then scaled, at its
+  position: (89, 65) scaled (0.4, 1) and (274, 76) scaled (0.6, 1.4).
 
 ## Drawing order of the airport's objects — confirmed
 
