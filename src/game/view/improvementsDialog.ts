@@ -4,7 +4,7 @@ import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import type { Progress } from '../progress';
-import type { ImprovementOffer } from '../stages/layout';
+import { onSale, type ImprovementOffer } from '../stages/layout';
 import { DIALOG_SURFACES, dialogButton, dialogFrame } from './dialog';
 import { MAIN_FONT, SCORE_FONT } from './floatingText';
 
@@ -43,7 +43,7 @@ export class ImprovementsDialog extends Container {
     private readonly progress: Progress,
     private readonly stage: number,
     private readonly level: number,
-    private readonly offers: readonly ImprovementOffer[],
+    private readonly all: readonly ImprovementOffer[],
     private readonly onExit: () => void,
   ) {
     super();
@@ -51,7 +51,7 @@ export class ImprovementsDialog extends Container {
     this.panel.position.set(BOX.width / 2, BOX.height / 2);
     panel.addChild(this.panel);
     this.addChild(overlay);
-    this.chosen = offers[0]!;
+    this.chosen = this.offers[0]!;
 
     const heading = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TEXT_SHORT'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 } } });
     heading.anchor.set(0.5, 0.85);
@@ -67,12 +67,12 @@ export class ImprovementsDialog extends Container {
     zone.hitArea = new Rectangle(LIST.x - 44, LIST.top, 88, LIST.bottom - LIST.top);
     zone.eventMode = 'static';
     let grab: { pointer: number; start: number; moved: boolean } | null = null;
-    const limit = Math.min(0, LIST.bottom - LIST.top - offers.length * LIST.pitch);
     zone.on('pointerdown', (event: FederatedPointerEvent) => (grab = { pointer: event.global.y, start: this.rows.y, moved: false }));
     zone.on('globalpointermove', (event: FederatedPointerEvent) => {
       if (!grab) return;
       const by = event.global.y - grab.pointer;
       if (Math.abs(by) > 4) grab.moved = true;
+      const limit = Math.min(0, LIST.bottom - LIST.top - this.offers.length * LIST.pitch);
       if (grab.moved) this.rows.y = Math.max(limit, Math.min(0, grab.start + by));
     });
     const release = (event: FederatedPointerEvent): void => {
@@ -81,7 +81,7 @@ export class ImprovementsDialog extends Container {
       if (!held || held.moved) return;
       // A touch without dragging picks the row under it.
       const index = Math.floor((this.panel.toLocal(event.global).y - LIST.top - this.rows.y) / LIST.pitch);
-      const offer = offers[index];
+      const offer = this.offers[index];
       if (!offer) return;
       this.chosen = offer;
       audio.play('SOUNDS.CLICK');
@@ -93,6 +93,12 @@ export class ImprovementsDialog extends Container {
 
     this.refresh();
     audio.play('SOUNDS.IMPROVEMENTS_SCREEN');
+  }
+
+  /** What is on sale right now: the stage withdraws and adds offers as others are bought. */
+  private get offers(): ImprovementOffer[] {
+    const owned = this.progress.improvements(this.stage, this.level);
+    return this.all.filter((offer) => onSale(offer, owned));
   }
 
   private owned(offer: ImprovementOffer): boolean {
@@ -107,7 +113,11 @@ export class ImprovementsDialog extends Container {
   private refresh(): void {
     const { strings, textures } = this;
     for (const child of this.rows.removeChildren()) child.destroy({ children: true });
-    this.offers.forEach((offer, i) => {
+    const offers = this.offers;
+    // A purchase or sale can take the chosen one off the list.
+    if (!offers.includes(this.chosen)) this.chosen = offers[0]!;
+    this.rows.y = Math.max(Math.min(0, LIST.bottom - LIST.top - offers.length * LIST.pitch), this.rows.y);
+    offers.forEach((offer, i) => {
       // 0x4e08c: the full-colour icon when it is owned or can be paid for, the grey one otherwise.
       const lit = this.owned(offer) || this.affordable(offer);
       const icon: Sprite = textures.sprite(`${offer.icon}.${lit ? 'ACTIVE' : 'GRAYED'}`);

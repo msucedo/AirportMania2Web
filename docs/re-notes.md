@@ -775,7 +775,8 @@ Vtable `0x17a8e8`, kind 5.
   `CASH`. A hidden button adds 1,000,000 for the tester profile.
 - List of items (`0x4ca54`, confirmed): one per improvement the stage registered (entries of
   0x34 bytes at `airport+0xa0`: price `+0x24`, id `+0x28`, a level number `+0x2c`, a visible
-  flag `+0x30`), in that order, with no prerequisites between them. An item (`0x4e08c`) holds
+  flag `+0x30`), in that order. The dialog itself applies no prerequisites: those come from the
+  stage script, which registers some offers only under conditions (see below). An item (`0x4e08c`) holds
   the icon's `.ACTIVE` and `.GRAYED` images and `IMPROVEMENTS.BOUGHT`, and is told whether it is
   owned, whether the level's funds cover its price, and whether to mark it "try me": not owned,
   affordable, the current level at or past its level number (2 for `0x01`, 4 for `0x16`, 3 for
@@ -968,6 +969,32 @@ After the body's front image the plane draw (`0x9220`) draws the dirt image of t
 (`plane+0x88 + 4·pose`) while `plane+0x26c` is clear. The constructor sets that byte from the
 schedule's `NeedWash` (clear when the plane needs a wash); in state 9, the wash, the dirt fades
 out. No plane in stages 1 and 2 needs a wash, so it never shows there.
+
+## When an improvement is on sale — confirmed
+
+The stage script registers an offer (`0x13458`) only under conditions on what the level's
+record already owns, so the shop's list changes as things are bought. Worked out by running
+each script for every combination of the improvements involved (`stage_layout.py --offers`):
+
+| Stage | Offer | Needs | Withdrawn while owned |
+|---|---|---|---|
+| Arches | extra stop spot `0x01` | | painting spot `0x72` |
+| Arches | painting spot `0x72` | `0x01` | |
+| Arches | gate C `0x16` | | its upgrade `0x20` |
+| Arches | upgraded gate C `0x20` | `0x16` | |
+| Island | extra stop spot `0x01` | | second one `0x02` |
+| Island | second stop spot `0x02` | `0x01` | painting spot `0x72` |
+| Island | painting spot `0x72` | `0x02` | |
+| Island | gate C `0x16` / upgrade `0x20` | as in Arches | as in Arches |
+| Stage 3 | extra stop spot `0x01` | | `0x02`, wash `0x77` |
+| Stage 3 | wash and go `0x77`, second stop spot `0x02` | `0x01` | `0x02`: painting spot `0x72` |
+| Stage 3 | painting spot `0x72` | `0x02` | |
+| Stage 3 | gates C `0x16`, D `0x17` | | their upgrades `0x20`, `0x21` |
+| Stage 3 | upgraded gates C `0x20`, D `0x21` | `0x16`, `0x17` | |
+
+Everything else is always on sale. The effect is that what another improvement builds on
+cannot be sold from under it. An earlier note here said there were no prerequisites; that came
+from reading the shop alone.
 
 ## Reading a stage script by running it
 

@@ -15,6 +15,10 @@ which register held what.
 script is run once with nothing owned and once more for each improvement id it tests, and the
 differences are listed, which shows what each improvement adds, removes or changes.
 
+--offers works out when each improvement is put on sale: the script registers some only when
+another is owned and withdraws some while another is. It runs the script for every combination
+of the improvements that matter and prints, per offer, which must be owned and which must not.
+
 Needs the Unicorn emulator: python3 -m venv .tools/venv && .tools/venv/bin/pip install unicorn
 """
 import argparse, os, pickle, re, struct, sys
@@ -234,6 +238,61 @@ def tested_ids(run, script):
     return sorted(i for i in ids if i < 0x200)
 
 
+def offered(run):
+    """Ids of the improvements a run registered, with price and first level recommended."""
+    out = {}
+    for call in run.calls:
+        if call['name'] == 'improvement':
+            args = call['args']
+            words = args[args.index('|') + 1:]
+            out[int(args[0], 0)] = (int(args[1], 0), words[3] if len(words) > 3 else '?', args[2])
+    return out
+
+
+def offers(script, stage, level):
+    from itertools import combinations
+    base = Run(script, stage, level, [])
+    everything = dict(offered(base))
+    singles = {}
+    for extra in tested_ids(base, script):
+        seen = offered(Run(script, stage, level, [extra]))
+        everything.update(seen)
+        if set(seen) != set(offered(base)):
+            singles[extra] = seen
+    relevant = sorted(singles)
+    # Owning one improvement can bring in an offer that a further one brings in turn.
+    grew = True
+    while grew:
+        grew = False
+        for extra in tested_ids(base, script):
+            if extra in relevant:
+                continue
+            with_all = offered(Run(script, stage, level, relevant))
+            more = offered(Run(script, stage, level, relevant + [extra]))
+            everything.update(with_all)
+            everything.update(more)
+            if set(with_all) != set(more):
+                relevant.append(extra)
+                grew = True
+    relevant.sort()
+    table = {}
+    for size in range(len(relevant) + 1):
+        for owned in combinations(relevant, size):
+            seen = offered(Run(script, stage, level, list(owned)))
+            everything.update(seen)
+            table[frozenset(owned)] = set(seen)
+    print(f'# script {script:#x}, stage {stage}, level {level}; improvements that affect what is on sale: {[hex(i) for i in relevant]}')
+    for offer in sorted(everything, key=lambda i: list(everything).index(i)):
+        price, recommended, icon = everything[offer]
+        shown = [owned for owned, ids in table.items() if offer in ids]
+        needs = [i for i in relevant if shown and all(i in owned for owned in shown)]
+        hides = [i for i in relevant if shown and not any(i in owned for owned in shown)]
+        rule = lambda owned: all(i in owned for i in needs) and not any(i in owned for i in hides)  # noqa: E731
+        exact = all((offer in ids) == rule(owned) for owned, ids in table.items())
+        note = '' if exact else '   (not a simple rule: check by hand)'
+        print(f"{offer:#04x} price {price:6d} recommended from level {recommended:>4} {icon:42s} needs {[hex(i) for i in needs]} hidden by {[hex(i) for i in hides]}{note}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('script')
@@ -242,9 +301,13 @@ def main():
     parser.add_argument('--own', default='')
     parser.add_argument('--all', action='store_true')
     parser.add_argument('--raw', action='store_true')
+    parser.add_argument('--offers', action='store_true')
     parser.add_argument('--only', default='', help='comma-separated call names to show')
     options = parser.parse_args()
     script = int(options.script, 16)
+    if options.offers:
+        offers(script, options.stage, options.level)
+        return
     owned = [int(x, 0) for x in options.own.split(',') if x]
     only = {x for x in options.only.split(',') if x}
     keep = lambda call: not only or call['name'] in only  # noqa: E731

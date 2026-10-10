@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Progress, type StageRules } from '../src/game/progress';
 import { ARCHES, IMPROVEMENT } from '../src/game/stages/arches';
 import { ISLAND } from '../src/game/stages/island';
+import { onSale } from '../src/game/stages/layout';
 
 // No localStorage under the test runner: Progress then keeps everything in memory.
 const RULES = new Map<number, StageRules>([
@@ -85,6 +86,27 @@ describe('progress', () => {
     // In the order they are registered, which is the order the shop lists them in.
     expect(ARCHES.improvements.map((offer) => offer.id)).toEqual([0x01, 0x0a, 0x72, 0x16, 0x1e, 0x1f, 0xcb, 0x20]);
     expect(ISLAND.improvements.map((offer) => offer.id)).toEqual([0x01, 0x02, 0x0a, 0x72, 0x16, 0x1e, 0x1f, 0x74, 0xcc, 0x20]);
+  });
+});
+
+describe('what is on sale', () => {
+  const listed = (layout: typeof ARCHES, ...owned: number[]): number[] => layout.improvements.filter((offer) => onSale(offer, new Set(owned))).map((offer) => offer.id);
+
+  it('adds what builds on an improvement and withdraws the one built on (Arches)', () => {
+    expect(listed(ARCHES)).toEqual([0x01, 0x0a, 0x16, 0x1e, 0x1f, 0xcb]);
+    // The painting stop spot needs the extra stop spot, which then cannot be sold.
+    expect(listed(ARCHES, 0x01)).toEqual([0x01, 0x0a, 0x72, 0x16, 0x1e, 0x1f, 0xcb]);
+    expect(listed(ARCHES, 0x01, 0x72)).toEqual([0x0a, 0x72, 0x16, 0x1e, 0x1f, 0xcb]);
+    // The same between gate C and its upgrade.
+    expect(listed(ARCHES, 0x16)).toEqual([0x01, 0x0a, 0x16, 0x1e, 0x1f, 0xcb, 0x20]);
+    expect(listed(ARCHES, 0x16, 0x20)).toEqual([0x01, 0x0a, 0x1e, 0x1f, 0xcb, 0x20]);
+  });
+
+  it('chains the stop spots on the island: first, second, then the painting one', () => {
+    expect(listed(ISLAND)).toEqual([0x01, 0x0a, 0x16, 0x1e, 0x1f, 0x74, 0xcc]);
+    expect(listed(ISLAND, 0x01)).toEqual([0x01, 0x02, 0x0a, 0x16, 0x1e, 0x1f, 0x74, 0xcc]);
+    expect(listed(ISLAND, 0x01, 0x02)).toEqual([0x02, 0x0a, 0x72, 0x16, 0x1e, 0x1f, 0x74, 0xcc]);
+    expect(listed(ISLAND, 0x01, 0x02, 0x72)).toEqual([0x0a, 0x72, 0x16, 0x1e, 0x1f, 0x74, 0xcc]);
   });
 });
 

@@ -43,17 +43,17 @@ export const ARCHES: StageLayout = {
     { position: { x: 180, y: 300 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_STOP_SPOT },
     { position: { x: 60, y: 300 }, requires: IMPROVEMENT.EXTRA_STOP_SPOT, replacedBy: IMPROVEMENT.PAINTING_STOP_SPOT },
   ],
-  // Ids, prices, order and the level each is first recommended at are the ones the stage script
-  // registers (0x13458). Which title goes with 0x20 is inferred.
+  // Ids, prices, order, the level each is first recommended at and when each is on sale are what
+  // the stage script registers (0x13458), as run by tools/re/stage_layout.py --offers.
   improvements: [
-    offer(IMPROVEMENT.EXTRA_STOP_SPOT, 10000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'STORAGE_PLACE', 2),
+    offer(IMPROVEMENT.EXTRA_STOP_SPOT, 10000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'STORAGE_PLACE', { tryFrom: 2, hiddenBy: [IMPROVEMENT.PAINTING_STOP_SPOT] }),
     offer(IMPROVEMENT.UPGRADED_STOP_SPOT, 20000, 'VIP_STORAGE_PLACE', 'VIP_STORAGE_PLACE', 'VIP_STORAGE_PLACE'),
-    offer(IMPROVEMENT.PAINTING_STOP_SPOT, 60000, 'PAINTING_STOPSPOT', 'PAINTING_STOPSPOT', 'PAINTING_STOPSPOT'),
-    offer(IMPROVEMENT.EXTRA_GATE_C, 20000, 'EXTRA_GATE_C', 'EXTRA_GATE', 'GATE_0', 4),
-    offer(IMPROVEMENT.UPGRADED_GATE_A, 25000, 'IMPROVED_GATE_A', 'IMPROVED_GATE', 'GATE_1', 3),
+    offer(IMPROVEMENT.PAINTING_STOP_SPOT, 60000, 'PAINTING_STOPSPOT', 'PAINTING_STOPSPOT', 'PAINTING_STOPSPOT', { needs: [IMPROVEMENT.EXTRA_STOP_SPOT] }),
+    offer(IMPROVEMENT.EXTRA_GATE_C, 20000, 'EXTRA_GATE_C', 'EXTRA_GATE', 'GATE_0', { tryFrom: 4, hiddenBy: [IMPROVEMENT.UPGRADED_GATE_C] }),
+    offer(IMPROVEMENT.UPGRADED_GATE_A, 25000, 'IMPROVED_GATE_A', 'IMPROVED_GATE', 'GATE_1', { tryFrom: 3 }),
     offer(IMPROVEMENT.UPGRADED_GATE_B, 30000, 'IMPROVED_GATE_B', 'IMPROVED_GATE', 'GATE_1'),
     offer(IMPROVEMENT.PLANE_4_LICENCE, 85000, 'PLANE_4_LICENCE', 'PLANE_4_LICENCE', 'PLANE_4'),
-    offer(IMPROVEMENT.UPGRADED_GATE_C, 35000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_1'),
+    offer(IMPROVEMENT.UPGRADED_GATE_C, 35000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_1', { needs: [IMPROVEMENT.EXTRA_GATE_C] }),
   ],
   extraPlaneLicence: IMPROVEMENT.PLANE_4_LICENCE,
 };

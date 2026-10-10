@@ -38,6 +38,13 @@ export interface ImprovementOffer {
    * been bought in an earlier level of the stage (0x4cbaa). Absent for those never marked.
    */
   tryFrom?: number;
+  /**
+   * The stage script only puts it on sale while all of `needs` are owned and none of `hiddenBy`
+   * is: what builds on another improvement needs it, and the one built on is withdrawn meanwhile,
+   * so it cannot be sold from under the other (tools/re/stage_layout.py --offers).
+   */
+  needs?: readonly number[];
+  hiddenBy?: readonly number[];
 }
 
 export interface BackdropLayer {
@@ -119,12 +126,24 @@ export const IMPROVEMENT = {
   PLANE_5_LICENCE: 0xcc,
 } as const;
 
-const offer = (id: number, price: number, title: string, description: string, icon: string, tryFrom?: number): ImprovementOffer => ({
+const offer = (
+  id: number,
+  price: number,
+  title: string,
+  description: string,
+  icon: string,
+  rules: { tryFrom?: number; needs?: readonly number[]; hiddenBy?: readonly number[] } = {},
+): ImprovementOffer => ({
   id,
   price,
   titleId: `IMPROVEMENTS.TITLES.${title}`,
   descriptionId: `IMPROVEMENTS.DESCRIPTIONS.${description}`,
   icon: `IMPROVEMENTS.${icon}`,
-  ...(tryFrom === undefined ? {} : { tryFrom }),
+  ...rules,
 });
+
+/** Whether an improvement is on sale, given what the level already owns. */
+export function onSale(offer: ImprovementOffer, owned: ReadonlySet<number>): boolean {
+  return (offer.needs ?? []).every((id) => owned.has(id)) && !(offer.hiddenBy ?? []).some((id) => owned.has(id));
+}
 export { offer };
