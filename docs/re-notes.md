@@ -480,9 +480,21 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
   arrows and `INDICATORS.ARROWS.X%d`.
 - Order flags (`0x6b720`): `INDICATORS.FLAGS.COLOR` plus `INDICATORS.FLAGS.NUMBERS.%d`; `0x6ba58`
   places one when an order is added (called from `addOrder`).
-- Not read: the gate draw (`0x436e4`) and runway draw (`0x6dd44`), so the bar fill, arrow timing,
-  runway number position, flag offsets, hover label and combo arrows are assumed or
-  missing in the web version.
+- Gate service indicator (`0x439b0`, confirmed), for state 3 (unloading) and again for state 2
+  (loading) with the other set of images. `p` is the service clock `gate+0xd4` and `T` the
+  plane's `LoadingTime` (`0x5a98`):
+  - the four arrow frames are all drawn at gate + `ArrowsPosition`, frame `j` with opacity
+    `sin(π·(1 + 2p + j/4))`;
+  - the icon at gate + `IconBarPosition`; from 12 px above it, bar segments 7 px apart going up:
+    `n = (T − p)/T · ((T − 8)/2 + 8) / 2` of them, the whole part solid and one more with the
+    fraction as opacity.
+- Colour multiplier (`0x43cdc`): `INDICATORS.X%d` at gate + `BonusPosition` whenever the gate's
+  combo (`+0xc4`) is 2 or more, not only during service.
+- Hover label (`0x43d2a`): only for descriptors with `LabelOver`, when the pointer is over the
+  gate; not drawn in the web version.
+- Not read: the first part of the gate draw (`0x436e4`–`0x439ac`: building, colour, letter) and
+  the runway draw (`0x6dd44`), so the runway number position, flag offsets and combo arrows are
+  assumed or missing in the web version.
 
 ## Texts and fonts
 
