@@ -1753,8 +1753,7 @@ Rules:
 
 Drawing:
 
-- Planes:
-  and the mark on planes a service tab would reach are not drawn.
+- Planes: the mark on planes a service tab would reach is not drawn.
 - Gate: the hover label; the first part of its draw routine has not been read. Order flag
   offsets are assumed.
 - The font effects (gradients), the
@@ -1762,8 +1761,6 @@ Drawing:
   announcement is dismissed and what a level "introduces".
 - Turning direction of the paint chooser's ring and of the spray can; the clock that blinks
   the time-over light; whether the airport darkens at night.
-- Award counters (`0x9db0`) are not kept; Help, Users, Credits, Tutorial and Awards are not
-  built.
 
 Checked end to end by `tools/dev/play-all.mjs`, which plays the thirteen levels in order and
 verifies that each can be passed and that funds, stars and the opening of stage 2 chain.
