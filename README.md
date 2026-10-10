@@ -38,7 +38,8 @@ glints, rings and buoys; runways show their combo arrows.
 The tutorial (Airport Academy, three days) is played from the map's Tutorial button, with its
 hints, goals and reports.
 
-Not there yet: the awards screen.
+The awards are earned as in the original and shown in the awards room, reached from the map;
+its sparkles, the curtains' opening and the online leaderboard are not there.
 The stages' animated scenery is drawn (clouds, stars, the aurora, snow, Santa's sleigh, bats,
 the skies of the Moon and Mars). The wash and the luggage conveyor are still without their full
 drawing; `docs/re-notes.md` lists what is still approximate.

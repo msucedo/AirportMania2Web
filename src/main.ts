@@ -4,6 +4,7 @@ import { AudioPlayer } from './engine/audio';
 import { loadFonts } from './engine/fonts';
 import { createScreen } from './engine/screen';
 import { TextureStore, type EnlargedImages } from './engine/textures';
+import { AwardsRoom } from './game/awardsRoom';
 import { LevelScene } from './game/levelScene';
 import { MainMenu } from './game/mainMenu';
 import { loadSettings, saveSettings } from './game/settings';
@@ -32,6 +33,7 @@ function navigate(stage: number | null, level: number | null, map?: number | '')
   params.delete('reset');
   params.delete('map');
   params.delete('go');
+  params.delete('awards');
   if (stage === null) {
     params.delete('stage');
     params.delete('level');
@@ -99,8 +101,16 @@ async function main(): Promise<void> {
   const level = Number.isInteger(requested) && requested >= 1 && requested <= levels ? requested : null;
 
   const playable = new Map([...STAGES.keys()].map((s) => [s, data.areas.get(s)!.levelsCount]));
-  // A stage without a level is the map centred on it.
-  if (level === null && (params.has('map') || params.has('stage'))) {
+  if (params.has('awards')) {
+    // The awards room, reached from the map and going back to it.
+    await AwardsRoom.create(app, data, textures, makeAudio(), {
+      strings: await data.strings(chosen),
+      awards: progress.awards,
+      user: users.current?.name ?? null,
+      onBack: () => navigate(null, null, ''),
+    });
+  } else if (level === null && (params.has('map') || params.has('stage'))) {
+    // A stage without a level is the map centred on it.
     const audio = makeAudio();
     const focus = Number.parseInt(params.get('map') || params.get('stage') || '', 10);
     await WorldMap.create(app, data, textures, audio, {
@@ -111,6 +121,12 @@ async function main(): Promise<void> {
       focus: STAGES.has(focus) ? focus : null,
       onPlay: (s, l) => navigate(s, l),
       onMenu: () => navigate(null, null),
+      onAwards: () => {
+        const next = new URLSearchParams(location.search);
+        next.delete('reset');
+        next.set('awards', '');
+        location.href = `${location.pathname}?${next.toString()}`;
+      },
     });
   } else if (level === null) {
     const audio = makeAudio();

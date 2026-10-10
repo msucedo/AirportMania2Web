@@ -1,3 +1,4 @@
+import { parseAwardsTable, type AwardPlace } from './awards';
 import {
   parseGasStationTable,
   parseLuggageTable,
@@ -28,6 +29,8 @@ export interface GameData {
   stage(number: number): Promise<StageSchedule>;
   /** Where each level's marker sits on the world map, in map pixels: `positions.get(stage)[level - 1]`. */
   levelPositions(): Promise<Map<number, Point[]>>;
+  /** Where each award is in the awards room. */
+  awards(): Promise<AwardPlace[]>;
   strings(language: Language): Promise<Strings>;
 }
 
@@ -62,6 +65,7 @@ export async function loadGameData(): Promise<GameData> {
     areas: parseLevelsDb(levelsDb),
     stage: async (number) =>
       parseStageSchedule(await json<XmlNode[]>(`data/maps/stage_levels_${String(number).padStart(2, '0')}.json`)),
+    awards: async () => parseAwardsTable(await json<XmlNode[]>('data/descriptors/awards_room_descriptor_table.json')),
     levelPositions: async () => {
       const table = new Map<number, Point[]>();
       // The table lists some levels twice; the entries agree.

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { AWARD, awardCount, awardKind, awardsThatFollow, levelEndEvents, medalLevel, takeAward, type AwardsData, type LevelStanding } from '../src/game/awards';
+import { parseAwardsTable } from '../src/data/awards';
+import type { XmlNode } from '../src/data/xml';
+import table from '../src/data/generated/data/descriptors/awards_room_descriptor_table.json';
+import { AWARD, awardCount, awardKind, awardSound, awardText, awardsThatFollow, levelEndEvents, medalLevel, takeAward, type AwardsData, type LevelStanding } from '../src/game/awards';
+import { awardImages } from '../src/game/awardsRoom';
 
 describe('awards', () => {
   it('knows how each award takes its events', () => {
@@ -103,4 +107,33 @@ describe('awards', () => {
     // Not before the last level of the last stage.
     expect(levelEndEvents(plain, { ...at, stage: 9 }, levels, data)).toEqual([AWARD.EXCEPTIONAL_SERVICE]);
   });
+
+  it('announces each award with its own sound and text', () => {
+    expect(awardSound(7)).toBe('SOUNDS.AWARD_NEW_PLANE');
+    expect(awardSound(AWARD.BABY_DELIVERY_ASSISTANCE)).toBe('SOUNDS.AWARD_BABY_CRY');
+    expect(awardSound(AWARD.WASHER_DASHER)).toBe('SOUNDS.AWARD_GENERIC');
+    expect(awardSound(AWARD.GAME_FINISHED)).toBe('SOUNDS.AWARD_FINISH_ALL_LEVELS');
+    expect(awardSound(AWARD.DIPLOMA)).toBe('SOUNDS.AWARD_GENERIC');
+    expect(awardText(7)).toBe('AWARDS.PLANE_7');
+    expect(awardText(AWARD.STINGY_MANIAC)).toBe('AWARDS.STINGY_MANIAC');
+    expect(awardText(AWARD.DIPLOMA)).toBe('AWARDS.DIPLOMA');
+  });
+
+  it("places every award of the game's table in the room", () => {
+    const places = parseAwardsTable(table as XmlNode[]);
+    const of = (kind: string) => places.filter((place) => place.kind === kind);
+    expect(of('plane').map((place) => place.id)).toEqual(Array.from({ length: 20 }, (_, index) => index + 1));
+    expect(of('medal').map((place) => place.id)).toEqual(Array.from({ length: 13 }, (_, index) => 21 + index));
+    // The table shows five of the special trophies; Game Master is not among them.
+    expect(of('special').map((place) => place.id).sort()).toEqual([34, 35, 36, 37, 39]);
+    expect(places.find((place) => place.id === AWARD.GOLD_MASTER)!.text).toBe('AWARDS.GOLD_MASTER');
+    expect(places.find((place) => place.kind === 'diploma')).toMatchObject({ id: 0, x: 416, y: 104 });
+    expect(places.find((place) => place.kind === 'pig')).toMatchObject({ id: 40, x: 130, y: 280 });
+    expect(places.find((place) => place.kind === 'clock')!.id).toBe(41);
+    // Every medal's text is the one its id stands for.
+    for (const place of of('medal')) expect(place.text).toBe(awardText(place.id));
+    expect(awardImages(of('medal')[3]!)).toEqual({ tail: 'AWARDS_ROOM.MEDALS.TAILS.3', silhouette: 'AWARDS_ROOM.MEDALS.SILHOUETTE_1', icon: 'AWARDS_ROOM.MEDALS.ICONS.3' });
+    expect(awardImages(of('plane')[11]!)).toEqual({ picture: 'AWARDS_ROOM.PLANES_TROPHIES.12' });
+  });
 });
+

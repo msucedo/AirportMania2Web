@@ -1809,7 +1809,7 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   note's and the question's texts are centred in their boxes (their text call's second flag
   is 0 where the hint's is 1). The browser's keyboard stands in for the device's.
 
-## Awards — rules confirmed; the room is not built yet
+## Awards — rules and room confirmed in part
 
 - The room is laid out by `data/descriptors/awards_room_descriptor_table.xml`
   (`AWARDS.DESCRIPTOR_TABLE`, parsed by `0x1d5f8`): `DiplomaAward`, `PigAward`, `ClockAward`,
@@ -1883,5 +1883,28 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   (and nothing for the helicopter), that `+0x140`/`+0x14c` are the early arrivals and
   departures, that `+0x70` plays no part, and that the end-of-level events are for a passed
   level. The combo's event is posted when the port resets the combo. Levels played before the
-  fewest lost planes were kept do not count for Friendly Skies until played again. Awards are
-  earned but not announced or shown yet.
+  fewest lost planes were kept do not count for Friendly Skies until played again.
+- Announcing (`0x318e4` → `0x31dc4`): the award's `<text>.EARN`, formatted with its value
+  (`0x1b3ac`), in `FONTS.MAIN` at 0.8 wrapped to 240 px (`0x25218`), about (240, 160). Its
+  sound by id (`0x1b70c`): 1–20 `AWARD_NEW_PLANE`, 21 `AWARD_BABY_CRY`, 22
+  `AWARD_EMERGENCY_SIREN`, 23 `AWARD_PRESIDENT_MARCH`, 24 `AWARD_SWITCH_A_ROO`, 25
+  `AWARD_SUPER_RUNWAY_COORDINATOR`, 34 `AWARD_FINISH_ALL_LEVELS`, the rest `AWARD_GENERIC`.
+- Room draw (`0x1ed68`), everything on the wall moved by the scroll (`+0x70`): `AWARDS_ROOM.BACK`
+  scaled (16, 10) from x −48; `AWARDS_ROOM.SHELF` at (10, 285), (490, 125), (490, 205) and
+  (490, 285); the awards; shines and sparkles (a sparkle is drawn while −40 < x < 520, its size
+  breathing by a sine); then the curtains, which are stretched over the screen and drawn back
+  as the room opens (`+0x50`, eased), the ribbon and the text at (240, 25) in colour
+  (0.275, 0.157, 0.047). A back button (`0x4bb84`) at (50, 40). Past the awards the wall goes
+  on to a leaderboard (`0x1f2d4`).
+- An award on the wall (`0x1b588`): at its table position, 10% larger at most while touched
+  (`+0x30`). Earned (`vtable+0x2c`): its picture; a medal (`0x1c67c`) its ribbon
+  (`TAILS.<n−1>`), the head of its material and its icon (`ICONS.<n−1>`); pig, clock and
+  medals also what they count, as `%d` in `FONTS.SMALL_WHITE` at (1, 23), when it is 2 or
+  more (`0x1b65c`). Not earned (`0x1b920`): the picture in black at 0.25; a medal
+  (`0x1c644`) its silhouette (`SILHOUETTE_<(n−1) mod 3 + 1>`) in black at 0.2.
+- Web version: the room is opened from the map's Awards button and shows the wall, shelves,
+  awards, curtains (still, at the top and bottom edges), ribbon and back button; it is pulled
+  sideways by hand over its two screens. Not read, and so ours: how the scroll moves and
+  settles, the ribbon's width, the dialog a touched award opens (name, with the material for a
+  medal, and its description, or how to earn it), how long the announcement stays and how it
+  comes and goes. Not built: shines, sparkles, the curtains' opening, the leaderboard.

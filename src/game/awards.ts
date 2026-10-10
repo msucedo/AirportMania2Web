@@ -185,3 +185,32 @@ export function levelEndEvents(facts: LevelFacts, at: { stage: number; level: nu
   }
   return events;
 }
+
+/** The sound an award is announced with (0x1b70c). */
+export function awardSound(id: number): string {
+  if (id >= 1 && id <= 20) return 'SOUNDS.AWARD_NEW_PLANE';
+  switch (id) {
+    case AWARD.BABY_DELIVERY_ASSISTANCE:
+      return 'SOUNDS.AWARD_BABY_CRY';
+    case AWARD.TRANSPLANT_EMERGENCY:
+      return 'SOUNDS.AWARD_EMERGENCY_SIREN';
+    case AWARD.PRESIDENTIAL_DISTINGUISHED_SERVICE:
+      return 'SOUNDS.AWARD_PRESIDENT_MARCH';
+    case AWARD.SWITCH_A_ROO:
+      return 'SOUNDS.AWARD_SWITCH_A_ROO';
+    case AWARD.SUPER_RUNWAY_COORDINATOR:
+      return 'SOUNDS.AWARD_SUPER_RUNWAY_COORDINATOR';
+    case AWARD.GAME_FINISHED:
+      return 'SOUNDS.AWARD_FINISH_ALL_LEVELS';
+    default:
+      return 'SOUNDS.AWARD_GENERIC';
+  }
+}
+
+const NAMES: Readonly<Record<number, string>> = Object.fromEntries(Object.entries(AWARD).map(([name, id]) => [id, name]));
+
+/** Prefix of an award's texts: `.NAME`, `.EARN`, `.PRE_DESCRIPTION`, `.DESCRIPTION`. */
+export function awardText(id: number): string {
+  if (id >= 1 && id <= 20) return `AWARDS.PLANE_${id}`;
+  return `AWARDS.${NAMES[id] ?? 'DIPLOMA'}`;
+}

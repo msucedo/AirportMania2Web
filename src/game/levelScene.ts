@@ -1,8 +1,8 @@
-import { Container, Graphics, type Application, type Sprite, type FederatedPointerEvent } from 'pixi.js';
+import { Container, Graphics, Text, type Application, type Sprite, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
 import type { Language, Strings } from '../data/strings';
-import { loadFonts } from '../engine/fonts';
+import { loadFonts, fontFamily } from '../engine/fonts';
 import { SCREEN_WIDTH } from '../engine/screen';
 import type { AudioPlayer } from '../engine/audio';
 import type { TextureStore } from '../engine/textures';
@@ -28,7 +28,7 @@ import { FOG_SURFACES, FogView } from './view/fogView';
 import { ICE_SURFACES, IceView } from './view/iceView';
 import { SAND_SURFACES, SandBrush, SandView } from './view/sandView';
 import { hintFor, hintImages } from './sim/hints';
-import { AWARD } from './awards';
+import { AWARD, awardSound, awardText } from './awards';
 import { helpSurfaces } from './help';
 import { HELP_FONTS, HELP_SURFACES, HelpDialog } from './view/helpDialog';
 import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
@@ -123,6 +123,8 @@ export class LevelScene {
   private readonly hints: TutorialHint[] = [];
   /** Awards earned in this play, in order. */
   readonly awardsEarned: number[] = [];
+  private readonly notices: number[] = [];
+  private notice: { text: Text; left: number } | null = null;
 
   private constructor(
     private readonly textures: TextureStore,
@@ -432,6 +434,37 @@ export class LevelScene {
   /** Awards just earned: kept for the level, to be announced. */
   private earn(ids: readonly number[]): void {
     this.awardsEarned.push(...ids);
+    this.notices.push(...ids);
+  }
+
+  /**
+   * Announces the awards earned, one at a time (0x318e4 → 0x31dc4): the award's `EARN` text in
+   * `FONTS.MAIN` at 0.8, wrapped to 240 px, in the middle of the screen, with the award's sound.
+   * How long it stays and how it comes and goes have not been read: three seconds, fading.
+   */
+  private updateNotices(seconds: number): void {
+    if (this.notice) {
+      this.notice.left -= seconds;
+      this.notice.text.alpha = Math.max(0, Math.min(1, 4 * this.notice.left, 4 * (3 - this.notice.left)));
+      if (this.notice.left > 0) return;
+      this.notice.text.destroy();
+      this.notice = null;
+    }
+    const id = this.notices.shift();
+    if (id === undefined) return;
+    this.audio.play(awardSound(id));
+    const value = this.options.progress.awards[id]?.value ?? 0;
+    const text = new Text({
+      text: this.strings.t(`${awardText(id)}.EARN`, value),
+      style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 }, align: 'center', wordWrap: true, wordWrapWidth: 240 / 0.8 },
+    });
+    text.anchor.set(0.5);
+    text.scale.set(0.8);
+    text.position.set(240, 160);
+    text.alpha = 0;
+    text.eventMode = 'none';
+    this.root.addChild(text);
+    this.notice = { text, left: 3 };
   }
 
   /** The plane says what it needs, in the voice of its mood (0x5bd4). */
@@ -462,6 +495,7 @@ export class LevelScene {
     }
     for (const event of this.sim.drainEvents()) this.onEvent(event);
     this.showHint();
+    this.updateNotices(seconds);
     this.goalsPanel?.update(seconds);
     this.draw(seconds);
   }
