@@ -1733,3 +1733,32 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   `clamp((min(p, 265 − p) − height/2)/50)`.
 - Web version: the font's height is taken to be its cached size (11); `COLOR` and `IMAGE_LINE`
   are not built, no text using them; the dialog goes at once on Close instead of fading.
+
+## Help — confirmed
+
+- The game makes eight help dialogs at start (`0x3d76e`: `0x49c24(dialog, page)` for pages 1
+  to 8, kept at `app+0x188`); the in-game menu's Help opens the first (`0x67654`). Each is
+  built on opening by `0x49c80`: a 400×250 frame.
+- Pages 1 to 7: a picture at (−150, −70) and `HELP_DIALOG.<page>.1` in
+  (−100, −110)–(190, −10); a picture at (148, 30) and `HELP_DIALOG.<page>.2` in
+  (−190, −18)–(94, 98); both texts `FONTS.WHITE`, set as the hint dialog's. The pictures are
+  from the table at `0x17a9c4`: PLANE/RUNWAY, TELLING/WAITING, GATE_%d/GAS_STATION_%d,
+  GATE_COMBO/RUNWAY_COMBO, DIRTY_PLANES/RUNWAY, STORAGE_PLACE/QUEUING,
+  SWAPPING_PLACES/HIGHER_SCORES; `%d` is `0x827a8()+0x1c`.
+- Page 8: `HELP_DIALOG.TIPS` in (−190, −110)–(190, −80); the tips shower (`0x4abf4` →
+  `0x79e98`) at (0, 5), 400 wide; Next (`HELP_DIALOG.NEXT_TIP_SHORT`, `0x4a97c`) 85 wide at
+  (150, 110), which shows the tip after (`0x49c54`: index + 1, back to 0 at the count).
+- Bottom row, y 110: from page 2 a button 40 wide at −150 with `GUI.DIALOGS.ARROW` on it;
+  Close (`0x4a4cc`) 100 wide at 0, which closes the help and opens the in-game menu again
+  (`0x4a738`); up to page 7 a button at 150 with the arrow mirrored. Each arrow closes the
+  dialog and opens the page before or after.
+- Tips shower: `GUI.TIPS_SHOWER.SURFACE` drawn at x = −(width − 120)/2 = −140 and the tips
+  60 px right of the shower (draw `0x7a0e0`). A tip (`0x7a188`) is `GAME_TIP.<n>` in
+  `FONTS.TEEN` at 0.8, wrapped to (width − 120) − 68 = 212 (`0x25218`), on
+  `GUI.TIPS_SHOWER.SPEECH_BUBBLE` stretched (`0xe4704`, cuts 34 and 23) to 280 wide and the
+  text's height + 23, from (−140, floor(−height/2 − 11)); the text is drawn 34 px in from the
+  bubble's left, centred on the tip's height (draw `0x7a72c`). The shower and each tip fade
+  (`+0x20`, `+0x1c`), and a tip grows from half its height as it appears.
+- Web version: `%d` is taken to be the stage, as for the hints; the tip's text is drawn
+  black (its colour call `0xb4290` is not read); tips change at once, without the fade; the
+  four numbers of the bubble's cut are taken as 34 from the left and 23 from the top.

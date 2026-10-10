@@ -46,7 +46,7 @@ export function centred(textures: TextureStore, width: number, height: number): 
 }
 
 /** A text box (0x2d14c): the text wrapped to the box's width, centred in it or set at its top left. */
-function textBox(parent: Container, value: string, box: Box, style: Face, centredIn: boolean): Text {
+export function textBox(parent: Container, value: string, box: Box, style: Face, centredIn: boolean): Text {
   const node = new Text({
     text: value,
     style: {

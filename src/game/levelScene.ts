@@ -28,6 +28,8 @@ import { FOG_SURFACES, FogView } from './view/fogView';
 import { ICE_SURFACES, IceView } from './view/iceView';
 import { SAND_SURFACES, SandBrush, SandView } from './view/sandView';
 import { hintFor, hintImages } from './sim/hints';
+import { helpSurfaces } from './help';
+import { HELP_FONTS, HELP_SURFACES, HelpDialog } from './view/helpDialog';
 import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
 import { GoalsPanel, HintDialog, TUTORIAL_FONTS, TUTORIAL_HINT_SURFACES, TUTORIAL_SOUNDS, TUTORIAL_SURFACES, TutorialGoalsDialog, TutorialIntro, TutorialReport } from './view/tutorialViews';
 import { LuggageView, luggageSurfaceIds } from './view/luggageView';
@@ -189,7 +191,7 @@ export class LevelScene {
     if (sim.hazardSchedule.some((h) => h.kind === 'sand')) for (const id of SAND_SURFACES) ids.add(id);
     if (options.stage === 0) for (const id of [...TUTORIAL_SURFACES, ...TUTORIAL_HINT_SURFACES]) ids.add(id);
     // The pictures of the hints a refused order can bring; a stage has only those of what it has.
-    for (const id of hintImages(options.stage)) if (data.resources.hasSurface(id)) ids.add(id);
+    for (const id of [...hintImages(options.stage), ...helpSurfaces(options.stage), ...HELP_SURFACES]) if (data.resources.hasSurface(id)) ids.add(id);
     for (const hangar of sim.hangars) {
       ids.add(hangar.descriptor.surfaces.back);
       ids.add(hangar.descriptor.surfaces.front);
@@ -205,7 +207,7 @@ export class LevelScene {
     const [strings] = await Promise.all([
       data.strings(options.language),
       textures.load(ids),
-      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS, ...LEVEL_INTRO_FONTS, ...(options.stage === 0 ? TUTORIAL_FONTS : [])]),
+      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS, ...LEVEL_INTRO_FONTS, ...HELP_FONTS, ...(options.stage === 0 ? TUTORIAL_FONTS : [])]),
     ]);
 
     const scene = new LevelScene(textures, audio, strings, options, sim);
@@ -407,6 +409,17 @@ export class LevelScene {
         this.dialog = null;
         this.paused = false;
         setTimeout(() => menu.destroy({ children: true }));
+      },
+      // The help takes the menu's place, and its Close brings the menu back (0x4a738).
+      onHelp: () => {
+        setTimeout(() => menu.destroy({ children: true }));
+        const help = new HelpDialog(this.textures, this.audio, this.strings, this.options.stage, () => {
+          setTimeout(() => help.destroy({ children: true }));
+          this.dialog = null;
+          this.openPause();
+        });
+        this.dialog = help;
+        this.root.addChild(help);
       },
     });
     this.dialog = menu;

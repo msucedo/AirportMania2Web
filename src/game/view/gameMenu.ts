@@ -33,6 +33,8 @@ export interface GameMenuOptions {
   inGame: boolean;
   onSettings: (settings: Settings) => void;
   onExit: (how: MenuExit) => void;
+  /** Opens the help in place of the menu; without it the entry is greyed. */
+  onHelp?: () => void;
 }
 
 /**
@@ -81,7 +83,7 @@ export class GameMenu extends Container {
 
     if (page === 'menu') {
       button(bottom - 190, strings.t('OPTIONS_DIALOG.OPTIONS'), () => this.show('options'));
-      button(bottom - 130, strings.t('IN_GAME_MENU_DIALOG.HELP'), null);
+      button(bottom - 130, strings.t('IN_GAME_MENU_DIALOG.HELP'), this.options.onHelp ?? null);
       button(bottom - 70, strings.t('IN_GAME_MENU_DIALOG.FINISH_GAME'), () => this.show('finish'));
       button(bottom, strings.t('RESUME'), () => this.options.onExit('resume'));
     } else if (page === 'finish') {
