@@ -12,6 +12,9 @@ import { markPop, panelTop } from '../src/game/view/tutorialViews';
 import { cloudBandPose, movingImageX, propellerAngle } from '../src/game/view/scenery/airborne';
 import { batFrame, batOffset, fogPatchPose, scaryCloudPose } from '../src/game/view/scenery/monsters';
 import { auroraPoints, starThrob } from '../src/game/view/scenery/night';
+import { flakeAlpha, loopClock, sleighPoses } from '../src/game/view/scenery/northPole';
+import { backdropOf, isScenery } from '../src/game/stages/layout';
+import { NORTH_POLE } from '../src/game/stages/northPole';
 import { flagLean, horizonPose, horizonX } from '../src/game/view/scenery/simple';
 import { glintSlide } from '../src/game/view/waterEffects';
 
@@ -327,5 +330,35 @@ describe('scenery', () => {
     expect([0, 0.1, 0.2, 0.3, 0.4, 0.5].map((t) => batFrame(t, 0))).toEqual([0, 1, 2, 3, 4, 0]);
     expect(batFrame(0, 5)).toBe(5);
     expect(batFrame(0.1, 5)).toBe(0);
+  });
+
+  it('brings Santa across on an arch, the sleigh behind five reindeer', () => {
+    expect(loopClock(0, 380, 4.58405)).toBeCloseTo(4.58405, 5);
+    expect(loopClock(379, 380, 4.58405)).toBeCloseTo(3.58405, 4);
+    // Out of sight for most of the loop.
+    expect(sleighPoses(30, { x: -100, y: 50 }, 50)).toBeNull();
+    const poses = sleighPoses(10, { x: -100, y: 50 }, 50)!;
+    expect(poses).toHaveLength(6);
+    // 18 px apart, the sleigh at the rear at x 400: the top of the arch, 20 px up.
+    expect(poses.map((p) => p.x)).toEqual([400, 418, 436, 454, 472, 490]);
+    expect(poses[0]!.y).toBeCloseTo(50 - 20 + 3 * Math.sin(2 * Math.PI * 2), 4);
+    // Each turned the way the path runs from the one behind; the sleigh half as much as the first reindeer.
+    expect(poses[1]!.angle).toBeCloseTo((Math.atan2(poses[1]!.y - poses[0]!.y, 18) * 180) / Math.PI, 5);
+    expect(poses[0]!.angle).toBeCloseTo(poses[1]!.angle / 2, 5);
+  });
+
+  it('fades a snow flake in and out at the ends of its fall', () => {
+    expect([30, 36, 42, 90, 144, 150].map((y) => +flakeAlpha(y, 30, 150).toFixed(2))).toEqual([0, 0.5, 1, 1, 0.5, 0]);
+  });
+
+  it('gives the North Pole an overcast sky with snow on odd levels and a clear one on even', () => {
+    const kinds = (level: number) => backdropOf(NORTH_POLE, level).layers.map((entry) => (isScenery(entry) ? entry.scenery : entry.resource.split('.').pop()));
+    expect(backdropOf(NORTH_POLE, 2).sky).toBe(70);
+    expect(kinds(2)).toEqual(['BACKGROUND_DOWN', 'BACKGROUND_TOP', 'sleigh']);
+    expect(backdropOf(NORTH_POLE, 3).sky).toBeNull();
+    expect(kinds(3)).toEqual(['COVERED_SKY', 'BACKGROUND_DOWN', 'moving', 'moving', 'moving', 'moving', 'moving', 'moving', 'BACKGROUND_TOP', 'sleigh', 'snow', 'snow', 'snow', 'snow', 'snow']);
+    // Santa starts each level somewhere else in his loop.
+    const offset = (level: number) => backdropOf(NORTH_POLE, level).layers.flatMap((entry) => (isScenery(entry) && entry.scenery === 'sleigh' ? [entry.offset] : []))[0];
+    expect([1, 2, 8].map(offset)).toEqual([4.58405, 9.53402, 6.64197]);
   });
 });

@@ -70,7 +70,10 @@ export interface BackdropLayer {
  * - `scaryCloud`: a cloud that drifts at `speed` and swells (0x14aa8);
  * - `fogPatch`: a patch of fog that slides for `span` seconds of every `loop`, `start` seconds
  *   in at first (0x149d4);
- * - `bat`: a bat that swoops for `span` seconds of every `loop` (0x14f6c).
+ * - `bat`: a bat that swoops for `span` seconds of every `loop` (0x14f6c);
+ * - `sleigh`: Santa's sleigh and reindeer crossing once every `loop` seconds (0x13f84);
+ * - `snow`: flakes falling from `top` to `bottom` at `fall` px a second, one every half to one
+ *   `interval`, blown about by up to `drift` (0x13d0c).
  */
 export type SceneryItem =
   | { scenery: 'sea'; area: SparkleArea }
@@ -83,10 +86,15 @@ export type SceneryItem =
   | { scenery: 'propeller'; resource: string; position: Point; scale: Point }
   | { scenery: 'scaryCloud'; resource: string; position: Point; speed: number }
   | { scenery: 'fogPatch'; resource: string; position: Point; flipped: boolean; loop: number; span: number; speed: number; start: number }
-  | { scenery: 'bat'; position: Point; loop: number; span: number; start: number; phase: number };
+  | { scenery: 'bat'; position: Point; loop: number; span: number; start: number; phase: number }
+  | { scenery: 'sleigh'; position: Point; loop: number; speed: number; offset: number }
+  | { scenery: 'snow'; resource: string; top: number; bottom: number; drift: number; fall: number; interval: number };
 
 /** What a stage script puts behind the airport, in the order it makes it: images and scenery. */
 export type BackdropEntry = BackdropLayer | SceneryItem;
+
+/** A stage's backdrop on a level. */
+export const backdropOf = (layout: StageLayout, level: number): StageLayout['backdrop'] => layout.backdropFor?.(level) ?? layout.backdrop;
 
 export const isScenery = (entry: BackdropEntry): entry is SceneryItem => 'scenery' in entry;
 
@@ -123,6 +131,8 @@ export interface StageLayout {
      */
     layers: BackdropEntry[];
   };
+  /** The backdrop of a level, for a stage whose script makes it differently from one level to another. */
+  backdropFor?: (level: number) => StageLayout['backdrop'];
   /** The balloon corner the stage script gives its runways (see `BalloonCorner`). */
   runwayBalloonCorner: 0 | 1 | 2 | 3;
   /**

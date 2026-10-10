@@ -18,7 +18,7 @@ import { SERVICE_SLOTS, SERVICE_TAB_SURFACES, ServiceTab, serviceGrip } from './
 import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ringInterval, WATER_SURFACES, WaterRings } from './view/waterEffects';
 import { createScenery, scenerySurfaceIds, type SceneryView } from './view/scenery';
-import { isScenery } from './stages/layout';
+import { backdropOf, isScenery } from './stages/layout';
 import { PASSENGER_ICONS, PlaneView, planeSurfaceIds, type BalloonCorner, type Passenger } from './planeView';
 import type { Progress } from './progress';
 import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
@@ -169,7 +169,7 @@ export class LevelScene {
     });
 
     const ids = new Set<string>([...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
-    for (const entry of layout.backdrop.layers) {
+    for (const entry of backdropOf(layout, options.level).layers) {
       if (isScenery(entry)) for (const id of scenerySurfaceIds(entry)) ids.add(id);
       else ids.add(entry.resource);
     }
@@ -447,9 +447,9 @@ export class LevelScene {
 
   private build(): void {
     const { layout } = this.options;
-    const { horizon, layers } = layout.backdrop;
-    if (layout.backdrop.sky !== null) {
-      this.sky = new SkyView(this.textures, layout.backdrop.sky, horizon);
+    const { horizon, layers, sky } = backdropOf(layout, this.options.level);
+    if (sky !== null) {
+      this.sky = new SkyView(this.textures, sky, horizon);
       this.ground.addChild(this.sky);
     }
 

@@ -1,9 +1,49 @@
-import { IMPROVEMENT, offer, runway, type StageLayout } from './layout';
+import { IMPROVEMENT, offer, runway, type SceneryItem, type StageLayout } from './layout';
 
 // Stage 4 layout ("North Pole"), from a run of its stage script (0xd2958) in the emulator
 // (tools/re/stage_layout.py). See docs/re-notes.md.
 
 const I = IMPROVEMENT;
+
+/** Where Santa is in his loop when each level starts: the script takes it from the level's own random numbers. */
+const SLEIGH_OFFSETS: Record<number, number> = { 1: 4.58405, 2: 9.53402, 3: 3.64747, 4: 3.3765, 5: 4.03167, 6: 9.37971, 7: 7.04744, 8: 6.64197 };
+
+/** The clouds every sky has (0xcda08), as the six moving images they are, for a day without a sky object. */
+const CLOUDS: SceneryItem[] = (
+  [
+    ['AMBIENT.CLOUD_1', 0.275, 0.3],
+    ['AMBIENT.CLOUD_2', 0.325, 0.65],
+    ['AMBIENT.CLOUD_3', 0.175, 1],
+    ['AMBIENT.CLOUD_1', 0.275, 1.3],
+    ['AMBIENT.CLOUD_2', 0.225, 1.55],
+    ['AMBIENT.CLOUD_3', 0.325, 1.92],
+  ] as const
+).map(([resource, height, start]) => ({ scenery: 'moving', resource, x: -100, y: Math.floor(height * 70), loop: 520, span: 260, speed: 5, offset: start * 260 }));
+
+const snow = (image: number, bottom: number, drift: number, fall: number, interval: number): SceneryItem => ({ scenery: 'snow', resource: `SNOW_FLAKES.${image}`, top: 30, bottom, drift, fall, interval });
+
+/**
+ * The backdrop of a level, in the order the script makes it. Even levels have the usual sky; on
+ * odd ones it is overcast, an image stretched over the top, and it snows: five falls, the
+ * farthest first, each with bigger flakes that fall faster, lower and fewer than the one before.
+ * Santa's sleigh crosses on every level.
+ */
+function backdrop(level: number): StageLayout['backdrop'] {
+  const overcast = level % 2 === 1;
+  const sleigh: SceneryItem = { scenery: 'sleigh', position: { x: -100, y: 50 }, loop: 380, speed: 50, offset: SLEIGH_OFFSETS[level] ?? 0 };
+  return {
+    sky: overcast ? null : 70,
+    horizon: 162,
+    layers: [
+      ...(overcast ? [{ resource: 'STAGES.NORTH_POLE.COVERED_SKY', position: { x: 0, y: 0 }, scale: { x: 16, y: 23 } }] : []),
+      { resource: 'STAGES.NORTH_POLE.BACKGROUND_DOWN', position: { x: 0, y: 162 }, scale: { x: 16, y: 14.5 } },
+      ...(overcast ? CLOUDS : []),
+      { resource: 'STAGES.NORTH_POLE.BACKGROUND_TOP', position: { x: 0, y: 45 } },
+      sleigh,
+      ...(overcast ? [snow(4, 150, 5, 10, 0.2), snow(3, 180, 5, 15, 0.25), snow(2, 280, 10, 25, 0.5), snow(1, 320, 20, 50, 4), snow(0, 320, 40, 100, 15)] : []),
+    ],
+  };
+}
 
 export const NORTH_POLE: StageLayout = {
   stage: 4,
@@ -12,15 +52,9 @@ export const NORTH_POLE: StageLayout = {
   gateTypes: [6, 7, 8],
   runwayType: 3,
   gasStationType: 4,
-  backdrop: {
-    sky: 70,
-    horizon: 162,
-    // In the order the script creates them; a flying Santa (0x13f84) follows and is not drawn yet.
-    layers: [
-      { resource: 'STAGES.NORTH_POLE.BACKGROUND_DOWN', position: { x: 0, y: 162 }, scale: { x: 16, y: 14.5 } },
-      { resource: 'STAGES.NORTH_POLE.BACKGROUND_TOP', position: { x: 0, y: 45 } },
-    ],
-  },
+  // An even day: a clear sky. See `backdropFor` for the overcast odd days.
+  backdrop: backdrop(2),
+  backdropFor: backdrop,
   gateDecorations: [],
   stopSpotSurfaces: { normal: ['STOPSPOT'], vip: ['STOPSPOT_VIP'] },
   pontoons: false,

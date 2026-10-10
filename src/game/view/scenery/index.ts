@@ -5,6 +5,7 @@ import { SeaSparkles } from '../waterEffects';
 import { CloudBandView, MovingImageView, PropellerView } from './airborne';
 import { BAT_SURFACES, BatView, FogPatchView, ScaryCloudView } from './monsters';
 import { AuroraView, StarView } from './night';
+import { SLEIGH_SURFACES, SleighView, SnowView } from './northPole';
 import { FlagView, HorizonObjectView } from './simple';
 
 // The animated scenery a stage script makes between its backdrop images: one view per class of
@@ -33,6 +34,10 @@ export function scenerySurfaceIds(item: SceneryItem): string[] {
       return [item.resource];
     case 'bat':
       return BAT_SURFACES;
+    case 'sleigh':
+      return SLEIGH_SURFACES;
+    case 'snow':
+      return [item.resource];
     case 'star':
       return ['AMBIENT.STAR'];
   }
@@ -82,6 +87,14 @@ export function createScenery(textures: TextureStore, item: SceneryItem): Scener
     }
     case 'bat': {
       const view = new BatView(textures, item);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'sleigh': {
+      const view = new SleighView(textures, item);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'snow': {
+      const view = new SnowView(textures, item);
       return { view, update: (dt) => view.update(dt) };
     }
   }

@@ -1148,7 +1148,7 @@ one adds, removes or changes; `--level` shows what depends on the level.
 - Runways of type 3 created with flag 0: (−5, 217) and (30, 257); with `0x34`, (−5, 202),
   (30, 232) and (65, 262). Stop spots, wash and go and painting stop spot as in stage 3.
 - Backdrop: sky 70, `BACKGROUND_DOWN` at (0, 162) scaled 16×14.5, clouds, `BACKGROUND_TOP` at
-  (0, 45), and a flying Santa (`0x13f84`). The neutral gate colour is (0.549, 0.345, 1).
+  (0, 45), and Santa's sleigh (`0x13f84`). The neutral gate colour is (0.549, 0.345, 1).
 - Offers in the order registered: `0x01` 25000, `0x77` 160000, `0x02` 35000, `0x0a` 60000,
   `0x72` 160000, `0x16` 60000, `0x17` 70000, `0x1e` 55000, `0x1f` 65000, `0x20` 75000, `0x21`
   85000, `0x28` 50000, `0x29` 60000, `0x2a` 70000, `0x34` 120000, deicer `0x6e` 100000, `0x74`
@@ -1583,6 +1583,28 @@ place and plane; only what is added later (the service tabs) lies over them.
   `STAGES.MONSTERS.BAT.<n>`, `n = int(6·frac(2t) + phase) mod 6`. Five, made after the places,
   all with loop 25 and span 10 and y 190: x 520 start 0 phase 15; 510, 0.37, 5; 540, 10.1, 7;
   540, 11.1, 0; 530, 1.27, 11.
+
+- Santa's sleigh (`0x13f84(position, loop, speed, offset)` → class `0x397f4`, draw
+  `0x398c8`): a clock as the moving image's; the rear is at `x + speed·clock`, drawn while
+  that is between −200 and 1000. Six pieces 18 px apart, `STAGES.NORTH_POLE.SANTA` at the rear
+  and five `REINDEER` ahead; piece `i` is at
+  `y + 3·sin(2π·(0.2·clock + 0.1·i)) − 20·cos(π·(x_i − 400)/600)` and turned to the direction
+  from the piece behind it (`0x9f90`, in degrees), the rear one by half the angle of the next.
+  The North Pole has it at (−100, 50) with loop 380 and speed 50; the offset comes from the
+  level's random numbers: 4.584, 9.534, 3.647, 3.377, 4.032, 9.380, 7.047 and 6.642 on levels
+  1 to 8.
+- Snow (`0x13d0c(top, bottom, image, drift, fall, interval)` → class `0x765d8`, update
+  `0x76748`, draw `0x76a5c`). A flake is made each time a timer runs out and
+  `(0.5…1)·interval` is added to it: at x −20…500 and y `top`, falling at `fall`, with a
+  sideways speed within ±`drift`, an angle of 0…360°, a spin within ±60°/s and a size of
+  0.75…1. Every 0.3…0.6 s it gets a new sideways push within ±`drift/2` and a new push on its
+  spin within ±60°/s². It is removed at `bottom` and drawn with opacity
+  `clamp(10·min(u, 1 − u))`, `u` being how far down it is. Five on the North Pole's overcast
+  levels, all from y 30: `SNOW_FLAKES.4` to 150 (5, 10, 0.2), `.3` to 180 (5, 15, 0.25), `.2`
+  to 280 (10, 25, 0.5), `.1` to 320 (20, 50, 4), `.0` to 320 (40, 100, 15).
+- The North Pole's script makes a different backdrop on odd levels: instead of the sky
+  object, `STAGES.NORTH_POLE.COVERED_SKY` at (0, 0) scaled 16×23, and the five falls of snow.
+  The clouds and the sleigh are made on every level.
 
 ## Drawing order of the airport's objects — confirmed
 
