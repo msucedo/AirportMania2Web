@@ -7,6 +7,7 @@ import { clockDigits, goalBarFraction } from '../src/game/view/hud';
 import { comboArrows, usingArrow } from '../src/game/view/runwayView';
 import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
+import { brushPose, patchAlpha, puffAlpha } from '../src/game/view/sandView';
 
 describe('plane drawing rules', () => {
   it('picks the perspective and mirroring from the heading', () => {
@@ -159,3 +160,32 @@ describe('speech balloon flash', () => {
     expect(end.opacity).toBeCloseTo(0.02, 5);
   });
 });
+
+describe('runway sand', () => {
+  it('lays its six patches one after another from the left, and solid once it has settled', () => {
+    const row = (fade: number) => [0, 1, 2, 3, 4, 5].map((index) => +patchAlpha(index, fade).toFixed(2));
+    expect(row(0.25)).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(row(0.5)).toEqual([1, 0.67, 0.33, 0, 0, 0]);
+    expect(row(0.75)).toEqual([1, 1, 1, 1, 0.67, 0.33]);
+    expect(row(1)).toEqual([1, 1, 1, 1, 1, 1]);
+    expect(row(1.5)).toEqual([1, 1, 1, 1, 1, 1]);
+  });
+
+  it('sweeps the brush from the right end to the left, dropping onto the runway as it appears', () => {
+    expect(brushPose(0)).toEqual({ x: 180, y: -25, alpha: 0, frame: 0 });
+    expect(brushPose(0.5)).toEqual({ x: 85, y: -5, alpha: 1, frame: 0 });
+    expect(brushPose(0.26).frame).toBe(Math.trunc(0.26 * 96) % 8);
+    // It stops turning at the end and fades out over the last twentieth of the way.
+    expect(brushPose(0.95).frame).toBe(2);
+    expect(brushPose(0.975).alpha).toBeCloseTo(0.5, 5);
+    expect(brushPose(1).x).toBe(-10);
+  });
+
+  it('shows a puff only once it has less than a second left, and fades it at the end', () => {
+    expect(puffAlpha(1.1)).toBe(0);
+    expect(puffAlpha(0.9)).toBeCloseTo(0.5, 5);
+    expect(puffAlpha(0.7)).toBe(1);
+    expect(puffAlpha(0.25)).toBeCloseTo(0.5, 5);
+  });
+});
+

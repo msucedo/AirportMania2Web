@@ -7,6 +7,7 @@ import { parsePlaneTable } from '../src/data/planes';
 import type { XmlNode } from '../src/data/xml';
 import { Need, PlaneState, RULES, punctuality, roundScore } from '../src/game/sim/rules';
 import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulation';
+import { AFRICA } from '../src/game/stages/africa';
 import { AIRBORNE } from '../src/game/stages/airborne';
 import { ARCHES } from '../src/game/stages/arches';
 import { ISLAND } from '../src/game/stages/island';
@@ -1241,6 +1242,103 @@ describe('simulation, stage 5 (airborne)', () => {
   it('has fog from level 3 and its bonus events on levels 2, 6 and 8', () => {
     expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => airborne(level).hazardSchedule.filter((h) => h.kind === 'fog').length)).toEqual([0, 0, 1, 2, 2, 4, 2, 2]);
     expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => airborne(level).bonus?.kind ?? null)).toEqual([null, 'balloons', null, null, null, 'helicopter', null, 'balloons']);
+  });
+});
+
+describe('simulation, stage 6 (africa)', () => {
+  const stage6 = parseStageSchedule(tree('data/maps/stage_levels_06.json'));
+  const area6 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(6)!;
+  const africa = (level = 1, owned: number[] = [], random?: () => number): Simulation =>
+    new Simulation({ layout: AFRICA, schedule: findLevel(stage6, level, false), goals: findGoals(area6, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, ...(random ? { random } : {}) });
+
+  it('builds the airport the stage script builds, with three runways and a fourth on sale', () => {
+    const sim = africa();
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 12, { x: 350, y: 125 }],
+      ['B', 12, { x: 375, y: 175 }],
+    ]);
+    expect(sim.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 4, { x: -5, y: 175 }],
+      [2, 4, { x: 20, y: 210 }],
+      [3, 4, { x: 45, y: 245 }],
+    ]);
+    expect([sim.gasStations[0]!.position, sim.hangars[0]!.position, sim.luggages[0]!.position]).toEqual([
+      { x: 245, y: 78 },
+      { x: 135, y: 68 },
+      { x: 21, y: 98 },
+    ]);
+    expect([sim.gasStations[0]!.descriptor.type, sim.hangars[0]!.descriptor.type, sim.luggages[0]!.descriptor.type]).toEqual([6, 4, 3]);
+    for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.luggages, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+
+    const full = africa(1, [0x35, 0x3c, 0x50, 0x16, 0x2b]);
+    expect(full.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 7, { x: 0, y: 170 }],
+      [2, 4, { x: 25, y: 200 }],
+      [3, 4, { x: 50, y: 230 }],
+      [4, 4, { x: 75, y: 260 }],
+    ]);
+    expect(full.hangars[0]!.descriptor.type).toBe(9);
+    expect(full.gates.map((g) => [g.letter, g.descriptor.type])).toEqual([
+      ['A', 12],
+      ['B', 12],
+      ['C', 12],
+      ['D', 14],
+    ]);
+  });
+
+  /** A dice that goes round four throws: the level's fog lands on runway 1 and its sand, earlier, on runway 3. */
+  const dice = (): (() => number) => {
+    const throws = [0.1, 0.5, 0.9, 0.3];
+    let next = 0;
+    return () => throws[next++ % throws.length]!;
+  };
+
+  // Nine levels, from the levels database.
+  const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const FOGS = [0, 0, 1, 3, 3, 3, 4, 3, 5];
+  const SANDS = [0, 0, 1, 2, 3, 3, 6, 3, 3];
+
+  it('schedules the fog and the sand the levels database gives each level', () => {
+    // A level can end up with fewer than its number when no free moment is found on a runway.
+    const count = (kind: string) => LEVELS.map((level) => findGoals(area6, level, false)[kind === 'fog' ? 'fogs' : 'sands']);
+    expect(area6.levelsCount).toBe(9);
+    expect(count('fog')).toEqual(FOGS);
+    expect(count('sand')).toEqual(SANDS);
+    // Scheduled fog first and sand second, then put in order of time.
+    expect(africa(3, [], dice()).hazardSchedule.map((h) => [h.kind, h.runway])).toEqual([
+      ['sand', 2],
+      ['fog', 0],
+    ]);
+    // With the same throw for both, the sand finds the fog's moment on its runway taken twenty times over and is dropped.
+    expect(africa(3, [], () => 0.5).hazardSchedule.map((h) => h.kind)).toEqual(['fog']);
+    expect(LEVELS.map((level) => africa(level).bonus?.kind ?? null)).toEqual([null, 'helicopter', null, null, 'balloons', null, 'helicopter', null, 'balloons']);
+  });
+
+  it('closes a runway under sand for eighteen seconds, or five and a half with the anti-sand', () => {
+    const level = SANDS.findIndex((sands) => sands > 0) + 1;
+    const first = (sim: Simulation) => sim.runways[sim.hazardSchedule.find((h) => h.kind === 'sand')!.runway]!;
+    const sim = africa(level, [], dice());
+    const runway = first(sim);
+    const events: SimEvent[] = [];
+    runUntil(sim, () => runway.sand !== null, 400, events);
+    const appeared = sim.time;
+    const plane = sim.planes.find((p) => !p.gone && !p.landed && p.state === PlaneState.FLYING);
+    if (plane) expect(sim.addOrder(plane, runway)).toBe(false);
+    runUntil(sim, () => runway.sand?.lifting === true, 40, events);
+    expect(sim.time - appeared).toBeCloseTo(RULES.sand.machineAt + RULES.sand.time + RULES.sand.settle, 1);
+    expect(events.some((e) => e.type === 'hazardMachine')).toBe(false);
+    // It then fades away in a second.
+    runUntil(sim, () => runway.sand === null, 5);
+    expect(sim.time - appeared).toBeCloseTo(19, 1);
+
+    const quick = africa(level, [0x70], dice());
+    const other = first(quick);
+    const swept: SimEvent[] = [];
+    runUntil(quick, () => other.sand !== null, 400, swept);
+    const from = quick.time;
+    runUntil(quick, () => other.sand?.lifting === true, 40, swept);
+    expect(quick.time - from).toBeCloseTo(RULES.sand.machineAt + (1 - RULES.sand.clearAt) / RULES.sand.sweep, 1);
+    expect(swept.filter((e) => e.type === 'hazardMachine' && e.kind === 'sand')).toHaveLength(1);
   });
 });
 

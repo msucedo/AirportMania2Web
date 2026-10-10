@@ -24,6 +24,7 @@ import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { BONUS_SURFACES, BonusView } from './view/bonusView';
 import { FOG_SURFACES, FogView } from './view/fogView';
 import { ICE_SURFACES, IceView } from './view/iceView';
+import { SAND_SURFACES, SandBrush, SandView } from './view/sandView';
 import { LuggageView, luggageSurfaceIds } from './view/luggageView';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
@@ -94,6 +95,8 @@ export class LevelScene {
   private readonly bonusView: BonusView;
   private readonly fogViews: FogView[] = [];
   private readonly iceViews: IceView[] = [];
+  private readonly sandViews: SandView[] = [];
+  private readonly sandBrushes: SandBrush[] = [];
   private readonly luggageViews: LuggageView[] = [];
   /** The anti-fog machines' fans and the deicers' motors, by kind and runway number. */
   private readonly fans = new Map<string, ReturnType<AudioPlayer['loop']>>();
@@ -172,6 +175,7 @@ export class LevelScene {
     for (const station of sim.gasStations) for (const id of gasStationSurfaceIds(station)) ids.add(id);
     for (const luggage of sim.luggages) for (const id of luggageSurfaceIds(luggage)) ids.add(id);
     if (sim.hazardSchedule.some((h) => h.kind === 'ice')) for (const id of ICE_SURFACES) ids.add(id);
+    if (sim.hazardSchedule.some((h) => h.kind === 'sand')) for (const id of SAND_SURFACES) ids.add(id);
     for (const hangar of sim.hangars) {
       ids.add(hangar.descriptor.surfaces.back);
       ids.add(hangar.descriptor.surfaces.front);
@@ -403,6 +407,12 @@ export class LevelScene {
         this.fogViews.push(fog);
         this.planeLayer.addChild(fog);
       }
+      if (this.sim.hazardSchedule.some((h) => h.kind === 'sand')) {
+        const sand = new SandView(this.textures, runway);
+        this.sandViews.push(sand);
+        this.planeLayer.addChild(sand);
+        this.sandBrushes.push(new SandBrush(this.textures, runway, this.planeLayer));
+      }
       // A water runway lies between two lines of buoys, set relative to it by the stage script (0xcf370).
       const buoys = layout.water
         ? [new BuoyLine(this.textures, runway.position.x - 186, runway.position.y - 27), new BuoyLine(this.textures, runway.position.x - 166, runway.position.y + 6)]
@@ -597,15 +607,19 @@ export class LevelScene {
         break;
       case 'hazardAppeared':
         if (event.kind === 'ice') this.audio.play('SOUNDS.RUNWAY_FREEZING');
+        else if (event.kind === 'sand') this.audio.play('SOUNDS.SAND_APPEARS');
         break;
       case 'hazardMachine':
-        this.fans.set(`${event.kind}-${event.runway.number}`, this.audio.loop(event.kind === 'fog' ? 'SOUNDS.ANTI_FOG_SYSTEM_FAN' : 'SOUNDS.DE_ICER_WORKING'));
+        // The brush plays its sound once (0x1a1ca); the other two machines hum while they work.
+        if (event.kind === 'sand') this.audio.play('SOUNDS.ANTI_SAND');
+        else
+          this.fans.set(`${event.kind}-${event.runway.number}`, this.audio.loop(event.kind === 'fog' ? 'SOUNDS.ANTI_FOG_SYSTEM_FAN' : 'SOUNDS.DE_ICER_WORKING'));
         break;
       case 'hazardLifted': {
         const key = `${event.kind}-${event.runway.number}`;
         this.fans.get(key)?.stop(0.5);
         this.fans.delete(key);
-        if (event.byMachine) this.audio.play('SOUNDS.ANTI_FOG_DEICER_FINISH');
+        if (event.byMachine && event.kind !== 'sand') this.audio.play('SOUNDS.ANTI_FOG_DEICER_FINISH');
         break;
       }
       case 'paintingReady':
@@ -655,6 +669,8 @@ export class LevelScene {
     this.bonusView.update(elapsed);
     for (const fog of this.fogViews) fog.update(elapsed);
     for (const ice of this.iceViews) ice.update(elapsed);
+    for (const sand of this.sandViews) sand.update();
+    for (const brush of this.sandBrushes) brush.update(elapsed);
     for (const luggage of this.luggageViews) luggage.update(elapsed);
     if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);

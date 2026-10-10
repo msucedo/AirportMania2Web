@@ -132,9 +132,16 @@ export const RULES = {
    * lasts, and how long the machine takes to end it (fog 0x3a41c and 0x19b78, ice 0x4b850 and
    * 0x2ad80).
    */
-  hazards: { margin: 30, apart: 30, idle: 3, patience: 25, fade: 2, machineAt: 2 },
-  fog: { tries: 30, time: 15, machineTime: 5 },
-  ice: { tries: 20, time: 30, machineTime: 7 },
+  hazards: { margin: 30, idle: 3, patience: 25, fade: 2, machineAt: 2 },
+  fog: { tries: 30, apart: 30, time: 15, machineTime: 5 },
+  ice: { tries: 20, apart: 40, time: 30, machineTime: 7 },
+  /**
+   * Sand (0x6f6dc): it takes `appear` seconds to come; `machineAt` seconds after it appeared the
+   * brush comes if the anti-sand is owned, and the sand goes at `sweep` per second, freeing the
+   * runway below `clearAt`. Without it the sand lies `time` seconds more and the runway is free
+   * `settle` seconds later. The brush crosses the runway in `brushTime` seconds (0x1a230).
+   */
+  sand: { tries: 20, apart: 40, appear: 1, machineAt: 2, time: 15, settle: 1, sweep: 0.2, clearAt: 0.3, brushTime: 4 },
 
   /**
    * Wash and go (0x84d60, 0x852b0): a wash takes `time` seconds, the plane is clean with `rinse`

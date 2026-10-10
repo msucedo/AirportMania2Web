@@ -1088,8 +1088,10 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
 - Schedule (`0x102d8`): `TotalTime − 30` is cut into that many equal slices and each fog gets a
   random moment in its slice and a random runway (libc `rand`), retried up to 30 times so that
   no two on the same runway are within 30 s. Entries hold the runway index, the kind (0 fog, 1
-  ice, 2 sand) and the time.
-- When its time comes (`0x1094c`) the fog is created (`0x6d354`, kept at `runway+0xd0`) once the
+  ice, 2 sand) and the time. The ices and then the sands follow in the same way, each with 20
+  tries and 40 s apart from any other entry on the runway, and the list is then sorted by time
+  (`0x15234`, a stable list sort comparing `+16`). An entry that finds no moment is left out.
+- Only the first entry of the list is looked at. When its time comes (`0x1094c`) the fog is created (`0x6d354`, kept at `runway+0xd0`) once the
   runway is not busy and has been idle for more than 3 s (`runway+0xd8`); after 25 s of waiting
   it is dropped.
 - A runway with fog refuses every plane (`0x6da72` in slot 15). Likewise ice (`+0xcc`) and sand
@@ -1198,14 +1200,72 @@ animation.
 
 ## Runway ice — confirmed
 
-- Scheduled like fog (the ices are appended after the fogs, with 20 attempts each instead of
-  30) and created by `0x6d41c` at `runway+0xcc`. Class `0x4b71c`.
+- Scheduled like fog (20 attempts each instead of 30, and 40 s apart instead of 30) and created
+  by `0x6d41c` at `runway+0xcc`. Class `0x4b71c`.
 - It lasts 30 s (`0x4b850`) and plays `SOUNDS.RUNWAY_FREEZING`. With the deicer `0x6e`
   (`airport+0xac`) a deicer (`0x2ac90`, `SOUNDS.DE_ICER_WORKING`) comes 2 s in and ends it 7 s
   later (`0x2ad80`).
 - Drawn (`0x4b9d4`) as `RUNWAY.FROZEN` over the runway, with the fade as opacity.
 - Web version: the deicer's draw (`0x2ae50`) has only been read in part; it is shown rocking
-  over the runway. Sand (`runway+0xd4`, `0x6d4d0`, anti-sand `0x70`) is not built yet.
+  over the runway.
+
+## Runway sand — confirmed
+
+- Scheduled like ice (20 attempts, 40 s apart) and created by `0x6d4d0` at `runway+0xd4`.
+  Class with vtable `0x17b548`; it plays `SOUNDS.SAND_APPEARS`. A runway under sand refuses
+  every plane (`0x6da3a`), with hint 13 when the order was given by hand (12 for ice, 11 or 14
+  for fog).
+- States (`0x6f6dc`, `sand+0x20`), with a clock that runs from its creation and a fade:
+  0, the fade rises by 1 a second to 1; 1, once the clock passes 2 s, either the anti-sand
+  `0x70` (`airport+0xae`) is owned, a brush is created and it goes to 5, or the clock starts
+  again and it goes to 2; 2, after 15 s the fade is set to 2 and it goes to 3; 3, the fade
+  falls by 1 a second and below 1 the runway is freed (4); 4, it keeps falling and at 0 the
+  sand is removed. Swept: 5, the fade falls by 0.2 a second and below 0.3 the runway is freed
+  (6); 6, the same until 0. So a runway is closed 18 s without the brush and 5.5 s with it.
+- Draw (`0x6f8e0`): six images `RUNWAY.SAND.n`, `n = (i + 2) mod 4`, at x −140 + 56·i and 2 px
+  above the runway's position. With the fade below 1 each has opacity
+  `clamp(4·fade − i/3 − 1, 0, 1)`. Sorted 4 px in front of the runway's line.
+- Brush (`0x1a10c`, vtable `0x179798`, `SOUNDS.ANTI_SAND` played once): its progress rises by
+  a quarter a second and it is removed at 1. Drawn (`0x1a4b0`) at x + 180 − 190·p and
+  y − 25 + 20·a², with opacity `a = clamp(20·min(p, 1 − p), 0, 1)` and image `BRUSH.n`,
+  `n = int(96·p) mod 8`, or 2 from p = 0.94. Sorted 5 px in front of the runway's line.
+- Puffs (`0x1a230`): while p < 0.9 a timer that starts at 0.06 s runs down and each time it
+  passes 0 a puff is made and 0.05 to 0.1 s added. A puff (`0x1a8ec`, `SAND_PUFF`) starts at
+  the brush's x and 25 px above the runway plus half its speed; speed x −25 to −15 and y −20
+  to −5, both negated half the time; acceleration y −20 to −10; angle −10° to 10° turning at
+  −30 to 30°/s; size 0.5 to 0.8 growing by 0.6 a second; life 1 to 1.2 s; opacity
+  `clamp(min(2·life, 5·(1 − life)), 0, 1)`. It moves by the speed at the middle of each step
+  (`0x9f18`).
+- Web version: the hint is not shown (as for fog and ice).
+
+## Stage 6 ("Africa") — read with the emulated script (`0xd77ac`)
+
+- Nine levels. Gates of descriptor types 12, 13 (improved) and 14 (improved again): A
+  (350, 125), B (375, 175), C (404, 225) with `0x16`, `0x20` or `0x2a`, D (430, 275) with
+  `0x17`, `0x21` or `0x2b`.
+- Gas station type 6 at (245, 78), hangar type 4 at (135, 68) (type 9 with the improved hangar
+  `0x50`) and luggage conveyor type 3 at (21, 98).
+- Taxi nodes (270, 180), (290, 210), (310, 240), (360, 312), (375, 312), (355, 290).
+- Three runways of type 4 from the start: (−5, 175), (20, 210), (45, 245). With the fourth
+  runway `0x35`: (0, 170), (25, 200), (50, 230), (75, 260). With the VIP runway `0x3c` runway
+  1 is of type 7.
+- Stop spots, wash and go and painting stop spot as in stage 5.
+- Backdrop: sky 70, `BACKGROUND_DOWN` at (0, 120) scaled 16×, clouds, `BACKGROUND_TOP` at
+  (0, 40), `AIRPORT` at (370, 57). The neutral gate colour is (0.898, 0.592, 1).
+- Offers in the order registered: `0x01` 50000 (try from level 4), `0x77` 320000, `0x02`
+  75000 (6), `0x0a` 135000, `0x72` 320000, `0x16` 200000, `0x17` 210000, `0x1e` 160000,
+  `0x1f` 170000, `0x20` 180000, `0x21` 190000, `0x28` 120000, `0x29` 130000, `0x2a` 140000,
+  fourth runway `0x35` 250000, `0x3c` 150000, `0x50` 260000, `0x74` 170000, `0x73` 170000,
+  anti-fog `0x6f` 170000, anti-sand `0x70` 230000 (6), licence `0xcf` 430000, `0x2b` 150000.
+  When each is on sale follows the pattern confirmed for stages 1 to 3 and single-improvement
+  runs.
+- Bonus events: helicopter on level 2 (from the right, 63.3 s, coins of 2000) and level 7
+  (from the left, 152.1 s, 2500), balloons on level 5 (108.5 s, 2500) and level 9 (101.9 s,
+  3000).
+- Fog and sand per level, from the levels database: none on levels 1 and 2; 1 and 1 on 3; 3
+  and 2 on 4; 3 and 3 on 5 and 6; 4 and 6 on 7; 3 and 3 on 8; 5 and 3 on 9.
+- Later stages have more levels than the first five: 10 in stage 7, 11 in stage 8, 12 in
+  stage 9 and 13 in stage 10.
 
 ## Stage 3: what is still approximate
 
@@ -1227,7 +1287,7 @@ events can be read the same way. Builders not yet named, by script:
 |---|---|---|---|
 | 4 | `0xd2958` | North Pole | `0x13d0c` ×5 (snow or smoke), `0x13f84` (flying Santa), `0x14738` (luggage) |
 | 5 | `0xd4f54` | Airborne | `0x14858` ×5 (scrolling clouds), `0x14928` ×2 (propellers), `0x14b5c` ×4 |
-| 6 | `0xd77ac` | Africa | none beyond `0x14738` |
+| 6 | `0xd77ac` | Africa | none beyond `0x14738` (built, see above) |
 | 7 | `0xd9e00` | Antarctic | `0x13808` (aurora), stars |
 | 8 | `0xdc5b8` | Carrier | `0x13c3c` (sea), `0x14c3c`, `0x14d08`, `0x14dd4`, `0x14ea0` |
 | 9 | `0xdef50` | Moon | `0x136a8` |

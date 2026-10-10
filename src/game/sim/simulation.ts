@@ -70,10 +70,12 @@ export interface Runway extends PlaceBase {
   fog: Fog | null;
   /** Ice on it (`runway+0xcc`), likewise. */
   ice: Fog | null;
+  /** Sand on it (`runway+0xd4`), likewise. */
+  sand: Sand | null;
 }
 
 /** What can close a runway. */
-export type HazardKind = 'fog' | 'ice';
+export type HazardKind = 'fog' | 'ice' | 'sand';
 
 /** Fog over a runway (class `0x3a324`) or ice on it (class `0x4b71c`). */
 export interface Fog {
@@ -85,6 +87,16 @@ export interface Fog {
   lifting: boolean;
   /** Seconds the anti-fog machine or the deicer has been at work on it, or null without one. */
   machine: number | null;
+}
+
+/**
+ * Sand on a runway (class `0x6f5cc`). Its `fade` is 0 to 1 while it comes and goes, and 2 down to
+ * 1 while it settles before freeing the runway; `age` starts again once it is left to lie; and
+ * `machine` counts the seconds since the brush came.
+ */
+export interface Sand extends Fog {
+  /** State of the original (`sand+0x20`): 0 coming, 1 just come, 2 lying, 3 settling, 4 going, 5 and 6 being swept. */
+  phase: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
 export interface GasStation extends PlaceBase {
@@ -346,11 +358,11 @@ export class Simulation {
   private nextBonusId = 1;
   private readonly random: () => number;
   /**
-   * Fog and ice still to come: when, and on which runway (`level+0x110`). The fogs are listed
-   * first, then the ices, and only the first entry is ever looked at, as in the original.
+   * Fog, ice and sand still to come: when, and on which runway (`level+0x110`), in order of
+   * time. Only the first entry is ever looked at, as in the original.
    */
   readonly hazardSchedule: { time: number; runway: number; kind: HazardKind }[] = [];
-  /** The machines owned: anti-fog (`airport+0xad`) and deicer (`airport+0xac`). */
+  /** The machines owned: anti-fog (`airport+0xad`), deicer (`airport+0xac`) and anti-sand (`airport+0xae`). */
   readonly machines: Readonly<Record<HazardKind, boolean>>;
   /** The coffee and cake service, when the improvement is owned. */
   readonly coffee: ServiceButton | null;
@@ -500,6 +512,7 @@ export class Simulation {
         idle: 0,
         fog: null,
         ice: null,
+        sand: null,
       });
     }
 
@@ -541,9 +554,12 @@ export class Simulation {
       if (this.bonus.kind === 'balloons') this.balloonsLeft = RULES.bonus.balloons.count;
       else this.helicopterDue = true;
     }
-    this.machines = { fog: owned.has(IMPROVEMENT.ANTI_FOG), ice: owned.has(IMPROVEMENT.DEICER) };
+    this.machines = { fog: owned.has(IMPROVEMENT.ANTI_FOG), ice: owned.has(IMPROVEMENT.DEICER), sand: owned.has(IMPROVEMENT.ANTI_SAND) };
     this.scheduleHazards('fog', config.goals.fogs);
     this.scheduleHazards('ice', config.goals.ices);
+    this.scheduleHazards('sand', config.goals.sands);
+    // 0x15234: the list is then sorted by time, those at the same time staying in that order.
+    this.hazardSchedule.sort((a, b) => a.time - b.time);
     // It starts empty, like the painting spot (0x24010).
     this.coffee = owned.has(IMPROVEMENT.COFFEE_AND_CAKE) ? { recharge: RULES.coffee.recharge, left: RULES.coffee.recharge, ready: false } : null;
     this.movies = owned.has(IMPROVEMENT.IN_FLIGHT_MOVIES) ? { recharge: RULES.movies.recharge, left: RULES.movies.recharge, ready: false } : null;
@@ -689,7 +705,7 @@ export class Simulation {
   private canEnter(place: Place, plane: Plane): boolean {
     if (place.kind === 'runway') {
       // 0x6da58: nothing lands on or leaves from a runway under fog or ice.
-      if ((place.fog && !place.fog.lifting) || (place.ice && !place.ice.lifting)) return false;
+      if ((place.fog && !place.fog.lifting) || (place.ice && !place.ice.lifting) || (place.sand && !place.sand.lifting)) return false;
       return !plane.landed || (plane.unloaded && plane.loaded);
     }
     if (place.kind === 'gasStation') return plane.landed && plane.unloaded && plane.serviceDone && !plane.gasDone;
@@ -768,9 +784,9 @@ export class Simulation {
   }
 
   /**
-   * 0x102d8: the level's fogs or ices. The time, less a margin, is cut into equal slices and each
-   * one gets a random moment in its slice and a random runway, kept apart from another on that
-   * runway.
+   * 0x102d8: the level's fogs, ices or sands. The time, less a margin, is cut into equal slices
+   * and each one gets a random moment in its slice and a random runway, kept apart from another
+   * on that runway (30 s for fog, 40 s for ice and sand).
    */
   private scheduleHazards(kind: HazardKind, count: number): void {
     const rule = RULES.hazards;
@@ -780,14 +796,70 @@ export class Simulation {
       for (let attempt = 0; attempt < RULES[kind].tries; attempt++) {
         const runway = Math.floor(this.random() * this.runways.length) % this.runways.length;
         const time = i * slice + this.random() * slice;
-        if (this.hazardSchedule.some((other) => other.runway === runway && Math.abs(other.time - time) < rule.apart)) continue;
+        if (this.hazardSchedule.some((other) => other.runway === runway && Math.abs(other.time - time) < RULES[kind].apart)) continue;
         this.hazardSchedule.push({ time, runway, kind });
         break;
       }
     }
   }
 
-  /** 0x1094c for the one due next, and those already lying (fog 0x3a41c, ice 0x4b850). */
+  /** 0x6f6dc: the sand's own states, which neither fog nor ice share. */
+  private updateSand(runway: Runway, dt: number): void {
+    const sand = runway.sand;
+    if (!sand) return;
+    const rule = RULES.sand;
+    sand.age += dt;
+    if (sand.machine !== null) sand.machine += dt;
+    switch (sand.phase) {
+      case 0:
+        sand.fade += dt / rule.appear;
+        if (sand.fade > 1) {
+          sand.fade = 1;
+          sand.phase = 1;
+        }
+        break;
+      case 1:
+        if (sand.age <= rule.machineAt) break;
+        if (this.machines.sand) {
+          sand.machine = 0;
+          sand.phase = 5;
+          this.emit({ type: 'hazardMachine', runway, kind: 'sand' });
+        } else {
+          sand.age = 0;
+          sand.phase = 2;
+        }
+        break;
+      case 2:
+        if (sand.age > rule.time) {
+          sand.phase = 3;
+          sand.fade = 1 + rule.settle;
+        }
+        break;
+      case 3:
+        sand.fade -= dt;
+        if (sand.fade < 1) {
+          sand.phase = 4;
+          sand.lifting = true;
+          this.emit({ type: 'hazardLifted', runway, kind: 'sand', byMachine: false });
+        }
+        break;
+      case 5:
+        sand.fade -= rule.sweep * dt;
+        if (sand.fade < rule.clearAt) {
+          sand.phase = 6;
+          sand.lifting = true;
+          this.emit({ type: 'hazardLifted', runway, kind: 'sand', byMachine: true });
+        }
+        break;
+      case 4:
+      case 6:
+        sand.fade -= (sand.phase === 4 ? 1 : rule.sweep) * dt;
+        if (sand.fade < 0) runway.sand = null;
+        break;
+    }
+  }
+
+  /** 0x1094c for the one due next, and those already lying (fog 0x3a41c, ice 0x4b850, sand 0x6f6dc). */
   private updateHazards(dt: number): void {
     const rule = RULES.hazards;
     for (const runway of this.runways) runway.idle = runway.use === 'free' ? runway.idle + dt : 0;
@@ -798,10 +870,12 @@ export class Simulation {
       if (this.time - due.time >= rule.patience) this.hazardSchedule.shift();
       else if (runway.use === 'free' && runway.idle > rule.idle) {
         this.hazardSchedule.shift();
-        runway[due.kind] = { age: 0, fade: 0, lifting: false, machine: null };
+        if (due.kind === 'sand') runway.sand = { age: 0, fade: 0, lifting: false, machine: null, phase: 0 };
+        else runway[due.kind] = { age: 0, fade: 0, lifting: false, machine: null };
         this.emit({ type: 'hazardAppeared', runway, kind: due.kind });
       }
     }
+    for (const runway of this.runways) this.updateSand(runway, dt);
 
     for (const runway of this.runways) {
       for (const kind of ['fog', 'ice'] as const) {
