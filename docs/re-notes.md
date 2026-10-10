@@ -1110,8 +1110,7 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
 - Anti-fog machine draw (`0x19c40`): at the runway's position + (170 − 35·t, −30), so it sweeps
   along the runway; `ANTI_FOG.BASE`, then `ANTI_FOG.PROPELLER` turning three times a second and
   squeezed to 0.8 across, then `ANTI_FOG.NOSE`. Its fan is `SOUNDS.ANTI_FOG_SYSTEM_FAN`.
-- Web version: the hint the game gives when a plane is sent to a foggy runway (`0x10890`,
-  `HINTS.FOG`) is not shown, and the machine's wobble as it appears is left out.
+- Web version: the machine's wobble as it appears is left out.
 
 ## Reading a stage script by running it
 
@@ -1243,7 +1242,6 @@ animation.
   −30 to 30°/s; size 0.5 to 0.8 growing by 0.6 a second; life 1 to 1.2 s; opacity
   `clamp(min(2·life, 5·(1 − life)), 0, 1)`. It moves by the speed at the middle of each step
   (`0x9f18`).
-- Web version: the hint is not shown (as for fog and ice).
 
 ## Stage 6 ("Africa") — read with the emulated script (`0xd77ac`)
 
@@ -1447,6 +1445,33 @@ animation.
   `FONTS.WHITE` in the box (−104, −80)–(200, 40), a Close button at (0, 80) 380 wide, and
   pauses the game (`0x108f0`). A new hint replaces one still up.
 
+### Hints for refused orders (`0x10890(level, plane, id)`)
+
+- Table at `0x1796a8`, picture and text key by id: 0 `PLANE` / `NEEDS_TO_SELECT`, 1 `RUNWAY` /
+  `NEED_TO_BE_LANDED`, 2 `GATE_%d` / `NEED_TO_BE_UNLOADED`, 3 `HANGAR_%d` /
+  `NEED_TO_BE_REPAIRED`, 4 `GAS_STATION_%d` / `NEED_TO_BE_FUELED`, 5 `WASH_AND_GO` /
+  `NEED_TO_BE_WASHED`, 6 `LUGGAGE_%d` / `NEED_TO_BE_LOADED_WITH_LUGGAGE`, 7 `GATE_%d` /
+  `NEED_TO_BE_LOADED`, 8 `RUNWAY` / `NEED_TO_BE_LAUNCHED`, 9 `GAS_STATION_%d` /
+  `THERE_ISNT_GAS_STATION`, 10 `HANGAR_%d` / `THERE_ISNT_HANGAR`, 11 `FOG`, 12 `ICE`, 13
+  `SAND`, 14 `SPACE_GAS`.
+- A counter per id at `level+0x170 + 4·id`: above zero it is counted down and nothing is
+  shown. Otherwise, if the plane is the selected one (`level+0x118`), the hint is shown and
+  the counter set to the game's `+0x14` kept between 3 and 5.
+- Raised by the routines that say whether a plane may go to a place now (slot 15, with the
+  order given by hand), through one helper per thing done (`0x6b3fc` landed → 1, `0x6b428`
+  unloaded → 2, `0x6b454` serviced → 3, `0x6b4ac` fuelled → 4, `0x6b480` luggage → 6,
+  `0x6b4d8` loaded → 7, `0x6b504` taken off → 8). The first missing in the place's order is
+  the hint:
+  - gate (`0x43530`): landed; then, once unloaded, fuelled, serviced, luggage; once loaded, 8.
+  - gas station (`0x40d4c`): landed, unloaded, serviced; once fuelled, luggage, loaded, 8.
+  - hangar (`0x4735c`): landed, unloaded; once serviced, fuelled, luggage, loaded, 8.
+  - luggage (`0x56c18`): landed, unloaded, serviced, fuelled; once it has it, loaded, 8.
+  - runway (`0x6da34`): sand 13, ice 12, fog 11 or 14 first; a landed plane then needs
+    unloaded, serviced, fuelled, luggage, loaded.
+  - stop spot, wash and go, painting stop spot (`0x797a8`, `0x85290`, `0x67dd8`): landed.
+- Web version: which value the game's `+0x14` holds has not been read, so three occasions pass
+  in silence. Hints 0, 5, 9 and 10 are raised elsewhere and are not shown yet.
+
 ### Dialogs and the goals panel
 
 - Text boxes (`0x2d14c`) take a rectangle as left, top, right, bottom from the dialog's
@@ -1478,7 +1503,7 @@ animation.
   whether the game records the tutorial as done, what the map's Tutorial button asks first
   (`TUTORIAL_QUESTION_DIALOG`, `0x7e590`) and which dialog leads to which have not been read:
   the opening is followed by the goals, and passing a day leads to the next, the last to the
-  map. Hints outside the tutorial (fog, ice, sand, needs) are still not shown.
+  map.
 
 ## Drawing order of the airport's objects — confirmed
 
@@ -1503,7 +1528,7 @@ animation.
   `0x149d4`, `0x14f6c`; only their arguments have been read).
 - Wash and go: the shower, rollers, water and splashes are not drawn, and the dirt goes at once
   instead of fading.
-- Fog: the hint shown when a plane is sent to a foggy runway, and the machine's wobble.
+- Fog: the machine's wobble.
 - The balloon corner of its runways is taken to be the island's.
 - Everything listed for stages 1 and 2 below applies here too.
 

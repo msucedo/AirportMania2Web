@@ -5,6 +5,7 @@ import { parseGasStationTable, parseGateTable, parseHangarTable, parseLuggageTab
 import { findGoals, findLevel, parseLevelsDb, parseStageSchedule } from '../src/data/levels';
 import { parsePlaneTable } from '../src/data/planes';
 import type { XmlNode } from '../src/data/xml';
+import { Hint, hintFor, hintImages } from '../src/game/sim/hints';
 import { Need, PlaneState, RULES, punctuality, roundScore } from '../src/game/sim/rules';
 import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulation';
 import { AFRICA } from '../src/game/stages/africa';
@@ -1636,6 +1637,66 @@ describe('simulation, stage 10 (mars)', () => {
       [3, 3, 11],
     ]);
     expect(LEVELS.map((level) => mars(level).bonus?.kind ?? null)).toEqual(LEVELS.map(() => null));
+  });
+});
+
+describe('hints for refused orders', () => {
+  const stage4 = parseStageSchedule(tree('data/maps/stage_levels_04.json'));
+  const area4 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(4)!;
+  const pole = (level: number): Simulation =>
+    new Simulation({ layout: NORTH_POLE, schedule: findLevel(stage4, level, false), goals: findGoals(area4, level, false), planes, gates, runways, gasStations, hangars, luggages, level, screenWidth: 480, random: FIXED_DICE });
+  const hintsOf = (sim: Simulation): number[] => sim.drainEvents().flatMap((e) => (e.type === 'hint' ? [e.id] : []));
+
+  it('names the picture and the text of each, with the stage in the picture', () => {
+    expect(hintFor(Hint.UNLOAD, 4)).toEqual({ image: 'HINTS.GATE_4', text: 'HINTS.NEED_TO_BE_UNLOADED' });
+    expect(hintFor(Hint.FOG, 3)).toEqual({ image: 'HINTS.FOG', text: 'HINTS.FOG' });
+    expect(hintImages(7)).toContain('HINTS.LUGGAGE_7');
+  });
+
+  it('tells a selected plane what it still has to do, in the order the place asks', () => {
+    const sim = pole(1);
+    runUntil(sim, () => sim.planes.some((p) => p.state === PlaneState.FLYING));
+    const plane = sim.planes.find((p) => p.state === PlaneState.FLYING)!;
+    sim.drainEvents();
+    // Not the selected plane: the order is refused in silence.
+    expect(sim.addOrder(plane, sim.gasStations[0]!)).toBe(false);
+    expect(hintsOf(sim)).toEqual([]);
+    sim.select(plane);
+    // In the air everything asks for it to land first.
+    expect(sim.addOrder(plane, sim.gasStations[0]!)).toBe(false);
+    expect(hintsOf(sim)).toEqual([Hint.LAND]);
+    sim.addOrder(plane, sim.runways[0]!);
+    runUntil(sim, () => plane.landed && plane.state === PlaneState.WAITING);
+    sim.drainEvents();
+    // Down but not unloaded: the pump, the hangar and the conveyor ask for that; a runway too.
+    expect(sim.addOrder(plane, sim.hangars[0]!)).toBe(false);
+    expect(sim.addOrder(plane, sim.runways[0]!)).toBe(false);
+    expect(hintsOf(sim)).toEqual([Hint.UNLOAD]);
+  });
+
+  it('keeps quiet for the next three occasions of a hint just shown', () => {
+    const sim = pole(1);
+    runUntil(sim, () => sim.planes.some((p) => p.state === PlaneState.FLYING));
+    const plane = sim.planes.find((p) => p.state === PlaneState.FLYING)!;
+    sim.select(plane);
+    sim.drainEvents();
+    const tries = [1, 2, 3, 4, 5, 6].map(() => {
+      sim.addOrder(plane, sim.luggages[0]!);
+      return hintsOf(sim).length;
+    });
+    expect(tries).toEqual([1, 0, 0, 0, 1, 0]);
+  });
+
+  it('says what lies on a runway that is closed', () => {
+    const sim = pole(4);
+    const runway = sim.runways[sim.hazardSchedule[0]!.runway]!;
+    runUntil(sim, () => runway.ice !== null, 300);
+    const plane = sim.planes.find((p) => !p.gone && p.state === PlaneState.FLYING);
+    if (!plane) return;
+    sim.select(plane);
+    sim.drainEvents();
+    expect(sim.addOrder(plane, runway)).toBe(false);
+    expect(hintsOf(sim)).toEqual([Hint.ICE]);
   });
 });
 

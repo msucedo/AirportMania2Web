@@ -25,7 +25,8 @@ import { BONUS_SURFACES, BonusView } from './view/bonusView';
 import { FOG_SURFACES, FogView } from './view/fogView';
 import { ICE_SURFACES, IceView } from './view/iceView';
 import { SAND_SURFACES, SandBrush, SandView } from './view/sandView';
-import { tutorialFor, type Tutorial } from './sim/tutorial';
+import { hintFor, hintImages } from './sim/hints';
+import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
 import { GoalsPanel, HintDialog, TUTORIAL_FONTS, TUTORIAL_HINT_SURFACES, TUTORIAL_SOUNDS, TUTORIAL_SURFACES, TutorialGoalsDialog, TutorialIntro, TutorialReport } from './view/tutorialViews';
 import { LuggageView, luggageSurfaceIds } from './view/luggageView';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
@@ -113,6 +114,8 @@ export class LevelScene {
   /** The tutorial's day, in stage 0 (`level+0x128`), and its goals on screen. */
   private tutorial: Tutorial | null = null;
   private goalsPanel: GoalsPanel | null = null;
+  /** Hints raised by the game itself and not yet shown. */
+  private readonly hints: TutorialHint[] = [];
 
   private constructor(
     private readonly textures: TextureStore,
@@ -182,6 +185,8 @@ export class LevelScene {
     if (sim.hazardSchedule.some((h) => h.kind === 'ice')) for (const id of ICE_SURFACES) ids.add(id);
     if (sim.hazardSchedule.some((h) => h.kind === 'sand')) for (const id of SAND_SURFACES) ids.add(id);
     if (options.stage === 0) for (const id of [...TUTORIAL_SURFACES, ...TUTORIAL_HINT_SURFACES]) ids.add(id);
+    // The pictures of the hints a refused order can bring; a stage has only those of what it has.
+    for (const id of hintImages(options.stage)) if (data.resources.hasSurface(id)) ids.add(id);
     for (const hangar of sim.hangars) {
       ids.add(hangar.descriptor.surfaces.back);
       ids.add(hangar.descriptor.surfaces.front);
@@ -347,10 +352,10 @@ export class LevelScene {
 
   /** A hint stops the game until it is closed (0x4aedc); a later one takes the place of one still up. */
   private showHint(): void {
-    const tutorial = this.tutorial;
-    if (!tutorial || tutorial.hints.length === 0 || this.endShown) return;
+    if (this.tutorial) this.hints.push(...this.tutorial.hints.splice(0));
+    if (this.hints.length === 0 || this.endShown) return;
     if (this.dialog && !(this.dialog instanceof HintDialog)) return;
-    const hint = tutorial.hints.splice(0).at(-1)!;
+    const hint = this.hints.splice(0).at(-1)!;
     const previous = this.dialog;
     const dialog = new HintDialog(this.textures, this.audio, this.strings, hint, () => {
       if (this.dialog !== dialog) return;
@@ -607,6 +612,12 @@ export class LevelScene {
       case 'order':
         this.audio.play('SOUNDS.PLACE_CLICK');
         break;
+      case 'hint': {
+        // 0x10890. A stage without the picture has nothing to show it with.
+        const hint = hintFor(event.id, this.options.stage);
+        if (this.textures.has(hint.image)) this.hints.push(hint);
+        break;
+      }
       case 'forbidden':
         this.audio.play('SOUNDS.FORBIDDEN_CLICK');
         // Sent somewhere it cannot go while it has nothing else to do, the plane says what it

@@ -70,6 +70,11 @@ export class TextureStore {
     await Promise.all(pending);
   }
 
+  /** Whether a surface has been loaded. */
+  has(id: string): boolean {
+    return this.textures.has(id);
+  }
+
   texture(id: string): Texture {
     const texture = this.textures.get(id);
     if (!texture) throw new Error(`Surface "${id}" has not been loaded`);

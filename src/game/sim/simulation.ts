@@ -6,6 +6,7 @@ import { COLOR_NAMES } from '../palette';
 import { IMPROVEMENT, type BonusEvent, type StageLayout } from '../stages/layout';
 import { TaxiGraph, type TaxiNode } from './taxiGraph';
 import { Need, PlaneState, RULES, UNSELECTABLE_STATES, clamp01, punctuality, roundScore, type Punctuality } from './rules';
+import { Hint } from './hints';
 
 // Deterministic, render-free model of one level. Coordinates are screen pixels.
 
@@ -274,6 +275,7 @@ export type SimEvent =
   | { type: 'select'; plane: Plane }
   | { type: 'order'; plane: Plane; place: Place }
   | { type: 'forbidden'; plane?: Plane }
+  | { type: 'hint'; plane: Plane; id: number }
   | { type: 'balloonPopped'; x: number; y: number }
   | { type: 'coinReleased'; x: number; y: number }
   | { type: 'bonusPaid'; x: number; y: number; amount: number }
@@ -364,6 +366,8 @@ export class Simulation {
    * time. Only the first entry is ever looked at, as in the original.
    */
   readonly hazardSchedule: { time: number; runway: number; kind: HazardKind }[] = [];
+  /** Occasions still to pass in silence for each kind of hint (`level+0x170`…). */
+  private readonly hintQuiet = new Map<number, number>();
   /** The machines owned: anti-fog (`airport+0xad`), deicer (`airport+0xac`) and anti-sand (`airport+0xae`). */
   readonly machines: Readonly<Record<HazardKind, boolean>>;
   /** The coffee and cake service, when the improvement is owned. */
@@ -650,7 +654,11 @@ export class Simulation {
     // In the original the runway stays at the head of the queue until touch-down, so a landing
     // plane does not count as having an empty queue.
     const atRest = plane.queue.length === 0 && !plane.landing && (plane.state === PlaneState.FLYING || plane.state === PlaneState.WAITING);
-    if (atRest && !this.canEnter(place, plane)) return false;
+    if (atRest && !this.canEnter(place, plane)) {
+      const hint = this.refusalHint(place, plane);
+      if (hint !== null) this.raiseHint(plane, hint);
+      return false;
+    }
     if (plane.queue.includes(place)) return false;
     if (plane.place === place) return false;
     if (!this.accepts(place, plane)) return false;
@@ -724,6 +732,57 @@ export class Simulation {
     if (place.kind === 'hangar') return plane.landed && plane.unloaded && !plane.serviceDone;
     if (!plane.landed || plane.loaded) return false;
     return !plane.unloaded || (plane.serviceDone && plane.gasDone && plane.luggageDone);
+  }
+
+  /**
+   * What the same routines say when they refuse: each checks what the plane has done in its own
+   * order, and the first thing missing is the hint (helpers `0x6b3fc`…`0x6b504`). A plane that
+   * has taken off already is turned away without one.
+   */
+  private refusalHint(place: Place, plane: Plane): number | null {
+    const after = (...checks: [boolean, number][]): number | null => checks.find(([done]) => !done)?.[1] ?? null;
+    const landed: [boolean, number] = [plane.landed, Hint.LAND];
+    const unloaded: [boolean, number] = [plane.unloaded, Hint.UNLOAD];
+    const serviced: [boolean, number] = [plane.serviceDone, Hint.REPAIR];
+    const fuelled: [boolean, number] = [plane.gasDone, Hint.FUEL];
+    const luggage: [boolean, number] = [plane.luggageDone, Hint.LUGGAGE];
+    const loaded: [boolean, number] = [plane.loaded, Hint.LOAD];
+    const launched: [boolean, number] = [false, Hint.LAUNCH];
+    switch (place.kind) {
+      case 'runway':
+        // 0x6da34: what lies on the runway comes first.
+        if (place.sand && !place.sand.lifting) return Hint.SAND;
+        if (place.ice && !place.ice.lifting) return Hint.ICE;
+        if (place.fog && !place.fog.lifting) return this.config.layout.spaceGas ? Hint.SPACE_GAS : Hint.FOG;
+        return after(unloaded, serviced, fuelled, luggage, loaded);
+      case 'gate':
+        // 0x43530.
+        return after(landed, fuelled, serviced, luggage, launched);
+      case 'gasStation':
+        // 0x40d4c.
+        return after(landed, unloaded, serviced, luggage, loaded, launched);
+      case 'hangar':
+        // 0x4735c.
+        return after(landed, unloaded, fuelled, luggage, loaded, launched);
+      case 'luggage':
+        // 0x56c18.
+        return after(landed, unloaded, serviced, fuelled, loaded, launched);
+      default:
+        // 0x797a8, 0x85290, 0x67dd8: a stop spot of any kind only asks for the plane to be down.
+        return after(landed);
+    }
+  }
+
+  /** 0x10890: only for the selected plane, and not again for a while once one of a kind is shown. */
+  private raiseHint(plane: Plane, id: number): void {
+    const left = this.hintQuiet.get(id) ?? 0;
+    if (left > 0) {
+      this.hintQuiet.set(id, left - 1);
+      return;
+    }
+    if (this.selected !== plane) return;
+    this.hintQuiet.set(id, RULES.hints.quiet);
+    this.emit({ type: 'hint', plane, id });
   }
 
   /** Place virtual slot 14 (gate `0x43510`, runway `0x6da24`, gas station `0x40d40`). */
