@@ -1226,8 +1226,21 @@ animation.
   as its need (`0x6848`), scoring `round5(clamp(energy) × LuggagePoints)`.
 - The gate takes an unloaded plane back only with its luggage on or queued (as with gas and
   the hangar).
-- Web version: its draw routine (`0x56dac`, with the parcels on the belt) and its own taxi
-  nodes have not been read; the belt just runs while loading.
+- Draw (`0x56dac`), in order: the spot image at the node; the back image; the belt, on frame
+  `int(animation speed × clock) mod frames` while loading (state 2) and frame 0 otherwise, at
+  the animation's place; `LUGGAGES.PARCEL` while loading if the animation has `Parcels`; the
+  front image; then the marks.
+  - Parcel, with t the fraction of the clock: opacity `min(1, 10·(1 − t))`, scale
+    `0.5 + 0.5·opacity`, at the animation's place plus (`100 − 120t`, `(20·max(0, t − 0.8))²`),
+    or `120t − 100` across with `ParcelsFlip`.
+  - Marks, at `ParcerMarksPosition`: with r the plane's loading time less the clock, one
+    `LUGGAGES.PARCEL_MARK` for each second of r, each 10 px above the last; the one for the
+    last part of a second has opacity `max(0, 2r − 1)`.
+- The constructor (`0x563fc` on, from `0x56600`) makes two taxi nodes of its own from
+  `AuxNode1` and `AuxNode2` (`0x41338`) and links them (`0x45ff4`, `0x45d58`), with
+  `BarrierNode1` and `BarrierNode2`.
+- Web version: those nodes and links are not built; planes reach the conveyor through the
+  stage's own nodes.
 
 ## Runway ice — confirmed
 

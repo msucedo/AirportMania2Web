@@ -99,7 +99,7 @@ export interface LuggageDescriptor {
   node: Point;
   click: Rect;
   /** The conveyor's animation: frames `<resource>.<n>` at an offset, at `speed` frames a second. */
-  animation: { resource: string; position: Point; frames: number; speed: number };
+  animation: { resource: string; position: Point; frames: number; speed: number; parcels: boolean; parcelsFlip: boolean };
   parcelMarks: Point;
 }
 
@@ -114,7 +114,7 @@ export function parseLuggageTable(tree: XmlNode[]): Map<number, LuggageDescripto
       sound: str(node, 'SoundResource'),
       node: point(requireChild(node, 'NodePosition')),
       click: rect(requireChild(node, 'ClickRectangle')),
-      animation: { resource: str(animation, 'Resource'), position: point(animation), frames: num(animation, 'frames'), speed: Number.parseFloat(str(animation, 'speed')) },
+      animation: { resource: str(animation, 'Resource'), position: point(animation), frames: num(animation, 'frames'), parcels: animation.a.Parcels === 'true', parcelsFlip: animation.a.ParcelsFlip === 'true', speed: Number.parseFloat(str(animation, 'speed')) },
       parcelMarks: point(requireChild(node, 'ParcerMarksPosition')),
     };
     table.set(luggage.type, luggage);

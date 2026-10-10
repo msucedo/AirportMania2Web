@@ -1,3 +1,4 @@
+import { parcelMarks, parcelPose } from '../src/game/view/luggageView';
 import { dirtAlpha, rollerPose, splashPose, starPose, washElapsed, waterPose } from '../src/game/view/washView';
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
@@ -473,6 +474,30 @@ describe('scenery', () => {
     // The plane is clean two seconds in, with the dirt at a half.
     expect(dirtAlpha(2)).toBe(0.5);
     expect(dirtAlpha(5)).toBe(0);
+  });
+
+  it('throws a parcel along the conveyor every second of loading', () => {
+    expect(parcelPose(0, false)).toEqual({ x: 100, y: 0, scale: 1, alpha: 1 });
+    expect(parcelPose(2.5, false)).toEqual({ x: 40, y: 0, scale: 1, alpha: 1 });
+    // It drops over the last fifth of the second and goes over the last tenth, shrinking.
+    const late = parcelPose(3.95, false);
+    expect(late.x).toBeCloseTo(-14, 4);
+    expect(late.y).toBeCloseTo(9, 4);
+    expect(late.alpha).toBeCloseTo(0.5, 4);
+    expect(late.scale).toBeCloseTo(0.75, 4);
+    // Flipped, it goes the other way.
+    expect(parcelPose(0.25, true).x).toBeCloseTo(-70, 4);
+  });
+
+  it('piles a mark for each second of loading left', () => {
+    expect(parcelMarks(0)).toEqual([]);
+    expect(parcelMarks(3)).toEqual([{ y: 0, alpha: 1 }, { y: -10, alpha: 1 }, { y: -20, alpha: 1 }]);
+    // The top one fades over the last half of its second.
+    const marks = parcelMarks(2.75);
+    expect(marks).toHaveLength(3);
+    expect(marks[2]!.y).toBe(-20);
+    expect(marks[2]!.alpha).toBeCloseTo(0.5, 5);
+    expect(parcelMarks(0.4)).toEqual([{ y: 0, alpha: 0 }]);
   });
 });
 

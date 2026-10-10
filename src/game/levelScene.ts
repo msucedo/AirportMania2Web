@@ -831,7 +831,7 @@ export class LevelScene {
     for (const sand of this.sandViews) sand.update();
     for (const brush of this.sandBrushes) brush.update(elapsed);
     for (const wash of this.washViews) wash.update(elapsed);
-    for (const luggage of this.luggageViews) luggage.update(elapsed);
+    for (const luggage of this.luggageViews) luggage.update();
     if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);
     this.coffeeTab?.update(elapsed);
