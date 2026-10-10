@@ -1039,6 +1039,61 @@ Some levels have a bonus event, created by the stage script (found by running th
 - Web version: how the splash is animated has not been read (it grows and fades over 0.3 s);
   the award counters the events raise (code 0x20) are not kept.
 
+## Stage 3 ("Monsters") — read with the emulated script (`0xd07bc`)
+
+- Gates of descriptor types 4 and 5 (upgraded): A (365, 145), B (395, 188), C (425, 231) with
+  `0x16` or `0x20`, D (455, 274) with `0x17` or `0x21`; upgrades `0x1e`, `0x1f`, `0x20`, `0x21`.
+- Gas station type 3 at (60, 107) and hangar type 1 at (170, 107), both from level 1.
+- Taxi nodes (250, 195), (270, 225), (290, 255), (355, 315), (370, 315), (355, 300).
+- Runways of type 1 created with flag 0: 1 at (−5, 210) and 2 at (30, 250); with the third
+  runway `0x34` they are 1 (−5, 195), 2 (30, 225) and 3 (65, 255).
+- Stop spots: (270, 300) always, VIP with `0x0a`; (170, 300) with `0x01`, replaced by the wash
+  and go at (169, 301) with `0x77`; (50, 300) with `0x02`, or the painting stop spot there with
+  `0x72`.
+- Backdrop in order: `STAGES.MONSTERS.SKY` scaled 24×24; `BACKGROUND_DOWN` at (0, 153) scaled
+  16×17; `AMBIENT.MOON` at (428, 31); six stars (`0x13b8c`, `AMBIENT.STAR`); scary clouds
+  (`0x14aa8`, `SCARY_CLOUD_%d`) and a witch crossing (`0x14b5c`); `BACKGROUND_TOP` at (0, 45);
+  `TOWER` at (260, 45); `AIRPORT_BUILDING` at (385, 60); five patches of scary fog (`0x149d4`,
+  `FOG_%d`) and five bats (`0x14f6c`, `BAT.%d`). The neutral gate colour is (1, 0.8, 0.7).
+- Service tabs: in-flight movies `0x73` and coffee and cake `0x74`.
+- Offers and their conditions: see "When an improvement is on sale". Bonus events: see "Bonus
+  events".
+
+## Wash and go — confirmed
+
+Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base constructor
+(`0x78cb8`: thought image 13, drain factor 0.5, touch area ±35 × ±20).
+
+- It accepts what a stop spot accepts (slot 11 is `0x7983c`), needs the plane landed, and counts
+  as skippable in a queue (slot 17, `0x8585c`) once the plane is clean (`plane+0x26c`).
+- Washing is never one of a plane's needs: after unloading the next need is the hangar, then
+  gas, then luggage or loading (`0x64ac`; flags `+0x26a` service, `+0x26b` gas, `+0x26c` wash,
+  `+0x26d` luggage). It is something the player chooses to do.
+- A dirty plane arriving (`0x84d60`): `SOUNDS.WASHING`, state 2 with its clock at 8 s, rollers
+  set for 6.5, 6 and 5 s, plane state 9. A clean one just waits there (state 4), as on a stop
+  spot.
+- Update (`0x852b0`): with 6 s left the plane becomes clean (state 3); at zero the plane waits
+  again (`0x67c8`), gets 0.4 energy, and scores `round5(clamp(energy) × WashingPoints)`
+  (descriptor `+0xbc`). The place stays taken (state 4) until the plane moves off.
+
+## Runway fog — confirmed
+
+- The levels database gives each level a number of fogs (and of ices and sands for later
+  stages). Stage 3: none on levels 1 and 2, one on 3, two on 4 and 5, four on 6, two on 7 and 8.
+- Schedule (`0x102d8`): `TotalTime − 30` is cut into that many equal slices and each fog gets a
+  random moment in its slice and a random runway (libc `rand`), retried up to 30 times so that
+  no two on the same runway are within 30 s. Entries hold the runway index, the kind (0 fog, 1
+  ice, 2 sand) and the time.
+- When its time comes (`0x1094c`) the fog is created (`0x6d354`, kept at `runway+0xd0`) once the
+  runway is not busy and has been idle for more than 3 s (`runway+0xd8`); after 25 s of waiting
+  it is dropped.
+- A runway with fog refuses every plane (`0x6da72` in slot 15). Likewise ice (`+0xcc`) and sand
+  (`+0xd4`).
+- Fog (`0x3a41c`): fades in over half a second, lasts 15 s from when it appeared, then frees
+  the runway and fades out. With the anti-fog improvement `0x6f` (`airport+0xad`), an anti-fog
+  machine (`0x19a7c`) appears 2 s in, runs for 5 s and then ends the fog (`0x3a40c`) with
+  `SOUNDS.ANTI_FOG_DEICER_FINISH`.
+
 ## Reading a stage script by running it
 
 `tools/re/stage_layout.py` runs a compiled stage script in the Unicorn emulator (installed in
