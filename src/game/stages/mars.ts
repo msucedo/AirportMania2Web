@@ -15,14 +15,13 @@ export const MARS: StageLayout = {
   runwayType: 6,
   gasStationType: 13,
   backdrop: {
-    // No sky object: the script makes a sky of its own (0x13758, "MarsSky"), which draws `SKY`
-    // over a grid 480 px wide and 70 high and makes it ripple. It is drawn here stretched over
-    // that rectangle, without the ripple or its changing colours.
+    // No sky object: the script makes a sky of its own (0x13758, "MarsSky"), its image sliding
+    // and rippling over a grid 480 px wide and 70 high.
     sky: null,
     horizon: 130,
     // The rest in the order the script creates them.
     layers: [
-      { resource: 'STAGES.MARS.SKY', position: { x: 0, y: 0 }, scale: { x: 480 / 202, y: 70 / 98 } },
+      { scenery: 'marsSky', resource: 'STAGES.MARS.SKY', height: 70 },
       { resource: 'STAGES.MARS.BACKGROUND_TOP', position: { x: 0, y: 51 } },
       ground(1, 0, false),
       ground(2, 62, false),

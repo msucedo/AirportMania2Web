@@ -39,8 +39,9 @@ The tutorial (Airport Academy, three days) is played from the map's Tutorial but
 hints, goals and reports.
 
 Not there yet: the help, users, credits and awards screens.
-Stages 3 to 10 are played without their animated scenery, and the wash and the luggage conveyor
-without their full drawing; `docs/re-notes.md` lists what is still approximate.
+The stages' animated scenery is drawn (clouds, stars, the aurora, snow, Santa's sleigh, bats,
+the skies of the Moon and Mars). The wash and the luggage conveyor are still without their full
+drawing; `docs/re-notes.md` lists what is still approximate.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
 placeholder (some draw details, the payout rule) is tracked

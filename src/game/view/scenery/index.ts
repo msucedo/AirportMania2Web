@@ -4,6 +4,7 @@ import type { SceneryItem } from '../../stages/layout';
 import { SeaSparkles } from '../waterEffects';
 import { CloudBandView, MovingImageView, PropellerView } from './airborne';
 import { BAT_SURFACES, BatView, FogPatchView, ScaryCloudView } from './monsters';
+import { MarsSkyView } from './mars';
 import { AuroraView, StarView } from './night';
 import { SLEIGH_SURFACES, SleighView, SnowView } from './northPole';
 import { FlagView, HorizonObjectView } from './simple';
@@ -38,6 +39,7 @@ export function scenerySurfaceIds(item: SceneryItem): string[] {
     case 'sleigh':
       return SLEIGH_SURFACES;
     case 'snow':
+    case 'marsSky':
       return [item.resource];
     case 'space':
       return SPACE_SURFACES;
@@ -102,6 +104,10 @@ export function createScenery(textures: TextureStore, item: SceneryItem): Scener
     }
     case 'space': {
       const view = new SpaceView(textures, item.height);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'marsSky': {
+      const view = new MarsSkyView(textures, item.resource, item.height);
       return { view, update: (dt) => view.update(dt) };
     }
   }

@@ -1384,8 +1384,6 @@ animation.
   250000, `0x35` 570000, `0x3c` 410000, `0x50` 500000, `0x5a` 500000, `0x64` 500000, `0x74`
   305000, `0x73` 305000, anti space gas `0x71` 355000, deicer 425000, anti-sand 510000,
   licence `0xdb` 720000, `0x2b` 260000.
-- Web version: the sky is drawn stretched over its rectangle, without the ripple; which part
-  of the texture the grid shows at rest has not been worked out.
 
 ## Tutorial ("Airport Academy", stage 0) — confirmed
 
@@ -1620,6 +1618,16 @@ place and plane; only what is added later (the service tabs) lies over them.
     `GALAXY_1` (450, 540) 150, 120. Each is drawn while −reach < y < height + reach.
   - Web version: the generator's index is read from a word the constructor never sets; it is
     taken to start at 0, so the stars may not be where the original's are.
+
+- Sky of Mars (`0x13758(height)` → class "MarsSky" `0xcbffc`, grid `0xcbea4`, draw
+  `0xcc0bc`), with height 70: `STAGES.MARS.SKY` over a grid of 30 columns by 20 rows of points
+  at (`480·column/29`, `height·row/19`), drawn as one mesh. Only the texture coordinates
+  change. With `f = frac(0.004·t)`, `g = f` up to a half and `f − 0.5` after, and `w = 20π·f`,
+  point (row i, column j) shows
+  `u = g + 0.5·(j + 1 + 0.07·(0.1·sin(3w + 0.37i + 0.22j + 17) + 0.4·sin(9w + 0.3i + 0.52j + 10) + 0.4·sin(18w + 0.15j + 0.56i)))/31`,
+  `v = (i + 1 + 0.3·(0.5·sin(7w + 0.2i + 0.62j + 16) + 0.2·sin(4w + 0.6i + 0.32j + 49) + 0.2·sin(17w + 0.13j + 0.46i + 3)))/21`.
+  So half the image's width is shown, sliding along it and stepping back half way through
+  each 250 s.
 
 ## Drawing order of the airport's objects — confirmed
 

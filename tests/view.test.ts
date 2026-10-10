@@ -11,6 +11,7 @@ import { brushPose, patchAlpha, puffAlpha } from '../src/game/view/sandView';
 import { markPop, panelTop } from '../src/game/view/tutorialViews';
 import { cloudBandPose, movingImageX, propellerAngle } from '../src/game/view/scenery/airborne';
 import { batFrame, batOffset, fogPatchPose, scaryCloudPose } from '../src/game/view/scenery/monsters';
+import { marsSkyPoints, marsSkyTexture } from '../src/game/view/scenery/mars';
 import { auroraPoints, starThrob } from '../src/game/view/scenery/night';
 import { flakeAlpha, loopClock, sleighPoses } from '../src/game/view/scenery/northPole';
 import { backdropOf, isScenery } from '../src/game/stages/layout';
@@ -397,5 +398,37 @@ describe('scenery', () => {
     expect(spaceDrift(late, 46, 60, 70).x).toBeCloseTo(46 - 99.9 + 100, 3);
     expect(spaceTwinkle(0, Math.PI / 2)).toBeCloseTo(1, 6);
     expect(spaceTwinkle(0, -Math.PI / 2)).toBeCloseTo(0.6, 6);
+  });
+
+  it('lays the sky of Mars over a grid of 30 by 20 points, 480 px wide and as tall as asked', () => {
+    const points = marsSkyPoints(70);
+    expect(points).toHaveLength(1200);
+    expect([points[0], points[1]]).toEqual([0, 0]);
+    expect(points[2 * 29]).toBeCloseTo(480, 4);
+    expect(points[2 * (19 * 30) + 1]).toBeCloseTo(70, 4);
+    expect(points[2 * (19 * 30 + 29)]).toBeCloseTo(480, 4);
+  });
+
+  it('slides half the image across the grid and ripples it', () => {
+    const uvs = marsSkyTexture(0);
+    expect(uvs).toHaveLength(1200);
+    for (let k = 0; k < 600; k++) {
+      // Half the image across, a little in from its edges; nearly all of it down.
+      expect(uvs[2 * k]).toBeGreaterThan(0);
+      expect(uvs[2 * k]).toBeLessThan(0.5);
+      expect(uvs[2 * k + 1]).toBeGreaterThan(0.03);
+      expect(uvs[2 * k + 1]).toBeLessThan(0.97);
+    }
+    // A column further on is about a 62nd of the image further across; a row down, a 21st lower.
+    expect(uvs[2]! - uvs[0]!).toBeCloseTo(0.5 / 31, 2);
+    expect(uvs[2 * 30 + 1]! - uvs[1]!).toBeCloseTo(1 / 21, 1);
+    // A quarter of the way round (62.5 s) it has slid a quarter of the image; past half way it steps back.
+    const quarter = marsSkyTexture(62.5);
+    expect(quarter[0]! - uvs[0]!).toBeGreaterThan(0.24);
+    expect(quarter[0]! - uvs[0]!).toBeLessThan(0.26);
+    const later = marsSkyTexture(187.5);
+    expect(Math.abs(later[0]! - quarter[0]!)).toBeLessThan(0.01);
+    // It comes round every 250 seconds.
+    expect(Array.from(marsSkyTexture(250)).map((v) => +v.toFixed(4))).toEqual(Array.from(uvs).map((v) => +v.toFixed(4)));
   });
 });
