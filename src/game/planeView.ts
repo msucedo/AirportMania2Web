@@ -10,6 +10,8 @@ const GEAR_FRAMES = 3;
 /** The thought cloud and its trail, largest first, and where each sits from the cloud (0x9950). */
 const THOUGHT = ['INDICATORS.THOUGHT_A', 'INDICATORS.THOUGHT_B', 'INDICATORS.THOUGHT_C', 'INDICATORS.THOUGHT_D'];
 const THOUGHT_OFFSETS: readonly (readonly [number, number])[] = [[0, 0], [-7, 15], [-13, 19], [-19, 18]];
+/** Images for the thought cloud, one per kind of place (`INDICATORS.THOUGHT_ICONS.<n>`). */
+const THOUGHT_ICONS = 16;
 const SPEECH = ['INDICATORS.GLOBE', 'INDICATORS.GLOBE_NAG'];
 
 /**
@@ -65,6 +67,7 @@ export function planeSurfaceIds(plane: PlaneDescriptor, female: boolean, pontoon
   }
   for (let i = 0; i < ENERGY_FRAMES; i++) ids.push(`INDICATORS.ENERGY.${i}`);
   for (let i = 0; i < NEED_ICONS; i++) ids.push(`INDICATORS.ICONS.${i}`);
+  for (let i = 0; i < THOUGHT_ICONS; i++) ids.push(`INDICATORS.THOUGHT_ICONS.${i}`);
   return [...ids, ...THOUGHT, ...SPEECH];
 }
 
@@ -357,7 +360,7 @@ export class PlaneView extends Container {
     this.nag = textures.sprite(SPEECH[1]!);
     this.nag.visible = false;
     this.needIcon = textures.sprite('INDICATORS.ICONS.0');
-    this.thoughtIcon = textures.sprite('INDICATORS.ICONS.0');
+    this.thoughtIcon = textures.sprite('INDICATORS.THOUGHT_ICONS.0');
     // Drawn smallest first, so the cloud ends on top.
     for (const id of [...THOUGHT].reverse()) this.puffs.push(textures.sprite(id));
     this.addChild(this.speech, this.nag, this.needIcon, ...this.puffs, this.thoughtIcon);
@@ -578,7 +581,7 @@ export class PlaneView extends Container {
     const iconAlpha = this.thoughtFade * 4 - 3;
     this.thoughtIcon.visible = showing && iconAlpha > 0;
     this.thoughtIcon.position.set(cloud.x, cloud.y - altitude);
-    this.thoughtIcon.texture = this.textures.texture(`INDICATORS.ICONS.${this.shownThought}`);
+    this.thoughtIcon.texture = this.textures.texture(`INDICATORS.THOUGHT_ICONS.${this.shownThought}`);
     this.thoughtIcon.alpha = Math.max(0, iconAlpha);
   }
 }

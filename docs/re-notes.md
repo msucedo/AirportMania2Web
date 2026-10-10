@@ -384,13 +384,14 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   - Thought cloud `INDICATORS.THOUGHT_A`–`D`: on while the plane is flying or waiting with orders
     queued. The cloud is 50 px aside (left for corners 0 and 2) and 80 px above or 15 below; the
     trail D, C, B sits at (−19, 18), (−13, 19), (−7, 15) from it, mirrored the same way; puff i
-    of 4 has alpha `min(1, 5v − i)`; an image owned by the next place (`place+8`) is drawn in
-    the cloud with alpha `4v − 3`.
+    of 4 has alpha `min(1, 5v − i)`; the next place's image (`place+8`) is drawn in the cloud
+    with alpha `4v − 3`. That image is `INDICATORS.THOUGHT_ICONS.<n>` (`0x6abc8`), `n` being the
+    number the place's constructor passes to the base one (`place+0xc`): runway number − 1, gate
+    index + 5, gas station 10, hangar 11, stop spot 12, painting stop spot 15.
   - The corner comes from the place the plane is at (`place+0x58`, `0x75f0`), given by the stage
     scripts: 1 for gates, gas station and hangar, 0 for stop spots, 0 for Arches' runways and 1
     for the island's (the last inferred from its helper); a new plane has 3.
-- Web version: gear fold rate (4/s) and selection fade are assumed; the thought cloud shows the matching need icon in place of the
-  place's image, which has not been identified.
+- Web version: gear fold rate (4/s) and selection fade are assumed.
 
 ## Special passengers and speech — confirmed
 
@@ -972,8 +973,7 @@ Rules:
 Drawing:
 
 - Planes: the pitch on landing, landing dust,
-  and the mark on planes a service tab would reach are not drawn. The thought cloud shows the
-  need icon in place of the place's own image.
+  and the mark on planes a service tab would reach are not drawn.
 - Gate: the hover label; the first part of its draw routine has not been read. Order flag
   offsets are assumed.
 - Tier colours (table at `0x181314`, filled at run time), the font effects (gradients), the

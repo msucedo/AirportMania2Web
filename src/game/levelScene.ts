@@ -26,7 +26,7 @@ import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
-import { Need, PlaneState, RULES } from './sim/rules';
+import { PlaneState, RULES } from './sim/rules';
 import { Simulation, type Gate, type Hangar, type Plane, type SimEvent, type StopSpot } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
@@ -235,16 +235,18 @@ export class LevelScene {
   }
 
   /**
-   * Icon for the thought cloud: where the plane goes next. The original draws an image owned by
-   * the place (`place+8`), which has not been identified; the matching need icon stands in.
+   * Image for the thought cloud: the one the place the plane goes to next was built with
+   * (`place+0xc`, loaded as `INDICATORS.THOUGHT_ICONS.<n>` by 0x6abc8). Runways use their number
+   * less one, gates 5 onwards by letter, the gas station 10, the hangar 11, a stop spot 12 and
+   * the painting stop spot 15.
    */
   private destinationIcon(plane: Plane): number {
     const next = plane.queue[0]!;
-    if (next.kind === 'runway') return plane.landed ? Need.TAKE_OFF : Need.LAND;
-    if (next.kind === 'gate') return plane.unloaded ? Need.LOAD : Need.UNLOAD;
-    if (next.kind === 'gasStation') return Need.GAS;
-    if (next.kind === 'hangar') return Need.SERVICE;
-    return 8;
+    if (next.kind === 'runway') return next.number - 1;
+    if (next.kind === 'gate') return 5 + next.letter.charCodeAt(0) - 'A'.charCodeAt(0);
+    if (next.kind === 'gasStation') return 10;
+    if (next.kind === 'hangar') return 11;
+    return next.painting ? 15 : 12;
   }
 
   /** The improvements shop for this level; a purchase or sale means building the airport again. */
