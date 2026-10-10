@@ -1098,6 +1098,16 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
   the runway and fades out. With the anti-fog improvement `0x6f` (`airport+0xad`), an anti-fog
   machine (`0x19a7c`) appears 2 s in, runs for 5 s and then ends the fog (`0x3a40c`) with
   `SOUNDS.ANTI_FOG_DEICER_FINISH`.
+- Fog draw (`0x3a5a0`): five `FOG` images along the runway at x −128, −64, 0, 64 and 128 from
+  its position and 20 px above, with the fade as opacity, each leaning by
+  `0.1·sin(0.75·age + k)` about a point 30 px below its centre, `k = 7i mod 11`. A flag passed
+  by the stage (`airport+0x7c`, clear in stages 1 to 3) tints it green. It is sorted 4 px in
+  front of the runway's line.
+- Anti-fog machine draw (`0x19c40`): at the runway's position + (170 − 35·t, −30), so it sweeps
+  along the runway; `ANTI_FOG.BASE`, then `ANTI_FOG.PROPELLER` turning three times a second and
+  squeezed to 0.8 across, then `ANTI_FOG.NOSE`. Its fan is `SOUNDS.ANTI_FOG_SYSTEM_FAN`.
+- Web version: the hint the game gives when a plane is sent to a foggy runway (`0x10890`,
+  `HINTS.FOG`) is not shown, and the machine's wobble as it appears is left out.
 
 ## Reading a stage script by running it
 

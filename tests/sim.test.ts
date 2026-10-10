@@ -918,6 +918,10 @@ describe('simulation, stage 2 (island)', () => {
 describe('simulation, stage 3 (monsters)', () => {
   const stage3 = parseStageSchedule(tree('data/maps/stage_levels_03.json'));
   const area3 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(3)!;
+  /** A dice that always lands in the middle, so fog times and runways are known. */
+  const steady = (level: number, ...owned: number[]): Simulation =>
+    new Simulation({ layout: MONSTERS, schedule: findLevel(stage3, level, false), goals: findGoals(area3, level, false), planes, gates, runways, gasStations, hangars, level, improvements: new Set(owned), screenWidth: 480, random: () => 0.5 });
+
   const monsters = (level = 1, ...owned: number[]): Simulation =>
     new Simulation({
       layout: MONSTERS,
@@ -1040,6 +1044,67 @@ describe('simulation, stage 3 (monsters)', () => {
     sim.addOrder(second, bay);
     runUntil(sim, () => bay.use === 'occupied' && second.state === PlaneState.WAITING, 60, events);
     expect(events.some((e) => e.type === 'washStarted')).toBe(false);
+  });
+
+  it('schedules as many fogs as the level has, one in each slice of its time', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => monsters(level).fogSchedule.length)).toEqual([0, 0, 1, 2, 2, 4, 2, 2]);
+    // Level 4 lasts 220 s: two slices of 95 s, and this dice picks the middle of each.
+    const sim = steady(4);
+    expect(sim.totalTime).toBe(220);
+    expect(sim.fogSchedule).toEqual([
+      { time: 47.5, runway: 1 },
+      { time: 142.5, runway: 1 },
+    ]);
+  });
+
+  it('closes a runway under fog for fifteen seconds', () => {
+    const sim = steady(4);
+    const runway = sim.runways[1]!;
+    const events: SimEvent[] = [];
+    run(sim, 47, events);
+    expect(runway.fog).toBeNull();
+    runUntil(sim, () => runway.fog !== null, 2, events);
+    expect(sim.time).toBeCloseTo(47.5, 1);
+    const appeared = sim.time;
+    // A plane cannot be sent there, but the other runway still takes it.
+    const plane = sim.planes.find((p) => !p.gone && !p.landed && p.state === PlaneState.FLYING)!;
+    expect(sim.addOrder(plane, runway)).toBe(false);
+    expect(sim.addOrder(plane, sim.runways[0]!)).toBe(true);
+    runUntil(sim, () => runway.fog?.lifting === true, 20, events);
+    expect(sim.time - appeared).toBeCloseTo(RULES.fog.time, 1);
+    expect(events.filter((e) => e.type === 'fogLifted')).toEqual([{ type: 'fogLifted', runway, byMachine: false }]);
+    // Lifting, it can be used again, and it has gone half a second later.
+    const other = sim.planes.find((p) => !p.gone && !p.landed && p.state === PlaneState.FLYING && p !== plane);
+    if (other) expect(sim.addOrder(other, runway)).toBe(true);
+    run(sim, 0.6, events);
+    expect(runway.fog).toBeNull();
+  });
+
+  it('lifts the fog seven seconds in with the anti-fog system', () => {
+    const sim = steady(4, 0x6f);
+    const runway = sim.runways[1]!;
+    const events: SimEvent[] = [];
+    runUntil(sim, () => runway.fog !== null, 60, events);
+    const appeared = sim.time;
+    runUntil(sim, () => runway.fog?.machine !== null && runway.fog?.machine !== undefined, 5, events);
+    expect(sim.time - appeared).toBeCloseTo(RULES.fog.machineAt, 1);
+    runUntil(sim, () => runway.fog?.lifting === true, 10, events);
+    expect(sim.time - appeared).toBeCloseTo(RULES.fog.machineAt + RULES.fog.machineTime, 1);
+    expect(events.filter((e) => e.type === 'fogLifted')).toEqual([{ type: 'fogLifted', runway, byMachine: true }]);
+  });
+
+  it('waits for a busy runway and gives up on the fog after twenty-five seconds', () => {
+    const sim = steady(4);
+    const runway = sim.runways[1]!;
+    // A plane parked on the runway keeps it from being free.
+    runUntil(sim, () => sim.planes.length >= 1, 60);
+    const plane = sim.planes[0]!;
+    plane.energy = 100;
+    sim.addOrder(plane, runway);
+    runUntil(sim, () => plane.landed, 40);
+    run(sim, 47.5 + RULES.fog.patience + 1 - sim.time);
+    expect(runway.fog).toBeNull();
+    expect(sim.fogSchedule).toEqual([{ time: 142.5, runway: 1 }]);
   });
 
   it('has its bonus events on levels 2, 6 and 8', () => {

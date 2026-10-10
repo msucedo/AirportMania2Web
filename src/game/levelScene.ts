@@ -22,6 +22,7 @@ import type { Progress } from './progress';
 import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { BONUS_SURFACES, BonusView } from './view/bonusView';
+import { FOG_SURFACES, FogView } from './view/fogView';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
@@ -89,6 +90,9 @@ export class LevelScene {
   coffeeTab: ServiceTab | null = null;
   moviesTab: ServiceTab | null = null;
   private readonly bonusView: BonusView;
+  private readonly fogViews: FogView[] = [];
+  /** The anti-fog machines' fans, by runway number. */
+  private readonly fans = new Map<number, ReturnType<AudioPlayer['loop']>>();
   /** The helicopter's engine while it crosses. */
   private rotor: ReturnType<AudioPlayer['loop']> = null;
   /** Seconds until each plane filling up may whistle. */
@@ -156,6 +160,7 @@ export class LevelScene {
     if (sim.stopSpots.some((spot) => spot.painting)) for (const id of PAINTING_SURFACES) ids.add(id);
     if (sim.stopSpots.some((spot) => spot.wash)) ids.add('WASH_AND_GO.GRATING');
     if (sim.bonus) for (const id of BONUS_SURFACES[sim.bonus.kind]) ids.add(id);
+    if (sim.fogSchedule.length > 0) for (const id of FOG_SURFACES) ids.add(id);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
@@ -380,6 +385,11 @@ export class LevelScene {
     for (const runway of this.sim.runways) {
       const view = new RunwayView(this.textures, runway);
       this.runwayViews.push(view);
+      if (this.sim.fogSchedule.length > 0) {
+        const fog = new FogView(this.textures, runway);
+        this.fogViews.push(fog);
+        this.planeLayer.addChild(fog);
+      }
       // A water runway lies between two lines of buoys, set relative to it by the stage script (0xcf370).
       const buoys = layout.water
         ? [new BuoyLine(this.textures, runway.position.x - 186, runway.position.y - 27), new BuoyLine(this.textures, runway.position.x - 166, runway.position.y + 6)]
@@ -564,6 +574,14 @@ export class LevelScene {
       case 'washStarted':
         this.audio.play('SOUNDS.WASHING');
         break;
+      case 'antiFogStarted':
+        this.fans.set(event.runway.number, this.audio.loop('SOUNDS.ANTI_FOG_SYSTEM_FAN'));
+        break;
+      case 'fogLifted':
+        this.fans.get(event.runway.number)?.stop(0.5);
+        this.fans.delete(event.runway.number);
+        if (event.byMachine) this.audio.play('SOUNDS.ANTI_FOG_DEICER_FINISH');
+        break;
       case 'paintingReady':
         this.audio.play('SOUNDS.PAINTING_READY');
         break;
@@ -609,6 +627,7 @@ export class LevelScene {
     this.rings?.update(elapsed);
     this.drawPainting(elapsed);
     this.bonusView.update(elapsed);
+    for (const fog of this.fogViews) fog.update(elapsed);
     if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);
     this.coffeeTab?.update(elapsed);

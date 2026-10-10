@@ -64,6 +64,22 @@ export interface Runway extends PlaceBase {
   use: 'free' | 'landing' | 'takeOffReserved' | 'takingOff';
   landings: ComboTrack;
   takeOffs: ComboTrack;
+  /** Seconds the runway has been free (`runway+0xd8`). */
+  idle: number;
+  /** Fog lying on it (`runway+0xd0`): no plane may use it until it has lifted. */
+  fog: Fog | null;
+}
+
+/** Fog over a runway (class `0x3a324`). */
+export interface Fog {
+  /** Seconds since it appeared. */
+  age: number;
+  /** 0 to 1: how thick it is drawn while it comes and goes. */
+  fade: number;
+  /** Lifting: the runway can be used again and the fog is fading away. */
+  lifting: boolean;
+  /** Seconds the anti-fog machine has been at work on it, or null without one. */
+  machine: number | null;
 }
 
 export interface GasStation extends PlaceBase {
@@ -237,6 +253,9 @@ export type SimEvent =
   | { type: 'coffeeServed'; planes: Plane[] }
   | { type: 'moviesReady' }
   | { type: 'moviesShown'; planes: Plane[] }
+  | { type: 'fogAppeared'; runway: Runway }
+  | { type: 'antiFogStarted'; runway: Runway }
+  | { type: 'fogLifted'; runway: Runway; byMachine: boolean }
   | { type: 'washStarted'; plane: Plane; spot: StopSpot }
   | { type: 'washDone'; plane: Plane; spot: StopSpot }
   | { type: 'paintingReady'; spot: StopSpot }
@@ -306,6 +325,10 @@ export class Simulation {
   private helicopterDue = false;
   private nextBonusId = 1;
   private readonly random: () => number;
+  /** Fogs still to come: when, and on which runway (`level+0x110`). */
+  readonly fogSchedule: { time: number; runway: number }[] = [];
+  /** The anti-fog system is owned (`airport+0xad`). */
+  readonly antiFog: boolean;
   /** The coffee and cake service, when the improvement is owned. */
   readonly coffee: ServiceButton | null;
   /** The in-flight movies, likewise. */
@@ -426,6 +449,8 @@ export class Simulation {
         use: 'free',
         landings: { count: 0, value: 0, active: false },
         takeOffs: { count: 0, value: 0, active: false },
+        idle: 0,
+        fog: null,
       });
     }
 
@@ -467,6 +492,8 @@ export class Simulation {
       if (this.bonus.kind === 'balloons') this.balloonsLeft = RULES.bonus.balloons.count;
       else this.helicopterDue = true;
     }
+    this.antiFog = owned.has(IMPROVEMENT.ANTI_FOG);
+    this.scheduleFogs(config.goals.fogs);
     // It starts empty, like the painting spot (0x24010).
     this.coffee = owned.has(IMPROVEMENT.COFFEE_AND_CAKE) ? { recharge: RULES.coffee.recharge, left: RULES.coffee.recharge, ready: false } : null;
     this.movies = owned.has(IMPROVEMENT.IN_FLIGHT_MOVIES) ? { recharge: RULES.movies.recharge, left: RULES.movies.recharge, ready: false } : null;
@@ -603,7 +630,11 @@ export class Simulation {
 
   /** Place virtual slot 15 (gate `0x43530`, runway `0x6da34`, gas station `0x40d4c`): may the plane go there now? */
   private canEnter(place: Place, plane: Plane): boolean {
-    if (place.kind === 'runway') return !plane.landed || (plane.unloaded && plane.loaded);
+    if (place.kind === 'runway') {
+      // 0x6da72: nothing lands on or leaves from a runway under fog.
+      if (place.fog && !place.fog.lifting) return false;
+      return !plane.landed || (plane.unloaded && plane.loaded);
+    }
     if (place.kind === 'gasStation') return plane.landed && plane.unloaded && plane.serviceDone && !plane.gasDone;
     if (place.kind === 'stopSpot') return plane.landed;
     if (place.kind === 'hangar') return plane.landed && plane.unloaded && !plane.serviceDone;
@@ -640,6 +671,7 @@ export class Simulation {
     while (this.pending.length > 0 && this.pending[0]!.time <= this.time) this.spawn(this.pending.shift()!);
 
     for (const runway of this.runways) this.updateRunway(runway, dt);
+    this.updateFogs(dt);
     for (const gate of this.gates) this.updateGate(gate, dt);
     for (const station of this.gasStations) this.updateGasStation(station, dt);
     for (const hangar of this.hangars) this.updateHangar(hangar, dt);
@@ -673,6 +705,64 @@ export class Simulation {
     if (!booth || !booth.ready || booth.job || !plane) return [];
     if (spot.use !== 'occupied' || plane.state !== PlaneState.WAITING) return [];
     return this.colors.filter((color) => color !== plane.color);
+  }
+
+  /**
+   * 0x102d8: the level's fogs. The time, less a margin, is cut into equal slices and each fog
+   * gets a random moment in its slice and a random runway, kept apart from another on that runway.
+   */
+  private scheduleFogs(count: number): void {
+    const rule = RULES.fog;
+    if (count < 1 || this.runways.length === 0) return;
+    const slice = (this.totalTime - rule.margin) / count;
+    for (let i = 0; i < count; i++) {
+      for (let attempt = 0; attempt < rule.tries; attempt++) {
+        const runway = Math.floor(this.random() * this.runways.length) % this.runways.length;
+        const time = i * slice + this.random() * slice;
+        if (this.fogSchedule.some((fog) => fog.runway === runway && Math.abs(fog.time - time) < rule.apart)) continue;
+        this.fogSchedule.push({ time, runway });
+        break;
+      }
+    }
+  }
+
+  /** 0x1094c for the fog due next, and the fogs already lying (0x3a41c, 0x19b78). */
+  private updateFogs(dt: number): void {
+    const rule = RULES.fog;
+    for (const runway of this.runways) runway.idle = runway.use === 'free' ? runway.idle + dt : 0;
+
+    const due = this.fogSchedule[0];
+    if (due && this.time >= due.time) {
+      const runway = this.runways[due.runway]!;
+      if (this.time - due.time >= rule.patience) this.fogSchedule.shift();
+      else if (runway.use === 'free' && runway.idle > rule.idle) {
+        this.fogSchedule.shift();
+        runway.fog = { age: 0, fade: 0, lifting: false, machine: null };
+        this.emit({ type: 'fogAppeared', runway });
+      }
+    }
+
+    for (const runway of this.runways) {
+      const fog = runway.fog;
+      if (!fog) continue;
+      fog.age += dt;
+      if (fog.lifting) {
+        fog.fade -= rule.fade * dt;
+        if (fog.fade < 0) runway.fog = null;
+        continue;
+      }
+      fog.fade = Math.min(1, fog.fade + rule.fade * dt);
+      if (fog.machine !== null) fog.machine += dt;
+      else if (this.antiFog && fog.age > rule.machineAt) {
+        fog.machine = 0;
+        this.emit({ type: 'antiFogStarted', runway });
+      }
+      const byMachine = fog.machine !== null && fog.machine > rule.machineTime;
+      if (byMachine || fog.age > rule.time) {
+        fog.lifting = true;
+        this.emit({ type: 'fogLifted', runway, byMachine });
+      }
+    }
   }
 
   /** The bonus event and the coins it has released. */

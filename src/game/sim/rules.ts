@@ -122,6 +122,15 @@ export const RULES = {
   painting: { recharge: 42, colorAt: 4, duration: 5.5, energy: 0.4 },
 
   /**
+   * Runway fog. The schedule (0x102d8) leaves `margin` seconds free at the end of the level and
+   * keeps two fogs on one runway `apart` seconds from each other, in `tries` attempts. A fog due
+   * (0x1094c) waits for its runway to have been idle `idle` seconds, for at most `patience`. It
+   * lasts `time` seconds (0x3a41c), fading in and out at `fade` a second; with the anti-fog a
+   * machine comes `machineAt` seconds in and ends it `machineTime` seconds later (0x19b78).
+   */
+  fog: { margin: 30, apart: 30, tries: 30, idle: 3, patience: 25, time: 15, fade: 2, machineAt: 2, machineTime: 5 },
+
+  /**
    * Wash and go (0x84d60, 0x852b0): a wash takes `time` seconds, the plane is clean with `rinse`
    * left, and at the end it gains `energy` and scores its WashingPoints.
    */
