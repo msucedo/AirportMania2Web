@@ -943,6 +943,13 @@ less, `GUI.INGAMEGUI.NO_MORE_TIME` (`hud+0x3f8`) is drawn at (14, 0) with opacit
 `0.5 + 0.5·sin(11·t)`. Which clock `t` is has not been identified; the web version uses the
 bar's own.
 
+## Dirt — confirmed
+
+After the body's front image the plane draw (`0x9220`) draws the dirt image of the current pose
+(`plane+0x88 + 4·pose`) while `plane+0x26c` is clear. The constructor sets that byte from the
+schedule's `NeedWash` (clear when the plane needs a wash); in state 9, the wash, the dirt fades
+out. No plane in stages 1 and 2 needs a wash, so it never shows there.
+
 ## Stages 1 and 2: what is still approximate
 
 Everything else in these two stages is read from the binary and noted above with its address.
@@ -962,7 +969,7 @@ Rules:
 
 Drawing:
 
-- Planes: dirt, the whistle, the nag flash of the balloon, the pitch on landing, landing dust,
+- Planes: the whistle, the nag flash of the balloon, the pitch on landing, landing dust,
   and the mark on planes a service tab would reach are not drawn. The thought cloud shows the
   need icon in place of the place's own image.
 - Gate: the hover label; the first part of its draw routine has not been read. Order flag

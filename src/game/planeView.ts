@@ -45,13 +45,14 @@ const MOUTH_SEQUENCES = {
 export const PASSENGER_ICONS = { PRESIDENT: 'PRESIDENT', PREGNANT: 'PREGNANT', ORGAN: 'ORGANBAG' } as const;
 export type Passenger = keyof typeof PASSENGER_ICONS;
 
-export function planeSurfaceIds(plane: PlaneDescriptor, female: boolean, pontoons = false, passenger: Passenger | null = null): string[] {
+export function planeSurfaceIds(plane: PlaneDescriptor, female: boolean, pontoons = false, passenger: Passenger | null = null, dirty = false): string[] {
   const ids = [plane.shadow, 'PLANE.EYELASH', 'PLANE.EYELASH_REMARK'];
   if (passenger) ids.push(PASSENGER_ICONS[passenger]);
   const suffix = female ? '_FEMALE' : '';
   for (const side of ['LEFT', 'RIGHT']) ids.push(`PLANE.${side}_EYEBROW${suffix}`, `PLANE.${side}_EYEBROW${suffix}_REMARK`);
   for (let i = 0; i < MOUTHS; i++) ids.push(`PLANE.MOUTH.${i}`);
   for (const p of PERSPECTIVES) {
+    if (dirty) ids.push(`${plane.body.dirt}.${p}`);
     ids.push(`${plane.body.color}.${p}`, `${plane.body.front}.${p}`, `${plane.body.remark}.${p}`, `${plane.eyes.opened}.${p}`, `${plane.eyes.closed}.${p}`);
     const attached = pontoons ? plane.pantoons[p] : plane.rail?.parts[p];
     if (attached) {
@@ -157,6 +158,8 @@ export interface PlaneLook {
   corner: BalloonCorner;
   /** Special passenger still aboard, shown beside the energy bar. */
   passenger: Passenger | null;
+  /** Still needing its wash. */
+  dirty?: boolean;
   /** Waiting with nothing to do: the eyes turn aside. */
   idle: boolean;
   gearDown: boolean;
@@ -171,6 +174,7 @@ export class PlaneView extends Container {
   private readonly shadow: Sprite;
   private readonly body = new Container();
   private readonly poses: Pose[] = [];
+  private readonly dirt: Sprite[] = [];
   private readonly energySolid: Sprite;
   private readonly energyFlicker: Sprite;
   private passengerIcon: Sprite | null = null;
@@ -210,6 +214,8 @@ export class PlaneView extends Container {
     female: boolean,
     /** Water stages draw the plane's pontoons instead of its landing gear. */
     pontoons = false,
+    /** The plane arrives needing a wash: its dirt is drawn over the body until it has had one (0x9220). */
+    dirty = false,
   ) {
     super();
     this.shadow = textures.sprite(plane.shadow);
@@ -296,6 +302,11 @@ export class PlaneView extends Container {
       pose.color = color;
       pose.oldColor = oldColor;
       root.addChild(color, oldColor, textures.sprite(`${plane.body.front}.${p}`));
+      if (dirty) {
+        const dirt = textures.sprite(`${plane.body.dirt}.${p}`);
+        this.dirt.push(dirt);
+        root.addChild(dirt);
+      }
 
       if (!browsBehind) for (const part of brows(browIds, false)) root.addChild(part);
       if (!back) for (const lash of lashes('PLANE.EYELASH', false)) root.addChild(lash);
@@ -383,6 +394,7 @@ export class PlaneView extends Container {
     if (this.lastEnergy !== null && energy > this.lastEnergy + 0.01) this.cheer();
     this.lastEnergy = energy;
 
+    for (const sprite of this.dirt) sprite.visible = look.dirty === true;
     if (this.repainted > 0) this.repainted = Math.max(0, this.repainted - dt);
     for (const pose of this.poses) {
       if (!pose.oldColor) continue;

@@ -157,7 +157,7 @@ export class LevelScene {
       for (const id of runwaySurfaceIds(runway)) ids.add(id);
     }
     for (const spawn of schedule.planes) {
-      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, spawn.sex === 'FEMALE', layout.pontoons, spawn.passengers in PASSENGER_ICONS ? (spawn.passengers as Passenger) : null)) ids.add(id);
+      for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, spawn.sex === 'FEMALE', layout.pontoons, spawn.passengers in PASSENGER_ICONS ? (spawn.passengers as Passenger) : null, spawn.needWash)) ids.add(id);
     }
     const [strings] = await Promise.all([
       data.strings(options.language),
@@ -580,7 +580,7 @@ export class LevelScene {
         continue;
       }
       if (!view) {
-        view = new PlaneView(this.textures, plane.descriptor, plane.passenger === 'PRESIDENT' ? PRESIDENT_COLOR : paletteColor(plane.color), plane.sex === 'FEMALE', this.options.layout.pontoons);
+        view = new PlaneView(this.textures, plane.descriptor, plane.passenger === 'PRESIDENT' ? PRESIDENT_COLOR : paletteColor(plane.color), plane.sex === 'FEMALE', this.options.layout.pontoons, !plane.washDone);
         this.planeLayer.addChild(view);
         this.planeViews.set(plane.id, view);
       }
@@ -618,6 +618,7 @@ export class LevelScene {
         thought: draining && plane.queue.length > 0 ? this.destinationIcon(plane) : null,
         corner: this.balloonCorner(plane),
         passenger: plane.passenger,
+        dirty: !plane.washDone,
         idle: plane.state === PlaneState.WAITING && plane.queue.length === 0,
         gearDown: this.gearDown(plane),
       });
