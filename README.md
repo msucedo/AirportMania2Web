@@ -16,8 +16,8 @@ npm test
 
 The game opens on the original main menu and world map: touch a level's marker, or Play for the
 current one, and confirm in its dialog.
-Seven stages are playable (56 levels): Arches, the island, the monsters' stage, the North
-Pole, Airborne, Africa and the Antarctic. Options in the main
+Eight stages are playable (67 levels): Arches, the island, the monsters' stage, the North
+Pole, Airborne, Africa, the Antarctic and the carrier. Options in the main
 menu set the sound and music volume and, under Advanced, the language (eight are available);
 during a level the menu button opens the original menu, with the options and the ways out.
 
@@ -35,8 +35,8 @@ Planes have their full faces (mood, blinking, talking), landing gear, propellers
 colours; the sky runs its day and night cycle with sun, stars and clouds; the island has its sea
 glints, rings and buoys; runways show their combo arrows.
 
-Not there yet: the help, users, credits and awards screens, the tutorial, and stages 8 to 10.
-Stages 3 to 7 are played without their animated scenery, and the wash and the luggage conveyor
+Not there yet: the help, users, credits and awards screens, the tutorial, and stages 9 and 10.
+Stages 3 to 8 are played without their animated scenery, and the wash and the luggage conveyor
 without their full drawing; `docs/re-notes.md` lists what is still approximate.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
@@ -64,5 +64,5 @@ after running it.
   `python3 -m venv .tools/venv && .tools/venv/bin/pip install unicorn`).
 - `tools/dev/play.mjs` — plays the first plane in a headless browser and takes screenshots.
 - `tools/dev/shoot-level.mjs` — drives a plane that needs fuel through a level and takes screenshots.
-- `tools/dev/play-all.mjs` — plays every level of stages 1 to 7 in order, buying improvements as the funds allow, and checks that each can be passed and that progress chains.
+- `tools/dev/play-all.mjs` — plays every level of stages 1 to 8 in order, buying improvements as the funds allow, and checks that each can be passed and that progress chains.
 - `tools/dev/shoot-flow.mjs` — checks a finished level, its report, saved progress, the shop and the next level.

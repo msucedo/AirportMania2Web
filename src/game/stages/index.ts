@@ -2,6 +2,7 @@ import { AFRICA } from './africa';
 import { AIRBORNE } from './airborne';
 import { ANTARCTIC } from './antarctic';
 import { ARCHES } from './arches';
+import { CARRIER } from './carrier';
 import { ISLAND } from './island';
 import type { StageLayout } from './layout';
 import { MONSTERS } from './monsters';
@@ -16,4 +17,5 @@ export const STAGES: ReadonlyMap<number, StageLayout> = new Map([
   [AIRBORNE.stage, AIRBORNE],
   [AFRICA.stage, AFRICA],
   [ANTARCTIC.stage, ANTARCTIC],
+  [CARRIER.stage, CARRIER],
 ]);

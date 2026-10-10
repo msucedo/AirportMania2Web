@@ -12,6 +12,7 @@ import { AIRBORNE } from '../src/game/stages/airborne';
 import { STAGES } from '../src/game/stages';
 import { ANTARCTIC } from '../src/game/stages/antarctic';
 import { ARCHES } from '../src/game/stages/arches';
+import { CARRIER } from '../src/game/stages/carrier';
 import { ISLAND } from '../src/game/stages/island';
 import { MONSTERS } from '../src/game/stages/monsters';
 import { NORTH_POLE } from '../src/game/stages/northPole';
@@ -50,6 +51,13 @@ function run(sim: Simulation, seconds: number, events: SimEvent[] = []): SimEven
   }
   return events;
 }
+/**
+ * Fog, ice and sand fall on a runway and at a moment picked at random. Stage helpers use this
+ * fixed dice unless a test brings its own, so that a hazard never lands by chance on the runway
+ * a test is using: with it they all go to the middle runway of the stage.
+ */
+const FIXED_DICE = (): number => 0.5;
+
 function runUntil(sim: Simulation, done: () => boolean, limit = 120, events: SimEvent[] = []): SimEvent[] {
   for (let t = 0; t < limit && !done(); t += DT) {
     sim.update(DT);
@@ -941,6 +949,7 @@ describe('simulation, stage 3 (monsters)', () => {
       level,
       improvements: new Set(owned),
       screenWidth: 480,
+      random: FIXED_DICE,
     });
 
   it('builds the airport the stage script builds', () => {
@@ -1122,7 +1131,7 @@ describe('simulation, stage 4 (north pole)', () => {
   const stage4 = parseStageSchedule(tree('data/maps/stage_levels_04.json'));
   const area4 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(4)!;
   const pole = (level = 1, owned: number[] = [], random?: () => number): Simulation =>
-    new Simulation({ layout: NORTH_POLE, schedule: findLevel(stage4, level, false), goals: findGoals(area4, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, ...(random ? { random } : {}) });
+    new Simulation({ layout: NORTH_POLE, schedule: findLevel(stage4, level, false), goals: findGoals(area4, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, random: random ?? FIXED_DICE });
 
   it('builds the airport the stage script builds, with its luggage conveyor', () => {
     const sim = pole();
@@ -1147,7 +1156,9 @@ describe('simulation, stage 4 (north pole)', () => {
   });
 
   it('loads luggage on a plane that needs it, between the services and the gate', () => {
-    const sim = pole(8);
+    // A fixed dice sends the level's ice to runway 2, leaving the one used here clear.
+    const sim = pole(8, [], () => 0.5);
+    expect(sim.hazardSchedule.every((h) => h.runway === 1)).toBe(true);
     const conveyor = sim.luggages[0]!;
     const events: SimEvent[] = [];
     runUntil(sim, () => sim.planes.some((p) => !p.gone && !p.luggageDone && p.serviceDone && p.gasDone), 300, events);
@@ -1209,7 +1220,7 @@ describe('simulation, stage 5 (airborne)', () => {
   const stage5 = parseStageSchedule(tree('data/maps/stage_levels_05.json'));
   const area5 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(5)!;
   const airborne = (level = 1, owned: number[] = []): Simulation =>
-    new Simulation({ layout: AIRBORNE, schedule: findLevel(stage5, level, false), goals: findGoals(area5, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480 });
+    new Simulation({ layout: AIRBORNE, schedule: findLevel(stage5, level, false), goals: findGoals(area5, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, random: FIXED_DICE });
 
   it('builds the airport the stage script builds', () => {
     const sim = airborne();
@@ -1251,7 +1262,7 @@ describe('simulation, stage 6 (africa)', () => {
   const stage6 = parseStageSchedule(tree('data/maps/stage_levels_06.json'));
   const area6 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(6)!;
   const africa = (level = 1, owned: number[] = [], random?: () => number): Simulation =>
-    new Simulation({ layout: AFRICA, schedule: findLevel(stage6, level, false), goals: findGoals(area6, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, ...(random ? { random } : {}) });
+    new Simulation({ layout: AFRICA, schedule: findLevel(stage6, level, false), goals: findGoals(area6, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, random: random ?? FIXED_DICE });
 
   it('builds the airport the stage script builds, with three runways and a fourth on sale', () => {
     const sim = africa();
@@ -1348,7 +1359,7 @@ describe('simulation, stage 7 (antarctic)', () => {
   const stage7 = parseStageSchedule(tree('data/maps/stage_levels_07.json'));
   const area7 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(7)!;
   const antarctic = (level = 1, owned: number[] = [], random?: () => number): Simulation =>
-    new Simulation({ layout: ANTARCTIC, schedule: findLevel(stage7, level, false), goals: findGoals(area7, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, ...(random ? { random } : {}) });
+    new Simulation({ layout: ANTARCTIC, schedule: findLevel(stage7, level, false), goals: findGoals(area7, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, random: random ?? FIXED_DICE });
   const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   it('builds the airport the stage script builds', () => {
@@ -1412,10 +1423,80 @@ describe('simulation, stage 7 (antarctic)', () => {
       [3, 8],
     ]);
     // In order of time whatever the kind.
-    const times = antarctic(6).hazardSchedule.map((h) => h.time);
+    // A dice that varies, so that fog and ice do not all ask for the same runway and moment.
+    let seed = 7;
+    const varied = (): number => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const schedule = antarctic(6, [], varied).hazardSchedule;
+    const times = schedule.map((h) => h.time);
     expect(times).toEqual([...times].sort((a, b) => a - b));
-    expect(new Set(antarctic(6).hazardSchedule.map((h) => h.kind))).toEqual(new Set(['fog', 'ice']));
+    expect(new Set(schedule.map((h) => h.kind))).toEqual(new Set(['fog', 'ice']));
     expect(LEVELS.map((level) => antarctic(level).bonus?.kind ?? null)).toEqual([null, 'helicopter', null, 'balloons', null, 'helicopter', null, null, 'balloons', null]);
+  });
+});
+
+describe('simulation, stage 8 (carrier)', () => {
+  const stage8 = parseStageSchedule(tree('data/maps/stage_levels_08.json'));
+  const area8 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(8)!;
+  const carrier = (level = 1, owned: number[] = []): Simulation =>
+    new Simulation({ layout: CARRIER, schedule: findLevel(stage8, level, false), goals: findGoals(area8, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, random: FIXED_DICE });
+  const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+  it('builds the airport the stage script builds', () => {
+    const sim = carrier();
+    expect(area8.levelsCount).toBe(11);
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 18, { x: 348, y: 136 }],
+      ['B', 18, { x: 380, y: 182 }],
+    ]);
+    expect(sim.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 5, { x: -5, y: 180 }],
+      [2, 5, { x: 20, y: 210 }],
+      [3, 5, { x: 45, y: 240 }],
+    ]);
+    expect([sim.gasStations[0]!.position, sim.hangars[0]!.position, sim.luggages[0]!.position]).toEqual([
+      { x: 55, y: 97 },
+      { x: 170, y: 75 },
+      { x: 340, y: 86 },
+    ]);
+    expect([sim.gasStations[0]!.descriptor.type, sim.hangars[0]!.descriptor.type, sim.luggages[0]!.descriptor.type]).toEqual([8, 6, 5]);
+    for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.luggages, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('swaps in the improved gas station and hangar, the VIP runway and the fourth runway', () => {
+    const full = carrier(1, [0x35, 0x3c, 0x50, 0x5a, 0x16, 0x21]);
+    expect([full.gasStations[0]!.descriptor.type, full.hangars[0]!.descriptor.type]).toEqual([10, 11]);
+    expect(full.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 7, { x: 0, y: 170 }],
+      [2, 5, { x: 25, y: 200 }],
+      [3, 5, { x: 50, y: 230 }],
+      [4, 5, { x: 75, y: 260 }],
+    ]);
+    expect(full.gates.map((g) => [g.letter, g.descriptor.type])).toEqual([
+      ['A', 18],
+      ['B', 18],
+      ['C', 18],
+      ['D', 19],
+    ]);
+    // The improved pump fills a plane faster than the plain one.
+    expect(full.gasStations[0]!.descriptor.speed).toBeGreaterThan(carrier().gasStations[0]!.descriptor.speed);
+    for (const place of [...full.gates, ...full.gasStations, ...full.hangars, ...full.luggages, ...full.stopSpots]) expect(full.graph.route(full.runways[3]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('gets its fog and ice from the levels database and its bonus events from the script', () => {
+    expect(LEVELS.map((level) => [findGoals(area8, level, false).fogs, findGoals(area8, level, false).ices])).toEqual([
+      [0, 0],
+      [0, 0],
+      [0, 2],
+      [1, 2],
+      [1, 2],
+      [6, 5],
+      [3, 5],
+      [6, 2],
+      [1, 5],
+      [6, 5],
+      [5, 7],
+    ]);
+    expect(LEVELS.map((level) => carrier(level).bonus?.kind ?? null)).toEqual([null, 'helicopter', null, null, null, 'balloons', null, 'helicopter', null, null, 'balloons']);
   });
 });
 
@@ -1429,6 +1510,7 @@ describe('stage layouts', () => {
       [5, 1],
       [6, 1],
       [7, 1],
+      [8, 0],
     ]);
   });
 });

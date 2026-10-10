@@ -1146,9 +1146,14 @@ one adds, removes or changes; `--level` shows what depends on the level.
 - Offers in the order registered: `0x01` 25000, `0x77` 160000, `0x02` 35000, `0x0a` 60000,
   `0x72` 160000, `0x16` 60000, `0x17` 70000, `0x1e` 55000, `0x1f` 65000, `0x20` 75000, `0x21`
   85000, `0x28` 50000, `0x29` 60000, `0x2a` 70000, `0x34` 120000, deicer `0x6e` 100000, `0x74`
-  80000, `0x73` 80000, licence `0xce` 200000, `0x2b` 80000. Single-improvement runs show the
-  same pattern of conditions as stage 3, with each second upgrade needing the first and hiding
-  it; the run over every combination has not finished.
+  80000, `0x73` 80000, licence `0xce` 200000, `0x2b` 80000.
+- When each is on sale, from the run over every combination: `0x01` hidden by `0x02` or
+  `0x77`; `0x77` and `0x02` need `0x01`, `0x02` hidden by `0x72`; `0x72` needs `0x02`; `0x16`
+  hidden by `0x20` or `0x2a`, `0x17` by `0x21` or `0x2b`; `0x1e` hidden by `0x28`, `0x1f` by
+  `0x29`; `0x20` needs `0x16` and is hidden by `0x2a`, `0x21` needs `0x17` and is hidden by
+  `0x2b`; `0x28`, `0x29`, `0x2a`, `0x2b` need `0x1e`, `0x1f`, `0x20`, `0x21`. Levels to try
+  from: `0x01` 2, `0x16` 4, deicer 5, `0x17` 6, `0x1e` and `0x1f` 7, `0x28` and `0x29` 8.
+  Stages 5 to 8 are given the same conditions; only stage 4's have been run in full.
 - Bonus events: helicopter on level 2 (25.2 s, coins of 1000) and level 8 (64.9 s, 1500),
   balloons on level 6 (132.1 s, 1000).
 - Ice per level, from the levels database: 1 on levels 3 and 8, 2 on 4, 5 and 7, 4 on 6.
@@ -1299,6 +1304,31 @@ animation.
   4; 1 and 3 on 5; 5 and 4 on 6; 2 and 3 on 7; 4 and 4 on 8; 3 and 5 on 9; 3 and 8 on 10.
 - Web version: the stars and the aurora are not drawn.
 
+## Stage 8 ("Carrier") — read with the emulated script (`0xdc5b8`)
+
+- Eleven levels. Gates of descriptor types 18, 19 (improved) and 20 (improved again): A
+  (348, 136), B (380, 182), C (408, 228), D (440, 274), with the same improvements as before.
+- Gas station type 8 at (55, 97), or type 10 with the improved gas station `0x5a` (new here);
+  hangar type 6 at (170, 75), or type 11 with `0x50`; luggage conveyor type 5 at (340, 86).
+- Taxi nodes (225, 170), (250, 200), (275, 230), (300, 260), (335, 307), (355, 307),
+  (345, 297), and a linked terminal pair at (312, 148) and (327, 169).
+- Runways of type 5: (−5, 180), (20, 210), (45, 240); with `0x35`, (0, 170), (25, 200),
+  (50, 230), (75, 260). VIP runway `0x3c` as before. Stop spots as in stage 5, with corner 0.
+- Backdrop: sky 70, `BACKGROUND_DOWN` at (0, 115) scaled 16×19, `OCEAN_BOTTOM` at (0, 68)
+  scaled 48×4, clouds, four islands (`0x14c3c`, `0x14d08`, `0x14dd4`, `0x14ea0`), `OCEAN_TOP`
+  at (0, 45), the sea (`0x13c3c`), `BACKGROUND_TOP` at (0, 85) and `AIRPORT` at (359, 45) with
+  depth 100. The neutral gate colour is (0.671, 0.804, 1).
+- Offers in the order registered, none with a level to try it from: `0x01` 65000, `0x77`
+  300000, `0x02` 100000, `0x0a` 195000, `0x72` 440000, `0x16` 240000, `0x17` 250000, `0x1e`
+  190000, `0x1f` 200000, `0x20` 210000, `0x21` 220000, `0x28` 140000, `0x29` 150000, `0x2a`
+  160000, `0x35` 690000, `0x3c` 410000, `0x50` 390000, `0x5a` 390000, `0x74` 220000, `0x73`
+  220000, anti-fog 220000, deicer 250000, licence `0xd6` 530000, `0x2b` 170000.
+- Bonus events: helicopter from the left on level 2 (65.3 s, coins of 4000) and level 8
+  (148.9 s, 4500), balloons on level 6 (67.8 s, 4500) and level 11 (50.9 s, 5000).
+- Fog and ice per level, from the levels database: none on 1 and 2; 0 and 2 on 3; 1 and 2 on
+  4 and 5; 6 and 5 on 6; 3 and 5 on 7; 6 and 2 on 8; 1 and 5 on 9; 6 and 5 on 10; 5 and 7 on 11.
+- Web version: the islands and the sea are not drawn.
+
 ## Drawing order of the airport's objects — confirmed
 
 - Every object of the airport is kept in one list (`airport+0x14`, added by `0xa3490`), which
@@ -1337,7 +1367,7 @@ events can be read the same way. Builders not yet named, by script:
 | 5 | `0xd4f54` | Airborne | `0x14858` ×5 (scrolling clouds), `0x14928` ×2 (propellers), `0x14b5c` ×4 |
 | 6 | `0xd77ac` | Africa | none beyond `0x14738` (built, see above) |
 | 7 | `0xd9e00` | Antarctic | `0x13808` (aurora), stars (built, see above) |
-| 8 | `0xdc5b8` | Carrier | `0x13c3c` (sea), `0x14c3c`, `0x14d08`, `0x14dd4`, `0x14ea0` |
+| 8 | `0xdc5b8` | Carrier | `0x13c3c` (sea), `0x14c3c`, `0x14d08`, `0x14dd4`, `0x14ea0` (built, see above) |
 | 9 | `0xdef50` | Moon | `0x136a8` |
 | 10 | `0xe18c4` | Mars | `0x13758` |
 

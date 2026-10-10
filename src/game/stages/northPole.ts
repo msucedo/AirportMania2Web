@@ -56,8 +56,8 @@ export const NORTH_POLE: StageLayout = {
     { position: { x: 50, y: 300 }, requires: I.EXTRA_STOP_SPOT_2, replacedBy: I.PAINTING_STOP_SPOT },
   ],
   // Ids, prices, the level each is first recommended at and the order are what the stage script
-  // registers (0x13458). When each is on sale follows the pattern confirmed for stages 1 to 3 and
-  // what a run with each single improvement shows; the run over every combination is pending.
+  // registers (0x13458). When each is on sale comes from running the script with every
+  // combination of the improvements that matter (tools/re/stage_layout.py --offers).
   improvements: [
     offer(I.EXTRA_STOP_SPOT, 25000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'STORAGE_PLACE', { tryFrom: 2, hiddenBy: [I.EXTRA_STOP_SPOT_2, I.WASH_AND_GO] }),
     offer(I.WASH_AND_GO, 160000, 'WASH_AND_GO', 'WASH_AND_GO', 'WASH_AND_GO', { needs: [I.EXTRA_STOP_SPOT] }),
@@ -68,8 +68,8 @@ export const NORTH_POLE: StageLayout = {
     offer(I.EXTRA_GATE_D, 70000, 'EXTRA_GATE_D', 'EXTRA_GATE', 'GATE_6', { tryFrom: 6, hiddenBy: [I.UPGRADED_GATE_D, I.MORE_UPGRADED_GATE_D] }),
     offer(I.UPGRADED_GATE_A, 55000, 'IMPROVED_GATE_A', 'IMPROVED_GATE', 'GATE_7', { tryFrom: 7, hiddenBy: [I.MORE_UPGRADED_GATE_A] }),
     offer(I.UPGRADED_GATE_B, 65000, 'IMPROVED_GATE_B', 'IMPROVED_GATE', 'GATE_7', { tryFrom: 7, hiddenBy: [I.MORE_UPGRADED_GATE_B] }),
-    offer(I.UPGRADED_GATE_C, 75000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_7', { needs: [I.EXTRA_GATE_C] }),
-    offer(I.UPGRADED_GATE_D, 85000, 'IMPROVED_GATE_D', 'IMPROVED_GATE', 'GATE_7', { needs: [I.EXTRA_GATE_D] }),
+    offer(I.UPGRADED_GATE_C, 75000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_7', { needs: [I.EXTRA_GATE_C], hiddenBy: [I.MORE_UPGRADED_GATE_C] }),
+    offer(I.UPGRADED_GATE_D, 85000, 'IMPROVED_GATE_D', 'IMPROVED_GATE', 'GATE_7', { needs: [I.EXTRA_GATE_D], hiddenBy: [I.MORE_UPGRADED_GATE_D] }),
     offer(I.MORE_UPGRADED_GATE_A, 50000, 'MORE_IMPROVED_GATE_A', 'MORE_IMPROVED_GATE', 'GATE_8', { tryFrom: 8, needs: [I.UPGRADED_GATE_A] }),
     offer(I.MORE_UPGRADED_GATE_B, 60000, 'MORE_IMPROVED_GATE_B', 'MORE_IMPROVED_GATE', 'GATE_8', { tryFrom: 8, needs: [I.UPGRADED_GATE_B] }),
     offer(I.MORE_UPGRADED_GATE_C, 70000, 'MORE_IMPROVED_GATE_C', 'MORE_IMPROVED_GATE', 'GATE_8', { needs: [I.UPGRADED_GATE_C] }),

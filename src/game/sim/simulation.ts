@@ -426,7 +426,9 @@ export class Simulation {
     }
 
     // Same creation order as the stage builder: gates, gas station, taxi nodes, runways.
-    const stationDescriptor = config.gasStations?.get(layout.gasStationType);
+    // With the improved gas station the stage builds one of another type in its place.
+    const stationType = layout.gasStation.improved && owned.has(layout.gasStation.improved.improvement) ? layout.gasStation.improved.type : layout.gasStationType;
+    const stationDescriptor = config.gasStations?.get(stationType);
     if (stationDescriptor && (config.level ?? 1) >= layout.gasStation.minLevel) {
       const { x, y } = layout.gasStation.position;
       const node = { x: x + stationDescriptor.node.x, y: y + stationDescriptor.node.y };

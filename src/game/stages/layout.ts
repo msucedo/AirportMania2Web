@@ -102,7 +102,7 @@ export interface StageLayout {
    */
   gateDecorations: { resource: string; offset: Point; depth?: number }[];
   gates: GateSlot[];
-  gasStation: { position: Point; minLevel: number };
+  gasStation: { position: Point; minLevel: number; improved?: { improvement: number; type: number } };
   /** Repair hangar, when the stage has one. */
   hangar: { position: Point; type: number; minLevel: number; improved?: { improvement: number; type: number } } | null;
   /** Luggage conveyor, when the stage has one. */
@@ -168,6 +168,7 @@ export const IMPROVEMENT = {
   EXTRA_RUNWAY_4: 0x35,
   VIP_RUNWAY: 0x3c,
   IMPROVED_HANGAR: 0x50,
+  IMPROVED_GAS_STATION: 0x5a,
   DEICER: 0x6e,
   ANTI_FOG: 0x6f,
   ANTI_SAND: 0x70,
@@ -182,6 +183,7 @@ export const IMPROVEMENT = {
   PLANE_8_LICENCE: 0xcf,
   PLANE_9_LICENCE: 0xd0,
   PLANE_14_LICENCE: 0xd5,
+  PLANE_15_LICENCE: 0xd6,
 } as const;
 
 const offer = (
