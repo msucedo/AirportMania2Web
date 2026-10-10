@@ -915,7 +915,15 @@ State 13, with a phase in `plane+0x330` and a clock in `+0x314` (`0x7eb2`). Posi
   `0x7d34`) it is `10·t²`. The plane's transform (`0x8584`) applies it as a rotation between a
   translation of (0, 25) and one of (0, `OffsetY` − 28), before the mirroring for planes facing
   right, so the body turns about a point 25 px above its origin.
-- Web version: the dust (`0x6870`) is not drawn. That positive pitch lifts the nose is taken
+- The dust is a smoke tail (`0x6870`, class `SmokeTail` made by `0x757c0` and kept at
+  `plane+0x278`; the plane's update calls it at three points and `0x757b8` ends it). Each
+  call hands `0x758b0` the plane's place, its speed (`+0x30c`, `+0x310`), its depth less one
+  and a strength that grows with the square of the speed over 200 (nothing under 0.2). The
+  tail lets go puffs at `20 + 0.1·speed` a second (globals `0x178b34`, `0x178b38`) along the
+  way travelled. A puff (`0x75b1c`, `EFFECTS.SMOKE`) drifts at up to 7 px/s, starts at a random
+  angle turning at up to 45°/s, grows, and lasts half a second (its clock runs at 2/s).
+- Web version: the smoke tail is not drawn; how the strength sets a puff's size and opacity
+  (`0x75ee8`) and the head of `0x6870` have not been read. That positive pitch lifts the nose is taken
   from the values making sense that way round, not from the engine's rotation sign.
 
 ## Orders of a plane waiting on the ground — confirmed
