@@ -1126,6 +1126,36 @@ one adds, removes or changes; `--level` shows what depends on the level.
 - Limits: what a builder does with its arguments still has to be read; a call whose return
   value the script tests gets a blank object, which may take a branch the game would not.
 
+## Stage 3: what is still approximate
+
+- Scenery not drawn: the six stars, the scary clouds and the witch crossing the sky, the five
+  fog patches by the gas station and the five bats (builders `0x13b8c`, `0x14aa8`, `0x14b5c`,
+  `0x149d4`, `0x14f6c`; only their arguments have been read).
+- Wash and go: the shower, rollers, water and splashes are not drawn, and the dirt goes at once
+  instead of fading.
+- Fog: the hint shown when a plane is sent to a foggy runway, and the machine's wobble.
+- The balloon corner of its runways is taken to be the island's.
+- Everything listed for stages 1 and 2 below applies here too.
+
+## The remaining stage scripts — surveyed, not built
+
+Every script runs to the end in `tools/re/stage_layout.py`, so their layouts, offers and bonus
+events can be read the same way. Builders not yet named, by script:
+
+| Stage | Script | Scenery set | New builders |
+|---|---|---|---|
+| 4 | `0xd2958` | North Pole | `0x13d0c` ×5 (snow or smoke), `0x13f84` (flying Santa), `0x14738` (luggage) |
+| 5 | `0xd4f54` | Airborne | `0x14858` ×5 (scrolling clouds), `0x14928` ×2 (propellers), `0x14b5c` ×4 |
+| 6 | `0xd77ac` | Africa | none beyond `0x14738` |
+| 7 | `0xd9e00` | Antarctic | `0x13808` (aurora), stars |
+| 8 | `0xdc5b8` | Carrier | `0x13c3c` (sea), `0x14c3c`, `0x14d08`, `0x14dd4`, `0x14ea0` |
+| 9 | `0xdef50` | Moon | `0x136a8` |
+| 10 | `0xe18c4` | Mars | `0x13758` |
+
+`0x14738` (luggage) is in every script from stage 4 on. The levels database also gives later
+levels ice and sand on the runways (kinds 1 and 2 of the same schedule as fog, created by
+`0x6d41c` and `0x6d4d0`), and the hints mention sand and "space gas".
+
 ## Stages 1 and 2: what is still approximate
 
 Everything else in these two stages is read from the binary and noted above with its address.
