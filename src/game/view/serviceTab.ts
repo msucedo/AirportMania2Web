@@ -6,7 +6,13 @@ import type { ServiceButton } from '../sim/simulation';
 // cake at x 395, or a filler in the slot of one that has not been bought. See docs/re-notes.md.
 
 export const SERVICE_SLOTS = { movies: 354, coffee: 395 } as const;
-export const SERVICE_TAB_SURFACES = ['GUI.INGAMEGUI.GRIP', 'GUI.INGAMEGUI.COFFEE_AND_CAKE_ON', 'GUI.INGAMEGUI.COFFEE_AND_CAKE_OFF'];
+export const SERVICE_TAB_SURFACES = [
+  'GUI.INGAMEGUI.GRIP',
+  'GUI.INGAMEGUI.COFFEE_AND_CAKE_ON',
+  'GUI.INGAMEGUI.COFFEE_AND_CAKE_OFF',
+  'GUI.INGAMEGUI.IN_FLIGHT_MOVIES_ON',
+  'GUI.INGAMEGUI.IN_FLIGHT_MOVIES_OFF',
+];
 
 /** The filler of an empty slot (0x1328c). */
 export function serviceGrip(textures: TextureStore, x: number): Sprite {

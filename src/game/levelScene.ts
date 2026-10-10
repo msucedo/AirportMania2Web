@@ -87,6 +87,7 @@ export class LevelScene {
   private readonly fading: PaintChooser[] = [];
   private readonly sprays: SprayCan[] = [];
   coffeeTab: ServiceTab | null = null;
+  moviesTab: ServiceTab | null = null;
   private readonly bonusView: BonusView;
   /** The helicopter's engine while it crosses. */
   private rotor: ReturnType<AudioPlayer['loop']> = null;
@@ -108,7 +109,10 @@ export class LevelScene {
     this.hud = new Hud(textures, sim.goals);
     this.hud.onPause = () => this.openPause();
     // 0x12f90: each slot of the bar holds its service tab or, without the improvement, a filler.
-    this.hud.behind.addChild(serviceGrip(textures, SERVICE_SLOTS.movies));
+    if (sim.movies) {
+      this.moviesTab = new ServiceTab(textures, sim.movies, SERVICE_SLOTS.movies, { on: 'GUI.INGAMEGUI.IN_FLIGHT_MOVIES_ON', off: 'GUI.INGAMEGUI.IN_FLIGHT_MOVIES_OFF' });
+      this.hud.behind.addChild(this.moviesTab);
+    } else this.hud.behind.addChild(serviceGrip(textures, SERVICE_SLOTS.movies));
     if (sim.coffee) {
       this.coffeeTab = new ServiceTab(textures, sim.coffee, SERVICE_SLOTS.coffee, { on: 'GUI.INGAMEGUI.COFFEE_AND_CAKE_ON', off: 'GUI.INGAMEGUI.COFFEE_AND_CAKE_OFF' });
       this.hud.behind.addChild(this.coffeeTab);
@@ -197,6 +201,7 @@ export class LevelScene {
       scene.heldChooser?.release(event.global.y);
       scene.heldChooser = null;
       if (scene.coffeeTab) scene.coffeeTab.held = false;
+      if (scene.moviesTab) scene.moviesTab.held = false;
     };
     app.stage.on('pointerup', release);
     app.stage.on('pointerupoutside', release);
@@ -212,6 +217,11 @@ export class LevelScene {
     if (this.coffeeTab?.contains(x, y) && !this.paused) {
       this.coffeeTab.held = true;
       this.sim.serveCoffee();
+      return;
+    }
+    if (this.moviesTab?.contains(x, y) && !this.paused) {
+      this.moviesTab.held = true;
+      this.sim.showMovies();
       return;
     }
     // Balloons and the helicopter are on top of everything, the bar included, and take the
@@ -543,6 +553,12 @@ export class LevelScene {
       case 'coffeeServed':
         this.audio.play('SOUNDS.CAKE_AND_COFFEE');
         break;
+      case 'moviesReady':
+        this.audio.play('SOUNDS.IN_FLIGHT_MOVIES_READY');
+        break;
+      case 'moviesShown':
+        this.audio.play('SOUNDS.IN_FLIGHT_MOVIES');
+        break;
       case 'paintingReady':
         this.audio.play('SOUNDS.PAINTING_READY');
         break;
@@ -591,6 +607,7 @@ export class LevelScene {
     if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);
     this.coffeeTab?.update(elapsed);
+    this.moviesTab?.update(elapsed);
     for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
     for (const view of this.runwayViews) view.update(elapsed);

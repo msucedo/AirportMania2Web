@@ -233,6 +233,8 @@ export type SimEvent =
   | { type: 'helicopterLeft' }
   | { type: 'coffeeReady' }
   | { type: 'coffeeServed'; planes: Plane[] }
+  | { type: 'moviesReady' }
+  | { type: 'moviesShown'; planes: Plane[] }
   | { type: 'paintingReady'; spot: StopSpot }
   | { type: 'paintingStarted'; plane: Plane; spot: StopSpot; color: PlaneColor }
   | { type: 'repainted'; plane: Plane; from: PlaneColor }
@@ -302,6 +304,8 @@ export class Simulation {
   private readonly random: () => number;
   /** The coffee and cake service, when the improvement is owned. */
   readonly coffee: ServiceButton | null;
+  /** The in-flight movies, likewise. */
+  readonly movies: ServiceButton | null;
   /** The colours used in this level; the painting stop spot offers these (`airport+0x15c`). */
   readonly colors: readonly PlaneColor[];
   readonly counts: Record<'unload' | 'takeOff', Record<Punctuality, number>> = {
@@ -457,6 +461,7 @@ export class Simulation {
     }
     // It starts empty, like the painting spot (0x24010).
     this.coffee = owned.has(IMPROVEMENT.COFFEE_AND_CAKE) ? { recharge: RULES.coffee.recharge, left: RULES.coffee.recharge, ready: false } : null;
+    this.movies = owned.has(IMPROVEMENT.IN_FLIGHT_MOVIES) ? { recharge: RULES.movies.recharge, left: RULES.movies.recharge, ready: false } : null;
     // 0x133fc: the colours the level's planes come in, in the order of the colour table.
     this.colors = COLOR_NAMES.filter((name) => config.schedule.planes.some((p) => p.color === name));
   }
@@ -631,12 +636,16 @@ export class Simulation {
     for (const station of this.gasStations) this.updateGasStation(station, dt);
     for (const hangar of this.hangars) this.updateHangar(hangar, dt);
     for (const spot of this.stopSpots) if (spot.painting) this.updatePainting(spot, spot.painting, dt);
-    if (this.coffee && !this.coffee.ready) {
+    for (const [button, ready] of [
+      [this.coffee, 'coffeeReady'],
+      [this.movies, 'moviesReady'],
+    ] as const) {
+      if (!button || button.ready) continue;
       // 0x240f4: it counts down and is ready on the update after reaching zero.
-      if (this.coffee.left >= 0) this.coffee.left -= dt;
+      if (button.left >= 0) button.left -= dt;
       else {
-        this.coffee.ready = true;
-        this.emit({ type: 'coffeeReady' });
+        button.ready = true;
+        this.emit({ type: ready });
       }
     }
     for (const plane of this.planes) if (!plane.gone) this.updatePlane(plane, dt);
@@ -784,6 +793,21 @@ export class Simulation {
     const planes = this.planes.filter((plane) => !plane.gone && plane.landed && !plane.loaded);
     for (const plane of planes) this.addEnergy(plane, RULES.coffee.energy);
     this.emit({ type: 'coffeeServed', planes });
+    return true;
+  }
+
+  /**
+   * The in-flight movie is shown (0x24704, 0x1080a): every plane that has not landed yet cheers
+   * up, and the button has to recharge.
+   */
+  showMovies(): boolean {
+    const movies = this.movies;
+    if (this.ended || !movies || !movies.ready) return false;
+    movies.left = movies.recharge;
+    movies.ready = false;
+    const planes = this.planes.filter((plane) => !plane.gone && !plane.landed);
+    for (const plane of planes) this.addEnergy(plane, RULES.movies.energy);
+    this.emit({ type: 'moviesShown', planes });
     return true;
   }
 

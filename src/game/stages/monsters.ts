@@ -58,8 +58,7 @@ export const MONSTERS: StageLayout = {
   // Ids, prices, order, the level each is first recommended at and when each is on sale are what
   // the stage script registers (0x13458), as run by tools/re/stage_layout.py --offers. Still
   // missing from the list, until they are built: the wash and go (0x77, 150000, after the first
-  // stop spot), the third runway (0x34, 110000), the anti-fog (0x6f, 80000) and the in-flight
-  // movies (0x73, 80000).
+  // stop spot) and the anti-fog (0x6f, 80000, after the third runway).
   improvements: [
     offer(IMPROVEMENT.EXTRA_STOP_SPOT, 20000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'STORAGE_PLACE', { tryFrom: 2, hiddenBy: [IMPROVEMENT.EXTRA_STOP_SPOT_2, IMPROVEMENT.WASH_AND_GO] }),
     offer(IMPROVEMENT.EXTRA_STOP_SPOT_2, 30000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'STORAGE_PLACE', { needs: [IMPROVEMENT.EXTRA_STOP_SPOT], hiddenBy: [IMPROVEMENT.PAINTING_STOP_SPOT] }),
@@ -70,7 +69,9 @@ export const MONSTERS: StageLayout = {
     offer(IMPROVEMENT.UPGRADED_GATE_A, 55000, 'IMPROVED_GATE_A', 'IMPROVED_GATE', 'GATE_5', { tryFrom: 7 }),
     offer(IMPROVEMENT.UPGRADED_GATE_B, 60000, 'IMPROVED_GATE_B', 'IMPROVED_GATE', 'GATE_5', { tryFrom: 7 }),
     offer(IMPROVEMENT.UPGRADED_GATE_C, 70000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_5', { needs: [IMPROVEMENT.EXTRA_GATE_C] }),
+    offer(IMPROVEMENT.EXTRA_RUNWAY_3, 110000, 'EXTRA_RUNWAY_3', 'EXTRA_RUNWAY', 'RUNWAY'),
     offer(IMPROVEMENT.COFFEE_AND_CAKE, 80000, 'COFFEE_AND_CAKE', 'COFFEE_AND_CAKE', 'COFFEE_AND_CAKE'),
+    offer(IMPROVEMENT.IN_FLIGHT_MOVIES, 80000, 'IN_FLIGHT_MOVIES', 'IN_FLIGHT_MOVIES', 'IN_FLIGHT_MOVIES'),
     offer(IMPROVEMENT.PLANE_6_LICENCE, 200000, 'PLANE_6_LICENCE', 'PLANE_6_LICENCE', 'PLANE_6'),
     offer(IMPROVEMENT.UPGRADED_GATE_D, 80000, 'IMPROVED_GATE_D', 'IMPROVED_GATE', 'GATE_5', { needs: [IMPROVEMENT.EXTRA_GATE_D] }),
   ],

@@ -35,8 +35,8 @@ colours; the sky runs its day and night cycle with sun, stars and clouds; the is
 glints, rings and buoys; runways show their combo arrows.
 
 Not there yet: dirt and washing, the help, users, credits and
-awards screens, and stages 4 to 10. Stage 3 can be played, without yet its wash and go,
-runway fog, third runway and in-flight movies, and without its animated scenery.
+awards screens, and stages 4 to 10. Stage 3 can be played, without yet its wash and go and
+runway fog, and without its animated scenery.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
 placeholder (some draw details, the payout rule) is tracked
@@ -63,5 +63,5 @@ after running it.
   `python3 -m venv .tools/venv && .tools/venv/bin/pip install unicorn`).
 - `tools/dev/play.mjs` — plays the first plane in a headless browser and takes screenshots.
 - `tools/dev/shoot-level.mjs` — drives a plane that needs fuel through a level and takes screenshots.
-- `tools/dev/play-all.mjs` — plays every level of stages 1 and 2 in order and checks that each can be passed and that progress chains.
+- `tools/dev/play-all.mjs` — plays every level of stages 1 to 3 in order and checks that each can be passed and that progress chains.
 - `tools/dev/shoot-flow.mjs` — checks a finished level, its report, saved progress, the shop and the next level.

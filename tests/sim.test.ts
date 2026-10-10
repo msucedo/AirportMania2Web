@@ -965,6 +965,28 @@ describe('simulation, stage 3 (monsters)', () => {
     ]);
   });
 
+  it('shows in-flight movies to the planes still in the air once the button has charged', () => {
+    expect(monsters().movies).toBeNull();
+    const sim = monsters(1, 0x73);
+    const events: SimEvent[] = [];
+    runUntil(sim, () => sim.planes.length >= 1, 60, events);
+    const landed = sim.planes[0]!;
+    sim.addOrder(landed, sim.runways[0]!);
+    expect(sim.showMovies()).toBe(false);
+    runUntil(sim, () => sim.movies!.ready, 60, events);
+    expect(sim.time).toBeCloseTo(RULES.movies.recharge, 0);
+    expect(landed.landed).toBe(true);
+    const flying = sim.planes.find((p) => !p.gone && !p.landed)!;
+    landed.energy = 0.2;
+    flying.energy = 0.2;
+    expect(sim.showMovies()).toBe(true);
+    // Only the one in the air gets it.
+    expect(flying.energy).toBeCloseTo(0.8, 5);
+    expect(landed.energy).toBeCloseTo(0.2, 5);
+    expect(sim.movies).toMatchObject({ ready: false, left: RULES.movies.recharge });
+    expect(events.filter((e) => e.type === 'moviesReady')).toHaveLength(1);
+  });
+
   it('has its bonus events on levels 2, 6 and 8', () => {
     expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => monsters(level).bonus?.kind ?? null)).toEqual([null, 'balloons', null, null, null, 'helicopter', null, 'balloons']);
   });

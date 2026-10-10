@@ -124,6 +124,11 @@ export const RULES = {
    * plane on the ground that has not finished loading (0x107d4).
    */
   coffee: { recharge: 50, energy: 0.5 },
+  /**
+   * In-flight movies: the button recharges for 40 seconds (0x24634) and gives 0.6 energy to every
+   * plane that has not landed yet (0x1080a).
+   */
+  movies: { recharge: 40, energy: 0.6 },
 
   /**
    * Seconds before the end of the level is considered: after the time runs out (longer when a
