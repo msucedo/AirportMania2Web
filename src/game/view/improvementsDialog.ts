@@ -13,7 +13,7 @@ export const IMPROVEMENTS_FONTS = [MAIN_FONT, SCORE_FONT, ROW_FONT];
 export const IMPROVEMENTS_SOUNDS = ['SOUNDS.IMPROVEMENTS_SCREEN', 'SOUNDS.BUY_SOMETHING', 'SOUNDS.CANNOT', 'SOUNDS.CASH', 'SOUNDS.CLICK'];
 
 export function improvementsSurfaceIds(offers: readonly ImprovementOffer[]): string[] {
-  return [...DIALOG_SURFACES, ...offers.flatMap((offer) => [`${offer.icon}.ACTIVE`, `${offer.icon}.GRAYED`])];
+  return [...DIALOG_SURFACES, 'IMPROVEMENTS.BOUGHT', ...offers.flatMap((offer) => [`${offer.icon}.ACTIVE`, `${offer.icon}.GRAYED`])];
 }
 
 const BOX = { width: 430, height: 270 };
@@ -99,25 +99,27 @@ export class ImprovementsDialog extends Container {
     return this.progress.improvements(this.stage, this.level).has(offer.id);
   }
 
-  /** Some improvements build on another one, which has to be bought first. */
-  private available(offer: ImprovementOffer): boolean {
-    return offer.requires === undefined || this.progress.improvements(this.stage, this.level).has(offer.requires);
+  /** The level's funds cover it (0x4cb44). */
+  private affordable(offer: ImprovementOffer): boolean {
+    return offer.price <= this.progress.funds(this.stage, this.level);
   }
 
   private refresh(): void {
     const { strings, textures } = this;
     for (const child of this.rows.removeChildren()) child.destroy({ children: true });
     this.offers.forEach((offer, i) => {
-      const lit = this.owned(offer) || this.available(offer);
+      // 0x4e08c: the full-colour icon when it is owned or can be paid for, the grey one otherwise.
+      const lit = this.owned(offer) || this.affordable(offer);
       const icon: Sprite = textures.sprite(`${offer.icon}.${lit ? 'ACTIVE' : 'GRAYED'}`);
       icon.position.set(LIST.x, LIST.top + LIST.pitch * (i + 0.5));
       if (offer === this.chosen) this.rows.addChild(new Graphics().roundRect(LIST.x - 43, LIST.top + LIST.pitch * i + 1, 86, LIST.pitch - 2, 8).fill({ color: 0xffc23a, alpha: 0.35 }));
       this.rows.addChild(icon);
       if (this.owned(offer)) {
-        const tick = new Text({ text: '✓', style: { fontFamily: 'sans-serif', fontSize: 18, fontWeight: 'bold', fill: 0x7be36a, stroke: { color: 0x103010, width: 3 } } });
-        tick.anchor.set(0.5);
-        tick.position.set(LIST.x + 30, LIST.top + LIST.pitch * (i + 0.5) + 8);
-        this.rows.addChild(tick);
+        // The original's own mark for what has been bought; its place on the row is assumed.
+        const bought = textures.sprite('IMPROVEMENTS.BOUGHT');
+        bought.position.copyFrom(icon.position);
+        bought.scale.set(Math.min(1, (LIST.pitch - 2) / bought.height));
+        this.rows.addChild(bought);
       }
     });
 
@@ -156,11 +158,9 @@ export class ImprovementsDialog extends Container {
   private trade(offer: ImprovementOffer): void {
     const { progress, stage, level } = this;
     if (this.owned(offer)) {
-      // Selling something others were built on takes those with it.
-      for (const other of this.offers) if (other.requires === offer.id && this.owned(other)) progress.sell(stage, level, other.id, other.price);
       progress.sell(stage, level, offer.id, offer.price);
       this.audio.play('SOUNDS.CASH');
-    } else if (this.available(offer) && progress.buy(stage, level, offer.id, offer.price)) {
+    } else if (progress.buy(stage, level, offer.id, offer.price)) {
       this.audio.play('SOUNDS.BUY_SOMETHING');
     } else {
       this.audio.play('SOUNDS.CANNOT');

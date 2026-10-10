@@ -69,7 +69,7 @@ Improvements registered for the stage (id, price): `0x01` 10000, `0x72` 60000, `
 (extra storage place, painting stop spot, VIP storage place, improved gates A/B, plane 4 licence):
 inferred. Registered order: `0x01`, `0x0a`, `0x72`, `0x16`, `0x1e`, `0x1f`, `0xcb`, `0x20`.
 `0x13458` also stores a number per improvement (2 for `0x01`, 4 for `0x16`, 3 for `0x1e`, 1000
-for the rest) whose use has not been read.
+for the rest): the level from which the shop marks it "try me" (see the improvements dialog).
 
 ## Click handling (`0x10b58`, called from the level update `0x11654`)
 
@@ -772,8 +772,16 @@ Vtable `0x17a8e8`, kind 5.
   cover the price, takes it and adds the id to the level's record; selling (`0x4bf08`) removes it
   and gives the price back. Sounds: `SOUNDS.IMPROVEMENTS_SCREEN`, `BUY_SOMETHING`, `CANNOT`,
   `CASH`. A hidden button adds 1,000,000 for the tester profile.
-- Not read: the list of items (a scrolling list widget, `0x4ca54`), the description's box, the
-  "try me" marker (`0x4da44`).
+- List of items (`0x4ca54`, confirmed): one per improvement the stage registered (entries of
+  0x34 bytes at `airport+0xa0`: price `+0x24`, id `+0x28`, a level number `+0x2c`, a visible
+  flag `+0x30`), in that order, with no prerequisites between them. An item (`0x4e08c`) holds
+  the icon's `.ACTIVE` and `.GRAYED` images and `IMPROVEMENTS.BOUGHT`, and is told whether it is
+  owned, whether the level's funds cover its price, and whether to mark it "try me": not owned,
+  affordable, the current level at or past its level number (2 for `0x01`, 4 for `0x16`, 3 for
+  `0x1e`, 1000 for the rest) and not owned in any earlier level of the stage.
+- The list is drawn (`0x4dd80`) fading out between 105 and 115 px above and below its centre.
+- Not read: where an item's parts sit, the description's box, and the "try me" marker's draw
+  (`0x4da44`, text `IMPROVEMENTS_DIALOG.TRY_ME`). The web version does not draw the marker.
 - The dialog object is made once at start-up (`0x4be20`, kept at `app+0x1b4`) and shown by
   `Level::start` (`0xfe8c`) with `MUSICS.SHOPPING` before every level except the tutorial and
   level 1 of stage 1; leaving it starts the level. The web version does the same and reloads the
@@ -969,8 +977,7 @@ Rules:
 - The loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
 - Plane state 10 (set from `0x56b78`) is unknown; it has not been seen to matter here.
 - The service tab acts when the finger goes down, not when it is lifted.
-- The number `0x13458` stores with each improvement (2, 3, 4 or 1000) and the stage options
-  `0x6e`–`0x70` are not understood; prerequisites between improvements are inferred.
+- The stage options `0x6e`–`0x70` are not understood.
 
 Drawing:
 

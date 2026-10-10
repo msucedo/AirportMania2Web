@@ -31,8 +31,11 @@ export interface ImprovementOffer {
   descriptionId: string;
   /** Icon resource prefix; `.ACTIVE` and `.GRAYED` variants exist. */
   icon: string;
-  /** Improvement that has to be owned first. */
-  requires?: number;
+  /**
+   * Level from which the shop marks it as worth trying, when it can be paid for and has not
+   * been bought in an earlier level of the stage (0x4cbaa). Absent for those never marked.
+   */
+  tryFrom?: number;
 }
 
 export interface BackdropLayer {
@@ -114,12 +117,12 @@ export const IMPROVEMENT = {
   PLANE_5_LICENCE: 0xcc,
 } as const;
 
-const offer = (id: number, price: number, title: string, description: string, icon: string, requires?: number): ImprovementOffer => ({
+const offer = (id: number, price: number, title: string, description: string, icon: string, tryFrom?: number): ImprovementOffer => ({
   id,
   price,
   titleId: `IMPROVEMENTS.TITLES.${title}`,
   descriptionId: `IMPROVEMENTS.DESCRIPTIONS.${description}`,
   icon: `IMPROVEMENTS.${icon}`,
-  ...(requires === undefined ? {} : { requires }),
+  ...(tryFrom === undefined ? {} : { tryFrom }),
 });
 export { offer };
