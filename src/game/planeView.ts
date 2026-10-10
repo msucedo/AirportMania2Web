@@ -174,6 +174,8 @@ export interface PlaneLook {
   passenger: Passenger | null;
   /** Still needing its wash. */
   dirty?: boolean;
+  /** How solid the dirt is: it fades while the plane is washed. */
+  dirtAlpha?: number;
   /** Nose-up angle of the body in degrees. */
   pitch?: number;
   /** Waiting with nothing to do: the eyes turn aside. */
@@ -426,7 +428,10 @@ export class PlaneView extends Container {
     if (this.lastEnergy !== null && energy > this.lastEnergy + 0.01) this.cheer();
     this.lastEnergy = energy;
 
-    for (const sprite of this.dirt) sprite.visible = look.dirty === true;
+    for (const sprite of this.dirt) {
+      sprite.visible = look.dirty === true;
+      sprite.alpha = look.dirtAlpha ?? 1;
+    }
     if (this.repainted > 0) this.repainted = Math.max(0, this.repainted - dt);
     for (const pose of this.poses) {
       if (!pose.oldColor) continue;

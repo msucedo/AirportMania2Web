@@ -1087,8 +1087,28 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
 - Its own draw (`0x853b4`) is `WASH_AND_GO.GRATING` at its position. The shower, the three
   rollers, the water and the splashes are objects of their own (`ShowerWater`, `WashingRoller`,
   `WaterSplash`, `CleanShinyStar`).
-- Web version: those animated parts are not drawn yet, and the dirt goes at once when the plane
-  becomes clean instead of fading.
+- Built by the constructor (`0x84a8c`), each sorted by its own depth: the shower
+  (`WASH_AND_GO.SHOWER`, a static image) at the wash's place, depth y − 15; two rollers
+  (`0x865fc`) at (−48, −11) and (−30, +15), depth their y − 10; the water (`0x86524`) at the
+  wash's place, depth y + 2. The start (`0x84d60`) sets their clocks to 6.5, 6 and 5 s.
+  - Roller (`0x85f28`, images `ROLLER_0`…`3`): shown while its clock is between 0 and 6;
+    moved sideways by `30·(1 − cos(2π·clock))` while the clock is between 1 and 5; frame
+    `int(10·clock) mod 4`; opacity `clamp(2·min(clock, 6 − clock))`.
+  - Water (`0x85d60`, `WATER_0`…`2`): shown between 0 and 5; frame `int(10·clock) mod 3`;
+    opacity `clamp(min(clock, 5 − clock))`.
+  - The start also makes three `CleanShinyStar` (`0x86408`, `AMBIENT.STAR`, depth y + 50) at
+    (−25, −35), (5, −10) and (20, −20) with clocks 8.75, 8.25 and 8.5 and spins −300, 300 and
+    −250, at a random angle. A star (`0x85b90`) shows in its clock's last second: scale
+    `2·min(c, 1 − c)`, opacity `clamp(10·min(c, 1 − c))`.
+  - And four pairs of `WaterSplash` (`0x86320`, `SPLASH_<i mod 3>`, depth y + 100), pair i with
+    clocks `8 + 0.1·i` and `8.05 + 0.1·i`: from (∓10, −35 + rand·25), speed
+    (∓(90 − rand·50), −90 + rand·50), falling at 150. A splash (`0x85950`) moves and shows in
+    its clock's last second: scale `1.3 − 0.6·c`, opacity `c·clamp(6·min(c, 1 − c))`, tinted
+    towards a colour as it starts.
+- The dirt during the wash (`0x923a`): opacity `clamp((8 − t)/4 − 1)` with t the seconds in
+  state 9; it stops being drawn once the plane is clean, two seconds in.
+- Web version: the splash's tint is not applied; the pictures are placed by the point their
+  resource names.
 
 ## Runway fog — confirmed
 
@@ -1647,8 +1667,6 @@ place and plane; only what is added later (the service tabs) lies over them.
 
 ## Stage 3: what is still approximate
 
-- Wash and go: the shower, rollers, water and splashes are not drawn, and the dirt goes at once
-  instead of fading.
 - Fog: the machine's wobble.
 - The balloon corner of its runways is taken to be the island's.
 - Everything listed for stages 1 and 2 below applies here too.

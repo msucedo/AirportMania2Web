@@ -29,6 +29,7 @@ import { ICE_SURFACES, IceView } from './view/iceView';
 import { SAND_SURFACES, SandBrush, SandView } from './view/sandView';
 import { hintFor, hintImages } from './sim/hints';
 import { AWARD, awardSound, awardText } from './awards';
+import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView';
 import { helpSurfaces } from './help';
 import { HELP_FONTS, HELP_SURFACES, HelpDialog } from './view/helpDialog';
 import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
@@ -105,6 +106,7 @@ export class LevelScene {
   private readonly iceViews: IceView[] = [];
   private readonly sandViews: SandView[] = [];
   private readonly sandBrushes: SandBrush[] = [];
+  private readonly washViews: WashView[] = [];
   private readonly luggageViews: LuggageView[] = [];
   /** The anti-fog machines' fans and the deicers' motors, by kind and runway number. */
   private readonly fans = new Map<string, ReturnType<AudioPlayer['loop']>>();
@@ -184,7 +186,7 @@ export class LevelScene {
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
     if (layout.water) for (const id of WATER_SURFACES) ids.add(id);
     if (sim.stopSpots.some((spot) => spot.painting)) for (const id of PAINTING_SURFACES) ids.add(id);
-    if (sim.stopSpots.some((spot) => spot.wash)) ids.add('WASH_AND_GO.GRATING');
+    if (sim.stopSpots.some((spot) => spot.wash)) for (const id of ['WASH_AND_GO.GRATING', ...WASH_SURFACES]) ids.add(id);
     if (sim.bonus) for (const id of BONUS_SURFACES[sim.bonus.kind]) ids.add(id);
     if (sim.hazardSchedule.some((h) => h.kind === 'fog')) for (const id of FOG_SURFACES) ids.add(id);
     sim.gates.forEach((gate) => {
@@ -565,6 +567,7 @@ export class LevelScene {
         sprite.position.copyFrom(spot.position);
         this.ground.addChild(sprite);
       }
+      if (spot.wash) this.washViews.push(new WashView(this.textures, spot, this.planeLayer));
       if (spot.painting) {
         const sign = new PaintingSign(this.textures, spot, layout.water);
         this.paintingSigns.push(sign);
@@ -827,6 +830,7 @@ export class LevelScene {
     for (const ice of this.iceViews) ice.update(elapsed);
     for (const sand of this.sandViews) sand.update();
     for (const brush of this.sandBrushes) brush.update(elapsed);
+    for (const wash of this.washViews) wash.update(elapsed);
     for (const luggage of this.luggageViews) luggage.update(elapsed);
     if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);
@@ -900,6 +904,7 @@ export class LevelScene {
         corner: this.balloonCorner(plane),
         passenger: plane.passenger,
         dirty: !plane.washDone,
+        dirtAlpha: dirtAlpha(washElapsed(this.sim.stopSpots.find((spot) => spot.plane === plane)?.wash?.left) ?? 0),
         pitch: plane.pitch,
         idle: plane.state === PlaneState.WAITING && plane.queue.length === 0,
         gearDown: this.gearDown(plane),

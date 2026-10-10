@@ -144,4 +144,12 @@ export class TextureStore {
     sprite.blendMode = BLEND_MODES[def.blending];
     return sprite;
   }
+
+  /** A sprite placed by the point its resource names (`x`, `y` in the image), for those that have one. */
+  pinned(id: string): Sprite {
+    const sprite = this.sprite(id);
+    const def = this.resources.surface(id);
+    if (!def.centered) sprite.pivot.set(def.x ?? 0, def.y ?? 0);
+    return sprite;
+  }
 }

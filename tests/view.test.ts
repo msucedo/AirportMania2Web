@@ -1,3 +1,4 @@
+import { dirtAlpha, rollerPose, splashPose, starPose, washElapsed, waterPose } from '../src/game/view/washView';
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace, nagFlash } from '../src/game/planeView';
@@ -431,4 +432,47 @@ describe('scenery', () => {
     // It comes round every 250 seconds.
     expect(Array.from(marsSkyTexture(250)).map((v) => +v.toFixed(4))).toEqual(Array.from(uvs).map((v) => +v.toFixed(4)));
   });
+
+  it('runs the rollers of a wash out and back once a second', () => {
+    // Not shown until its clock is under six, nor once it has run out.
+    expect(rollerPose(6.2)).toBeNull();
+    expect(rollerPose(0)).toBeNull();
+    // It comes over half a second, still at its place for the first second.
+    expect(rollerPose(5.75)).toMatchObject({ slide: 0, alpha: 0.5 });
+    expect(rollerPose(5.2)!.slide).toBeCloseTo(0, 5);
+    // Then 60 px out at each half second and back at each whole one.
+    expect(rollerPose(4.5)!.slide).toBeCloseTo(60, 5);
+    expect(rollerPose(4)!.slide).toBeCloseTo(0, 5);
+    expect(rollerPose(2.25)!.slide).toBeCloseTo(30, 5);
+    expect(rollerPose(0.5)).toMatchObject({ slide: 0, alpha: 1 });
+    expect(rollerPose(0.25)!.alpha).toBeCloseTo(0.5, 5);
+    // Four frames, ten a second.
+    expect([3.0, 3.1, 3.2, 3.3, 3.4].map((clock) => rollerPose(clock + 0.01)!.frame)).toEqual([2, 3, 0, 1, 2]);
+  });
+
+  it('shows the water of a wash for five seconds, the stars and splashes for their last one', () => {
+    expect(waterPose(5)).toBeNull();
+    expect(waterPose(4.5)!.alpha).toBeCloseTo(0.5, 5);
+    expect(waterPose(2.5)).toEqual({ frame: 1, alpha: 1 });
+    expect(waterPose(0.25)!.alpha).toBeCloseTo(0.25, 5);
+    expect(starPose(1.2)).toBeNull();
+    expect(starPose(0.5)).toEqual({ scale: 1, alpha: 1 });
+    expect(starPose(0.95)!.scale).toBeCloseTo(0.1, 5);
+    expect(starPose(0.95)!.alpha).toBeCloseTo(0.5, 5);
+    expect(splashPose(1)).toBeNull();
+    expect(splashPose(0.5)!.scale).toBeCloseTo(1, 5);
+    expect(splashPose(0.5)!.alpha).toBeCloseTo(0.5, 5);
+    expect(splashPose(0.1)!.alpha).toBeCloseTo(0.06, 5);
+  });
+
+  it('fades the dirt while the plane is washed', () => {
+    expect(washElapsed(null)).toBeNull();
+    expect(washElapsed(8)).toBe(0);
+    expect(washElapsed(6)).toBe(2);
+    expect(dirtAlpha(0)).toBe(1);
+    // The plane is clean two seconds in, with the dirt at a half.
+    expect(dirtAlpha(2)).toBe(0.5);
+    expect(dirtAlpha(5)).toBe(0);
+  });
 });
+
