@@ -3,7 +3,7 @@ import type { LevelGoals, LevelSchedule, PlaneColor, PlaneSpawn, Sex } from '../
 import type { PlaneDescriptor } from '../../data/planes';
 import type { Point } from '../../data/xml';
 import { COLOR_NAMES } from '../palette';
-import { IMPROVEMENT, type StageLayout } from '../stages/layout';
+import { IMPROVEMENT, type BonusEvent, type StageLayout } from '../stages/layout';
 import { TaxiGraph, type TaxiNode } from './taxiGraph';
 import { Need, PlaneState, RULES, UNSELECTABLE_STATES, clamp01, punctuality, roundScore, type Punctuality } from './rules';
 
@@ -100,6 +100,44 @@ export interface StopSpot extends PlaceBase {
   painting: PaintBooth | null;
 }
 
+/** A balloon of the balloons bonus, rising until popped or gone (class `0x222f8`). */
+export interface Balloon {
+  id: number;
+  x: number;
+  y: number;
+  /** Which of the three balloon images it uses. */
+  image: number;
+}
+
+/** A coin released by a bonus: it grows, falls and pays (class `0x26224`). */
+export interface Coin {
+  id: number;
+  x: number;
+  y: number;
+  amount: number;
+  /** 0 growing, 1 falling, 2 shrinking after paying. */
+  phase: 0 | 1 | 2;
+  scale: number;
+  /** Seconds it has existed, for its swing. */
+  time: number;
+}
+
+/** The helicopter of the helicopter bonus while it crosses (class `0x4996c`). */
+export interface Helicopter {
+  x: number;
+  y: number;
+  /** How far along its crossing it is; also runs its rotor animation (`+0x5c`). */
+  progress: number;
+  speed: number;
+  /** The burst a tap gives it, fading (`+0x64`). */
+  burst: number;
+  fromLeft: boolean;
+  /** Random phases of its bobbing (`+0x70`, `+0x74`). */
+  phases: [number, number];
+  /** Coins it has released. */
+  released: number;
+}
+
 /** A service the player starts from the top bar, usable again after a recharge (class `0x24010`). */
 export interface ServiceButton {
   recharge: number;
@@ -188,6 +226,11 @@ export type SimEvent =
   | { type: 'select'; plane: Plane }
   | { type: 'order'; plane: Plane; place: Place }
   | { type: 'forbidden'; plane?: Plane }
+  | { type: 'balloonPopped'; x: number; y: number }
+  | { type: 'coinReleased'; x: number; y: number }
+  | { type: 'bonusPaid'; x: number; y: number; amount: number }
+  | { type: 'helicopterArrived' }
+  | { type: 'helicopterLeft' }
   | { type: 'coffeeReady' }
   | { type: 'coffeeServed'; planes: Plane[] }
   | { type: 'paintingReady'; spot: StopSpot }
@@ -228,6 +271,8 @@ export interface SimulationConfig {
   level?: number;
   /** Improvement ids the player owns. */
   improvements?: ReadonlySet<number>;
+  /** Source of the chance the bonus events use (libc `rand` in the original); `Math.random` by default. */
+  random?: () => number;
   screenWidth: number;
 }
 
@@ -243,6 +288,18 @@ export class Simulation {
   readonly gasStations: GasStation[] = [];
   readonly hangars: Hangar[] = [];
   readonly stopSpots: StopSpot[] = [];
+  /** This level's bonus event, if it has one, and the seconds until it starts. */
+  readonly bonus: BonusEvent | null;
+  private bonusDelay = 0;
+  /** Balloons still to be released and the seconds until the next one. */
+  private balloonsLeft = 0;
+  private balloonTimer = 0;
+  readonly balloons: Balloon[] = [];
+  readonly coins: Coin[] = [];
+  helicopter: Helicopter | null = null;
+  private helicopterDue = false;
+  private nextBonusId = 1;
+  private readonly random: () => number;
   /** The coffee and cake service, when the improvement is owned. */
   readonly coffee: ServiceButton | null;
   /** The colours used in this level; the painting stop spot offers these (`airport+0x15c`). */
@@ -390,6 +447,13 @@ export class Simulation {
     this.graph.autoLink();
 
     this.pending = [...config.schedule.planes].sort((a, b) => a.time - b.time);
+    this.random = config.random ?? Math.random;
+    this.bonus = layout.bonuses?.[config.level ?? 1] ?? null;
+    if (this.bonus) {
+      this.bonusDelay = this.bonus.delay;
+      if (this.bonus.kind === 'balloons') this.balloonsLeft = RULES.bonus.balloons.count;
+      else this.helicopterDue = true;
+    }
     // It starts empty, like the painting spot (0x24010).
     this.coffee = owned.has(IMPROVEMENT.COFFEE_AND_CAKE) ? { recharge: RULES.coffee.recharge, left: RULES.coffee.recharge, ready: false } : null;
     // 0x133fc: the colours the level's planes come in, in the order of the colour table.
@@ -575,6 +639,7 @@ export class Simulation {
       }
     }
     for (const plane of this.planes) if (!plane.gone) this.updatePlane(plane, dt);
+    this.updateBonus(dt);
 
     this.updateEnd(dt);
   }
@@ -589,6 +654,96 @@ export class Simulation {
     if (!booth || !booth.ready || booth.job || !plane) return [];
     if (spot.use !== 'occupied' || plane.state !== PlaneState.WAITING) return [];
     return this.colors.filter((color) => color !== plane.color);
+  }
+
+  /** The bonus event and the coins it has released. */
+  private updateBonus(dt: number): void {
+    const rule = RULES.bonus;
+    if (this.bonus && this.bonusDelay > 0) this.bonusDelay -= dt;
+    else if (this.bonus?.kind === 'balloons' && this.balloonsLeft > 0) {
+      // 0x21ade: one balloon whenever the clock runs out, then 1 to 2 s until the next.
+      this.balloonTimer -= dt;
+      while (this.balloonTimer < 0 && this.balloonsLeft > 0) {
+        const b = rule.balloons;
+        this.balloons.push({ id: this.nextBonusId++, x: b.minX + this.random() * b.spanX, y: b.startY, image: Math.floor(this.random() * b.images) % b.images });
+        this.balloonTimer += b.minGap + this.random() * b.gapSpan;
+        this.balloonsLeft--;
+      }
+    } else if (this.bonus?.kind === 'helicopter' && this.helicopterDue) {
+      this.helicopterDue = false;
+      const { speed, fromLeft } = this.bonus;
+      this.helicopter = { x: fromLeft ? rule.helicopter.leftEdge : rule.helicopter.rightEdge, y: rule.helicopter.y, progress: 0, speed, burst: 0, fromLeft, phases: [this.random() * Math.PI, this.random() * Math.PI], released: 0 };
+      this.emit({ type: 'helicopterArrived' });
+    }
+
+    for (let i = this.balloons.length - 1; i >= 0; i--) {
+      const balloon = this.balloons[i]!;
+      balloon.y -= rule.balloons.rise * dt;
+      if (balloon.y < rule.balloons.goneY) this.balloons.splice(i, 1);
+    }
+
+    const helicopter = this.helicopter;
+    if (helicopter) {
+      const h = rule.helicopter;
+      helicopter.burst = helicopter.burst > 0 ? helicopter.burst - helicopter.speed * dt : 0;
+      helicopter.progress += (helicopter.speed + h.burstWeight * helicopter.burst) * dt;
+      const t = helicopter.progress;
+      helicopter.x = helicopter.fromLeft ? h.leftEdge + h.pace * t : h.rightEdge - h.pace * t;
+      helicopter.y = h.y + 15 * Math.sin(1.5 * t + helicopter.phases[0]) + 20 * Math.sin(t + helicopter.phases[1]);
+      if (helicopter.x < h.leftEdge || helicopter.x > h.rightEdge) {
+        this.helicopter = null;
+        this.emit({ type: 'helicopterLeft' });
+      }
+    }
+
+    for (let i = this.coins.length - 1; i >= 0; i--) {
+      const coin = this.coins[i]!;
+      coin.time += dt;
+      if (coin.phase === 0) {
+        coin.scale += rule.coin.grow * dt;
+        if (coin.scale > 1) coin.phase = 1;
+      } else if (coin.phase === 1) {
+        coin.y += rule.coin.fall * dt;
+        if (coin.y > rule.coin.payY) {
+          // 0x25de0: the amount goes to the score, with its number floating up and the till.
+          coin.phase = 2;
+          coin.scale = 1;
+          this.score += coin.amount;
+          this.emit({ type: 'bonusPaid', x: coin.x, y: coin.y, amount: coin.amount });
+        }
+      } else {
+        coin.scale -= rule.coin.grow * dt;
+        if (coin.scale <= 0) this.coins.splice(i, 1);
+      }
+    }
+  }
+
+  private releaseCoin(x: number, y: number, amount: number): void {
+    this.coins.push({ id: this.nextBonusId++, x, y: y + RULES.bonus.coin.dropBelow, amount, phase: 0, scale: 0, time: 0 });
+  }
+
+  /**
+   * A touch on a bonus object: a balloon pops (0x22044) or the helicopter is tapped (0x4974c),
+   * and either releases a coin. Returns whether the touch landed on one.
+   */
+  tapBonus(x: number, y: number): boolean {
+    if (this.ended || !this.bonus) return false;
+    const rule = RULES.bonus;
+    const helicopter = this.helicopter;
+    if (helicopter && Math.abs(x - helicopter.x) <= rule.helicopter.reachX && Math.abs(y - helicopter.y) <= rule.helicopter.reachY) {
+      helicopter.released++;
+      this.releaseCoin(helicopter.x, helicopter.y, this.bonus.amount);
+      helicopter.burst = rule.helicopter.burst;
+      helicopter.speed += rule.helicopter.faster;
+      this.emit({ type: 'coinReleased', x: helicopter.x, y: helicopter.y });
+      return true;
+    }
+    const index = this.balloons.findIndex((b) => Math.abs(x - b.x) <= rule.balloons.reach && Math.abs(y - b.y) <= rule.balloons.reach);
+    if (index < 0) return false;
+    const [balloon] = this.balloons.splice(index, 1) as [Balloon];
+    this.releaseCoin(balloon.x, balloon.y, this.bonus.amount);
+    this.emit({ type: 'balloonPopped', x: balloon.x, y: balloon.y });
+    return true;
   }
 
   /**

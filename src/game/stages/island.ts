@@ -76,4 +76,9 @@ export const ISLAND: StageLayout = {
     offer(IMPROVEMENT.UPGRADED_GATE_C, 45000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_3', { needs: [IMPROVEMENT.EXTRA_GATE_C] }),
   ],
   extraPlaneLicence: IMPROVEMENT.PLANE_5_LICENCE,
+  // Balloons on level 1 and a helicopter on level 6.
+  bonuses: {
+    1: { kind: 'balloons', delay: 28.4289, amount: 750 },
+    6: { kind: 'helicopter', delay: 153.739, amount: 1000, speed: 1, fromLeft: false },
+  },
 };

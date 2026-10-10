@@ -76,6 +76,45 @@ export class AudioPlayer {
     });
   }
 
+  /**
+   * Starts a sound that repeats until stopped, such as an engine. The handle moves it between
+   * the speakers (-1 left to 1 right) and stops it, fading over `fade` seconds. Returns null when
+   * sound is off.
+   */
+  loop(id: string, volume = 1): { pan(value: number): void; stop(fade?: number): void } | null {
+    const { context, effects } = this;
+    if (!context || !effects || this.muted) return null;
+    const gain = context.createGain();
+    gain.gain.value = volume;
+    const panner = context.createStereoPanner();
+    panner.connect(gain).connect(effects);
+    let source: AudioBufferSourceNode | null = null;
+    let stopped = false;
+    void this.buffer(id).then((buffer) => {
+      if (!buffer || stopped) return;
+      source = context.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(panner);
+      source.start();
+    });
+    return {
+      pan: (value) => {
+        panner.pan.value = Math.max(-1, Math.min(1, value));
+      },
+      stop: (fade = 0) => {
+        if (stopped) return;
+        stopped = true;
+        gain.gain.linearRampToValueAtTime(0, context.currentTime + fade);
+        try {
+          source?.stop(context.currentTime + fade);
+        } catch {
+          // Never started.
+        }
+      },
+    };
+  }
+
   /** Plays `intro` once (if given and different from the loop) and then loops `loop`. */
   playMusic(loop: string, intro?: string): void {
     const start = (): void => {

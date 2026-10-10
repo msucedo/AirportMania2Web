@@ -681,6 +681,98 @@ describe('simulation, improvements', () => {
   });
 });
 
+describe('simulation, bonus events', () => {
+  const withBonus = (level: number, random: () => number = () => 0.5): Simulation =>
+    new Simulation({ layout: ARCHES, schedule: findLevel(stage, level, false), goals: findGoals(area, level, false), planes, gates, runways, gasStations, level, screenWidth: 480, random });
+
+  it('has none on a level without one', () => {
+    const sim = withBonus(1);
+    expect(sim.bonus).toBeNull();
+    run(sim, 30);
+    expect([sim.balloons.length, sim.coins.length, sim.helicopter]).toEqual([0, 0, null]);
+    expect(sim.tapBonus(240, 160)).toBe(false);
+  });
+
+  it('releases ten balloons from the second the stage script sets, and pays for the ones popped', () => {
+    const sim = withBonus(6);
+    expect(sim.bonus).toMatchObject({ kind: 'balloons', amount: 750 });
+    const events: SimEvent[] = [];
+    run(sim, 22, events);
+    expect(sim.balloons).toHaveLength(0);
+    // The first appears at 22.3 s, below the screen, and rises at 100 px a second.
+    runUntil(sim, () => sim.balloons.length === 1, 1, events);
+    expect(sim.time).toBeCloseTo(22.3, 1);
+    const first = sim.balloons[0]!;
+    expect(first.x).toBe(RULES.bonus.balloons.minX + 0.5 * RULES.bonus.balloons.spanX);
+    const from = first.y;
+    run(sim, 1, events);
+    expect(from - first.y).toBeCloseTo(100, 0);
+
+    // A touch within 30 px pops it and a coin appears 20 px below.
+    const score = sim.score;
+    const at = { x: first.x, y: first.y };
+    expect(sim.tapBonus(at.x + 31, at.y)).toBe(false);
+    expect(sim.tapBonus(at.x + 29, at.y - 29)).toBe(true);
+    expect(sim.balloons).not.toContain(first);
+    expect(sim.coins).toHaveLength(1);
+    expect(sim.coins[0]).toMatchObject({ x: at.x, y: at.y + 20, amount: 750, phase: 0 });
+    expect(sim.score).toBe(score);
+    // The coin falls on its own and pays when it reaches y 290.
+    runUntil(sim, () => events.some((e) => e.type === 'bonusPaid'), 10, events);
+    expect(sim.score).toBe(score + 750);
+    runUntil(sim, () => sim.coins.length === 0, 1, events);
+
+    // Ten in all, one every second and a half with this dice, and those left alone drift off.
+    let seen = 1;
+    let ids = new Set(sim.balloons.map((b) => b.id));
+    runUntil(
+      sim,
+      () => {
+        for (const b of sim.balloons) if (!ids.has(b.id)) (ids.add(b.id), seen++);
+        return sim.time > 22.3 + 9 * 1.5 + 5;
+      },
+      40,
+      events,
+    );
+    expect(seen + (ids.has(first.id) ? 0 : 0)).toBeLessThanOrEqual(10);
+    expect(ids.size + 1).toBe(10);
+    expect(sim.balloons).toHaveLength(0);
+    expect(events.filter((e) => e.type === 'balloonPopped')).toHaveLength(1);
+  });
+
+  it('sends a helicopter across that drops a coin and speeds up each time it is tapped', () => {
+    const sim = withBonus(3);
+    expect(sim.bonus).toMatchObject({ kind: 'helicopter', amount: 500, speed: 0.9, fromLeft: false });
+    const events: SimEvent[] = [];
+    run(sim, 69, events);
+    expect(sim.helicopter).toBeNull();
+    runUntil(sim, () => sim.helicopter !== null, 1, events);
+    expect(sim.time).toBeCloseTo(69.2, 1);
+    const helicopter = sim.helicopter!;
+    // It comes in from the right at 60 px a second times its speed.
+    run(sim, 1, events);
+    // (give or take the frame it appeared on)
+    expect(Math.abs(RULES.bonus.helicopter.rightEdge - helicopter.x - 60 * 0.9)).toBeLessThan(1.5);
+    expect(Math.abs(helicopter.y - 200)).toBeLessThanOrEqual(35);
+
+    expect(sim.tapBonus(helicopter.x + 41, helicopter.y)).toBe(false);
+    expect(sim.tapBonus(helicopter.x - 39, helicopter.y + 29)).toBe(true);
+    expect(helicopter).toMatchObject({ released: 1, burst: 0.4 });
+    expect(helicopter.speed).toBeCloseTo(1.15, 5);
+    expect(sim.coins).toHaveLength(1);
+    expect(sim.tapBonus(helicopter.x, helicopter.y)).toBe(true);
+    expect(helicopter.speed).toBeCloseTo(1.4, 5);
+
+    // Both coins pay, and the helicopter leaves by the other side.
+    runUntil(sim, () => sim.helicopter === null, 20, events);
+    runUntil(sim, () => sim.coins.length === 0, 10, events);
+    const paid = events.filter((e) => e.type === 'bonusPaid');
+    expect(paid.map((e) => (e.type === 'bonusPaid' ? e.amount : 0))).toEqual([500, 500]);
+    expect(events.filter((e) => e.type === 'helicopterLeft')).toHaveLength(1);
+    expect(sim.tapBonus(240, 200)).toBe(false);
+  });
+});
+
 describe('simulation, stage 2 (island)', () => {
   const stage2 = parseStageSchedule(tree('data/maps/stage_levels_02.json'));
   const area2 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(2)!;

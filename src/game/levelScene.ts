@@ -21,6 +21,7 @@ import { PASSENGER_ICONS, PlaneView, planeSurfaceIds, type BalloonCorner, type P
 import type { Progress } from './progress';
 import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
+import { BONUS_SURFACES, BonusView } from './view/bonusView';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
@@ -86,6 +87,9 @@ export class LevelScene {
   private readonly fading: PaintChooser[] = [];
   private readonly sprays: SprayCan[] = [];
   coffeeTab: ServiceTab | null = null;
+  private readonly bonusView: BonusView;
+  /** The helicopter's engine while it crosses. */
+  private rotor: ReturnType<AudioPlayer['loop']> = null;
   /** Seconds until each plane filling up may whistle. */
   private readonly whistles = new Map<number, number>();
   /** The colour chooser the finger went down on, until it is lifted. */
@@ -110,7 +114,8 @@ export class LevelScene {
       this.hud.behind.addChild(this.coffeeTab);
     } else this.hud.behind.addChild(serviceGrip(textures, SERVICE_SLOTS.coffee));
     this.flags = new OrderFlags(textures);
-    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.floating, this.hud);
+    this.bonusView = new BonusView(textures, sim);
+    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud);
     this.build();
   }
 
@@ -145,6 +150,7 @@ export class LevelScene {
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
     if (layout.water) for (const id of WATER_SURFACES) ids.add(id);
     if (sim.stopSpots.some((spot) => spot.painting)) for (const id of PAINTING_SURFACES) ids.add(id);
+    if (sim.bonus) for (const id of BONUS_SURFACES[sim.bonus.kind]) ids.add(id);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
@@ -208,6 +214,9 @@ export class LevelScene {
       this.sim.serveCoffee();
       return;
     }
+    // Balloons and the helicopter are on top of everything, the bar included, and take the
+    // touch first.
+    if (!this.paused && this.sim.tapBonus(x, y)) return;
     if (this.hud.contains(y)) return;
     if (first) {
       this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.BONUS_X2', 'SOUNDS.CASH']);
@@ -506,6 +515,26 @@ export class LevelScene {
       case 'timeOver':
         this.audio.play('SOUNDS.TIME_OVER');
         break;
+      case 'balloonPopped':
+        // 0x22150: the pop is pitched a little differently each time.
+        this.audio.play('SOUNDS.BALLOON_POP', { pitch: 0.98 + Math.random() * 0.04 });
+        this.bonusView.splash(event.x, event.y);
+        break;
+      case 'coinReleased':
+        this.audio.play('SOUNDS.COIN_RELEASE');
+        break;
+      case 'helicopterArrived':
+        // 0x49568: its engine at half volume, heard from the side it is on.
+        this.rotor = this.audio.loop('SOUNDS.HELICOPTER_LOOP', 0.5);
+        break;
+      case 'helicopterLeft':
+        this.rotor?.stop(0.5);
+        this.rotor = null;
+        break;
+      case 'bonusPaid':
+        this.audio.play('SOUNDS.CASH');
+        this.floating.show(String(event.amount), event.x, event.y, 'score');
+        break;
       case 'coffeeReady':
         this.audio.play('SOUNDS.CAKE_AND_COFFEE_READY');
         break;
@@ -556,6 +585,8 @@ export class LevelScene {
     this.sparkles?.update(elapsed);
     this.rings?.update(elapsed);
     this.drawPainting(elapsed);
+    this.bonusView.update(elapsed);
+    if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);
     this.coffeeTab?.update(elapsed);
     for (const line of this.buoys) line.update(elapsed);

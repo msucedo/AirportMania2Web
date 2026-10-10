@@ -53,6 +53,16 @@ export interface BackdropLayer {
   scale?: Point;
 }
 
+/**
+ * A bonus event a level has: balloons to pop or a helicopter to tap, each releasing coins worth
+ * `amount`. The stage script decides the level, the amount and, with the level's own random
+ * generator, the second it starts and the side the helicopter comes from, so they are the same
+ * every time (tools/re/stage_layout.py).
+ */
+export type BonusEvent =
+  | { kind: 'balloons'; delay: number; amount: number }
+  | { kind: 'helicopter'; delay: number; amount: number; speed: number; fromLeft: boolean };
+
 export interface StageLayout {
   stage: number;
   /** Colour of a gate nobody has used yet: each stage script overwrites entry 0 of the colour table. */
@@ -94,6 +104,8 @@ export interface StageLayout {
   improvements: ImprovementOffer[];
   /** Improvement that switches levels to their extra-plane variant. */
   extraPlaneLicence: number;
+  /** Bonus events, by level number. */
+  bonuses?: Readonly<Record<number, BonusEvent>>;
 }
 
 const RUNWAY_NODE_OFFSET = 144;

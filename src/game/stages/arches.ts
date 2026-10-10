@@ -56,4 +56,9 @@ export const ARCHES: StageLayout = {
     offer(IMPROVEMENT.UPGRADED_GATE_C, 35000, 'IMPROVED_GATE_C', 'IMPROVED_GATE', 'GATE_1', { needs: [IMPROVEMENT.EXTRA_GATE_C] }),
   ],
   extraPlaneLicence: IMPROVEMENT.PLANE_4_LICENCE,
+  // 0xcec94: a helicopter on level 3 and balloons on level 6.
+  bonuses: {
+    3: { kind: 'helicopter', delay: 69.2279, amount: 500, speed: 0.9, fromLeft: false },
+    6: { kind: 'balloons', delay: 22.2954, amount: 750 },
+  },
 };

@@ -61,7 +61,7 @@ All confirmed from immediates unless noted. See `src/game/stages/arches.ts`.
 - Stop spot at (180,300), upgraded with improvement `0x0a`. A second one at (60,300) when
   improvement `0x01` is owned; replaced by the painting stop spot when `0x72` is owned.
 - Decoration `STAGES.ARCHES.ARCH` at (403,50), extra float 600.0.
-- Level-specific branches follow for levels 3 and 6 (not yet read).
+- Level-specific branches follow for levels 3 and 6: the bonus events (see "Bonus events").
 
 Improvements registered for the stage (id, price): `0x01` 10000, `0x72` 60000, `0x0a` 20000,
 `0x16` 20000 (`IMPROVEMENTS.GATE_0`, confirmed), `0x1e` 25000, `0x1f` 30000, `0x20` 35000
@@ -995,6 +995,49 @@ each script for every combination of the improvements involved (`stage_layout.py
 Everything else is always on sale. The effect is that what another improvement builds on
 cannot be sold from under it. An earlier note here said there were no prerequisites; that came
 from reading the shop alone.
+
+## Bonus events — confirmed
+
+Some levels have a bonus event, created by the stage script (found by running the scripts; the
+"level-specific branches" left unread earlier are these).
+
+- When: the script seeds a Mersenne Twister (`0xa2724`, 31-bit output from `0xa2770`) with
+  `stage × 100 + level` and starts the event at `20 + r·(B − 70)` seconds, `r` in [0, 1) and
+  `B = (7000 + 1400·(level + min(level, 3))) / (level + 90)` (integer division) in Arches. So
+  the moment is the same every time. The helicopter takes a number before that one: even means
+  it comes from the left.
+
+| Level | Event | Starts at | Coin |
+|---|---|---|---|
+| 1-3 | helicopter from the right, speed 0.9 | 69.2 s | 500 |
+| 1-6 | balloons | 22.3 s | 750 |
+| 2-1 | balloons | 28.4 s | 750 |
+| 2-6 | helicopter from the right, speed 1.0 | 153.7 s | 1000 |
+| 3-2 | balloons | 38.0 s | 750 |
+| 3-6 | helicopter from the left, speed 1.0 | 102.7 s | 1000 |
+| 3-8 | balloons | 109.9 s | 1000 |
+
+- Balloons (`BalloonsBonus`, builder `0x13ac4`, update `0x21a48`): ten balloons, the next one
+  1 to 2 s after each (libc `rand`). A balloon (`0x222f8`) starts at y 350 and a random x in
+  10…470 with one of three images, rises 100 px/s (`0x21fc0`) and goes at y −30; it takes
+  touches within 30 px. It is drawn (`0x21ee8`) leaning `3·sin(0.05·y)` degrees, thread and
+  all, the balloon itself turned back upright about a point 20 px above. Popped (`0x22044`):
+  `SOUNDS.BALLOON_POP` at pitch 0.98…1.02, a `BALLOON.SPLASH` and a coin 20 px below. A float the
+  builder also receives (10, 15 or 20) is stored and not used by the update or the draw.
+- Helicopter (`HelicopterBonus`, builder `0x139fc`, update `0x49518`): `SOUNDS.HELICOPTER_LOOP`
+  at half volume, panned by `(x − 240)/240`. Its progress `t` advances by
+  `speed + 8·burst` a second, the burst falling at `speed` a second; `x = 520 − 60t` (or
+  `−40 + 60t` from the left), `y = 200 + 15·sin(1.5t + a) + 20·sin(t + b)` with random `a`, `b`.
+  It takes touches within 40 × 30 px; a tap (`0x4974c`) releases a coin 20 px below, sets the
+  burst to 0.4, adds 0.25 to the speed and plays `SOUNDS.COIN_RELEASE`. It is drawn with frame
+  `⌊30t⌋ mod 4` of `HELICOPTER.%d`, mirrored when it comes from the left, and goes once past
+  the far edge, its sound fading over half a second.
+- Coin (`CoinBonus`, `0x26224`, update `0x260d4`): `COIN_BONUS` grows to full size in a quarter
+  of a second, falls at 50 px/s (`0x177d64`) swinging `35·sin(2.3·t)` degrees, and on passing
+  y 290 pays (`0x25de0`): the amount is added to the score, shown in `FONTS.SCORE` and
+  `SOUNDS.CASH` plays; then it shrinks away. It needs no touch.
+- Web version: how the splash is animated has not been read (it grows and fades over 0.3 s);
+  the award counters the events raise (code 0x20) are not kept.
 
 ## Reading a stage script by running it
 

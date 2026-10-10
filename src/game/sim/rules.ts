@@ -131,6 +131,19 @@ export const RULES = {
    */
   levelEnd: { afterTimeOver: 3, afterTimeOverLanded: 10, retry: 6, retryLanded: 10 },
 
+  /**
+   * Bonus events. Balloons (0x21a48, 0x21fc0): ten of them, one every 1 to 2 s, rise from y 350
+   * at 100 px/s at a random x from 10 to 470 and can be popped within 30 px. The helicopter
+   * (0x49518): crosses at 60 px/s times its speed, bobbing around y 200, and can be tapped within
+   * 40 × 30 px; a tap adds 0.25 to its speed and a burst that fades. A coin (0x260d4) grows in a
+   * quarter of a second, falls at 50 px/s (0x177d64) and pays on reaching y 290.
+   */
+  bonus: {
+    balloons: { count: 10, startY: 350, rise: 100, minX: 10, spanX: 460, reach: 30, images: 3, minGap: 1, gapSpan: 1, goneY: -30 },
+    helicopter: { pace: 60, leftEdge: -40, rightEdge: 520, y: 200, reachX: 40, reachY: 30, burst: 0.4, burstWeight: 8, faster: 0.25 },
+    coin: { dropBelow: 20, grow: 4, fall: 50, payY: 290 },
+  },
+
   /** Taxiing accelerates towards the next node, is capped, and brakes for the final target. */
   taxiAcceleration: 200,
   taxiMaxSpeed: 200,

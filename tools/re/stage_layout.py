@@ -34,16 +34,19 @@ HEAP, HEAP_SIZE = 0x40000000, 0x1000000
 TRAP = 0x70000000
 # Code that belongs to the stage scripts and their local helpers, and so is run for real.
 NATIVE = (0xce178, 0xe4704)
+# Engine code that is also run for real: the level's random generator (a Mersenne Twister the
+# script seeds with stage * 100 + level), whose numbers decide when the bonus events start.
+ALSO_NATIVE = ((0xa2724, 0xa2888),)
 
 # Engine functions the scripts call, by what they build.
 BUILDERS = {
     0x12ddc: 'beginStage', 0x12f90: 'serviceTabs', 0x1328c: 'image', 0x13458: 'improvement', 0x135f4: 'sky',
     0x13de4: 'scaledImage', 0x1404c: 'depthImage', 0x141ac: 'gate', 0x1428c: 'hangar', 0x1434c: 'gasStation',
     0x1440c: 'runway', 0x144e4: 'stopSpot', 0x145a8: 'paintingSpot', 0x147f8: 'taxiNode', 0x14808: 'linkNodes',
-    0xcda08: 'clouds',
+    0xcda08: 'clouds', 0x139fc: 'helicopterBonus', 0x13ac4: 'balloonsBonus', 0x14678: 'washAndGo',
 }
 # Stack words each builder really takes; the rest of the outgoing area is left over from before.
-STACK_WORDS = {'improvement': 4, 'gate': 1, 'runway': 1, 'stopSpot': 1, 'paintingSpot': 2, 'serviceTabs': 3, 'hangar': 1, 'gasStation': 1}
+STACK_WORDS = {'helicopterBonus': 1, 'balloonsBonus': 1, 'washAndGo': 2, 'improvement': 4, 'gate': 1, 'runway': 1, 'stopSpot': 1, 'paintingSpot': 2, 'serviceTabs': 3, 'hangar': 1, 'gasStation': 1}
 DEFAULT_STACK_WORDS = 0
 # Calls that are plumbing and say nothing about the airport.
 QUIET = {0x2ef4, 0x2ca4, 0x827a8, 0x821b8, 0x2aa0, 0xa3490, 0xa31d0}
@@ -170,6 +173,8 @@ class Run:
     def on_code(self, uc, address, size, data):
         if NATIVE[0] <= address < NATIVE[1] and address not in BUILDERS:
             return
+        if any(lo <= address < hi for lo, hi in ALSO_NATIVE):
+            return
         lr = uc.reg_read(UC_ARM_REG_LR)
         if address == TRAP + 0x800:
             return
@@ -189,6 +194,16 @@ class Run:
             if regs[2] and self.mapped(regs[0]):
                 uc.mem_write(regs[0], bytes(uc.mem_read(regs[1], min(regs[2], 0x10000))))
             result = regs[0]
+        elif name in ('___divsi3', '___udivsi3', '___modsi3', '___umodsi3'):
+            signed = 'u' not in name[3:5]
+            a, b = regs[0], regs[1]
+            if signed:
+                a, b = (a - (1 << 32) if a & 0x80000000 else a), (b - (1 << 32) if b & 0x80000000 else b)
+            if b == 0:
+                result = 0
+            else:
+                quotient = abs(a) // abs(b) * (1 if (a < 0) == (b < 0) else -1)
+                result = (quotient if 'div' in name else a - quotient * b) & 0xffffffff
         elif name and ('ZNSsC' in name or 'ZNSs6assign' in name):
             # A string made from a C string: keep the pointer so the text can be shown later.
             if self.mapped(regs[0]):
