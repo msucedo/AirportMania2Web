@@ -4,7 +4,7 @@ import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace } from '.
 import { markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
-import { comboArrows } from '../src/game/view/runwayView';
+import { comboArrows, usingArrow } from '../src/game/view/runwayView';
 import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
 
@@ -130,5 +130,18 @@ describe('in-game bar', () => {
     expect(clockDigits(0.5)).toEqual([4, 4, 4]);
     expect(clockDigits(1 / 9)).toEqual([1, 0, 0]);
     expect(clockDigits(0)).toEqual([0, 0, 0]);
+  });
+});
+
+describe('runway in-use arrows', () => {
+  it('run towards the node for a landing and away from it for a take-off', () => {
+    expect(usingArrow(0, true)).toEqual({ along: 260, opacity: 0 });
+    expect(usingArrow(0.5, true)).toEqual({ along: 150, opacity: 1 });
+    expect(usingArrow(1, true).along).toBe(40);
+    expect(usingArrow(0, false).along).toBe(40);
+    expect(usingArrow(1, false).along).toBe(260);
+    // They fade over the first and last tenth of the run.
+    expect(usingArrow(0.05, false).opacity).toBeCloseTo(0.5, 5);
+    expect(usingArrow(0.95, false).opacity).toBeCloseTo(0.5, 5);
   });
 });

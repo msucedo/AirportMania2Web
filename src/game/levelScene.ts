@@ -553,7 +553,7 @@ export class LevelScene {
     this.coffeeTab?.update(elapsed);
     for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
-    for (const view of this.runwayViews) view.update();
+    for (const view of this.runwayViews) view.update(elapsed);
     for (const { hangar, panel, ticks } of this.hangarPanels) {
       const plane = hangar.plane;
       panel.visible = hangar.use === 'working' && plane !== null;

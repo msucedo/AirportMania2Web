@@ -493,8 +493,7 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
 - Hover label (`0x43d2a`): only for descriptors with `LabelOver`, when the pointer is over the
   gate; not drawn in the web version.
 - Not read: the first part of the gate draw (`0x436e4`–`0x439ac`: building, colour, letter) and
-  the runway draw (`0x6dd44`), so the runway number position, flag offsets and combo arrows are
-  assumed or missing in the web version.
+  the order flag offsets. The runway draw is covered under "Runway drawing".
 
 ## Gas station drawing — confirmed
 
@@ -711,8 +710,14 @@ sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructo
   Take-offs use `INDICATORS.ARROWS.RUNWAY_COMBO_RIGHT` when the runway's direction flag (`+0xc0`)
   is set and `_LEFT` otherwise; landings the opposite. With a count of 2 or more,
   `INDICATORS.ARROWS.X2`–`X4` is drawn over the first arrow.
-- Not read: the block at `0x6de06`–`0x6de9a` (three items driven by `+0xa8`/`+0xac`, drawn by
-  `0x6e1f4`).
+- In-use arrows (`0x6de06`, drawn by `0x6e1f4`, before the combo arrows). Reserving the runway
+  (`0x6d9e4`) sets `+0xa4` and clears the phase `+0xac`; `+0xb0` is the direction flag `+0xc0`
+  for a landing and its opposite for a take-off. The update (`0x6db18`) advances the phase by
+  0.3/s, wrapping at 1, and fades `+0xa4` into `+0xa8` at 3/s; the flag is cleared when the plane
+  gets there (`0x6d93a`, `0x6dd22`). Four arrows are drawn at phases `t`, `t + ¼`, `t + ½`,
+  `t + ¾`: `INDICATORS.ARROWS.RUNWAY_USING_LEFT` or `_RIGHT` on the node's line, from 260 to
+  40 px from the node for a landing and from 40 to 260 for a take-off, with opacity `+0xa8`
+  times a fade over the first and last tenth of the run.
 
 ## Hangar — confirmed
 
@@ -960,8 +965,8 @@ Drawing:
 - Planes: dirt, the whistle, the nag flash of the balloon, the pitch on landing, landing dust,
   and the mark on planes a service tab would reach are not drawn. The thought cloud shows the
   need icon in place of the place's own image.
-- Gate: the hover label; the first part of its draw routine has not been read. Runway draw
-  (`0x6dd44`): number position, combo arrows and order flag offsets are assumed.
+- Gate: the hover label; the first part of its draw routine has not been read. Order flag
+  offsets are assumed.
 - Tier colours (table at `0x181314`, filled at run time), the font effects (gradients), the
   shop's item list layout (`0x4ca54`), the interiors of the map dialogs, how the level
   announcement is dismissed and what a level "introduces".
