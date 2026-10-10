@@ -34,3 +34,9 @@ export function paletteColor(color: PlaneColor | null): PaletteColor {
   const index = color ? COLOR_NAMES.indexOf(color) + 1 : 0;
   return PALETTE[index] ?? NEUTRAL_COLOR;
 }
+
+/**
+ * The colour of each score tier, from the goal up to a perfect score: the table at `0x181314`,
+ * filled by the static initialiser `0x4f788`. The goal bar and the score plates use it.
+ */
+export const TIER_COLORS: readonly number[] = [0xffac32, 0xe6e530, 0x6fe546, 0x50afff, 0xa055cc];

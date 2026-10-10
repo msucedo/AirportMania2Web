@@ -5,16 +5,12 @@ import { fontFamily } from '../../engine/fonts';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../engine/screen';
 import type { TextureStore } from '../../engine/textures';
 import { MAIN_FONT, SCORE_FONT } from './floatingText';
+import { TIER_COLORS } from '../palette';
 
 export const LEVEL_INTRO_SURFACES = ['GUI.INGAMEGUI.SCORE_GOAL_BACK'];
 export const LEVEL_INTRO_FONTS = ['FONTS.BLUE_STONE', 'FONTS.TEEN_BD', MAIN_FONT, SCORE_FONT];
 
 const TIERS = ['GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'] as const;
-/**
- * Plate colours per tier. The original takes them from a table filled at run time
- * (`0x181314`), which has not been read; these are ours.
- */
-const PLATE_TINTS = [0xfff2c2, 0xffe08a, 0xffc861, 0xffab52, 0xff8f6b];
 const BEST_TINT = 0x4d4d4d;
 
 /** One score row (0x51b18): the plate, the name 125 px left of its centre and the amount 115 px right. */
@@ -37,7 +33,7 @@ export function goalRows(textures: TextureStore, strings: Strings, goals: LevelG
   const rows = new Container();
   const amounts = [goals.goal, goals.expert, goals.master, goals.supreme, goals.perfect];
   TIERS.forEach((tier, i) => {
-    const row = goalRow(textures, strings.t(`SCORE.${tier}_SCORE`), String(amounts[i]), PLATE_TINTS[i]!);
+    const row = goalRow(textures, strings.t(`SCORE.${tier}_SCORE`), String(amounts[i]), TIER_COLORS[i]!);
     row.y = i * 26;
     rows.addChild(row);
   });

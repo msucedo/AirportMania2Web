@@ -532,9 +532,11 @@ Draw routine `0x40ed4`:
 - A score row (`0x51b18`): `GUI.INGAMEGUI.SCORE_GOAL_BACK` in the tier's colour, the tier name
   (`0x12520`) in `FONTS.WHITE` at (−125, −2) and the amount in `FONTS.SCORE` right-aligned at 115.
   Rows are 26 px apart; the best score follows 20 px further down in a darker plate.
-- Not read: the tier colours (a table at `0x181314` filled at run time), the list of what a level
-  introduces, and how the panel is dismissed. The web version uses its own colours and closes
-  the panel with a touch.
+- Tier colours (confirmed): the table at `0x181314` is filled by the static initialiser
+  `0x4f788` with five RGBA colours, goal to perfect: `#FFAC32`, `#E6E530`, `#6FE546`,
+  `#50AFFF`, `#A055CC`. The bar's draw (`0x4ec78`) reads the same table.
+- Not read: the list of what a level introduces, and how the panel is dismissed. The web
+  version closes the panel with a touch.
 
 ## Final report (dialog `0x3241c`, steps `0x328d4`)
 
@@ -976,7 +978,7 @@ Drawing:
   and the mark on planes a service tab would reach are not drawn.
 - Gate: the hover label; the first part of its draw routine has not been read. Order flag
   offsets are assumed.
-- Tier colours (table at `0x181314`, filled at run time), the font effects (gradients), the
+- The font effects (gradients), the
   shop's item list layout (`0x4ca54`), the interiors of the map dialogs, how the level
   announcement is dismissed and what a level "introduces".
 - Turning direction of the paint chooser's ring and of the spray can; the clock that blinks

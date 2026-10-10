@@ -1,6 +1,7 @@
 import { Container, Graphics, Rectangle, Sprite, Texture, TilingSprite } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { TextureStore } from '../../engine/textures';
+import { TIER_COLORS } from '../palette';
 
 // The in-game bar, after the original's update (0x4e89c) and draw (0x4eba4). The score reels and
 // the goal bar are drawn first and seen through the holes of the bar's image, which goes over
@@ -34,11 +35,6 @@ const RINGS = [
   { inner: 15, outer: 23, image: 'GUI.INGAMEGUI.YELLOW_DISC' },
   { inner: 7, outer: 15.5, image: 'GUI.INGAMEGUI.BLUE_ORANGE_DISC' },
 ] as const;
-/**
- * Segment colours of the goal bar, one per tier. The original reads them from a table filled at
- * run time (`0x181314`) that has not been found; these are ours.
- */
-const TIER_COLORS = [0xf2a33a, 0xe8c63a, 0xa8d04a, 0x6cc04a, 0x3fb36b];
 
 /** Where the goal bar reaches, 0..1 of its length (0x4e8cc): each tier fills its share, eased. */
 export function goalBarFraction(score: number, goals: LevelGoals): number {
