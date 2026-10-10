@@ -496,6 +496,18 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
   the runway draw (`0x6dd44`), so the runway number position, flag offsets and combo arrows are
   assumed or missing in the web version.
 
+## Gas station drawing — confirmed
+
+Draw routine `0x40ed4`:
+
+- `SurfaceSpotResource` at station + `NodePosition`, then `BackSurfaceResource` at the station.
+- While fueling (state 2), with `f = progress / FuelingTime` (`0x5aa8`, descriptor `+0xd4`): the
+  gauge sits at station + `NodePosition` − (0, 80). Opacity `a = clamp(20·min(f, 1 − f), 0, 1)`.
+  `INDICATORS.FUELING_MARK` is drawn at scale `0.5 + 0.5a`; `FUELING_MARK_TICK` at scale
+  `0.7 + 0.3a`, rotated `−80 + 160·clamp((12f − 1)/10, 0, 1)` degrees about its hot spot.
+- Plane times in the descriptor: `+0xc8` LoadingTime, `+0xd4` FuelingTime, `+0xd0`
+  LuggageLoadingTime, `+0xcc` ServicingTime (getters `0x5a98`, `0x5aa8`, `0x5ab8`, `0x5ac8`).
+
 ## Texts and fonts
 
 - Strings live in `data/languages/<language>.xml` as nested `NameSpace` elements; ids are the
