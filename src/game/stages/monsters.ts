@@ -52,15 +52,15 @@ export const MONSTERS: StageLayout = {
   runwaysWith: { improvement: IMPROVEMENT.EXTRA_RUNWAY_3, runways: [runway(1, -5, 195, 0), runway(2, 30, 225, 0), runway(3, 65, 255, 0)] },
   stopSpots: [
     { position: { x: 270, y: 300 }, requires: null, upgradedBy: IMPROVEMENT.UPGRADED_STOP_SPOT },
-    { position: { x: 170, y: 300 }, requires: IMPROVEMENT.EXTRA_STOP_SPOT },
+    { position: { x: 170, y: 300 }, requires: IMPROVEMENT.EXTRA_STOP_SPOT, washedBy: { improvement: IMPROVEMENT.WASH_AND_GO, position: { x: 169, y: 301 } } },
     { position: { x: 50, y: 300 }, requires: IMPROVEMENT.EXTRA_STOP_SPOT_2, replacedBy: IMPROVEMENT.PAINTING_STOP_SPOT },
   ],
   // Ids, prices, order, the level each is first recommended at and when each is on sale are what
   // the stage script registers (0x13458), as run by tools/re/stage_layout.py --offers. Still
-  // missing from the list, until they are built: the wash and go (0x77, 150000, after the first
-  // stop spot) and the anti-fog (0x6f, 80000, after the third runway).
+  // missing from the list, until it is built: the anti-fog (0x6f, 80000, after the third runway).
   improvements: [
     offer(IMPROVEMENT.EXTRA_STOP_SPOT, 20000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'STORAGE_PLACE', { tryFrom: 2, hiddenBy: [IMPROVEMENT.EXTRA_STOP_SPOT_2, IMPROVEMENT.WASH_AND_GO] }),
+    offer(IMPROVEMENT.WASH_AND_GO, 150000, 'WASH_AND_GO', 'WASH_AND_GO', 'WASH_AND_GO', { tryFrom: 3, needs: [IMPROVEMENT.EXTRA_STOP_SPOT] }),
     offer(IMPROVEMENT.EXTRA_STOP_SPOT_2, 30000, 'EXTRA_STORAGE_PLACE', 'EXTRA_STORAGE_PLACE', 'STORAGE_PLACE', { needs: [IMPROVEMENT.EXTRA_STOP_SPOT], hiddenBy: [IMPROVEMENT.PAINTING_STOP_SPOT] }),
     offer(IMPROVEMENT.UPGRADED_STOP_SPOT, 60000, 'VIP_STORAGE_PLACE', 'VIP_STORAGE_PLACE', 'VIP_STORAGE_PLACE'),
     offer(IMPROVEMENT.PAINTING_STOP_SPOT, 150000, 'PAINTING_STOPSPOT', 'PAINTING_STOPSPOT', 'PAINTING_STOPSPOT', { needs: [IMPROVEMENT.EXTRA_STOP_SPOT_2] }),

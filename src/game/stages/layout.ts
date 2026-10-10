@@ -101,7 +101,11 @@ export interface StageLayout {
   runways: RunwaySlot[];
   /** The runways the stage builds instead once an improvement that adds one is owned. */
   runwaysWith?: { improvement: number; runways: RunwaySlot[] };
-  stopSpots: { position: Point; requires: number | null; upgradedBy?: number; replacedBy?: number }[];
+  /**
+   * Stop spots. One is replaced by the painting stop spot when `replacedBy` is owned, or by the
+   * wash and go, built at `position`, when `washedBy.improvement` is.
+   */
+  stopSpots: { position: Point; requires: number | null; upgradedBy?: number; replacedBy?: number; washedBy?: { improvement: number; position: Point } }[];
   /** Sprites of a stop spot, bottom to top, for the plain and the VIP version. */
   stopSpotSurfaces: { normal: string[]; vip: string[] };
   /** Planes land on water here and show their pontoons (`PlanesUsePantoons` in the levels db). */

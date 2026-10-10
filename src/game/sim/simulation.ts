@@ -98,6 +98,8 @@ export interface StopSpot extends PlaceBase {
   use: 'free' | 'reserved' | 'occupied';
   /** The repainting equipment of a painting stop spot; null on an ordinary one. */
   painting: PaintBooth | null;
+  /** Set on a wash and go: the seconds left of the wash under way, or null when none is. */
+  wash: { left: number | null } | null;
 }
 
 /** A balloon of the balloons bonus, rising until popped or gone (class `0x222f8`). */
@@ -235,6 +237,8 @@ export type SimEvent =
   | { type: 'coffeeServed'; planes: Plane[] }
   | { type: 'moviesReady' }
   | { type: 'moviesShown'; planes: Plane[] }
+  | { type: 'washStarted'; plane: Plane; spot: StopSpot }
+  | { type: 'washDone'; plane: Plane; spot: StopSpot }
   | { type: 'paintingReady'; spot: StopSpot }
   | { type: 'paintingStarted'; plane: Plane; spot: StopSpot; color: PlaneColor }
   | { type: 'repainted'; plane: Plane; from: PlaneColor }
@@ -429,16 +433,19 @@ export class Simulation {
     for (const slot of layout.stopSpots) {
       // The painting stop spot takes this place whether or not the plain one had been bought.
       const paints = slot.replacedBy !== undefined && owned.has(slot.replacedBy);
-      if (!paints && slot.requires !== null && !owned.has(slot.requires)) continue;
-      const vip = slot.upgradedBy !== undefined && owned.has(slot.upgradedBy);
-      const { x, y } = slot.position;
+      // Likewise the wash and go, which is built a pixel or so away.
+      const washes = slot.washedBy !== undefined && owned.has(slot.washedBy.improvement);
+      if (!paints && !washes && slot.requires !== null && !owned.has(slot.requires)) continue;
+      const vip = !washes && slot.upgradedBy !== undefined && owned.has(slot.upgradedBy);
+      const position = washes ? slot.washedBy!.position : slot.position;
+      const { x, y } = position;
       const click = RULES.stopSpotClick;
       this.stopSpots.push({
         kind: 'stopSpot',
         id: `stop-spot-${this.stopSpots.length + 1}`,
-        position: slot.position,
-        node: slot.position,
-        taxiNode: this.graph.addStopSpot(slot.position),
+        position,
+        node: position,
+        taxiNode: this.graph.addStopSpot(position),
         click: { x1: x + click.x1, y1: y + click.y1, x2: x + click.x2, y2: y + click.y2 },
         plane: null,
         vip,
@@ -446,6 +453,7 @@ export class Simulation {
         use: 'free',
         // It starts empty and has to charge before the first repaint (0x67c40).
         painting: paints ? { recharge: RULES.painting.recharge, left: RULES.painting.recharge, ready: false, job: null } : null,
+        wash: washes ? { left: null } : null,
       });
     }
 
@@ -636,6 +644,7 @@ export class Simulation {
     for (const station of this.gasStations) this.updateGasStation(station, dt);
     for (const hangar of this.hangars) this.updateHangar(hangar, dt);
     for (const spot of this.stopSpots) if (spot.painting) this.updatePainting(spot, spot.painting, dt);
+    for (const spot of this.stopSpots) if (spot.wash) this.updateWash(spot, spot.wash, dt);
     for (const [button, ready] of [
       [this.coffee, 'coffeeReady'],
       [this.movies, 'moviesReady'],
@@ -819,6 +828,21 @@ export class Simulation {
     spot.painting!.job = { color, time: 0, applied: false };
     this.emit({ type: 'paintingStarted', plane, spot, color });
     return true;
+  }
+
+  /** `WashAndGo::update` (0x852b0). */
+  private updateWash(spot: StopSpot, wash: { left: number | null }, dt: number): void {
+    const plane = spot.plane;
+    if (wash.left === null || !plane) return;
+    wash.left -= dt;
+    // The dirt is gone well before the rollers stop.
+    if (wash.left < RULES.wash.rinse) plane.washDone = true;
+    if (wash.left > 0) return;
+    wash.left = null;
+    plane.state = PlaneState.WAITING;
+    this.addEnergy(plane, RULES.wash.energy);
+    this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.washing), 1, 'service');
+    this.emit({ type: 'washDone', plane, spot });
   }
 
   /** `PaintingStopSpot::update` (0x67e24) and the spray's own update (0x77a80). */
@@ -1064,7 +1088,9 @@ export class Simulation {
   private skipParking(plane: Plane): void {
     const { queue } = plane;
     let next = 0;
-    while (next < queue.length && queue[next]!.kind === 'stopSpot' && !this.busy(queue[next]!, plane)) next++;
+    // A wash and go only counts as somewhere to wait for a plane that is already clean (0x8585c).
+    const waitingPlace = (place: Place): boolean => place.kind === 'stopSpot' && (!place.wash || plane.washDone);
+    while (next < queue.length && waitingPlace(queue[next]!) && !this.busy(queue[next]!, plane)) next++;
     if (next === 0 || next === queue.length) return;
     const place = queue[next]!;
     if (this.busy(place, plane) || !this.canEnter(place, plane)) return;
@@ -1223,10 +1249,17 @@ export class Simulation {
       this.emit({ type: 'serviceStartedAtHangar', plane, hangar: place });
       this.addEnergy(plane, RULES.energyBoost);
     } else if (place.kind === 'stopSpot') {
-      // `StopSpot::planeArrived` (0x79788): the plane simply waits there.
       place.use = 'occupied';
-      plane.state = PlaneState.WAITING;
-      this.emit({ type: 'parked', plane, spot: place });
+      if (place.wash && !plane.washDone) {
+        // `WashAndGo::planeArrived` (0x84d60): a dirty plane is washed.
+        place.wash.left = RULES.wash.time;
+        plane.state = PlaneState.WASHING;
+        this.emit({ type: 'washStarted', plane, spot: place });
+      } else {
+        // `StopSpot::planeArrived` (0x79788): the plane simply waits there.
+        plane.state = PlaneState.WAITING;
+        this.emit({ type: 'parked', plane, spot: place });
+      }
     }
     else this.runwayUsed(place, plane);
   }

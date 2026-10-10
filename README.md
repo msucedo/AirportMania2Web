@@ -35,8 +35,8 @@ colours; the sky runs its day and night cycle with sun, stars and clouds; the is
 glints, rings and buoys; runways show their combo arrows.
 
 Not there yet: dirt and washing, the help, users, credits and
-awards screens, and stages 4 to 10. Stage 3 can be played, without yet its wash and go and
-runway fog, and without its animated scenery.
+awards screens, and stages 4 to 10. Stage 3 can be played, without yet its runway fog and
+without its animated scenery or the wash's rollers and water.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
 placeholder (some draw details, the payout rule) is tracked

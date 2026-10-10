@@ -987,6 +987,61 @@ describe('simulation, stage 3 (monsters)', () => {
     expect(events.filter((e) => e.type === 'moviesReady')).toHaveLength(1);
   });
 
+  it('washes a dirty plane on the wash and go, which takes the second stop spot', () => {
+    const sim = monsters(3, 0x01, 0x77);
+    expect(sim.stopSpots.map((s) => [s.position, s.wash !== null])).toEqual([
+      [{ x: 270, y: 300 }, false],
+      [{ x: 169, y: 301 }, true],
+    ]);
+    const bay = sim.stopSpots[1]!;
+    const events: SimEvent[] = [];
+    runUntil(sim, () => sim.planes.some((p) => !p.gone && !p.washDone), 200, events);
+    const dirty = sim.planes.find((p) => !p.gone && !p.washDone)!;
+    sim.addOrder(dirty, sim.runways[0]!);
+    sim.addOrder(dirty, bay);
+    // A gate behind it does not make a dirty plane skip the wash.
+    sim.addOrder(dirty, sim.gates[0]!);
+    runUntil(sim, () => dirty.state === PlaneState.WASHING, 60, events);
+    expect(dirty.place).toBe(bay);
+    const started = sim.time;
+    dirty.energy = 0.5;
+    run(sim, 1.5, events);
+    expect(dirty.washDone).toBe(false);
+    run(sim, 1, events);
+    // Clean with six seconds still to go, and washing costs no energy.
+    expect(dirty.washDone).toBe(true);
+    expect(dirty.state).toBe(PlaneState.WASHING);
+    expect(dirty.energy).toBe(0.5);
+    const before = sim.score;
+    runUntil(sim, () => dirty.state !== PlaneState.WASHING, 10, events);
+    expect(sim.time - started).toBeCloseTo(RULES.wash.time, 1);
+    expect(dirty.energy).toBeGreaterThan(0.85);
+    const award = events.filter((e) => e.type === 'score' && e.plane === dirty && e.reason === 'service').at(-1)!;
+    expect(award).toMatchObject({ points: roundScore(0.9 * dirty.descriptor.points.washing) });
+    expect(sim.score).toBe(before + (award.type === 'score' ? award.points : 0));
+    expect(events.filter((e) => e.type === 'washDone')).toHaveLength(1);
+  });
+
+  it('lets a clean plane use the wash and go as somewhere to wait, and skip it', () => {
+    const sim = monsters(1, 0x01, 0x77);
+    const bay = sim.stopSpots[1]!;
+    const events: SimEvent[] = [];
+    runUntil(sim, () => sim.planes.length >= 2, 120, events);
+    const [first, second] = sim.planes as [Plane, Plane];
+    expect([first.washDone, second.washDone]).toEqual([true, true]);
+    // With the gate free it goes straight there.
+    sim.addOrder(first, sim.runways[0]!);
+    sim.addOrder(first, bay);
+    sim.addOrder(first, sim.gates[0]!);
+    runUntil(sim, () => first.state === PlaneState.UNLOADING, 60, events);
+    expect(bay.use).toBe('free');
+    // Sent there alone it just parks.
+    sim.addOrder(second, sim.runways[1]!);
+    sim.addOrder(second, bay);
+    runUntil(sim, () => bay.use === 'occupied' && second.state === PlaneState.WAITING, 60, events);
+    expect(events.some((e) => e.type === 'washStarted')).toBe(false);
+  });
+
   it('has its bonus events on levels 2, 6 and 8', () => {
     expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => monsters(level).bonus?.kind ?? null)).toEqual([null, 'balloons', null, null, null, 'helicopter', null, 'balloons']);
   });

@@ -1075,6 +1075,11 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
 - Update (`0x852b0`): with 6 s left the plane becomes clean (state 3); at zero the plane waits
   again (`0x67c8`), gets 0.4 energy, and scores `round5(clamp(energy) × WashingPoints)`
   (descriptor `+0xbc`). The place stays taken (state 4) until the plane moves off.
+- Its own draw (`0x853b4`) is `WASH_AND_GO.GRATING` at its position. The shower, the three
+  rollers, the water and the splashes are objects of their own (`ShowerWater`, `WashingRoller`,
+  `WaterSplash`, `CleanShinyStar`).
+- Web version: those animated parts are not drawn yet, and the dirt goes at once when the plane
+  becomes clean instead of fading.
 
 ## Runway fog — confirmed
 

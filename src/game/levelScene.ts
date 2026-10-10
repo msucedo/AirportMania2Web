@@ -154,6 +154,7 @@ export class LevelScene {
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
     if (layout.water) for (const id of WATER_SURFACES) ids.add(id);
     if (sim.stopSpots.some((spot) => spot.painting)) for (const id of PAINTING_SURFACES) ids.add(id);
+    if (sim.stopSpots.some((spot) => spot.wash)) ids.add('WASH_AND_GO.GRATING');
     if (sim.bonus) for (const id of BONUS_SURFACES[sim.bonus.kind]) ids.add(id);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
@@ -265,7 +266,7 @@ export class LevelScene {
     if (next.kind === 'gate') return 5 + next.letter.charCodeAt(0) - 'A'.charCodeAt(0);
     if (next.kind === 'gasStation') return 10;
     if (next.kind === 'hangar') return 11;
-    return next.painting ? 15 : 12;
+    return next.painting ? 15 : next.wash ? 13 : 12;
   }
 
   /** The improvements shop for this level; a purchase or sale means building the airport again. */
@@ -389,7 +390,8 @@ export class LevelScene {
       if (buoys[1]) this.ground.addChild(buoys[1]);
     }
     for (const spot of this.sim.stopSpots) {
-      for (const id of spot.vip ? layout.stopSpotSurfaces.vip : layout.stopSpotSurfaces.normal) {
+      // The wash and go's own draw (0x853b4) is its grating on the ground.
+      for (const id of spot.wash ? ['WASH_AND_GO.GRATING'] : spot.vip ? layout.stopSpotSurfaces.vip : layout.stopSpotSurfaces.normal) {
         const sprite = this.textures.sprite(id);
         sprite.position.copyFrom(spot.position);
         this.ground.addChild(sprite);
@@ -558,6 +560,9 @@ export class LevelScene {
         break;
       case 'moviesShown':
         this.audio.play('SOUNDS.IN_FLIGHT_MOVIES');
+        break;
+      case 'washStarted':
+        this.audio.play('SOUNDS.WASHING');
         break;
       case 'paintingReady':
         this.audio.play('SOUNDS.PAINTING_READY');

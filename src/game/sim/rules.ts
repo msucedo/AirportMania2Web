@@ -13,6 +13,8 @@ export const PlaneState = {
   FUELING: 7,
   /** Being repainted on a painting stop spot (0x6354). */
   PAINTING: 8,
+  /** Being washed on a wash and go (0x67b8). */
+  WASHING: 9,
   TAKING_OFF: 11,
   /** In the air after the take-off run. */
   AIRBORNE: 12,
@@ -118,6 +120,12 @@ export const RULES = {
    * after `duration` (0x77a80). The plane then gains `energy` (0x67df8).
    */
   painting: { recharge: 42, colorAt: 4, duration: 5.5, energy: 0.4 },
+
+  /**
+   * Wash and go (0x84d60, 0x852b0): a wash takes `time` seconds, the plane is clean with `rinse`
+   * left, and at the end it gains `energy` and scores its WashingPoints.
+   */
+  wash: { time: 8, rinse: 6, energy: 0.4 },
 
   /**
    * Coffee and cake: the button recharges for 50 seconds (0x243d8) and gives 0.5 energy to every
