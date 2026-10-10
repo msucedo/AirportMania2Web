@@ -12,13 +12,12 @@ export const MOON: StageLayout = {
   runwayType: 6,
   gasStationType: 9,
   backdrop: {
-    // No sky object: the script makes a backdrop of space of its own (0x136a8), which draws
-    // `SPACE` four times its size and, over it, stars, the Earth, Saturn, two galaxies and a
-    // nebula drifting slowly across. Only the first is drawn yet.
+    // No sky object: the script makes a backdrop of space of its own (0x136a8), the image of
+    // space with stars, the Earth, Saturn, two galaxies and a nebula rising slowly through it.
     sky: null,
     horizon: 173,
     layers: [
-      { resource: 'STAGES.MOON.SPACE', position: { x: 0, y: 0 }, scale: { x: 4, y: 4 } },
+      { scenery: 'space', height: 70 },
       { resource: 'STAGES.MOON.BACKGROUND_DOWN', position: { x: 0, y: 173 }, scale: { x: 16, y: 19 } },
       { resource: 'STAGES.MOON.BACKGROUND_TOP', position: { x: 0, y: 45 } },
     ],

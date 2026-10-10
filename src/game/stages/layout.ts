@@ -73,7 +73,8 @@ export interface BackdropLayer {
  * - `bat`: a bat that swoops for `span` seconds of every `loop` (0x14f6c);
  * - `sleigh`: Santa's sleigh and reindeer crossing once every `loop` seconds (0x13f84);
  * - `snow`: flakes falling from `top` to `bottom` at `fall` px a second, one every half to one
- *   `interval`, blown about by up to `drift` (0x13d0c).
+ *   `interval`, blown about by up to `drift` (0x13d0c);
+ * - `space`: the Moon's sky, `height` px tall, with its stars and bodies (0x136a8).
  */
 export type SceneryItem =
   | { scenery: 'sea'; area: SparkleArea }
@@ -88,7 +89,8 @@ export type SceneryItem =
   | { scenery: 'fogPatch'; resource: string; position: Point; flipped: boolean; loop: number; span: number; speed: number; start: number }
   | { scenery: 'bat'; position: Point; loop: number; span: number; start: number; phase: number }
   | { scenery: 'sleigh'; position: Point; loop: number; speed: number; offset: number }
-  | { scenery: 'snow'; resource: string; top: number; bottom: number; drift: number; fall: number; interval: number };
+  | { scenery: 'snow'; resource: string; top: number; bottom: number; drift: number; fall: number; interval: number }
+  | { scenery: 'space'; height: number };
 
 /** What a stage script puts behind the airport, in the order it makes it: images and scenery. */
 export type BackdropEntry = BackdropLayer | SceneryItem;

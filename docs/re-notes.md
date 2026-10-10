@@ -1358,7 +1358,6 @@ animation.
   570000, `0x3c` 620000, `0x50` 565000, `0x5a` 565000, `0x64` 565000, `0x74` 305000, `0x73`
   305000, anti space gas `0x71` 305000, deicer 455000, anti-sand 410000, licence `0xda`
   920000, `0x2b` 270000.
-- Web version: the stars and the five bodies of the backdrop are not drawn.
 
 ## Stage 10 ("Mars") — read with the emulated script (`0xe18c4`)
 
@@ -1605,6 +1604,22 @@ place and plane; only what is added later (the service tabs) lies over them.
 - The North Pole's script makes a different backdrop on odd levels: instead of the sky
   object, `STAGES.NORTH_POLE.COVERED_SKY` at (0, 0) scaled 16×23, and the five falls of snow.
   The clouds and the sleigh are made on every level.
+
+- Space (`0x136a8(height)` → class `0x664fc`, set up by `0x65f88`, drawn by `0x665d4`), the
+  Moon's sky, with height 70. `STAGES.MOON.SPACE` at four times its size, then 150 stars and
+  five bodies. With `f = frac(0.003·t)`, everything is drawn at (x − 100·f, y − 620·f), put
+  back by (+100, +620) once y is under `height − 620`.
+  - Stars come from a generator of their own (WELL512, `0x36fd4`), seeded with
+    `0x1234567 + height` added as floats: state word 0 is `seed ^ 0x75bcd15` and word k is
+    word k−1 `^ (seed << k)`. Each star takes four numbers in turn: x in −50…500, y in 0…600,
+    size in 0.2…0.3 and a phase in 0…2π. It is `AMBIENT.STAR` scaled by
+    `size·(0.8 + 0.2·sin(300π·f + phase))`, drawn while −30 < y < height + 30 and
+    −30 < x < 500.
+  - Bodies, as field position, reach and turn in degrees: `EARTH` (46, 108) 90, 0;
+    `GALAXY_0` (100, 192) 150, −47; `NEBULA` (330, 300) 150, 300; `SATURN` (241, 420) 80, 225;
+    `GALAXY_1` (450, 540) 150, 120. Each is drawn while −reach < y < height + reach.
+  - Web version: the generator's index is read from a word the constructor never sets; it is
+    taken to start at 0, so the stars may not be where the original's are.
 
 ## Drawing order of the airport's objects — confirmed
 

@@ -16,6 +16,7 @@ import { flakeAlpha, loopClock, sleighPoses } from '../src/game/view/scenery/nor
 import { backdropOf, isScenery } from '../src/game/stages/layout';
 import { NORTH_POLE } from '../src/game/stages/northPole';
 import { flagLean, horizonPose, horizonX } from '../src/game/view/scenery/simple';
+import { spaceDrift, spaceStars, spaceTwinkle, starGenerator } from '../src/game/view/scenery/space';
 import { glintSlide } from '../src/game/view/waterEffects';
 
 describe('plane drawing rules', () => {
@@ -360,5 +361,41 @@ describe('scenery', () => {
     // Santa starts each level somewhere else in his loop.
     const offset = (level: number) => backdropOf(NORTH_POLE, level).layers.flatMap((entry) => (isScenery(entry) && entry.scenery === 'sleigh' ? [entry.offset] : []))[0];
     expect([1, 2, 8].map(offset)).toEqual([4.58405, 9.53402, 6.64197]);
+  });
+
+  it('makes the same field of stars for the Moon every time', () => {
+    const a = starGenerator(19088814);
+    const b = starGenerator(19088814);
+    const first = [a(), a(), a(), a()];
+    expect([b(), b(), b(), b()]).toEqual(first);
+    expect(new Set(first).size).toBe(4);
+    for (const value of first) expect(Number.isInteger(value) && value >= 0 && value < 2 ** 32).toBe(true);
+    expect(starGenerator(19088815)()).not.toBe(first[0]);
+
+    const stars = spaceStars(70);
+    expect(stars).toHaveLength(150);
+    expect(spaceStars(70)).toEqual(stars);
+    for (const star of stars) {
+      expect(star.x).toBeGreaterThanOrEqual(-50);
+      expect(star.x).toBeLessThan(500);
+      expect(star.y).toBeGreaterThanOrEqual(0);
+      expect(star.y).toBeLessThan(600);
+      expect(star.size).toBeGreaterThanOrEqual(0.2);
+      expect(star.size).toBeLessThan(0.3001);
+    }
+  });
+
+  it('lifts the field of stars through the sky and brings it back in from below', () => {
+    expect(spaceDrift(0, 46, 108, 70)).toEqual({ x: 46, y: 108 });
+    // A tenth of the way round: 62 px up and 10 px left.
+    const tenth = 1 / 0.03;
+    expect(spaceDrift(tenth, 46, 108, 70).x).toBeCloseTo(36, 4);
+    expect(spaceDrift(tenth, 46, 108, 70).y).toBeCloseTo(46, 4);
+    // Gone 620 px above the strip, it is put back where it will come up again.
+    const late = 0.999 / 0.003;
+    expect(spaceDrift(late, 46, 60, 70).y).toBeCloseTo(60 - 620 * 0.999 + 620, 3);
+    expect(spaceDrift(late, 46, 60, 70).x).toBeCloseTo(46 - 99.9 + 100, 3);
+    expect(spaceTwinkle(0, Math.PI / 2)).toBeCloseTo(1, 6);
+    expect(spaceTwinkle(0, -Math.PI / 2)).toBeCloseTo(0.6, 6);
   });
 });

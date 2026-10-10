@@ -7,6 +7,7 @@ import { BAT_SURFACES, BatView, FogPatchView, ScaryCloudView } from './monsters'
 import { AuroraView, StarView } from './night';
 import { SLEIGH_SURFACES, SleighView, SnowView } from './northPole';
 import { FlagView, HorizonObjectView } from './simple';
+import { SPACE_SURFACES, SpaceView } from './space';
 
 // The animated scenery a stage script makes between its backdrop images: one view per class of
 // the original. See docs/re-notes.md.
@@ -38,6 +39,8 @@ export function scenerySurfaceIds(item: SceneryItem): string[] {
       return SLEIGH_SURFACES;
     case 'snow':
       return [item.resource];
+    case 'space':
+      return SPACE_SURFACES;
     case 'star':
       return ['AMBIENT.STAR'];
   }
@@ -95,6 +98,10 @@ export function createScenery(textures: TextureStore, item: SceneryItem): Scener
     }
     case 'snow': {
       const view = new SnowView(textures, item);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'space': {
+      const view = new SpaceView(textures, item.height);
       return { view, update: (dt) => view.update(dt) };
     }
   }
