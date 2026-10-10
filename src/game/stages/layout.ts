@@ -66,7 +66,11 @@ export interface BackdropLayer {
  * - `moving`: an image that crosses for the first `span` seconds of every `loop` (0x14b5c);
  * - `cloudBand`: a band of cloud sliding left, one image width every `period` seconds, cut off
  *   at `left` (0x14858);
- * - `propeller`: a spinning propeller squeezed by `scale` (0x14928).
+ * - `propeller`: a spinning propeller squeezed by `scale` (0x14928);
+ * - `scaryCloud`: a cloud that drifts at `speed` and swells (0x14aa8);
+ * - `fogPatch`: a patch of fog that slides for `span` seconds of every `loop`, `start` seconds
+ *   in at first (0x149d4);
+ * - `bat`: a bat that swoops for `span` seconds of every `loop` (0x14f6c).
  */
 export type SceneryItem =
   | { scenery: 'sea'; area: SparkleArea }
@@ -76,7 +80,10 @@ export type SceneryItem =
   | { scenery: 'aurora'; resource: string }
   | { scenery: 'moving'; resource: string; x: number; y: number; loop: number; span: number; speed: number; offset: number }
   | { scenery: 'cloudBand'; resource: string; period: number; y: number; left: number; right: number }
-  | { scenery: 'propeller'; resource: string; position: Point; scale: Point };
+  | { scenery: 'propeller'; resource: string; position: Point; scale: Point }
+  | { scenery: 'scaryCloud'; resource: string; position: Point; speed: number }
+  | { scenery: 'fogPatch'; resource: string; position: Point; flipped: boolean; loop: number; span: number; speed: number; start: number }
+  | { scenery: 'bat'; position: Point; loop: number; span: number; start: number; phase: number };
 
 /** What a stage script puts behind the airport, in the order it makes it: images and scenery. */
 export type BackdropEntry = BackdropLayer | SceneryItem;
@@ -110,6 +117,8 @@ export interface StageLayout {
     /** Screen y down to which the sky's bottom colour is kept painted, behind the backdrop layers. */
     horizon: number;
     layers: BackdropEntry[];
+    /** Scenery the script makes once the airport's places are built: it lies over the ground and under the planes. */
+    after?: SceneryItem[];
   };
   /** The balloon corner the stage script gives its runways (see `BalloonCorner`). */
   runwayBalloonCorner: 0 | 1 | 2 | 3;

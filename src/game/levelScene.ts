@@ -173,6 +173,7 @@ export class LevelScene {
       if (isScenery(entry)) for (const id of scenerySurfaceIds(entry)) ids.add(id);
       else ids.add(entry.resource);
     }
+    for (const item of layout.backdrop.after ?? []) for (const id of scenerySurfaceIds(item)) ids.add(id);
     for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip]) ids.add(id);
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
     if (layout.water) for (const id of WATER_SURFACES) ids.add(id);
@@ -563,6 +564,11 @@ export class LevelScene {
       const view = new LuggageView(this.textures, luggage);
       this.ground.addChild(view);
       this.luggageViews.push(view);
+    }
+    for (const item of layout.backdrop.after ?? []) {
+      const piece = createScenery(this.textures, item);
+      this.scenery.push(piece);
+      this.ground.addChild(piece.view);
     }
     for (const decoration of layout.decorations) {
       const sprite = this.textures.sprite(decoration.resource);

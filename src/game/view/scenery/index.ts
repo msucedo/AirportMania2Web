@@ -3,6 +3,7 @@ import type { TextureStore } from '../../../engine/textures';
 import type { SceneryItem } from '../../stages/layout';
 import { SeaSparkles } from '../waterEffects';
 import { CloudBandView, MovingImageView, PropellerView } from './airborne';
+import { BAT_SURFACES, BatView, FogPatchView, ScaryCloudView } from './monsters';
 import { AuroraView, StarView } from './night';
 import { FlagView, HorizonObjectView } from './simple';
 
@@ -27,7 +28,11 @@ export function scenerySurfaceIds(item: SceneryItem): string[] {
     case 'moving':
     case 'cloudBand':
     case 'propeller':
+    case 'scaryCloud':
+    case 'fogPatch':
       return [item.resource];
+    case 'bat':
+      return BAT_SURFACES;
     case 'star':
       return ['AMBIENT.STAR'];
   }
@@ -65,6 +70,18 @@ export function createScenery(textures: TextureStore, item: SceneryItem): Scener
     }
     case 'propeller': {
       const view = new PropellerView(textures, item.resource, item.position, item.scale);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'scaryCloud': {
+      const view = new ScaryCloudView(textures, item);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'fogPatch': {
+      const view = new FogPatchView(textures, item);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'bat': {
+      const view = new BatView(textures, item);
       return { view, update: (dt) => view.update(dt) };
     }
   }

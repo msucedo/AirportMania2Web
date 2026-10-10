@@ -1554,6 +1554,30 @@ list in that order (`backdrop.layers`) and makes a view for each piece
   `STAGES.AIRBORNE.PROPELLER` turned by `360·frac(10·t)` degrees, then scaled, at its
   position: (89, 65) scaled (0.4, 1) and (274, 76) scaled (0.6, 1.4).
 
+- Scary cloud (`0x14aa8(index, position, speed)` → class `0x70098`, draw `0x70164`):
+  `STAGES.MONSTERS.SCARY_CLOUD_<index>`. With `f = frac(t·speed / 1190)`, x is
+  `x + 1190·f`, brought back into −300…880 in steps of 1180, and it is scaled by
+  (`1 + 0.04·sin(200f)`, `1 + 0.06·cos(200f)`). Four: index 1 at (100, 19.5) speed 15, 3 at
+  (700, 33) speed −12, 2 at (400, 30) speed −8, 0 at (1000, 48) speed 9.5. The witch crosses
+  between the second and the third: a moving image, `STAGES.MONSTERS.WITCH` from x 900 at y 40,
+  loop 100, span 12, speed −80, offset 67.456.
+- Patch of fog (`0x149d4(position, image, mirrored, loop, span, speed, start)` → class
+  `0x70580`, update `0x70668`, draw `0x7069c`): a clock from `start` that wraps at `loop`;
+  drawn while it is below `span`, at x + clock·speed, mirrored if asked, with opacity
+  `min(clock, span − clock)/2` kept within 0 and 1. Five by the gas station, made after the
+  buildings: `FOG_2` at (60, 94) mirrored, 19, 13, −2.5, 3; `FOG_1` at (70, 105), 17, 14, 3,
+  0; `FOG_0` at (35, 98), 16.3, 8, −4.1, 1.7; `FOG_1` at (96, 93) mirrored, 16.3, 8, 3.3, 10.7;
+  `FOG_2` at (43, 100), 19, 14, 3.5, 7.
+- Bat (`0x14f6c(position, loop, span, start, phase)` → class `0x2275c`, update `0x22834`,
+  draw `0x22868`): a clock from `start` that wraps at `loop`; drawn while it is below `span`.
+  With `c = π·clock` it is at position +
+  (`10·sin(2c + phase) − 150·sin(0.3c)`,
+  `1.1·(cos 2c + cos(11c + 0.13) + cos(20c + 0.15)) − 120·cos(0.3c)`), showing image
+  `STAGES.MONSTERS.BAT.<n>`, `n = int(6·frac(2t) + phase) mod 6`. Its clock is also its depth,
+  so it is drawn over the ground and under the gates and planes. Five, made after the places,
+  all with loop 25 and span 10 and y 190: x 520 start 0 phase 15; 510, 0.37, 5; 540, 10.1, 7;
+  540, 11.1, 0; 530, 1.27, 11.
+
 ## Drawing order of the airport's objects — confirmed
 
 - Every object of the airport is kept in one list (`airport+0x14`, added by `0xa3490`), which
@@ -1572,9 +1596,6 @@ list in that order (`backdrop.layers`) and makes a view for each piece
 
 ## Stage 3: what is still approximate
 
-- Scenery not drawn: the six stars, the scary clouds and the witch crossing the sky, the five
-  fog patches by the gas station and the five bats (builders `0x13b8c`, `0x14aa8`, `0x14b5c`,
-  `0x149d4`, `0x14f6c`; only their arguments have been read).
 - Wash and go: the shower, rollers, water and splashes are not drawn, and the dirt goes at once
   instead of fading.
 - Fog: the machine's wobble.

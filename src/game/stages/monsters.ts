@@ -13,15 +13,39 @@ export const MONSTERS: StageLayout = {
     // The night sky is an image here; the stage does not create the usual sky object.
     sky: null,
     horizon: 153,
-    // In the order the script creates them. Its stars, scary clouds, witch, fog patches and bats
-    // come between and after these and are not drawn yet.
+    // In the order the script creates them: six stars, four clouds and a witch that crosses now
+    // and then in the sky; five patches of fog by the gas station once the buildings are up.
     layers: [
       { resource: 'STAGES.MONSTERS.SKY', position: { x: 0, y: 0 }, scale: { x: 24, y: 24 } },
       { resource: 'STAGES.MONSTERS.BACKGROUND_DOWN', position: { x: 0, y: 153 }, scale: { x: 16, y: 17 } },
       { resource: 'AMBIENT.MOON', position: { x: 428, y: 31 } },
+      { scenery: 'star', position: { x: 26, y: 55 }, size: 9 },
+      { scenery: 'star', position: { x: 93, y: 33 }, size: 9 },
+      { scenery: 'star', position: { x: 195, y: 38 }, size: 7 },
+      { scenery: 'star', position: { x: 240, y: 17 }, size: 8 },
+      { scenery: 'star', position: { x: 260, y: 61 }, size: 11 },
+      { scenery: 'star', position: { x: 323, y: 34 }, size: 9 },
+      { scenery: 'scaryCloud', resource: 'STAGES.MONSTERS.SCARY_CLOUD_1', position: { x: 100, y: 19.5 }, speed: 15 },
+      { scenery: 'scaryCloud', resource: 'STAGES.MONSTERS.SCARY_CLOUD_3', position: { x: 700, y: 33 }, speed: -12 },
+      { scenery: 'moving', resource: 'STAGES.MONSTERS.WITCH', x: 900, y: 40, loop: 100, span: 12, speed: -80, offset: 67.456 },
+      { scenery: 'scaryCloud', resource: 'STAGES.MONSTERS.SCARY_CLOUD_2', position: { x: 400, y: 30 }, speed: -8 },
+      { scenery: 'scaryCloud', resource: 'STAGES.MONSTERS.SCARY_CLOUD_0', position: { x: 1000, y: 48 }, speed: 9.5 },
       { resource: 'STAGES.MONSTERS.BACKGROUND_TOP', position: { x: 0, y: 45 } },
       { resource: 'STAGES.MONSTERS.TOWER', position: { x: 260, y: 45 } },
       { resource: 'STAGES.MONSTERS.AIRPORT_BUILDING', position: { x: 385, y: 60 } },
+      { scenery: 'fogPatch', resource: 'STAGES.MONSTERS.FOG_2', position: { x: 60, y: 94 }, flipped: true, loop: 19, span: 13, speed: -2.5, start: 3 },
+      { scenery: 'fogPatch', resource: 'STAGES.MONSTERS.FOG_1', position: { x: 70, y: 105 }, flipped: false, loop: 17, span: 14, speed: 3, start: 0 },
+      { scenery: 'fogPatch', resource: 'STAGES.MONSTERS.FOG_0', position: { x: 35, y: 98 }, flipped: false, loop: 16.3, span: 8, speed: -4.1, start: 1.7 },
+      { scenery: 'fogPatch', resource: 'STAGES.MONSTERS.FOG_1', position: { x: 96, y: 93 }, flipped: true, loop: 16.3, span: 8, speed: 3.3, start: 10.7 },
+      { scenery: 'fogPatch', resource: 'STAGES.MONSTERS.FOG_2', position: { x: 43, y: 100 }, flipped: false, loop: 19, span: 14, speed: 3.5, start: 7 },
+    ],
+    // Five bats, made last: they swoop in at the right edge, each on its own beat.
+    after: [
+      { scenery: 'bat', position: { x: 520, y: 190 }, loop: 25, span: 10, start: 0, phase: 15 },
+      { scenery: 'bat', position: { x: 510, y: 190 }, loop: 25, span: 10, start: 0.37, phase: 5 },
+      { scenery: 'bat', position: { x: 540, y: 190 }, loop: 25, span: 10, start: 10.1, phase: 7 },
+      { scenery: 'bat', position: { x: 540, y: 190 }, loop: 25, span: 10, start: 11.1, phase: 0 },
+      { scenery: 'bat', position: { x: 530, y: 190 }, loop: 25, span: 10, start: 1.27, phase: 11 },
     ],
   },
   gateDecorations: [],

@@ -10,6 +10,7 @@ import { ringInterval } from '../src/game/view/waterEffects';
 import { brushPose, patchAlpha, puffAlpha } from '../src/game/view/sandView';
 import { markPop, panelTop } from '../src/game/view/tutorialViews';
 import { cloudBandPose, movingImageX, propellerAngle } from '../src/game/view/scenery/airborne';
+import { batFrame, batOffset, fogPatchPose, scaryCloudPose } from '../src/game/view/scenery/monsters';
 import { auroraPoints, starThrob } from '../src/game/view/scenery/night';
 import { flagLean, horizonPose, horizonX } from '../src/game/view/scenery/simple';
 import { glintSlide } from '../src/game/view/waterEffects';
@@ -291,5 +292,40 @@ describe('scenery', () => {
     expect(propellerAngle(0)).toBe(0);
     expect(propellerAngle(0.025)).toBeCloseTo(90, 5);
     expect(propellerAngle(0.1)).toBeCloseTo(0, 5);
+  });
+
+  it('drifts a scary cloud round between −300 and 880, swelling as it goes', () => {
+    expect(scaryCloudPose(0, 100, 15)).toEqual({ x: 100, scaleX: 1, scaleY: 1.06 });
+    expect(scaryCloudPose(10, 100, 15).x).toBeCloseTo(250, 4);
+    // Past 880 it comes back in at the left. One moving left is worked out as a move right of
+    // the rest of a 1190 px turn and brought back by 1180, which leaves it 10 px on.
+    expect(scaryCloudPose(60, 100, 15).x).toBeCloseTo(100 + 900 - 1180, 4);
+    expect(scaryCloudPose(50, 400, -8).x).toBeCloseTo(10, 4);
+    for (const t of [0, 13, 77, 150, 400]) {
+      const pose = scaryCloudPose(t, 700, -12);
+      expect(pose.x).toBeGreaterThanOrEqual(-300);
+      expect(pose.x).toBeLessThanOrEqual(880);
+      expect(Math.abs(pose.scaleX - 1)).toBeLessThanOrEqual(0.04);
+    }
+  });
+
+  it('slides a patch of fog for part of its loop, fading in and out over two seconds', () => {
+    expect(fogPatchPose(0, 13, -2.5)).toEqual({ dx: -0, alpha: 0 });
+    expect(fogPatchPose(1, 13, -2.5)).toEqual({ dx: -2.5, alpha: 0.5 });
+    expect(fogPatchPose(6, 13, -2.5)).toEqual({ dx: -15, alpha: 1 });
+    expect(fogPatchPose(12, 13, -2.5)).toEqual({ dx: -30, alpha: 0.5 });
+    expect(fogPatchPose(13, 13, -2.5)).toBeNull();
+  });
+
+  it('swoops a bat round a wide arc and beats its wings twice a second', () => {
+    // From above the point it turns about, out to the left, and down below it.
+    expect(batOffset(0, 0).y).toBeCloseTo(-120 + 1.1 * (1 + Math.cos(0.13) + Math.cos(0.15)), 4);
+    const left = batOffset(10 / 6, 0);
+    expect(left.x).toBeLessThan(-140);
+    expect(Math.abs(left.y)).toBeLessThan(4);
+    expect(batOffset(10 / 3, 0).y).toBeGreaterThan(115);
+    expect([0, 0.1, 0.2, 0.3, 0.4, 0.5].map((t) => batFrame(t, 0))).toEqual([0, 1, 2, 3, 4, 0]);
+    expect(batFrame(0, 5)).toBe(5);
+    expect(batFrame(0.1, 5)).toBe(0);
   });
 });
