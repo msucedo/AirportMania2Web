@@ -1,7 +1,7 @@
 // Player progress, kept in the browser. The rules are the original's (profile code around
 // 0x821b8, 0x34170, 0x115a0 and 0x78a9c); the storage format is ours.
 
-const KEY = 'am2web.progress.v2';
+export const PROGRESS_KEY = 'am2web.progress.v2';
 const OLD_KEY = 'am2web.progress.v1';
 
 /**
@@ -39,15 +39,19 @@ export class Progress {
     private readonly stages: ReadonlyMap<number, StageRules>,
   ) {}
 
-  static load(stages: ReadonlyMap<number, StageRules>): Progress {
+  /** Where it is saved: the current user's place (see users.ts). */
+  private key = PROGRESS_KEY;
+
+  static load(stages: ReadonlyMap<number, StageRules>, key = PROGRESS_KEY): Progress {
     try {
-      const raw = localStorage.getItem(KEY);
+      const raw = localStorage.getItem(key);
       if (raw) {
         const progress = Progress.restore(JSON.parse(raw) as ProgressData, stages);
+        progress.key = key;
         progress.save();
         return progress;
       }
-      const old = localStorage.getItem(OLD_KEY);
+      const old = key === PROGRESS_KEY ? localStorage.getItem(OLD_KEY) : null;
       if (old) {
         const progress = Progress.fromResults(stages, (JSON.parse(old) as { levels?: Record<string, { best: number; stars: number }> }).levels ?? {});
         progress.save();
@@ -56,7 +60,9 @@ export class Progress {
     } catch {
       // Storage unavailable or corrupt: start fresh for this session.
     }
-    return new Progress({ records: {} }, stages);
+    const progress = new Progress({ records: {} }, stages);
+    progress.key = key;
+    return progress;
   }
 
   /**
@@ -210,7 +216,7 @@ export class Progress {
 
   private save(): void {
     try {
-      localStorage.setItem(KEY, JSON.stringify(this.data));
+      localStorage.setItem(this.key, JSON.stringify(this.data));
     } catch {
       // Ignore: progress simply will not persist.
     }

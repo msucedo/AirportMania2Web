@@ -1762,3 +1762,49 @@ verifies that each can be passed and that funds, stars and the opening of stage 
 - Web version: `%d` is taken to be the stage, as for the hints; the tip's text is drawn
   black (its colour call `0xb4290` is not read); tips change at once, without the fade; the
   four numbers of the bubble's cut are taken as 34 from the left and 23 from the top.
+
+## Users — confirmed
+
+- The users are a list kept in `users.dat` (`0x8210c`, `0x82830`), each with a profile of
+  their own; `0x827a8` gives the current one.
+- Users dialog (`0x80cd8`): 340×250. List box `0x2f0e8(x −80, y −30, width 160, rows 3)`; New
+  (`0x81778`) at (100, −90), Rename (`0x814dc`) at (100, −30) and Delete (`0x81240`) at
+  (100, 30), each 120 wide; Load Profile (`0x80fa0`) 320 wide at (0, 100). The title string
+  is not referenced.
+  - The list is filled with every user's name and the current one picked (`0x81b88`);
+    picking a row makes that user current at once (`0x81bc0` → `0x827c0`).
+  - Rename, Delete and Load Profile are disabled while the list is empty (`0x8120c`,
+    `0x814ac`, `0x81748`). Load Profile closes the dialog and applies the profile (`0x3b190`).
+  - New opens the name dialog in mode 1 and Rename in mode 2 (`0x819e4`, `0x81764`); Delete
+    opens the question (`0x814c8`).
+- List box (`0x2f0e8` over `0x2ead0`): rows 36 px tall; `GUI.DIALOGS.COMBOBOX.BACK`
+  stretched to width + 24 by rows·36 + 64 (its picture cut at 32 and 64 down: a cap, the
+  rows, a cap), from (−width/2 − 12, −rows·18 − 32); the picked row lies on
+  `GUI.DIALOGS.COMBOBOX.TEXT_REMARK` stretched to width + 12, 38 tall, from −width/2 − 6;
+  `ARROW`, `REMARK_UP` and `REMARK_DOWN` are for the caps. Text in `FONTS.WHITE`.
+- Name dialog (`0x805ac(dialog, mode)`): 340×200; `ENTER_YOUR_NAME`, or `RENAME_THE_USER` in
+  mode 2, centred at y −80 in `FONTS.WHITE`; a text field `0x2e1e8` 170 wide at (0, −20); an
+  accept button (`0x81bec`, Enter presses it too: `0x81e58`) at (−90, 70) and `CANCEL`
+  (`0x2f328`) at (90, 70), 130 wide. The field starts with the current name in mode 2;
+  otherwise with `DEFAULT_USER_NAME`, a `*` appended for as long as some user has that name
+  (`0x80704`).
+  - Text field (`0x2e208`): `GUI.DIALOGS.EDITBOX` stretched sideways to width + 36, from
+    (−width/2 − 18, −31); a text too wide for the width loses its last characters (`0x2e3d0`).
+  - Accepting (`0x80124`): spaces around the name are dropped; an empty name opens the note
+    with `NAME_NULL`, one some user already has (`0x82808`) the note with `NAME_REPEATED`;
+    otherwise modes 0 and 1 add the user (`0x82694`) and mode 2 renames the current one, and
+    the list is saved.
+- Note (`0x803cc(dialog, repeated)`): 340×240, its text in (−150, −105)–(150, 95) and `BACK`
+  200 wide at (0, 90).
+- Delete question (`0x7fe40`): 400×200, `DELETE_USER_DIALOG.TEXT` with the current name in
+  (−190, −90)–(190, 40), `YES` (`0x81ea4`) at (−90, 65) and a closing button 100 wide at
+  (90, 65); `SOUNDS.USER_CONFIRM_DELETE` plays as it opens.
+- `MAIN_MENU.HELLO_USER` and its sign are not referenced by the code.
+- Web version: users and each one's progress are kept in the browser (`am2web.users.v1`,
+  `am2web.progress.v2.user<id>`); the first user takes over the progress made before there
+  were users, and without a user the game plays on that. The name is asked when the menu
+  opens with no user. Not read, and so ours: how rows are aligned and scrolled (one row per
+  press of a cap), where the field's text and caret sit, the buttons' height (30), that a new
+  user becomes the current one, who is current after a deletion (the first left), and that the
+  note's and the question's texts are centred in their boxes (their text call's second flag
+  is 0 where the hint's is 1). The browser's keyboard stands in for the device's.
