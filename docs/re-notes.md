@@ -1704,3 +1704,32 @@ Drawing:
 
 Checked end to end by `tools/dev/play-all.mjs`, which plays the thirteen levels in order and
 verifies that each can be passed and that funds, stars and the opening of stage 2 chain.
+
+## Credits — confirmed
+
+- Dialog (`0x28f40`): 438×280, the roll at (0, −25) from its centre and Close, 380 wide, at
+  (0, 120). The roll is made by `0x28a18(position, speed 40, delay 0, touchable 1)`.
+- Layout (`0x27bc8`), from `CREDITS_DIALOG.TEXT`, one `#MARK#value#` per line. Cursor starts at
+  30, interlining at 30, font `FONTS.MAIN`, colour white.
+  - `FONT` and `INTERLINING` set what follows; `SEPARATION` adds to the cursor; `COLOR` takes
+    four values divided by 255.
+  - `LINE`: y = cursor, height = the font's (`font+36`); cursor += height + interlining.
+  - `TWO_COLUMNS_LINE`: the same, its two texts centred 110 px either side (`+0x20` = 220,
+    draw `0x28c04`), tops at y (text draw `0x94650`: r3 0/1/2 = left/centre/right, stack
+    argument 0 = top at y, 1 = middle, 3 = bottom).
+  - `IMAGE`: y = cursor + height div 2, cursor += height (no interlining).
+  - `IMAGE_LINE`: a picture with text 20 px to its right (`0x28cf8`).
+  - The roll's length is the final cursor less the interlining.
+  - Every language's text uses only `FONT` (`FONTS.WHITE`), `LINE`, `IMAGE`, `SEPARATION`,
+    `INTERLINING` and `TWO_COLUMNS_LINE`.
+- Update (`0x2864c`), states 1 appear, 2 shown, 3 leave. Appearing, a clock rises to 0.5 s;
+  leaving, it falls. Shown, the touch is polled: on its start the roll's speed and drag speed
+  are zeroed; while held the roll moves by how far the finger rose and the drag speed becomes
+  `v·k + (moved/dt)·(1 − k)` with `k = pow(0.3, dt)`; let go, the speed becomes the drag speed.
+  Then always: `room = total + 10 − offset` going on, `offset + 10` going back;
+  `offset += min(1, room/200)·dt·speed`, kept within 0 and the total.
+- Draw (`0x2885c`): the whole roll's opacity is the clock while appearing or leaving (so it
+  reaches a half and then is full). Per item `p = y − offset + 135`, opacity
+  `clamp((min(p, 265 − p) − height/2)/50)`.
+- Web version: the font's height is taken to be its cached size (11); `COLOR` and `IMAGE_LINE`
+  are not built, no text using them; the dialog goes at once on Close instead of fading.

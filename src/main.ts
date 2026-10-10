@@ -1,11 +1,13 @@
 import { loadGameData } from './data/load';
 import { isLanguage } from './data/strings';
 import { AudioPlayer } from './engine/audio';
+import { loadFonts } from './engine/fonts';
 import { createScreen } from './engine/screen';
 import { TextureStore, type EnlargedImages } from './engine/textures';
 import { LevelScene } from './game/levelScene';
 import { MainMenu } from './game/mainMenu';
 import { loadSettings, saveSettings } from './game/settings';
+import { CREDITS_FONTS, CREDITS_SURFACES, CreditsDialog } from './game/view/creditsDialog';
 import { GAME_MENU_SURFACES, GameMenu } from './game/view/gameMenu';
 import { WorldMap } from './game/worldMap';
 import { Progress, type StageRules } from './game/progress';
@@ -109,12 +111,17 @@ async function main(): Promise<void> {
   } else if (level === null) {
     const audio = makeAudio();
     const strings = await data.strings(chosen);
-    await textures.load(GAME_MENU_SURFACES);
+    await Promise.all([textures.load([...GAME_MENU_SURFACES, ...CREDITS_SURFACES]), loadFonts(data.resources, CREDITS_FONTS)]);
     await MainMenu.create(app, data, textures, audio, {
       strings,
-      enabled: ['PLAY', 'OPTIONS'],
+      enabled: ['PLAY', 'OPTIONS', 'CREDITS'],
       onSelect: (entry) => {
         if (entry === 'PLAY') return navigate(null, null, '');
+        if (entry === 'CREDITS') {
+          const credits = new CreditsDialog(textures, audio, strings, app.ticker, () => setTimeout(() => credits.destroy({ children: true })));
+          app.stage.addChild(credits);
+          return;
+        }
         const dialog = new GameMenu(textures, audio, {
           strings,
           settings,

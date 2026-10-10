@@ -37,7 +37,7 @@ export const TUTORIAL_HINT_SURFACES = [
 type Box = { x1: number; y1: number; x2: number; y2: number };
 
 /** A dialog frame with a container at its centre, where the original's positions are measured from. */
-function centred(textures: TextureStore, width: number, height: number): { overlay: Container; centre: Container } {
+export function centred(textures: TextureStore, width: number, height: number): { overlay: Container; centre: Container } {
   const { overlay, panel } = dialogFrame(textures, width, height);
   const centre = new Container();
   centre.position.set(width / 2, height / 2);
@@ -75,10 +75,10 @@ function textBox(parent: Container, value: string, box: Box, style: Face, centre
 // The dialogs name cached fonts, each a face at a fixed size with an effect: `FONTS.MAIN` is
 // Brady Bunch at 14 in gold, `FONTS.ULTRA` Blue Stone at 20 and 0.8 of its width, `FONTS.WHITE`
 // Teen Bold at 11 and `FONTS.TEEN` Teen Bold at 10 and 0.9 of its width with no effect.
-type Face = { family: string; size: number; fill: number; stroke?: number; widthScale?: number };
-const title = (): Face => ({ family: fontFamily(MAIN_FONT), size: 14, fill: 0xffc23a, stroke: 0x5a2a00 });
+export type Face = { family: string; size: number; fill: number; stroke?: number; widthScale?: number };
+export const title = (): Face => ({ family: fontFamily(MAIN_FONT), size: 14, fill: 0xffc23a, stroke: 0x5a2a00 });
 const ultra = (): Face => ({ family: fontFamily('FONTS.BLUE_STONE'), size: 20, fill: 0xffd75a, stroke: 0x5a2a00, widthScale: 0.8 });
-const white = (): Face => ({ family: fontFamily('FONTS.TEEN_BD'), size: 11, fill: 0xffffff });
+export const white = (): Face => ({ family: fontFamily('FONTS.TEEN_BD'), size: 11, fill: 0xffffff });
 
 /**
  * The rule the dialogs draw under their title (0x2c26c), `width` wide and centred at height `y`.
