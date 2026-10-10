@@ -34,10 +34,11 @@ export function thoughtPlace(corner: BalloonCorner): { x: number; y: number; fli
   return { x: left ? -50 : 50, y: below ? 15 : -80, flipX: left, flipY: below };
 }
 
-/** Mouth animations (`0x13d798`, `0x13d848`): frames per second and the mouth shown on each frame. */
+/** Mouth animations (`0x13d798`, `0x13d848`, `0x13d7f0`): frames per second and the mouth shown on each frame. */
 const MOUTH_SEQUENCES = {
   talk: { fps: 16, frames: [9, 10, 11, 7, 8, 7, 10, 9, 10, 11, 7, 8, 7, 10] },
   cheer: { fps: 14, frames: [5, 6, 6, 6, 6, 6, 6, 6, 6, 5] },
+  whistle: { fps: 6, frames: [12, 13, 14, 15, 16, 17] },
 } as const;
 
 /** Surface ids a plane needs, for all three perspectives. */
@@ -390,6 +391,17 @@ export class PlaneView extends Container {
     this.sequence = MOUTH_SEQUENCES.talk;
     this.sequenceAt = 0;
     this.lookTimer = 1;
+  }
+
+  /** No mouth animation is running (`plane+0x40` clear). */
+  get mouthFree(): boolean {
+    return this.sequence === null;
+  }
+
+  /** The plane whistles while it fills up (0x5fd0). */
+  whistle(): void {
+    this.sequence = MOUTH_SEQUENCES.whistle;
+    this.sequenceAt = 0;
   }
 
   /** `Plane::addEnergy` (0x9b18): a cheer, raised eyebrows, a glance aside and a blink soon after. */

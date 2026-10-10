@@ -86,6 +86,8 @@ export class LevelScene {
   private readonly fading: PaintChooser[] = [];
   private readonly sprays: SprayCan[] = [];
   coffeeTab: ServiceTab | null = null;
+  /** Seconds until each plane filling up may whistle. */
+  private readonly whistles = new Map<number, number>();
   /** The colour chooser the finger went down on, until it is lifted. */
   heldChooser: PaintChooser | null = null;
   private dialog: Container | null = null;
@@ -496,6 +498,8 @@ export class LevelScene {
         break;
       case 'fuelingStarted':
         this.audio.play('SOUNDS.FUELING');
+        // 0x6764: it may whistle three to eight seconds into the fill-up.
+        this.whistles.set(event.plane.id, 3 + Math.random() * 5);
         break;
       case 'timeOver':
         this.audio.play('SOUNDS.TIME_OVER');
@@ -550,6 +554,7 @@ export class LevelScene {
     this.sparkles?.update(elapsed);
     this.rings?.update(elapsed);
     this.drawPainting(elapsed);
+    this.updateWhistles(elapsed);
     this.coffeeTab?.update(elapsed);
     for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
@@ -660,6 +665,27 @@ export class LevelScene {
         list.splice(i, 1);
         item.destroy({ children: true });
       }
+    }
+  }
+
+  /**
+   * A plane filling up whistles once when its wait is over, if it is content (energy above a
+   * half) and its mouth is not busy (0x7e5c).
+   */
+  private updateWhistles(elapsed: number): void {
+    for (const [id, left] of this.whistles) {
+      const plane = this.sim.planes.find((p) => p.id === id);
+      if (!plane || plane.gone || plane.state !== PlaneState.FUELING) {
+        this.whistles.delete(id);
+        continue;
+      }
+      const now = left - elapsed;
+      this.whistles.set(id, now);
+      const view = this.planeViews.get(id);
+      if (now >= 0 || !view || !view.mouthFree || plane.energy <= 0.5) continue;
+      this.planeSound(plane, Math.random() < 0.5 ? 'Whistle1' : 'Whistle2');
+      view.whistle();
+      this.whistles.delete(id);
     }
   }
 
