@@ -15,11 +15,20 @@ export const ANTARCTIC: StageLayout = {
     // The script makes no sky: the first layer is the night sky, stretched over the top.
     sky: null,
     horizon: 123,
-    // In the order the script creates them. Between the second and the third it also makes
-    // eight stars (0x13b8c) and the aurora (0x13808), not drawn yet.
+    // In the order the script creates them: eight stars and the aurora lie between the ground
+    // and the mountains.
     layers: [
       { resource: 'STAGES.ANTARCTIC.BACKGROUND_BOTTOM_TOP', position: { x: 0, y: 0 }, scale: { x: 16, y: 3.5 } },
       { resource: 'STAGES.ANTARCTIC.BACKGROUND_DOWN', position: { x: 0, y: 123 }, scale: { x: 16, y: 18 } },
+      { scenery: 'star', position: { x: 15, y: 13 }, size: 9 },
+      { scenery: 'star', position: { x: 56, y: 40 }, size: 9 },
+      { scenery: 'star', position: { x: 117, y: 45 }, size: 7 },
+      { scenery: 'star', position: { x: 144, y: 20 }, size: 8 },
+      { scenery: 'star', position: { x: 156, y: 25 }, size: 11 },
+      { scenery: 'star', position: { x: 313, y: 9 }, size: 9 },
+      { scenery: 'star', position: { x: 419, y: 25 }, size: 6 },
+      { scenery: 'star', position: { x: 458, y: 35 }, size: 7 },
+      { scenery: 'aurora', resource: 'STAGES.ANTARCTIC.AURORA_BOREALIS' },
       { resource: 'STAGES.ANTARCTIC.BACKGROUND_TOP', position: { x: 0, y: 41 } },
     ],
   },

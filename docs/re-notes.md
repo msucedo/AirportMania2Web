@@ -1307,7 +1307,6 @@ animation.
   4000).
 - Fog and ice per level, from the levels database: none on 1 and 2; 0 and 2 on 3; 1 and 1 on
   4; 1 and 3 on 5; 5 and 4 on 6; 2 and 3 on 7; 4 and 4 on 8; 3 and 5 on 9; 3 and 8 on 10.
-- Web version: the stars and the aurora are not drawn.
 
 ## Stage 8 ("Carrier") — read with the emulated script (`0xdc5b8`)
 
@@ -1526,6 +1525,19 @@ list in that order (`backdrop.layers`) and makes a view for each piece
   at (x, `y + 7·|x/240 − 1|`). The carrier's four islands (`0x14c3c`, `0x14d08`, `0x14dd4`,
   `0x14ea0`; `STAGES.CARRIER.ISLANDS.0`…`3`) have loop 400, speed 8, starts 100, 200, 300 and
   400 and y 37, 38, 41 and 37.
+
+- Star (`0x13b8c(position, size)` → class `0x292bc`, draw `0x293e4`): `AMBIENT.STAR`, drawn
+  additively, stretched to `size·(0.8 + 0.2·sin(4·(phase + t)))` px across, with a phase picked
+  at random between 0 and π. The Antarctic has eight: (15, 13) 9, (56, 40) 9, (117, 45) 7,
+  (144, 20) 8, (156, 25) 11, (313, 9) 9, (419, 25) 6, (458, 35) 7. The monsters' stage has six:
+  (26, 55) 9, (93, 33) 9, (195, 38) 7, (240, 17) 8, (260, 61) 11, (323, 34) 9.
+- Aurora (`0x13808` → class `0x74f44`, draw `0x7505c` then `0x75098`):
+  `STAGES.ANTARCTIC.AURORA_BOREALIS`, additive, over a strip of 75 pairs of points drawn at
+  half size from (10, −2). With `τ = t mod 495`, `k = 0.02π·τ` and `i = 0, 2, … 148`:
+  `a = sin(5k + 0.17i + 3)`, `b = sin(−11k + 0.27i + 5)`, `c = sin(9k + 0.23i + 4)`;
+  `x = 800·i/148 + 1.6c − 1.1b`; `n = (x − 400)/400`; the top point is at `80n² − 20` and the
+  bottom one at `120 − 60n² + (2c + 2.5b + 3a)·(1 − 0.8n²)`. The image runs along the strip
+  (`u = i/148`, top edge above, bottom edge below; `0x75024`).
 
 ## Drawing order of the airport's objects — confirmed
 

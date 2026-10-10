@@ -9,6 +9,7 @@ import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
 import { brushPose, patchAlpha, puffAlpha } from '../src/game/view/sandView';
 import { markPop, panelTop } from '../src/game/view/tutorialViews';
+import { auroraPoints, starThrob } from '../src/game/view/scenery/night';
 import { flagLean, horizonPose, horizonX } from '../src/game/view/scenery/simple';
 import { glintSlide } from '../src/game/view/waterEffects';
 
@@ -232,5 +233,29 @@ describe('scenery', () => {
     expect(glintSlide(1, 0.75)).toBeCloseTo(-0.25, 6);
     expect(glintSlide(3, 0.25)).toBeCloseTo(0.25, 6);
   });
-});
 
+  it('throbs a star between six and ten tenths of its size', () => {
+    expect(starThrob(0, 0)).toBeCloseTo(0.8, 6);
+    expect(starThrob(Math.PI / 8, 0)).toBeCloseTo(1, 6);
+    expect(starThrob(0, (3 * Math.PI) / 8)).toBeCloseTo(0.6, 6);
+  });
+
+  it('lays the aurora as an arch whose lower edge ripples', () => {
+    const points = auroraPoints(0);
+    expect(points).toHaveLength(300);
+    // Each pair shares its x; the strip runs from about 0 to about 800.
+    for (let pair = 0; pair < 75; pair++) expect(points[4 * pair]).toBe(points[4 * pair + 2]);
+    expect(Math.abs(points[0]!)).toBeLessThan(3);
+    expect(Math.abs(points[296]! - 800)).toBeLessThan(3);
+    // The top edge is 80·n² − 20, n going from −1 at one end to 1 at the other.
+    const middle = 4 * 37;
+    const n = (points[middle]! - 400) / 400;
+    expect(points[middle + 1]).toBeCloseTo(80 * n * n - 20, 4);
+    // The lower edge hangs near 120 in the middle, give or take the three waves.
+    expect(Math.abs(points[middle + 3]! - 120)).toBeLessThan(8);
+    // Its clock starts again every 495 seconds, and the three waves come round every 100.
+    expect(Array.from(auroraPoints(495))).toEqual(Array.from(points));
+    expect(auroraPoints(100)[middle + 3]).toBeCloseTo(points[middle + 3]!, 3);
+    expect(Array.from(auroraPoints(30))).not.toEqual(Array.from(points));
+  });
+});

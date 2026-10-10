@@ -2,6 +2,7 @@ import type { Container } from 'pixi.js';
 import type { TextureStore } from '../../../engine/textures';
 import type { SceneryItem } from '../../stages/layout';
 import { SeaSparkles } from '../waterEffects';
+import { AuroraView, StarView } from './night';
 import { FlagView, HorizonObjectView } from './simple';
 
 // The animated scenery a stage script makes between its backdrop images: one view per class of
@@ -21,7 +22,10 @@ export function scenerySurfaceIds(item: SceneryItem): string[] {
       return ['AMBIENT.WAVE_REFLECT'];
     case 'flag':
     case 'horizon':
+    case 'aurora':
       return [item.resource];
+    case 'star':
+      return ['AMBIENT.STAR'];
   }
 }
 
@@ -37,6 +41,14 @@ export function createScenery(textures: TextureStore, item: SceneryItem): Scener
     }
     case 'horizon': {
       const view = new HorizonObjectView(textures, item);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'star': {
+      const view = new StarView(textures, item.position, item.size);
+      return { view, update: (dt) => view.update(dt) };
+    }
+    case 'aurora': {
+      const view = new AuroraView(textures, item.resource);
       return { view, update: (dt) => view.update(dt) };
     }
   }
