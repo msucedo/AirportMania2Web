@@ -10,7 +10,7 @@ const GEAR_FRAMES = 3;
 /** The thought cloud and its trail, largest first, and where each sits from the cloud (0x9950). */
 const THOUGHT = ['INDICATORS.THOUGHT_A', 'INDICATORS.THOUGHT_B', 'INDICATORS.THOUGHT_C', 'INDICATORS.THOUGHT_D'];
 const THOUGHT_OFFSETS: readonly (readonly [number, number])[] = [[0, 0], [-7, 15], [-13, 19], [-19, 18]];
-const SPEECH = ['INDICATORS.GLOBE'];
+const SPEECH = ['INDICATORS.GLOBE', 'INDICATORS.GLOBE_NAG'];
 
 /**
  * Which way a plane's balloons hang (`plane+0x260`, taken from the place it is at): the balloon
@@ -102,6 +102,16 @@ export function moodFor(energy: number): { mouth: number; browAngle: number } {
   return { mouth: 0, browAngle: 0 };
 }
 
+/**
+ * The flash over the speech balloon just after the plane speaks (0x9892): with `left` seconds of
+ * the two the balloon stays up, a copy shrinks from one and a half times its size while it fades.
+ * Null outside that half second.
+ */
+export function nagFlash(left: number): { scale: number; opacity: number } | null {
+  if (left >= 1.8 || left <= 1.3) return null;
+  return { scale: left - 0.3, opacity: (left - 1.3) * 2 };
+}
+
 /** How much of the old colour shows `left` seconds before a repaint settles (0x90d2). */
 export function repaintMix(left: number): number {
   return left <= 0 ? 0 : triangle(left * 7);
@@ -179,6 +189,7 @@ export class PlaneView extends Container {
   private readonly energyFlicker: Sprite;
   private passengerIcon: Sprite | null = null;
   private readonly speech: Sprite;
+  private readonly nag: Sprite;
   private readonly needIcon: Sprite;
   private readonly puffs: Sprite[] = [];
   private readonly thoughtIcon: Sprite;
@@ -342,11 +353,13 @@ export class PlaneView extends Container {
 
     // Speech balloon with what the plane asks for, and thought cloud with where it goes next.
     this.speech = textures.sprite(SPEECH[0]!);
+    this.nag = textures.sprite(SPEECH[1]!);
+    this.nag.visible = false;
     this.needIcon = textures.sprite('INDICATORS.ICONS.0');
     this.thoughtIcon = textures.sprite('INDICATORS.ICONS.0');
     // Drawn smallest first, so the cloud ends on top.
     for (const id of [...THOUGHT].reverse()) this.puffs.push(textures.sprite(id));
-    this.addChild(this.speech, this.needIcon, ...this.puffs, this.thoughtIcon);
+    this.addChild(this.speech, this.nag, this.needIcon, ...this.puffs, this.thoughtIcon);
   }
 
   /**
@@ -527,6 +540,13 @@ export class PlaneView extends Container {
       this.needIcon.position.copyFrom(this.speech.position);
       this.needIcon.texture = this.textures.texture(`INDICATORS.ICONS.${this.shownNeed}`);
       this.speech.alpha = this.needIcon.alpha = speechAlpha;
+    }
+    const flash = speechAlpha > 0 && this.spoken ? nagFlash(this.spoken.left) : null;
+    this.nag.visible = flash !== null;
+    if (flash) {
+      this.nag.position.copyFrom(this.speech.position);
+      this.nag.scale.set(this.speech.scale.x * flash.scale, this.speech.scale.y * flash.scale);
+      this.nag.alpha = flash.opacity * speechAlpha;
     }
 
     const thinks = look.thought !== null;

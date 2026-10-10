@@ -376,8 +376,9 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
     an icon). With the descriptor's `BubblePosition` (bx, by) and the corner `c` (`+0x260`):
     `x = bx (+5 in perspective 0) (−10 for corners 0 and 2)`, negated and mirrored for corners 0
     and 2; `y = −5 − by` above (corners 0, 1) or `by` below and flipped (2, 3), less
-    `28 − DespY`. Alpha `(v − 0.25) / 0.75`. `INDICATORS.GLOBE_NAG` flashes over it while the
-    speech timer runs from 1.8 to 1.3.
+    `28 − DespY`. Alpha `(v − 0.25) / 0.75`. While the speech timer (`+0x218`, set to 2 by `0x5bd4`)
+    runs from 1.8 to 1.3, `INDICATORS.GLOBE_NAG` is drawn over it (`0x9892`), mirrored like the
+    balloon, at scale `timer − 0.3` and opacity `2·(timer − 1.3)` times the balloon's.
   - Thought cloud `INDICATORS.THOUGHT_A`–`D`: on while the plane is flying or waiting with orders
     queued. The cloud is 50 px aside (left for corners 0 and 2) and 80 px above or 15 below; the
     trail D, C, B sits at (−19, 18), (−13, 19), (−7, 15) from it, mirrored the same way; puff i
@@ -386,8 +387,7 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   - The corner comes from the place the plane is at (`place+0x58`, `0x75f0`), given by the stage
     scripts: 1 for gates, gas station and hangar, 0 for stop spots, 0 for Arches' runways and 1
     for the island's (the last inferred from its helper); a new plane has 3.
-- Web version: gear fold rate (4/s) and selection fade are assumed; dirt, the whistle and the
-  nag flash are not drawn; the thought cloud shows the matching need icon in place of the
+- Web version: gear fold rate (4/s) and selection fade are assumed; the whistle is not drawn; the thought cloud shows the matching need icon in place of the
   place's image, which has not been identified.
 
 ## Special passengers and speech — confirmed
@@ -969,7 +969,7 @@ Rules:
 
 Drawing:
 
-- Planes: the whistle, the nag flash of the balloon, the pitch on landing, landing dust,
+- Planes: the whistle, the pitch on landing, landing dust,
   and the mark on planes a service tab would reach are not drawn. The thought cloud shows the
   need icon in place of the place's own image.
 - Gate: the hover label; the first part of its draw routine has not been read. Order flag

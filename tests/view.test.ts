@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
-import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace } from '../src/game/planeView';
+import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace, nagFlash } from '../src/game/planeView';
 import { markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
@@ -143,5 +143,19 @@ describe('runway in-use arrows', () => {
     // They fade over the first and last tenth of the run.
     expect(usingArrow(0.05, false).opacity).toBeCloseTo(0.5, 5);
     expect(usingArrow(0.95, false).opacity).toBeCloseTo(0.5, 5);
+  });
+});
+
+describe('speech balloon flash', () => {
+  it('runs for half a second shortly after the plane speaks', () => {
+    expect(nagFlash(2)).toBeNull();
+    expect(nagFlash(1.8)).toBeNull();
+    expect(nagFlash(1.3)).toBeNull();
+    const start = nagFlash(1.79)!;
+    expect(start.scale).toBeCloseTo(1.49, 5);
+    expect(start.opacity).toBeCloseTo(0.98, 5);
+    const end = nagFlash(1.31)!;
+    expect(end.scale).toBeCloseTo(1.01, 5);
+    expect(end.opacity).toBeCloseTo(0.02, 5);
   });
 });
