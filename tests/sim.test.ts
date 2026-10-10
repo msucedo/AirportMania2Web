@@ -685,6 +685,32 @@ describe('simulation, improvements', () => {
     expect([atGate.place, parked.place]).toEqual([spot, gate]);
   });
 
+  it('has every plane on the ground hold the taxi node it stands on or heads for, and no two the same', () => {
+    const sim = withImprovements();
+    const held = (): number[] => sim.planes.filter((p) => !p.gone && p.node).map((p) => p.node!.id);
+    let moved = false;
+    for (let i = 0; i < 60 * 60; i++) {
+      for (const plane of sim.planes) {
+        if (plane.gone || plane.queue.length > 0) continue;
+        if (!plane.landed && plane.state === PlaneState.FLYING) sim.addOrder(plane, sim.runways[plane.id % sim.runways.length]!);
+        else if (plane.landed && plane.state === PlaneState.WAITING && plane.need === Need.UNLOAD) sim.addOrder(plane, sim.gates[plane.id % sim.gates.length]!);
+      }
+      sim.update(DT);
+      const nodes = held();
+      expect(new Set(nodes).size).toBe(nodes.length);
+      for (const plane of sim.planes) {
+        if (plane.gone) continue;
+        if (plane.node) expect(plane.node.occupied).toBe(true);
+        if (plane.ahead) expect(plane.ahead.occupied).toBe(true);
+        if (plane.state === PlaneState.TAXIING) moved = true;
+      }
+    }
+    expect(moved).toBe(true);
+    // Nothing is left held once every plane that holds a node is counted.
+    const mine = new Set(sim.planes.flatMap((p) => (p.gone ? [] : [p.node, p.ahead])).filter((n) => n !== null));
+    for (const node of sim.graph.nodes) expect(node.occupied).toBe(mine.has(node));
+  });
+
   it('unloads faster at an upgraded gate', () => {
     const sim = withImprovements(0x1e);
     run(sim, 1.1);

@@ -94,4 +94,31 @@ describe('Arches taxi graph', () => {
       }
     }
   });
+
+  it('goes round a node some plane holds, and nowhere if the destination is held', () => {
+    const graph = new TaxiGraph();
+    const a = graph.addNode({ x: 0, y: 0 }, false);
+    const short = graph.addNode({ x: 50, y: 10 }, false);
+    const long = graph.addNode({ x: 50, y: 80 }, false);
+    const place = graph.addNode({ x: 100, y: 0 }, true);
+    graph.link(a, short);
+    graph.link(short, place);
+    graph.link(a, long);
+    graph.link(long, place);
+    expect(graph.route(a, place)).toEqual([a, short, place]);
+    short.occupied = true;
+    expect(graph.route(a, place)).toEqual([a, long, place]);
+    // Asked to, it still goes through.
+    expect(graph.route(a, place, true)).toEqual([a, short, place]);
+    long.occupied = true;
+    expect(graph.route(a, place)).toBeNull();
+    short.occupied = false;
+    place.occupied = true;
+    expect(graph.route(a, place)).toBeNull();
+    // Where it starts from is its own.
+    a.occupied = true;
+    place.occupied = false;
+    expect(graph.route(a, place)).toEqual([a, short, place]);
+  });
 });
+

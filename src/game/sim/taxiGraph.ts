@@ -6,6 +6,8 @@ export interface TaxiNode extends Point {
   id: number;
   /** Terminal nodes belong to a place: routes may end on them but never pass through. */
   terminal: boolean;
+  /** Held by a plane standing on it or on its way to it (`node+0xc`); routes go round it. */
+  occupied: boolean;
   links: TaxiNode[];
 }
 
@@ -28,7 +30,7 @@ export class TaxiGraph {
   readonly nodes: TaxiNode[] = [];
 
   addNode(position: Point, terminal: boolean): TaxiNode {
-    const node: TaxiNode = { id: this.nodes.length, x: position.x, y: position.y, terminal, links: [] };
+    const node: TaxiNode = { id: this.nodes.length, x: position.x, y: position.y, terminal, occupied: false, links: [] };
     this.nodes.push(node);
     return node;
   }
@@ -165,8 +167,11 @@ export class TaxiGraph {
     return own;
   }
 
-  /** `0x46230`: shortest path by distance; terminal nodes are only usable as the destination. */
-  route(from: TaxiNode, to: TaxiNode): TaxiNode[] | null {
+  /**
+   * `0x46230`: shortest path by distance. Terminal nodes are only usable as the destination, and
+   * a node some plane holds is not used at all, the destination included, unless `throughHeld`.
+   */
+  route(from: TaxiNode, to: TaxiNode, throughHeld = false): TaxiNode[] | null {
     const distance = new Map<TaxiNode, number>([[from, 0]]);
     const previous = new Map<TaxiNode, TaxiNode>();
     const done = new Set<TaxiNode>();
@@ -180,6 +185,7 @@ export class TaxiGraph {
       done.add(current);
       for (const next of current.links) {
         if (done.has(next)) continue;
+        if (!throughHeld && next.occupied) continue;
         if (next.terminal && next !== to) continue;
         const d = distance.get(current)! + Math.hypot(next.x - current.x, next.y - current.y);
         if (d < (distance.get(next) ?? Infinity)) {

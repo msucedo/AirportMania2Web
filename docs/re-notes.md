@@ -972,8 +972,26 @@ State 0 with a phase in `plane+0x330` (`0x6f78`); the flight speed is 80 (`0x177
 State 3 (`0x74bc`): the plane accelerates at 200 px/s² (`0x1772b8`) towards its current node, up
 to 200 px/s (`0x1772bc`), and brakes at the same rate once the path left (`+0x234`) is no more
 than `v² / 400`. It arrives when the node is within 1 px along its direction of travel. Each
-node it heads for is marked taken (`node+0xc`), which the router (`0x46200`) reads; the web
-version does not model that.
+node it heads for is marked taken (`node+0xc`), which the router (`0x46200`) reads.
+
+- The plane keeps the node it stands on or heads for (`+0x240`), the one after it (`+0x244`)
+  and the target (`+0x248`).
+  - With no node ahead (`0x78fa`) the router is asked for the way from its node to the target
+    (`0x46200(graph, node, target, &length, 0)`, the length kept at `+0x234`); the first node
+    of the way becomes the one ahead and is marked taken. If there is no way it is asked again
+    the next frame.
+  - Reaching its node with one ahead (`0x76be`), the plane is put on the node, the node is
+    let go, the one ahead becomes its node and none is ahead, so the next is looked for at once.
+  - The router (`0x46382`) leaves out any taken node, the destination included, when its last
+    argument is 0, and any terminal node but the destination.
+  - Landing (`0x7402`) makes the runway's node the plane's and marks it; the take-off run
+    (`0x616a`) lets its node go; planes changing places (`0x7b9a`) have each place's node let
+    go before they set off.
+- Web version: planes hold nodes the same way and wait on a node while the way on is taken.
+  Taken, not read: that a plane still on its way asks again each frame for a node ahead, and
+  that a plane removed lets its nodes go. Where the graph has no way at all between two places
+  the plane goes straight, holding nothing. Over the 92 levels the automatic player now loses
+  4 planes and scores 1.6% less than without this.
 
 ## Plane sounds by event — confirmed
 
@@ -1744,8 +1762,7 @@ Rules:
 
 - The profile's factor at `+0x48` (it scales the level clock and the energy drain) is taken
   as 1.
-- Taxi node occupancy (`node+0xc`, read by the router `0x46200`) and the stop spots' own
-  pass-through nodes are not modelled; planes can overlap while taxiing.
+- The stop spots' own pass-through nodes are not modelled.
 - The loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
 - Plane state 10 (set from `0x56b78`) is unknown; it has not been seen to matter here.
 - The service tab acts when the finger goes down, not when it is lifted.

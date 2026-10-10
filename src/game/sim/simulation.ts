@@ -264,8 +264,16 @@ export interface Plane {
   approach: { phase: 0 | 2 | 3 | 4; time: number; vx: number; vy: number; ax: number } | null;
   /** Ground speed while taxiing or on the take-off run. */
   speed: number;
-  /** Remaining taxi waypoints, ending at the target place's node. */
+  /** Where the plane is taxiing to: the target place's node while it is on its way, else empty. */
   path: Point[];
+  /** The taxi node the plane holds: the one it stands on or is heading for (`+0x240`). */
+  node: TaxiNode | null;
+  /** The node after that, held too once a way to it is found (`+0x244`). */
+  ahead: TaxiNode | null;
+  /** The node the taxiing ends on (`+0x248`); null when no way exists and it goes straight. */
+  goal: TaxiNode | null;
+  /** Length of the way from `node` to `goal` as last found (`+0x234`). */
+  beyond: number;
   /** Seconds spent in the current airborne phase. */
   timer: number;
   gone: boolean;
@@ -1223,6 +1231,10 @@ export class Simulation {
       approach: null,
       speed: 0,
       path: [],
+      node: null,
+      ahead: null,
+      goal: null,
+      beyond: 0,
       timer: 0,
       gone: false,
     };
@@ -1378,20 +1390,59 @@ export class Simulation {
       const runway = place as Runway;
       plane.landing = true;
       plane.state = PlaneState.LANDING;
+      // 0x7402: the runway's node is the plane's from here on.
+      this.hold(plane, runway.taxiNode);
       plane.approach = { phase: 0, time: 0, vx: plane.flight.vx, vy: 0, ax: runway.direction * RULES.landing.leaveAcceleration };
       this.emit({ type: 'landingStarted', plane, runway });
       return;
     }
     plane.state = PlaneState.TAXIING;
     plane.speed = 0;
-    const route = from ? this.graph.route(from, place.taxiNode) : null;
-    // Skip the node the plane is standing on; fall back to a straight line if no route exists.
-    plane.path = route ? route.slice(1).map((n) => ({ x: n.x, y: n.y })) : [place.node];
+    this.setOff(plane, from, place.taxiNode, place.node);
+  }
+
+  /** Makes `node` the one the plane holds, letting go of the one it held. */
+  private hold(plane: Plane, node: TaxiNode | null): void {
+    if (plane.node && plane.node !== node) plane.node.occupied = false;
+    plane.node = node;
+    if (node) node.occupied = true;
+  }
+
+  /**
+   * Starts a taxi from the node the plane stands on to `goal`. Where the graph has no way at
+   * all between the two, the plane goes straight to `fallback`, holding nothing.
+   */
+  private setOff(plane: Plane, from: TaxiNode | undefined, goal: TaxiNode, fallback: Point): void {
+    if (plane.ahead) plane.ahead.occupied = false;
+    plane.ahead = null;
+    plane.beyond = 0;
+    plane.path = [{ x: fallback.x, y: fallback.y }];
+    if (from && this.graph.route(from, goal, true)) {
+      // The node it stands on is its own already; planes changing places have had theirs let go
+      // and it stays so (0x7b9a).
+      if (plane.node !== from) this.hold(plane, from);
+      plane.goal = goal;
+    } else {
+      this.hold(plane, null);
+      plane.goal = null;
+    }
+  }
+
+  /** 0x78fa: with no node held ahead, a way to the goal is looked for and its first node taken. */
+  private lookAhead(plane: Plane): void {
+    if (!plane.node || !plane.goal || plane.ahead || plane.node === plane.goal) return;
+    const route = this.graph.route(plane.node, plane.goal);
+    plane.beyond = 0;
+    if (!route) return;
+    for (let i = 0; i + 1 < route.length; i++) plane.beyond += Math.hypot(route[i + 1]!.x - route[i]!.x, route[i + 1]!.y - route[i]!.y);
+    plane.ahead = route[1]!;
+    plane.ahead.occupied = true;
   }
 
   /** Where a plane on the ground sets off from: the node of the place it stands on. */
   private standingNode(plane: Plane): TaxiNode | undefined {
     const place = plane.place;
+    if (plane.node) return plane.node;
     // A serviced plane stands at the hangar's exit node, not inside it.
     return place?.kind === 'hangar' && place.use === 'done' ? place.exitTaxiNode : place?.taxiNode;
   }
@@ -1410,7 +1461,7 @@ export class Simulation {
     const place = queue[next]!;
     if (this.busy(place, plane) || !this.canEnter(place, plane)) return;
     const from = this.standingNode(plane);
-    if (from && this.graph.route(from, place.taxiNode) === null) return;
+    if (from && this.graph.route(from, place.taxiNode, true) === null) return;
     queue.splice(0, next);
   }
 
@@ -1433,7 +1484,11 @@ export class Simulation {
       current = occupant;
     }
     const movers = chain.map((place) => place.plane!);
-    for (const place of chain) this.release(place);
+    for (const place of chain) {
+      // 0x7b9a: each place's node is let go, so the planes can pass each other.
+      place.taxiNode.occupied = false;
+      this.release(place);
+    }
     for (const mover of movers) this.startNextOrder(mover);
     // 0x7c02: how many planes changed places at once.
     this.emit({ type: 'award', id: AWARD.SWITCH_A_ROO, value: movers.length });
@@ -1524,37 +1579,70 @@ export class Simulation {
 
   private updateTaxi(plane: Plane, dt: number): void {
     const place = plane.place!;
-    // Remaining distance along the whole path: the plane only brakes for the final target.
-    let remaining = 0;
-    let from: Point = plane;
-    for (const point of plane.path) {
-      remaining += Math.hypot(point.x - from.x, point.y - from.y);
-      from = point;
-    }
     const a = RULES.taxiAcceleration;
-    const braking = remaining <= (plane.speed * plane.speed) / (2 * a);
-    plane.speed = braking ? Math.max(20, plane.speed - a * dt) : Math.min(RULES.taxiMaxSpeed, plane.speed + a * dt);
-
-    let step = plane.speed * dt;
-    while (plane.path.length > 0) {
-      const next = plane.path[0]!;
-      const dx = next.x - plane.x;
-      const dy = next.y - plane.y;
-      const distance = Math.hypot(dx, dy);
+    const face = (dx: number, dy: number, distance: number): void => {
       if (Math.abs(dx) > 1) plane.facing = dx > 0 ? 1 : -1;
       // Heading from the direction of travel: 0 is left, 90 is down the screen.
       if (distance > 0.5) plane.heading = ((Math.atan2(dy, -dx) * 180) / Math.PI + 360) % 360;
-      const last = plane.path.length === 1;
-      if (distance > (last ? Math.max(step, 1) : step)) {
+    };
+    if (!plane.goal) {
+      // No way through the graph: straight to the place.
+      const target = plane.path[0] ?? place.node;
+      const dx = target.x - plane.x;
+      const dy = target.y - plane.y;
+      const distance = Math.hypot(dx, dy);
+      const braking = distance <= (plane.speed * plane.speed) / (2 * a);
+      plane.speed = braking ? Math.max(20, plane.speed - a * dt) : Math.min(RULES.taxiMaxSpeed, plane.speed + a * dt);
+      const step = plane.speed * dt;
+      face(dx, dy, distance);
+      if (distance > Math.max(step, 1)) {
         plane.x += (dx / distance) * step;
         plane.y += (dy / distance) * step;
         return;
       }
-      plane.x = next.x;
-      plane.y = next.y;
-      step -= distance;
-      plane.path.shift();
+      plane.x = target.x;
+      plane.y = target.y;
+      this.hold(plane, place.taxiNode);
+    } else {
+      // 0x74bc: the plane holds the node it heads for and, once a way is found, the one after
+      // it; it brakes for the end of the way it knows, which is the node itself when the way
+      // on is taken, and waits there.
+      this.lookAhead(plane);
+      const ahead = (): number => Math.hypot(plane.node!.x - plane.x, plane.node!.y - plane.y);
+      const braking = ahead() + plane.beyond <= (plane.speed * plane.speed) / (2 * a);
+      plane.speed = braking ? Math.max(20, plane.speed - a * dt) : Math.min(RULES.taxiMaxSpeed, plane.speed + a * dt);
+      let step = plane.speed * dt;
+      for (;;) {
+        const node = plane.node!;
+        const dx = node.x - plane.x;
+        const dy = node.y - plane.y;
+        const distance = Math.hypot(dx, dy);
+        face(dx, dy, distance);
+        const last = node === plane.goal;
+        if (distance > (last ? Math.max(step, 1) : step)) {
+          plane.x += (dx / distance) * step;
+          plane.y += (dy / distance) * step;
+          return;
+        }
+        plane.x = node.x;
+        plane.y = node.y;
+        step -= distance;
+        if (last) break;
+        if (!plane.ahead) {
+          // Nowhere to go on to yet: it stands on the node until a way opens.
+          plane.speed = 0;
+          return;
+        }
+        // 0x76be: it leaves the node, which is let go, for the one held ahead.
+        plane.beyond = Math.max(0, plane.beyond - Math.hypot(plane.ahead.x - node.x, plane.ahead.y - node.y));
+        node.occupied = false;
+        plane.node = plane.ahead;
+        plane.ahead = null;
+        this.lookAhead(plane);
+      }
     }
+    plane.path = [];
+    plane.goal = null;
     if (place.kind === 'gate') this.gateArrival(place, plane);
     else if (place.kind === 'gasStation') this.gasStationArrival(place, plane);
     else if (place.kind === 'luggage') this.luggageArrival(place, plane);
@@ -1613,6 +1701,8 @@ export class Simulation {
       this.counts.takeOff[result]++;
       this.emit({ type: 'punctuality', plane, result });
       plane.state = PlaneState.TAKING_OFF;
+      // 0x616a: its node is let go as the run starts.
+      this.hold(plane, null);
       runway.use = 'takingOff';
       plane.speed = 0;
       plane.queue.length = 0;
@@ -1786,7 +1876,7 @@ export class Simulation {
     plane.need = !plane.gasDone ? Need.GAS : plane.luggageDone ? Need.LOAD : Need.LUGGAGE;
     plane.state = PlaneState.TAXIING;
     plane.speed = 0;
-    plane.path = [{ x: hangar.exitTaxiNode.x, y: hangar.exitTaxiNode.y }];
+    this.setOff(plane, hangar.taxiNode, hangar.exitTaxiNode, hangar.exitTaxiNode);
     this.emit({ type: 'serviceFinishedAtHangar', plane, hangar });
   }
 
@@ -1826,6 +1916,9 @@ export class Simulation {
 
   private remove(plane: Plane): void {
     plane.gone = true;
+    this.hold(plane, null);
+    if (plane.ahead) plane.ahead.occupied = false;
+    plane.ahead = null;
     if (plane.place && plane.place.plane === plane) this.release(plane.place);
     if (this.selected === plane) this.deselect();
   }
