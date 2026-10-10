@@ -24,7 +24,7 @@ export interface StageRules {
   clearBonus: number;
 }
 
-interface ProgressData {
+export interface ProgressData {
   records: Record<string, LevelRecord>;
 }
 
@@ -42,7 +42,11 @@ export class Progress {
   static load(stages: ReadonlyMap<number, StageRules>): Progress {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) return new Progress(JSON.parse(raw) as ProgressData, stages);
+      if (raw) {
+        const progress = Progress.restore(JSON.parse(raw) as ProgressData, stages);
+        progress.save();
+        return progress;
+      }
       const old = localStorage.getItem(OLD_KEY);
       if (old) {
         const progress = Progress.fromResults(stages, (JSON.parse(old) as { levels?: Record<string, { best: number; stars: number }> }).levels ?? {});
@@ -53,6 +57,19 @@ export class Progress {
       // Storage unavailable or corrupt: start fresh for this session.
     }
     return new Progress({ records: {} }, stages);
+  }
+
+  /**
+   * A save as it was stored, brought up to the stages there are now. A stage is opened at the
+   * moment the one before is cleared, so a stage cleared while the next did not exist yet left
+   * it shut for good: here every cleared stage opens the next if it is still shut.
+   */
+  static restore(data: ProgressData, stages: ReadonlyMap<number, StageRules>): Progress {
+    const progress = new Progress(data, stages);
+    for (const [stage, rules] of [...stages].sort((a, b) => a[0] - b[0])) {
+      if (progress.record(stage, rules.levels).tier > 0) progress.openNextStage(stage);
+    }
+    return progress;
   }
 
   /** Rebuilds a save from bare results (the first save format) by replaying them through the rules. */

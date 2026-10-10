@@ -11,6 +11,30 @@ const RULES = new Map<number, StageRules>([
 ]);
 
 describe('progress', () => {
+  it('opens a stage that did not exist yet when the one before it was cleared', () => {
+    // Stage 2 cleared with only two stages in the game: nothing to open then.
+    const before = Progress.load(RULES);
+    for (const level of [1, 2, 3]) before.complete(1, level, 9000, 2);
+    for (const level of [1, 2]) before.complete(2, level, 9000, 3);
+    const saved = JSON.parse(JSON.stringify({ records: Object.fromEntries([[1, 3], [2, 2]].flatMap(([stage, levels]) => Array.from({ length: levels! }, (_, i) => [`${stage}-${i + 1}`, before.record(stage!, i + 1)]))) }));
+    // The same save once a third stage has been added.
+    const three = new Map<number, StageRules>([...RULES, [3, { levels: 2, perStar: 4000, clearBonus: 60000 }]]);
+    const after = Progress.restore(saved, three);
+    expect(after.stageUnlocked(3)).toBe(true);
+    expect(after.unlocked(3, 1)).toBe(true);
+    // It starts with what clearing stage 2 pays: two levels of two stars each, and the bonus.
+    expect(after.funds(3, 1)).toBe(4 * 3000 + 50000);
+    expect(after.improvements(3, 1).size).toBe(0);
+    // A stage not cleared opens nothing, and one already open is left as it is.
+    const partial = Progress.load(three);
+    partial.complete(1, 1, 9000, 2);
+    expect(Progress.restore({ records: { '1-1': partial.record(1, 1) as never } }, three).stageUnlocked(2)).toBe(false);
+    after.complete(3, 1, 5000, 1);
+    const again = Progress.restore(saved, three);
+    expect(again.funds(3, 1)).toBe(4 * 3000 + 50000);
+    expect(again.result(3, 1).stars).toBe(1);
+  });
+
   it('opens the next level only when one is passed, with its funds raised by the score', () => {
     const progress = Progress.load(RULES);
     expect(progress.unlocked(1, 1)).toBe(true);
