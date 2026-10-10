@@ -16,6 +16,7 @@ export const HUD_SURFACES = [
   'GUI.INGAMEGUI.MENU_BUTTON_OVER',
   'GUI.INGAMEGUI.YELLOW_DISC',
   'GUI.INGAMEGUI.BLUE_ORANGE_DISC',
+  'GUI.INGAMEGUI.NO_MORE_TIME',
 ];
 export const HUD_FONT = 'FONTS.KENYAN_COFFEE_BD';
 export const HUD_HEIGHT = 34;
@@ -70,6 +71,7 @@ export class Hud extends Container {
   private readonly fill = new Graphics();
   private readonly glow: Sprite;
   private readonly menu: Sprite;
+  private readonly timeOver: Sprite;
   private readonly rings: Graphics[] = [];
   private shownScore: number | null = null;
   private time = 0;
@@ -117,6 +119,12 @@ export class Hud extends Container {
     });
     this.addChild(this.menu);
 
+    // 0x4f39a: over the clock once the time has run out.
+    this.timeOver = textures.sprite('GUI.INGAMEGUI.NO_MORE_TIME');
+    this.timeOver.position.set(14, 0);
+    this.timeOver.visible = false;
+    this.addChild(this.timeOver);
+
     // Each ring is its half-disc image, top centre on the clock's centre, seen through a sector.
     for (const ring of RINGS) {
       const image = textures.sprite(ring.image);
@@ -136,6 +144,8 @@ export class Hud extends Container {
   /** @param remaining share of the level's time still left, 1 at the start */
   update(score: number, remaining: number, dt: number): void {
     this.time += dt;
+    this.timeOver.visible = remaining <= 0;
+    this.timeOver.alpha = 0.5 + 0.5 * Math.sin(this.time * 11);
     this.setScore(score);
     this.rollReels(dt, score);
 

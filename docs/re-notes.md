@@ -907,6 +907,13 @@ version does not model that.
   giving up (`0x5de0`): `SOUNDS.CASH` (`plane+0x30`). A combo also plays `SOUNDS.BONUS_X%d`
   (`0x4342c`, `0x6d71c`).
 
+## Time-over sign — confirmed
+
+At the end of the bar's draw (`0x4f39a`), once `(TotalTime − elapsed) / TotalTime` is zero or
+less, `GUI.INGAMEGUI.NO_MORE_TIME` (`hud+0x3f8`) is drawn at (14, 0) with opacity
+`0.5 + 0.5·sin(11·t)`. Which clock `t` is has not been identified; the web version uses the
+bar's own.
+
 ## Still unknown
 
 - Plane update (`0x6af0`): state 10.
