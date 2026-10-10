@@ -17,10 +17,10 @@ export const ISLAND: StageLayout = {
     layers: [
       { resource: 'STAGES.ISLAND.WATER', position: { x: 0, y: 159 }, scale: { x: 16, y: 15 } },
       { resource: 'STAGES.ISLAND.SEA', position: { x: 0, y: 55 } },
+      { scenery: 'sea', area: { x1: 0, y1: 55, x2: 480, y2: 80, sag: 11 } },
       { resource: 'STAGES.ISLAND.BACKGROUND_TOP', position: { x: 0, y: 40 } },
       { resource: 'STAGES.ISLAND.BACKGROUND_DOWN', position: { x: 335, y: 160 } },
     ],
-    sparkles: { afterLayer: 1, area: { x1: 0, y1: 55, x2: 480, y2: 80, sag: 11 } },
   },
   decorations: [],
   gateDecorations: [

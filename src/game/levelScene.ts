@@ -16,7 +16,9 @@ import { GAME_MENU_SURFACES, GameMenu } from './view/gameMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
 import { SERVICE_SLOTS, SERVICE_TAB_SURFACES, ServiceTab, serviceGrip } from './view/serviceTab';
 import { SKY_SURFACES, SkyView } from './view/sky';
-import { BuoyLine, ringInterval, SeaSparkles, WATER_SURFACES, WaterRings } from './view/waterEffects';
+import { BuoyLine, ringInterval, WATER_SURFACES, WaterRings } from './view/waterEffects';
+import { createScenery, scenerySurfaceIds, type SceneryView } from './view/scenery';
+import { isScenery } from './stages/layout';
 import { PASSENGER_ICONS, PlaneView, planeSurfaceIds, type BalloonCorner, type Passenger } from './planeView';
 import type { Progress } from './progress';
 import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
@@ -76,7 +78,7 @@ export class LevelScene {
   private readonly flags: OrderFlags;
   private sky: SkyView | null = null;
   private readonly runwayViews: RunwayView[] = [];
-  private sparkles: SeaSparkles | null = null;
+  private readonly scenery: SceneryView[] = [];
   private rings: WaterRings | null = null;
   private readonly buoys: BuoyLine[] = [];
   /** Per plane: where it was last frame and how long until its next ring on the water. */
@@ -167,8 +169,9 @@ export class LevelScene {
     });
 
     const ids = new Set<string>([...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
-    for (const layer of layout.backdrop.layers) {
-      ids.add(layer.resource);
+    for (const entry of layout.backdrop.layers) {
+      if (isScenery(entry)) for (const id of scenerySurfaceIds(entry)) ids.add(id);
+      else ids.add(entry.resource);
     }
     for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip]) ids.add(id);
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
@@ -450,17 +453,23 @@ export class LevelScene {
       this.ground.addChild(this.sky);
     }
 
-    layers.forEach((layer, index) => {
-      const sprite = this.textures.sprite(layer.resource);
-      sprite.position.copyFrom(layer.position);
-      if (layer.scale) sprite.scale.copyFrom(layer.scale);
-      this.ground.addChild(sprite);
-      const sparkles = layout.backdrop.sparkles;
-      if (sparkles?.afterLayer === index) {
-        this.sparkles = new SeaSparkles(this.textures, sparkles.area);
-        this.ground.addChild(this.sparkles);
+    for (const entry of layers) {
+      if (isScenery(entry)) {
+        // Scenery the airport sorts among its planes goes with them; the rest lies where it was made.
+        const piece = createScenery(this.textures, entry);
+        this.scenery.push(piece);
+        if (piece.depth === undefined) this.ground.addChild(piece.view);
+        else {
+          piece.view.zIndex = piece.depth;
+          this.planeLayer.addChild(piece.view);
+        }
+        continue;
       }
-    });
+      const sprite = this.textures.sprite(entry.resource);
+      sprite.position.copyFrom(entry.position);
+      if (entry.scale) sprite.scale.copyFrom(entry.scale);
+      this.ground.addChild(sprite);
+    }
     if (layout.water) {
       this.rings = new WaterRings(this.textures);
       this.ground.addChild(this.rings);
@@ -749,7 +758,7 @@ export class LevelScene {
     this.report?.update(seconds);
     const elapsed = this.paused ? 0 : seconds;
     this.sky?.update(elapsed);
-    this.sparkles?.update(elapsed);
+    for (const piece of this.scenery) piece.update(elapsed);
     this.rings?.update(elapsed);
     this.drawPainting(elapsed);
     this.bonusView.update(elapsed);

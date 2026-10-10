@@ -56,6 +56,17 @@ export interface BackdropLayer {
 }
 
 /**
+ * A piece of animated scenery, with the arguments the stage script gives its builder. `sea` is
+ * the glints on a distant sea (0x13c3c).
+ */
+export type SceneryItem = { scenery: 'sea'; area: SparkleArea };
+
+/** What a stage script puts behind the airport, in the order it makes it: images and scenery. */
+export type BackdropEntry = BackdropLayer | SceneryItem;
+
+export const isScenery = (entry: BackdropEntry): entry is SceneryItem => 'scenery' in entry;
+
+/**
  * A bonus event a level has: balloons to pop or a helicopter to tap, each releasing coins worth
  * `amount`. The stage script decides the level, the amount and, with the level's own random
  * generator, the second it starts and the side the helicopter comes from, so they are the same
@@ -81,9 +92,7 @@ export interface StageLayout {
     sky: number | null;
     /** Screen y down to which the sky's bottom colour is kept painted, behind the backdrop layers. */
     horizon: number;
-    layers: BackdropLayer[];
-    /** Glints on the distant sea, drawn right after the layer with this index. */
-    sparkles?: { afterLayer: number; area: SparkleArea };
+    layers: BackdropEntry[];
   };
   /** The balloon corner the stage script gives its runways (see `BalloonCorner`). */
   runwayBalloonCorner: 0 | 1 | 2 | 3;
