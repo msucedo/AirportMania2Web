@@ -697,6 +697,13 @@ sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructo
   `y1 + 4 + (y2 − y1) d + sag · |x / 240 − 1|`, size `(0.4 d + 0.2) / 2` and a random phase. Drawn
   (`0x72ab8`) while `v = sin(2π (t / 2 + phase)) − 0.3` is positive, scaled by `v · size` with
   alpha `0.7 v`.
+- The builder is `0x13c3c(airport, area, density, size, drift, sag)`: the number of sprites is
+  multiplied by `density` and their size by `size` (`0x72740`), and while a glint shows it is
+  moved sideways by `(w − 0.5) · drift · size`, `w` being how far along its two second beat it
+  is (`0x72b6c`). The island gives (1, 1, 0, 11); the carrier, over (0, 47)–(480, 85),
+  (1, 1, −200, 11), so its sea slides by; the tutorial, over the lake (0, 58)–(62, 75),
+  (2, 0.4, 0, 0). In which order the slide and the glint's own scale are applied has not been
+  settled: the slide is applied unscaled.
 - Rings, `0x13950` → `0x86770` (`STAGES.ISLAND.WATER_RING`), kept at `airport + 0x780`. A plane
   below altitude 1 adds one at its position (`0x6cb2`) every
   `clamp(5 / max(5, speed), 0.07, ·) × (0.7 + 0.3 rand)` seconds; the upper clamp is read as 1.
@@ -1325,7 +1332,6 @@ animation.
   (148.9 s, 4500), balloons on level 6 (67.8 s, 4500) and level 11 (50.9 s, 5000).
 - Fog and ice per level, from the levels database: none on 1 and 2; 0 and 2 on 3; 1 and 2 on
   4 and 5; 6 and 5 on 6; 3 and 5 on 7; 6 and 2 on 8; 1 and 5 on 9; 6 and 5 on 10; 5 and 7 on 11.
-- Web version: the islands and the sea are not drawn.
 
 ## Stage 9 ("Moon") — read with the emulated script (`0xdef50`)
 
@@ -1499,11 +1505,27 @@ animation.
   + 20). A row (`0x7aac0`) draws `GUI.GOAL_CHECKBOX`, then, done or failed, `INDICATORS.YES`
   or `INDICATORS.NO` 6 px lower at 0.45 of its size, popping in over a second as
   `(1 + sin(4π·t))·t·(1 − t) + t`, and its text 12 px to the right in black `FONTS.TEEN`.
-- Web version: the sea and the flag are not drawn; the rules are drawn as a plain line;
+- Web version: the rules are drawn as a plain line;
   whether the game records the tutorial as done, what the map's Tutorial button asks first
   (`TUTORIAL_QUESTION_DIALOG`, `0x7e590`) and which dialog leads to which have not been read:
   the opening is followed by the goals, and passing a day leads to the next, the last to the
   map.
+
+## Animated scenery — confirmed
+
+The stage scripts make these between their backdrop images; the web version keeps both in one
+list in that order (`backdrop.layers`) and makes a view for each piece
+(`src/game/view/scenery/`).
+
+- Flag (`0x1503c` → class `0x39484`, draw `0x39558`): its image, sheared by
+  `0.05·sin(2π·frac(0.2·t))`, at its position. The tutorial has `STAGES.TUTORIAL.FLAG` at
+  (245, 56).
+- Horizon object (class `HorizonObject`, constructor `0x4b278(loop, speed, start, y, image)`,
+  update `0x4b384`, draw `0x4b3d0`): a clock that starts at `start` and wraps at `loop`; x is
+  `speed·(loop − clock) − 100`; drawn only for −40 < x < 520, turned by `3·(x/120 − 1)` degrees
+  at (x, `y + 7·|x/240 − 1|`). The carrier's four islands (`0x14c3c`, `0x14d08`, `0x14dd4`,
+  `0x14ea0`; `STAGES.CARRIER.ISLANDS.0`…`3`) have loop 400, speed 8, starts 100, 200, 300 and
+  400 and y 37, 38, 41 and 37.
 
 ## Drawing order of the airport's objects — confirmed
 

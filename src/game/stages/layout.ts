@@ -56,10 +56,16 @@ export interface BackdropLayer {
 }
 
 /**
- * A piece of animated scenery, with the arguments the stage script gives its builder. `sea` is
- * the glints on a distant sea (0x13c3c).
+ * A piece of animated scenery, with the arguments the stage script gives its builder:
+ * - `sea`: the glints on a distant sea (0x13c3c);
+ * - `flag`: an image that sways where it stands (0x1503c);
+ * - `horizon`: an image passing along the horizon, `start` seconds into a loop of `loop` seconds
+ *   at `speed` px a second (0x14c3c and its like).
  */
-export type SceneryItem = { scenery: 'sea'; area: SparkleArea };
+export type SceneryItem =
+  | { scenery: 'sea'; area: SparkleArea }
+  | { scenery: 'flag'; resource: string; position: Point }
+  | { scenery: 'horizon'; resource: string; y: number; loop: number; speed: number; start: number };
 
 /** What a stage script puts behind the airport, in the order it makes it: images and scenery. */
 export type BackdropEntry = BackdropLayer | SceneryItem;

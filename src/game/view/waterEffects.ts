@@ -8,27 +8,40 @@ export interface SparkleArea {
   y1: number;
   x2: number;
   y2: number;
-  /** How many pixels the band sags at the screen edges, following the curve of the horizon. */
+  /** How many pixels the band sags at the screen edges, following the curve of the horizon (the last argument of 0x13c3c). */
   sag: number;
+  /** How many times the usual number of glints, and how big they are (its two floats): 1 when left out. */
+  density?: number;
+  size?: number;
+  /** How far a glint slides sideways over its beat, for a sea that moves by (its fifth argument). */
+  drift?: number;
 }
+
+/** How far along its two second beat a glint is, from −0.5 to 0.5 (0x72b6c): what its sideways slide goes by. */
+export const glintSlide = (time: number, phase: number): number => {
+  const beat = time * 0.5 - Math.floor(time * 0.5) + phase;
+  return (beat > 1 ? beat - 1 : beat) - 0.5;
+};
 
 /**
  * Glints on the distant sea (`0x729b8`, generator `0x72740`, draw `0x72ab8`): one per 80 px² of
  * the area, crowded towards its top, each swelling and fading on a two second beat.
  */
 export class SeaSparkles extends Container {
-  private readonly glints: { sprite: Sprite; size: number; phase: number }[] = [];
+  private readonly glints: { sprite: Sprite; x: number; size: number; phase: number }[] = [];
+  private readonly drift: number;
   private time = 0;
 
   constructor(textures: TextureStore, area: SparkleArea) {
     super();
-    const count = Math.floor(((area.x2 - area.x1) * (area.y2 - area.y1)) / 80);
+    this.drift = area.drift ?? 0;
+    const count = Math.floor(((area.x2 - area.x1) * (area.y2 - area.y1) * (area.density ?? 1)) / 80);
     for (let i = 0; i < count; i++) {
       const depth = Math.pow(Math.random(), 3.5);
       const x = area.x1 - 15 + Math.random() * (area.x2 - area.x1 + 30);
       const sprite = textures.sprite('AMBIENT.WAVE_REFLECT');
       sprite.position.set(x, area.y1 + 4 + (area.y2 - area.y1) * depth + area.sag * Math.abs(x / 240 - 1));
-      this.glints.push({ sprite, size: (depth * 0.4 + 0.2) * 0.5, phase: Math.random() });
+      this.glints.push({ sprite, x, size: (depth * 0.4 + 0.2) * (area.size ?? 1) * 0.5, phase: Math.random() });
       this.addChild(sprite);
     }
     this.update(0);
@@ -42,6 +55,7 @@ export class SeaSparkles extends Container {
       if (strength > 0) {
         glint.sprite.scale.set(strength * glint.size);
         glint.sprite.alpha = strength * 0.7;
+        if (this.drift !== 0) glint.sprite.x = glint.x + glintSlide(this.time, glint.phase) * this.drift * glint.size;
       }
     }
   }

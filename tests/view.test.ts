@@ -9,6 +9,8 @@ import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
 import { brushPose, patchAlpha, puffAlpha } from '../src/game/view/sandView';
 import { markPop, panelTop } from '../src/game/view/tutorialViews';
+import { flagLean, horizonPose, horizonX } from '../src/game/view/scenery/simple';
+import { glintSlide } from '../src/game/view/waterEffects';
 
 describe('plane drawing rules', () => {
   it('picks the perspective and mirroring from the heading', () => {
@@ -202,6 +204,33 @@ describe('tutorial goals panel', () => {
     expect(markPop(0.375)).toBeCloseTo(0.375, 5);
     expect(markPop(1)).toBe(1);
     expect(markPop(3)).toBe(1);
+  });
+});
+
+describe('scenery', () => {
+  it('sways the tutorial flag once every five seconds', () => {
+    expect(flagLean(0)).toBeCloseTo(0, 6);
+    expect(flagLean(1.25)).toBeCloseTo(0.05, 6);
+    expect(flagLean(3.75)).toBeCloseTo(-0.05, 6);
+    expect(flagLean(6.25)).toBeCloseTo(0.05, 6);
+  });
+
+  it('brings an island along the horizon from the right, tilted and sunk with its curve', () => {
+    // A loop of 400 s at 8 px a second: on screen only for its last seventy seconds or so.
+    expect(horizonX(0, 400, 8)).toBe(3100);
+    expect(horizonX(400, 400, 8)).toBe(-100);
+    expect(horizonPose(horizonX(300, 400, 8), 37)).toBeNull();
+    expect(horizonPose(240, 37)).toEqual({ x: 240, y: 37, angle: 3 });
+    expect(horizonPose(0, 37)).toEqual({ x: 0, y: 44, angle: -3 });
+    expect(horizonPose(-40, 37)).toBeNull();
+    expect(horizonPose(520, 37)).toBeNull();
+  });
+
+  it('slides a glint of a moving sea by how far it is along its beat', () => {
+    expect(glintSlide(0, 0)).toBe(-0.5);
+    expect(glintSlide(1, 0)).toBe(0);
+    expect(glintSlide(1, 0.75)).toBeCloseTo(-0.25, 6);
+    expect(glintSlide(3, 0.25)).toBeCloseTo(0.25, 6);
   });
 });
 

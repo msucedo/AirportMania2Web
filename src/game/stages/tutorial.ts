@@ -13,11 +13,13 @@ export const TUTORIAL: StageLayout = {
   backdrop: {
     sky: 60,
     horizon: 158,
-    // In the order the script creates them, after the clouds. Between the two it also makes the
-    // sea (0x13c3c) and, after the second, a flag at (245, 56) (0x1503c); neither is drawn yet.
+    // In the order the script creates them, after the clouds: the lake at the left glints, twice
+    // as thickly as a sea and with smaller glints. The flag is the last thing made.
     layers: [
       { resource: 'STAGES.TUTORIAL.BACKGROUND_TOP', position: { x: 0, y: 38 } },
+      { scenery: 'sea', area: { x1: 0, y1: 58, x2: 62, y2: 75, sag: 0, density: 2, size: 0.4 } },
       { resource: 'STAGES.TUTORIAL.BACKGROUND_DOWN', position: { x: 0, y: 158 }, scale: { x: 16, y: 17 } },
+      { scenery: 'flag', resource: 'STAGES.TUTORIAL.FLAG', position: { x: 245, y: 56 } },
     ],
   },
   gateDecorations: [],

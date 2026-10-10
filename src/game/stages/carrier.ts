@@ -14,13 +14,18 @@ export const CARRIER: StageLayout = {
   backdrop: {
     sky: 70,
     horizon: 115,
-    // In the order the script creates them. After the second come the clouds and four islands
-    // drifting by (0x14c3c, 0x14d08, 0x14dd4, 0x14ea0), and after the third the sea (0x13c3c);
-    // the islands and the sea are not drawn yet.
+    // In the order the script creates them, with the clouds after the second: four islands pass
+    // along the horizon, a hundred seconds apart, and the sea glints as it slides by.
     layers: [
       { resource: 'STAGES.CARRIER.BACKGROUND_DOWN', position: { x: 0, y: 115 }, scale: { x: 16, y: 19 } },
       { resource: 'STAGES.CARRIER.OCEAN_BOTTOM', position: { x: 0, y: 68 }, scale: { x: 48, y: 4 } },
+      { scenery: 'horizon', resource: 'STAGES.CARRIER.ISLANDS.0', y: 37, loop: 400, speed: 8, start: 100 },
+      { scenery: 'horizon', resource: 'STAGES.CARRIER.ISLANDS.1', y: 38, loop: 400, speed: 8, start: 200 },
+      { scenery: 'horizon', resource: 'STAGES.CARRIER.ISLANDS.2', y: 41, loop: 400, speed: 8, start: 300 },
+      { scenery: 'horizon', resource: 'STAGES.CARRIER.ISLANDS.3', y: 37, loop: 400, speed: 8, start: 400 },
       { resource: 'STAGES.CARRIER.OCEAN_TOP', position: { x: 0, y: 45 } },
+      // The sea slides by: the carrier is under way.
+      { scenery: 'sea', area: { x1: 0, y1: 47, x2: 480, y2: 85, sag: 11, drift: -200 } },
       { resource: 'STAGES.CARRIER.BACKGROUND_TOP', position: { x: 0, y: 85 } },
     ],
   },
