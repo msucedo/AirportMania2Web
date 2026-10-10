@@ -260,14 +260,14 @@ export class LevelScene {
 
   /**
    * Which way a plane's balloons hang: the stage scripts give every place a corner, which the
-   * plane takes on while it is there (0x75f0). Gates, the pump and the hangar use 1, stop spots 0
-   * and runways the stage's own value; a plane not yet anywhere keeps 3.
+   * plane takes on while it is there (0x75f0). Gates, the pump and the hangar use 1, stop spots
+   * and runways the stage's own values; a plane not yet anywhere keeps 3.
    */
   private balloonCorner(plane: Plane): BalloonCorner {
     const place = plane.place;
     if (!place) return 3;
     if (place.kind === 'runway') return this.options.layout.runwayBalloonCorner;
-    return place.kind === 'stopSpot' ? 0 : 1;
+    return place.kind === 'stopSpot' ? (this.options.layout.stopSpotBalloonCorner ?? 0) : 1;
   }
 
   /**
@@ -447,7 +447,10 @@ export class LevelScene {
         }
       }
       const view = new GateView(this.textures, gate, gate.letter.charCodeAt(0) - 65);
-      this.ground.addChild(view);
+      // The airport keeps its objects sorted by depth (0x1238c), and a gate's is its own line
+      // plus the descriptor's DespZ (0x43094): a plane docked at it stands lower and is drawn over.
+      view.zIndex = gate.position.y + gate.descriptor.depthOffset;
+      this.planeLayer.addChild(view);
       this.gateViews.push({ gate, view });
     }
     for (const hangar of this.sim.hangars) {
@@ -483,7 +486,11 @@ export class LevelScene {
     for (const decoration of layout.decorations) {
       const sprite = this.textures.sprite(decoration.resource);
       sprite.position.copyFrom(decoration.position);
-      this.overlay.addChild(sprite);
+      if (decoration.depth === undefined) this.overlay.addChild(sprite);
+      else {
+        sprite.zIndex = decoration.depth;
+        this.planeLayer.addChild(sprite);
+      }
     }
 
     if (this.options.showNodes) {

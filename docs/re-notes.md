@@ -389,8 +389,10 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
     number the place's constructor passes to the base one (`place+0xc`): runway number − 1, gate
     index + 5, gas station 10, hangar 11, stop spot 12, painting stop spot 15.
   - The corner comes from the place the plane is at (`place+0x58`, `0x75f0`), given by the stage
-    scripts: 1 for gates, gas station and hangar, 0 for stop spots, 0 for Arches' runways and 1
-    for the island's (the last inferred from its helper); a new plane has 3.
+    scripts: 1 for gates, gas station and hangar, 0 for Arches' runways and 1 for the island's
+    (the last inferred from its helper); a new plane has 3. Stop spots, the painting stop spot
+    and the wash and go get 0 in stages 1, 2, 4 and 8 and 1 in stages 3, 5, 6 and 7 (the last
+    argument of `0x144e4` and `0x145a8`, the fourth of `0x14678`).
 - Web version: gear fold rate (4/s) and selection fade are assumed.
 
 ## Special passengers and speech — confirmed
@@ -1267,6 +1269,52 @@ animation.
 - Later stages have more levels than the first five: 10 in stage 7, 11 in stage 8, 12 in
   stage 9 and 13 in stage 10.
 
+## Stage 7 ("Antarctic") — read with the emulated script (`0xd9e00`)
+
+- Ten levels. Gates of descriptor types 15, 16 (improved) and 17 (improved again): A
+  (345, 145), B (377, 190), C (409, 235) with `0x16`, `0x20` or `0x2a`, D (441, 280) with
+  `0x17`, `0x21` or `0x2b`.
+- Gas station type 7 at (48, 92), hangar type 5 at (163, 85) (type 10 with `0x50`) and luggage
+  conveyor type 4 at (340, 87).
+- Taxi nodes (225, 175), (252, 205), (279, 235), (306, 265), (345, 312), (360, 312),
+  (345, 300), and a linked pair (`0x14808`) at (310, 160) and (330, 190). That builder makes
+  both nodes terminal (third argument of `0x45ff4`, stored at `node+0xd`) and links them: no
+  route can pass through a terminal node, so the pair only keeps the automatic links from
+  crossing the line between them, beside the building.
+- Runways of type 4: (−5, 180), (20, 210), (45, 240); with `0x35`, the same four as stage 6.
+  VIP runway `0x3c` as before.
+- Backdrop: no sky object. `BACKGROUND_BOTTOM_TOP` at (0, 0) scaled 16×3.5, `BACKGROUND_DOWN`
+  at (0, 123) scaled 16×18, eight stars (`0x13b8c`), the aurora (`0x13808`), `BACKGROUND_TOP`
+  at (0, 41), and the building `AIRPORT` at (365, 65) as an image with depth 120 (`0x1404c`).
+  The neutral gate colour is (0.929, 0.647, 1).
+- Offers in the order registered, none with a level to try it from: `0x01` 55000, `0x77`
+  200000, `0x02` 80000, `0x0a` 165000, `0x72` 410000, `0x16` 210000, `0x17` 220000, `0x1e`
+  170000, `0x1f` 180000, `0x20` 190000, `0x21` 200000, `0x28` 130000, `0x29` 140000, `0x2a`
+  150000, `0x35` 525000, `0x3c` 380000, `0x50` 330000, `0x74` 200000, `0x73` 200000, anti-fog
+  `0x6f` 170000, deicer `0x6e` 225000, licence `0xd0` 430000, `0x2b` 160000.
+- Bonus events: helicopter on level 2 (from the right, 43.0 s, coins of 3000) and level 6
+  (from the left, 70.7 s, 3500), balloons on level 4 (80.1 s, 3500) and level 9 (104.6 s,
+  4000).
+- Fog and ice per level, from the levels database: none on 1 and 2; 0 and 2 on 3; 1 and 1 on
+  4; 1 and 3 on 5; 5 and 4 on 6; 2 and 3 on 7; 4 and 4 on 8; 3 and 5 on 9; 3 and 8 on 10.
+- Web version: the stars and the aurora are not drawn.
+
+## Drawing order of the airport's objects — confirmed
+
+- Every object of the airport is kept in one list (`airport+0x14`, added by `0xa3490`), which
+  the airport's update sorts by the float at `object+4` after updating them (`0x1238c` calling
+  the list sort `0x179a8`, merge `0x17bb0`). The sort is stable, so objects at the same depth
+  stay in the order they were created.
+- A gate's depth is its y plus its descriptor's `DespZ` (`0x43094`); `DespZ` is 0 for every
+  type but 3 (−10). The plane docked at a gate stands 22 to 63 px lower (`NodePosition`), so
+  it is drawn over the gate; one passing above the gate goes under it.
+- Other depths read so far: fog and sand `runway.y + 4`, the anti-sand brush `runway.y + 5`,
+  a sand puff the y it appeared at, the painting sign `spot.y − 15`, an image made by `0x1404c`
+  the depth it is given (600 for the arch of Arches, 120 for the Antarctic building).
+- Web version: planes, gates and the objects above are sorted this way. The hangar, gas
+  station, luggage conveyor, stop spots and runways are still drawn in fixed layers under the
+  planes; their depths have not been read.
+
 ## Stage 3: what is still approximate
 
 - Scenery not drawn: the six stars, the scary clouds and the witch crossing the sky, the five
@@ -1288,7 +1336,7 @@ events can be read the same way. Builders not yet named, by script:
 | 4 | `0xd2958` | North Pole | `0x13d0c` ×5 (snow or smoke), `0x13f84` (flying Santa), `0x14738` (luggage) |
 | 5 | `0xd4f54` | Airborne | `0x14858` ×5 (scrolling clouds), `0x14928` ×2 (propellers), `0x14b5c` ×4 |
 | 6 | `0xd77ac` | Africa | none beyond `0x14738` (built, see above) |
-| 7 | `0xd9e00` | Antarctic | `0x13808` (aurora), stars |
+| 7 | `0xd9e00` | Antarctic | `0x13808` (aurora), stars (built, see above) |
 | 8 | `0xdc5b8` | Carrier | `0x13c3c` (sea), `0x14c3c`, `0x14d08`, `0x14dd4`, `0x14ea0` |
 | 9 | `0xdef50` | Moon | `0x136a8` |
 | 10 | `0xe18c4` | Mars | `0x13758` |

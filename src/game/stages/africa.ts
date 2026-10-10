@@ -26,6 +26,7 @@ export const AFRICA: StageLayout = {
   pontoons: false,
   // Runways are created with flag 0, as on the island; the corner is taken to be the same.
   runwayBalloonCorner: 1,
+  stopSpotBalloonCorner: 1,
   water: false,
   decorations: [],
   gates: [

@@ -9,6 +9,8 @@ import { Need, PlaneState, RULES, punctuality, roundScore } from '../src/game/si
 import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulation';
 import { AFRICA } from '../src/game/stages/africa';
 import { AIRBORNE } from '../src/game/stages/airborne';
+import { STAGES } from '../src/game/stages';
+import { ANTARCTIC } from '../src/game/stages/antarctic';
 import { ARCHES } from '../src/game/stages/arches';
 import { ISLAND } from '../src/game/stages/island';
 import { MONSTERS } from '../src/game/stages/monsters';
@@ -1339,6 +1341,95 @@ describe('simulation, stage 6 (africa)', () => {
     runUntil(quick, () => other.sand?.lifting === true, 40, swept);
     expect(quick.time - from).toBeCloseTo(RULES.sand.machineAt + (1 - RULES.sand.clearAt) / RULES.sand.sweep, 1);
     expect(swept.filter((e) => e.type === 'hazardMachine' && e.kind === 'sand')).toHaveLength(1);
+  });
+});
+
+describe('simulation, stage 7 (antarctic)', () => {
+  const stage7 = parseStageSchedule(tree('data/maps/stage_levels_07.json'));
+  const area7 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(7)!;
+  const antarctic = (level = 1, owned: number[] = [], random?: () => number): Simulation =>
+    new Simulation({ layout: ANTARCTIC, schedule: findLevel(stage7, level, false), goals: findGoals(area7, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, ...(random ? { random } : {}) });
+  const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+  it('builds the airport the stage script builds', () => {
+    const sim = antarctic();
+    expect(area7.levelsCount).toBe(10);
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 15, { x: 345, y: 145 }],
+      ['B', 15, { x: 377, y: 190 }],
+    ]);
+    expect(sim.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 4, { x: -5, y: 180 }],
+      [2, 4, { x: 20, y: 210 }],
+      [3, 4, { x: 45, y: 240 }],
+    ]);
+    expect([sim.gasStations[0]!.position, sim.hangars[0]!.position, sim.luggages[0]!.position]).toEqual([
+      { x: 48, y: 92 },
+      { x: 163, y: 85 },
+      { x: 340, y: 87 },
+    ]);
+    expect([sim.gasStations[0]!.descriptor.type, sim.hangars[0]!.descriptor.type, sim.luggages[0]!.descriptor.type]).toEqual([7, 5, 4]);
+    for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.luggages, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+
+    const full = antarctic(1, [0x35, 0x3c, 0x50, 0x17, 0x2a]);
+    expect(full.runways.map((r) => [r.number, r.descriptor.type])).toEqual([
+      [1, 7],
+      [2, 4],
+      [3, 4],
+      [4, 4],
+    ]);
+    expect(full.hangars[0]!.descriptor.type).toBe(10);
+    expect(full.gates.map((g) => [g.letter, g.descriptor.type])).toEqual([
+      ['A', 15],
+      ['B', 15],
+      ['C', 17],
+      ['D', 15],
+    ]);
+    for (const place of [...full.gates, ...full.gasStations, ...full.hangars, ...full.luggages, ...full.stopSpots]) expect(full.graph.route(full.runways[3]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('has a barrier by the building that no taxi link crosses', () => {
+    const { nodes } = antarctic().graph;
+    const [from, to] = [nodes.find((n) => n.x === 310 && n.y === 160)!, nodes.find((n) => n.x === 330 && n.y === 190)!];
+    expect([from.terminal, to.terminal, from.links, to.links]).toEqual([true, true, [to], [from]]);
+    // Whether two segments cross, by the side each end falls on.
+    const side = (a: { x: number; y: number }, b: { x: number; y: number }, p: { x: number; y: number }) => Math.sign((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x));
+    const crossing = nodes.flatMap((a) => a.links.filter((b) => a.id < b.id && a !== from && b !== to && side(a, b, from) * side(a, b, to) < 0 && side(from, to, a) * side(from, to, b) < 0));
+    expect(crossing).toEqual([]);
+  });
+
+  it('gets its fog and ice from the levels database and its bonus events from the script', () => {
+    expect(LEVELS.map((level) => [findGoals(area7, level, false).fogs, findGoals(area7, level, false).ices])).toEqual([
+      [0, 0],
+      [0, 0],
+      [0, 2],
+      [1, 1],
+      [1, 3],
+      [5, 4],
+      [2, 3],
+      [4, 4],
+      [3, 5],
+      [3, 8],
+    ]);
+    // In order of time whatever the kind.
+    const times = antarctic(6).hazardSchedule.map((h) => h.time);
+    expect(times).toEqual([...times].sort((a, b) => a - b));
+    expect(new Set(antarctic(6).hazardSchedule.map((h) => h.kind))).toEqual(new Set(['fog', 'ice']));
+    expect(LEVELS.map((level) => antarctic(level).bonus?.kind ?? null)).toEqual([null, 'helicopter', null, 'balloons', null, 'helicopter', null, null, 'balloons', null]);
+  });
+});
+
+describe('stage layouts', () => {
+  it('give stop spots the balloon corner each stage script passes', () => {
+    expect([...STAGES.values()].map((layout) => [layout.stage, layout.stopSpotBalloonCorner ?? 0])).toEqual([
+      [1, 0],
+      [2, 0],
+      [3, 1],
+      [4, 0],
+      [5, 1],
+      [6, 1],
+      [7, 1],
+    ]);
   });
 });
 

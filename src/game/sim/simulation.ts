@@ -391,6 +391,8 @@ export class Simulation {
     const owned = config.improvements ?? new Set<number>();
     const { layout } = config;
 
+    // The stage scripts that have them make these before any place.
+    for (const [from, to] of layout.taxiBarriers ?? []) this.graph.link(this.graph.addNode(from, true), this.graph.addNode(to, true));
     for (const slot of layout.gates) {
       if (slot.requires && !slot.requires.some((id) => owned.has(id))) continue;
       const upgraded = owned.has(slot.upgradedBy);

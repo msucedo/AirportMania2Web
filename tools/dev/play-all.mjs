@@ -1,4 +1,4 @@
-// Plays every level of stages 1 to 6 in order through the simulation API and checks that each
+// Plays every level of stages 1 to 7 in order, buying improvements as the funds allow, through the simulation API and checks that each
 // can be passed and that progress chains: the next level opens with this one's score as funds,
 // and clearing a stage opens the next. Usage: node tools/dev/play-all.mjs <baseUrl>
 import { createRequire } from 'node:module';
@@ -6,7 +6,7 @@ const require = createRequire(process.env.PUPPETEER_FROM ?? '/Users/msaucedo/Doc
 const puppeteer = require('puppeteer-core');
 
 const [base] = process.argv.slice(2);
-const LEVELS = [[1, 6], [2, 7], [3, 8], [4, 8], [5, 8], [6, 9]];
+const LEVELS = [[1, 6], [2, 7], [3, 8], [4, 8], [5, 8], [6, 9], [7, 10]];
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: true,
@@ -38,6 +38,31 @@ try {
       console.log(`level ${stage}-${level}`);
       check(before.unlocked, `open, with ${before.funds} to spend`);
       if (level > 1) check(before.funds === carried, `funds are the ${carried} carried from the level before`);
+
+      // Shop as a player would: whatever is on sale, in the shop's order, while the funds last.
+      const bought = await page.evaluate(([s, l]) => {
+        const offers = window.game.sim.config.layout.improvements;
+        const got = [];
+        for (let again = true; again; ) {
+          again = false;
+          const owned = window.progress.improvements(s, l);
+          for (const offer of offers) {
+            if (owned.has(offer.id)) continue;
+            if (!(offer.needs ?? []).every((id) => owned.has(id)) || (offer.hiddenBy ?? []).some((id) => owned.has(id))) continue;
+            if (!window.progress.buy(s, l, offer.id, offer.price)) continue;
+            got.push('0x' + offer.id.toString(16));
+            again = true;
+            break;
+          }
+        }
+        return got;
+      }, [stage, level]);
+      if (bought.length > 0) {
+        console.log(`  bought ${bought.join(' ')}`);
+        await open(`?stage=${stage}&level=${level}&mute&go&nointro`);
+        const owned = await page.evaluate(([s, l]) => [...window.progress.improvements(s, l)].length === [...window.game.sim.config.improvements].length, [stage, level]);
+        check(owned, 'the level is played with what was bought');
+      }
 
       // Every plane is sent wherever it needs to go next.
       const played = await page.evaluate(() => {

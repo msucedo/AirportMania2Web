@@ -87,9 +87,15 @@ export interface StageLayout {
   };
   /** The balloon corner the stage script gives its runways (see `BalloonCorner`). */
   runwayBalloonCorner: 0 | 1 | 2 | 3;
+  /**
+   * The corner the script gives its stop spots, painting stop spot and wash and go (the last
+   * argument of 0x144e4 and 0x145a8, the fourth of 0x14678): 0 when left out.
+   */
+  stopSpotBalloonCorner?: 0 | 1;
   /** Water stage: planes leave rings and each runway is marked by two lines of buoys. */
   water: boolean;
-  decorations: { resource: string; position: Point }[];
+  /** Images the stage adds with a depth (0x1404c). Without one here it is drawn over everything; with one, sorted among the planes at that height. */
+  decorations: { resource: string; position: Point; depth?: number }[];
   /**
    * Extra sprites drawn with every gate, relative to it. One with a `depth` is sorted among the
    * planes as if it stood that far below the gate, so it covers a plane docked there.
@@ -102,6 +108,11 @@ export interface StageLayout {
   /** Luggage conveyor, when the stage has one. */
   luggage?: { position: Point; type: number; minLevel: number } | null;
   taxiNodes: Point[];
+  /**
+   * Pairs of terminal nodes the stage links by hand (0x14808). No plane can pass through them, so
+   * all they do is keep the automatic links from crossing the line between them.
+   */
+  taxiBarriers?: [Point, Point][];
   runways: RunwaySlot[];
   /** An improvement that gives runway 1 another descriptor (the VIP runway). */
   vipRunway?: { improvement: number; type: number };
@@ -169,6 +180,7 @@ export const IMPROVEMENT = {
   PLANE_6_LICENCE: 0xcd,
   PLANE_7_LICENCE: 0xce,
   PLANE_8_LICENCE: 0xcf,
+  PLANE_9_LICENCE: 0xd0,
   PLANE_14_LICENCE: 0xd5,
 } as const;
 
