@@ -626,6 +626,7 @@ export class LevelScene {
         corner: this.balloonCorner(plane),
         passenger: plane.passenger,
         dirty: !plane.washDone,
+        pitch: plane.pitch,
         idle: plane.state === PlaneState.WAITING && plane.queue.length === 0,
         gearDown: this.gearDown(plane),
       });

@@ -174,6 +174,8 @@ export interface PlaneLook {
   passenger: Passenger | null;
   /** Still needing its wash. */
   dirty?: boolean;
+  /** Nose-up angle of the body in degrees. */
+  pitch?: number;
   /** Waiting with nothing to do: the eyes turn aside. */
   idle: boolean;
   gearDown: boolean;
@@ -240,7 +242,9 @@ export class PlaneView extends Container {
 
     for (const p of PERSPECTIVES) {
       const root = new Container();
-      root.y = plane.body.offsetY;
+      // The body turns about a point 25 px above its origin when the plane pitches (0x8584).
+      root.pivot.set(0, -25);
+      root.y = plane.body.offsetY - 25;
       const pose: Pose = { root, remarks: new Container(), remarkSprites: [], brows: [], propellers: [], gear: null, gearRemark: null, gearFrames: [], mouth: null, opened: null, closed: null, eyeX: 0, color: null, oldColor: null, colorId: `${plane.body.color}.${p}` };
       const remark = (sprite: Sprite): Sprite => {
         pose.remarkSprites.push(sprite);
@@ -480,6 +484,7 @@ export class PlaneView extends Container {
     this.poses.forEach((pose, p) => {
       pose.root.visible = p === perspective;
       if (!pose.root.visible) return;
+      pose.root.angle = look.pitch ?? 0;
       pose.remarks.visible = look.selected;
       for (const sprite of pose.remarkSprites) sprite.tint = remarkTint;
       for (const brow of pose.brows) {

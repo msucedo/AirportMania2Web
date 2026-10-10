@@ -79,6 +79,12 @@ export const RULES = {
    * the node. The scale grows to 1 at `scaleRate` per second on the way out.
    */
   landing: { leaveAcceleration: 150, dipTime: 1.5, dipFactor: 50, leaveMargin: 500, scaleRate: 0.2, approachAltitude: 200, glideDistance: 600, bounceSpeed: 10, bounceTime: 0.25, gearTime: 0.6 },
+  /**
+   * Nose-up angle of the body in degrees (`plane+0x2fc`). It starts the glide at `glide`, rises
+   * at `flare` a second, and falls back to level at `settle` a second while braking; after
+   * lift-off it is `climb` times the square of the seconds in the air.
+   */
+  pitch: { glide: -5, flare: 5, settle: 40, climb: 10 },
   /** Take-off run: constant acceleration from standstill, in px/s². */
   takeOffAcceleration: 200,
   /** Run length after which the plane leaves the ground. */

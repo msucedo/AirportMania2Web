@@ -149,6 +149,8 @@ export interface Plane {
   flight: { phase: 0 | 1 | 2 | 3; time: number; vx: number };
   /** Degrees: 0 facing left, 90 towards the viewer, 180 right, 270 away (0x5c8c). */
   heading: number;
+  /** Nose-up angle of the body in degrees, on the way down and after lift-off (`plane+0x2fc`). */
+  pitch: number;
   scale: number;
   queue: Place[];
   /** Place the plane is at or travelling to. */
@@ -685,6 +687,7 @@ export class Simulation {
       facing: spawn.side === 'RIGHT' ? -1 : 1,
       flight: { phase: spawn.side === 'RIGHT' ? 1 : 0, time: 0, vx: (spawn.side === 'RIGHT' ? -1 : 1) * RULES.flightSpeed },
       heading: spawn.side === 'RIGHT' ? 0 : 180,
+      pitch: 0,
       scale: start.scale,
       queue: [],
       place: null,
@@ -743,6 +746,8 @@ export class Simulation {
           break;
         }
         plane.timer += dt;
+        // 0x7d34: the nose comes up faster and faster.
+        plane.pitch = RULES.pitch.climb * plane.timer * plane.timer;
         plane.altitude += RULES.climbRate * dt;
         if (plane.timer >= RULES.airborneTime) {
           this.planesServed++;
@@ -936,6 +941,7 @@ export class Simulation {
       plane.y = runway.node.y;
       plane.scale = 1;
       plane.altitude = rule.approachAltitude;
+      plane.pitch = RULES.pitch.glide;
       this.emit({ type: 'landingApproach', plane, runway });
       return;
     }
@@ -944,6 +950,7 @@ export class Simulation {
     if (approach.phase === 2) {
       approach.time += (RULES.landingSpeed / rule.glideDistance) * dt;
       if (approach.time < 1) {
+        plane.pitch += RULES.pitch.flare * dt;
         plane.altitude = (rule.approachAltitude / 2) * (Math.cos(Math.PI * approach.time) + 1);
         return;
       }
@@ -965,10 +972,14 @@ export class Simulation {
         approach.phase = 4;
         approach.time = 0;
       }
-    } else approach.time += dt;
+    } else {
+      approach.time += dt;
+      plane.pitch = Math.max(0, plane.pitch - RULES.pitch.settle * dt);
+    }
     // 0x82de: done once the node is no longer ahead.
     if ((runway.node.x - plane.x) * approach.vx > 0) return;
     plane.approach = null;
+    plane.pitch = 0;
     plane.x = runway.node.x;
     plane.altitude = 0;
     plane.heading = runway.heading;

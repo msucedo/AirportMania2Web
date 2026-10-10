@@ -899,8 +899,13 @@ State 13, with a phase in `plane+0x330` and a clock in `+0x314` (`0x7eb2`). Posi
 - Plane sounds by descriptor offset: `+0x5c…+0x68` TalkHappy/Normal/Upset/Mad, `+0x6c` In,
   `+0x70` Out, `+0x74` Cannot, `+0x78` Landing, `+0x7c` GoingOut, `+0x80` Launching, `+0x84`
   TouchingLand, `+0x88` Loading, `+0x8c` Unloading, `+0x90` Whistle1, `+0x94` Whistle2.
-- Web version: the plane's pitch (`+0x2fc`: −5 at phase 2, rising 5/s) and the dust are not
-  drawn.
+- Pitch (`+0x2fc`, degrees, nose up): −5 at the start of phase 2, rising 5 a second through
+  the glide; in phase 4 it falls 40 a second to zero (`0x826a`). After lift-off (state 12,
+  `0x7d34`) it is `10·t²`. The plane's transform (`0x8584`) applies it as a rotation between a
+  translation of (0, 25) and one of (0, `OffsetY` − 28), before the mirroring for planes facing
+  right, so the body turns about a point 25 px above its origin.
+- Web version: the dust (`0x6870`) is not drawn. That positive pitch lifts the nose is taken
+  from the values making sense that way round, not from the engine's rotation sign.
 
 ## Orders of a plane waiting on the ground — confirmed
 
@@ -981,7 +986,7 @@ Rules:
 
 Drawing:
 
-- Planes: the pitch on landing, landing dust,
+- Planes: landing dust,
   and the mark on planes a service tab would reach are not drawn.
 - Gate: the hover label; the first part of its draw routine has not been read. Order flag
   offsets are assumed.

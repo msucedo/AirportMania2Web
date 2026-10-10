@@ -146,8 +146,12 @@ describe('simulation, level 1-1', () => {
     expect(Math.abs(plane.x - runway.node.x)).toBeCloseTo(150, -1);
     expect(plane.landed).toBe(false);
 
+    // It glided in nose down at first and flared: 5 degrees a second from -5 over 2.4 s.
+    expect(plane.pitch).toBeCloseTo(RULES.pitch.glide + RULES.pitch.flare * 2.4, 0);
+
     // Braking takes it exactly to the node, where the landing counts.
     runUntil(sim, () => plane.landed, 5, events);
+    expect(plane.pitch).toBe(0);
     expect(plane.x).toBe(runway.node.x);
     expect(plane.state).toBe(PlaneState.WAITING);
     expect(plane.approach).toBeNull();
