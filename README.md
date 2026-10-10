@@ -8,7 +8,7 @@ assets: they are imported from your own extracted copy and are never committed.
 ```sh
 npm install
 npm run import-assets            # reads ~/Desktop/AirportMania2_Assets (or pass a path)
-npm run dev                      # http://localhost:5173  (?map opens the world map, ?map=2 centres it on a stage and ?stage=2&level=3 opens a level directly, ?go skips the shop before a level and ?nointro its announcement, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
+npm run dev                      # http://localhost:5173  (?map opens the world map, ?map=2 centres it on a stage and ?stage=2&level=3 opens a level directly (stage 0 is the tutorial), ?go skips the shop before a level and ?nointro its announcement, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
 npm test
 ```
 
@@ -35,7 +35,10 @@ Planes have their full faces (mood, blinking, talking), landing gear, propellers
 colours; the sky runs its day and night cycle with sun, stars and clouds; the island has its sea
 glints, rings and buoys; runways show their combo arrows.
 
-Not there yet: the help, users, credits and awards screens, and the tutorial.
+The tutorial (Airport Academy, three days) is played from the map's Tutorial button, with its
+hints, goals and reports.
+
+Not there yet: the help, users, credits and awards screens.
 Stages 3 to 10 are played without their animated scenery, and the wash and the luggage conveyor
 without their full drawing; `docs/re-notes.md` lists what is still approximate.
 

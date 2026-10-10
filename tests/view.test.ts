@@ -8,6 +8,7 @@ import { comboArrows, usingArrow } from '../src/game/view/runwayView';
 import { cloudX, skyColorsAt, skyPhaseAt } from '../src/game/view/sky';
 import { ringInterval } from '../src/game/view/waterEffects';
 import { brushPose, patchAlpha, puffAlpha } from '../src/game/view/sandView';
+import { markPop, panelTop } from '../src/game/view/tutorialViews';
 
 describe('plane drawing rules', () => {
   it('picks the perspective and mirroring from the heading', () => {
@@ -186,6 +187,21 @@ describe('runway sand', () => {
     expect(puffAlpha(0.9)).toBeCloseTo(0.5, 5);
     expect(puffAlpha(0.7)).toBe(1);
     expect(puffAlpha(0.25)).toBeCloseTo(0.5, 5);
+  });
+});
+
+describe('tutorial goals panel', () => {
+  it('slides up from under the screen by the square of how far it has come', () => {
+    // Four goals are 88 px tall: it ends 128 px above y 350.
+    expect([0, 0.5, 1].map((shown) => panelTop(88, shown))).toEqual([350, 318, 222]);
+  });
+
+  it('pops a goal\'s mark in over a second, overshooting on the way', () => {
+    expect(markPop(0)).toBe(0);
+    expect(markPop(0.125)).toBeCloseTo(0.125 + 2 * 0.125 * 0.875, 5);
+    expect(markPop(0.375)).toBeCloseTo(0.375, 5);
+    expect(markPop(1)).toBe(1);
+    expect(markPop(3)).toBe(1);
   });
 });
 

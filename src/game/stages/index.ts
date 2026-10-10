@@ -9,6 +9,7 @@ import { MARS } from './mars';
 import { MONSTERS } from './monsters';
 import { MOON } from './moon';
 import { NORTH_POLE } from './northPole';
+import { TUTORIAL } from './tutorial';
 
 /** The ten stages, by stage number. */
 export const STAGES: ReadonlyMap<number, StageLayout> = new Map([
@@ -23,3 +24,9 @@ export const STAGES: ReadonlyMap<number, StageLayout> = new Map([
   [MOON.stage, MOON],
   [MARS.stage, MARS],
 ]);
+
+/** The tutorial is stage 0: it is played from the map's own button and is not one of the ten. */
+export { TUTORIAL };
+
+/** The layout of a stage by number, the tutorial included. */
+export const stageLayout = (stage: number): StageLayout | undefined => (stage === 0 ? TUTORIAL : STAGES.get(stage));

@@ -9,7 +9,7 @@ import { loadSettings, saveSettings } from './game/settings';
 import { GAME_MENU_SURFACES, GameMenu } from './game/view/gameMenu';
 import { WorldMap } from './game/worldMap';
 import { Progress, type StageRules } from './game/progress';
-import { STAGES } from './game/stages';
+import { STAGES, stageLayout } from './game/stages';
 
 declare global {
   interface Window {
@@ -86,8 +86,8 @@ async function main(): Promise<void> {
   window.progress = progress;
 
   const stageWanted = Number.parseInt(params.get('stage') ?? '1', 10);
-  const stage = STAGES.has(stageWanted) ? stageWanted : 1;
-  const layout = STAGES.get(stage)!;
+  const stage = stageLayout(stageWanted) ? stageWanted : 1;
+  const layout = stageLayout(stage)!;
   const levels = data.areas.get(stage)!.levelsCount;
   const requested = Number.parseInt(params.get('level') ?? '', 10);
   const level = Number.isInteger(requested) && requested >= 1 && requested <= levels ? requested : null;

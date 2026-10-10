@@ -34,6 +34,8 @@ export interface Gate extends PlaceBase {
   descriptor: GateDescriptor;
   /** Colour of the last plane served and how many in a row shared it. */
   lastColor: PlaneColor | null;
+  /** The colour it had before the plane now at it arrived (`gate+0xbc`). */
+  previousColor: PlaneColor | null;
   combo: number;
   /** Original `gate+0xc8`: 0 idle, 1 reserved, 2 unloading, 3 loading, 5 unloaded, 4 loaded. */
   service: 'idle' | 'reserved' | 'unloading' | 'loading' | 'unloaded' | 'loaded';
@@ -418,6 +420,7 @@ export class Simulation {
         click: { x1: x + descriptor.click.x1, y1: y + descriptor.click.y1, x2: x + descriptor.click.x2, y2: y + descriptor.click.y2 },
         plane: null,
         lastColor: null,
+        previousColor: null,
         combo: 0,
         service: 'idle',
         samePlane: false,
@@ -1535,6 +1538,7 @@ export class Simulation {
 
   /** `Gate::planeArrived` (0x43238). */
   private gateArrival(gate: Gate, plane: Plane): void {
+    gate.previousColor = gate.lastColor;
     if ((plane.color as unknown) === RULES.neutralColor) {
       gate.lastColor = null;
     } else if (gate.lastColor !== plane.color) {

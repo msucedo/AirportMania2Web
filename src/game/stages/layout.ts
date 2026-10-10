@@ -92,6 +92,8 @@ export interface StageLayout {
    * argument of 0x144e4 and 0x145a8, the fourth of 0x14678): 0 when left out.
    */
   stopSpotBalloonCorner?: 0 | 1;
+  /** The corner the script gives its gates, gas station, hangar and luggage conveyor: 1 when left out. */
+  placeBalloonCorner?: 0 | 1;
   /** Water stage: planes leave rings and each runway is marked by two lines of buoys. */
   water: boolean;
   /** Images the stage adds with a depth (0x1404c). Without one here it is drawn over everything; with one, sorted among the planes at that height. */

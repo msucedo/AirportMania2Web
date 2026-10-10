@@ -1387,6 +1387,99 @@ animation.
 - Web version: the sky is drawn stretched over its rectangle, without the ripple; which part
   of the texture the grid shows at rest has not been worked out.
 
+## Tutorial ("Airport Academy", stage 0) — confirmed
+
+### Layout (script `0xcde40`, three days)
+
+- Gates of descriptor type 24 at (320, 133) and (400, 133); one runway of type 1, created with
+  flag 0, at (95, 205); a stop spot at (330, 290); a taxi node at (4, 240). On the third day
+  only: gas station type 12 at (185, 125), hangar type 13 at (45, 118), luggage conveyor type
+  0 at (464, 245). Every place is given balloon corner 0, the gates, the pump and the hangar
+  included.
+- Backdrop: sky 60, clouds, `BACKGROUND_TOP` at (0, 38), the sea (`0x13c3c`),
+  `BACKGROUND_DOWN` at (0, 158) scaled 16×17, and a flag at (245, 56) (`0x1503c`, class
+  `0x39474`, `STAGES.TUTORIAL.FLAG`). The neutral gate colour is (0.769, 0.6, 1). Nothing is
+  on sale.
+
+### The tutorial object
+
+- Level state 1 (`0x116a6`) makes it with `0x7ad18(day)` and keeps it at `level+0x128`; other
+  stages have none. Classes: RealTutorial (vtable `0x17b9e8`), BasicSequenceTutorial
+  (`0x17ba68`, day 1), CombosTutorial (`0x17bae8`, day 2), ExtrasTutorial (`0x17bb68`, day 3).
+- Goals: a vector at `+0x28`, 72 bytes each, with the state at `goal+0x20` (0 pending, 1 done,
+  2 failed), a clock at `+0x24` that the update (`0x7b45c`) advances by two a second, and for
+  the goals that count how many of two are done at `+0x28` (set by `0x7a92c`).
+- When the level ends (`0x11d36`): slot 9 (`0x7b4a4`) fails every goal still pending, slot 10
+  (`0x7b4d0`) says whether all are done, and the day is failed anyway if the score
+  (`level+0x158`, copied from `+0x1b4`) is not above zero. Then the report `0x7efb4`.
+- Events, by vtable slot and where the game calls it: 11 a plane appears (`0x5990`), 12 a
+  plane is selected (`0x5e6c`), 14 loading starts (`0x62cc`), 15 loading ends (`0x630c`), 16
+  unloading starts (`0x6378`, with the gate), 17 unloading ends (`0x64ac`), then, if the plane
+  has no order waiting, 19, 20 or 21 for a need of repair, fuel or luggage (`0x6566`), 22
+  repaired (`0x6698`), 23 fuelled (`0x6748`), 24 luggage loaded (`0x6820`), 25 a landing
+  begins (`0x7446`), 26 landed (`0x840a`, with the runway), 27 take-off (`0x626c`, with the
+  runway).
+- Day 1 (four goals: land, unload, load, take off): three seconds after a plane appears with
+  none selected, hint `PLANE` / `NEED_TO_SELECT` (`0x7b600`); selecting a plane still in the
+  air, `RUNWAY` / `TUTORIAL_SELECTED`; landed, `GATE_<stage>` / `TUTORIAL_FINISHED_LANDING`
+  and goal 1; unloading starts, `UNLOADING` / `TUTORIAL_START_UNLOADING` and goal 2; unloading
+  ends, `LOADING` / `TUTORIAL_FINISHED_UNLOADING`; loading starts, goal 3; loading ends,
+  `RUNWAY` / `TUTORIAL_FINISHED_LOADING`; take-off, goal 4.
+- Day 2 (a runway combo; the same colour at the gates twice): it counts landings and
+  take-offs. The first landing gives `TUTORIAL_LANDING_COMBO` / `…TO_GET_A_LANDING_COMBO`; a
+  later one with the runway's landing count (`+0x9c`) at 2 or more gives `…_X2` /
+  `…TO_GET_ANOTHER…` and goal 1. Take-offs likewise with `+0xa0`; after two take-offs with no
+  combo of either kind goal 1 fails (`0x7b9b0`). When unloading starts (`0x7b874`) it compares
+  the gate's colour before this plane (`gate+0xbc`, copied from `+0xc0` on arrival) with the
+  colour now (`+0xc0`): different, and the gate had one, fails goal 2; the same with the count
+  (`+0xc4`) at 2 counts one towards it, with `TUTORIAL_GATE_COMBO_X2` /
+  `…YOU_MADE_A_GATE_COMBO` the first time. Slot 25 (`0x7b8f8`) counts orange planes coming in
+  to land and tells about the orange gate at the second; the day's planes are blue and green.
+- Day 3 (repair, refuel, luggage, two planes each): each need is explained once
+  (`HANGAR_0` / `NEED_TO_BE_REPAIRED`, `GAS_STATION_0` / `NEED_TO_BE_FUELED`, `LUGGAGE_0` /
+  `NEED_TO_BE_LOADED_WITH_LUGGAGE`) and each service done counts one towards its goal.
+
+### Hints (`0x4aedc(manager, picture, text key)`)
+
+- Used by the whole game, not only the tutorial (the runway hazards call it through
+  `0x10890`). It clears what the manager shows, makes a 400×200 frame, the picture
+  `HINTS.<name>` at (−160, −30) (a name with `%d` takes the stage number), the text in
+  `FONTS.WHITE` in the box (−104, −80)–(200, 40), a Close button at (0, 80) 380 wide, and
+  pauses the game (`0x108f0`). A new hint replaces one still up.
+
+### Dialogs and the goals panel
+
+- Text boxes (`0x2d14c`) take a rectangle as left, top, right, bottom from the dialog's
+  centre. Cached fonts: `FONTS.MAIN` is Brady Bunch at 14 with a gold effect, `FONTS.ULTRA`
+  Blue Stone at 20 and 0.8 of its width, `FONTS.WHITE` Teen Bold at 11, `FONTS.TEEN` Teen Bold
+  at 10 and 0.9 of its width.
+- Day's opening (`0x7d650`): 400×250; title `LEVEL<n>.TITLE` in `FONTS.MAIN` in
+  (−187, −110)–(187, −80); a rule at y −80, 381 wide; `LEVEL<n>.TEXT` in `FONTS.WHITE` in
+  (−187, −65)–(187, 80); Main Menu at (−100, 105) and Continue at (100, 105), 160 wide.
+- Goals (`0x7dfe0`): 400×250; `GOAL_TITLE` with the day in (−187, −110)–(187, −80); a rule at
+  y −85, 345 wide; `TO_PASS` in (−172, −70)–(172, −60); `LEVEL<n>.GOAL` in
+  (−170, −50)–(200, 60); Continue at (0, 105), 260 wide. Closing it shows the goals panel
+  (slot 8, `0x7b49c`).
+- Report (`0x7efb4`): `MUSICS.` and `SOUNDS.FINAL_REPORT.SUPREME` or `.FAIL`; 400×250 over
+  `GUI.FINAL_REPORT.BACK_STAR` or `SPIRAL` at 390×240; a rule at y −85, 380 wide;
+  `TUTORIAL_REPORT.SUCCESS` or `FAILED` in `FONTS.ULTRA` in (−150, −110)–(150, −80);
+  `LEVEL<n>.SUCCESS` or `FAILED` in (−185, −70)–(185, 60); Continue at (0, 105), or Try again
+  at (0, 50) and Main Menu at (0, 105), all 380 wide.
+- Goals panel (draw `0x7b2cc`): its top is at y `350 − (height + 40)·f²`, `f` rising three a
+  second while shown and falling five a second otherwise (`0x7bec4`). `GUI.TUTORIAL_BACK_TOP`
+  stretched nine times across from x `width − 9·w + 5`, `…_CORNER` after it, `…_RIGHT`
+  stretched three times down under the corner, `…_COLOR` filling the rest, and
+  `GUI.TUTORIAL_FASTENER` at (36, −16). Rows start 10 px down. Adding a goal (`0x7cdc4`) puts
+  it at x 12 and y `height + 12`, adds 22 to the height and keeps the widest row (text width
+  + 20). A row (`0x7aac0`) draws `GUI.GOAL_CHECKBOX`, then, done or failed, `INDICATORS.YES`
+  or `INDICATORS.NO` 6 px lower at 0.45 of its size, popping in over a second as
+  `(1 + sin(4π·t))·t·(1 − t) + t`, and its text 12 px to the right in black `FONTS.TEEN`.
+- Web version: the sea and the flag are not drawn; the rules are drawn as a plain line;
+  whether the game records the tutorial as done, what the map's Tutorial button asks first
+  (`TUTORIAL_QUESTION_DIALOG`, `0x7e590`) and which dialog leads to which have not been read:
+  the opening is followed by the goals, and passing a day leads to the next, the last to the
+  map. Hints outside the tutorial (fog, ice, sand, needs) are still not shown.
+
 ## Drawing order of the airport's objects — confirmed
 
 - Every object of the airport is kept in one list (`airport+0x14`, added by `0xa3490`), which

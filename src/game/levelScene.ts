@@ -25,6 +25,8 @@ import { BONUS_SURFACES, BonusView } from './view/bonusView';
 import { FOG_SURFACES, FogView } from './view/fogView';
 import { ICE_SURFACES, IceView } from './view/iceView';
 import { SAND_SURFACES, SandBrush, SandView } from './view/sandView';
+import { tutorialFor, type Tutorial } from './sim/tutorial';
+import { GoalsPanel, HintDialog, TUTORIAL_FONTS, TUTORIAL_HINT_SURFACES, TUTORIAL_SOUNDS, TUTORIAL_SURFACES, TutorialGoalsDialog, TutorialIntro, TutorialReport } from './view/tutorialViews';
 import { LuggageView, luggageSurfaceIds } from './view/luggageView';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
@@ -108,6 +110,9 @@ export class LevelScene {
   heldChooser: PaintChooser | null = null;
   private dialog: Container | null = null;
   private report: FinalReport | null = null;
+  /** The tutorial's day, in stage 0 (`level+0x128`), and its goals on screen. */
+  private tutorial: Tutorial | null = null;
+  private goalsPanel: GoalsPanel | null = null;
 
   private constructor(
     private readonly textures: TextureStore,
@@ -176,6 +181,7 @@ export class LevelScene {
     for (const luggage of sim.luggages) for (const id of luggageSurfaceIds(luggage)) ids.add(id);
     if (sim.hazardSchedule.some((h) => h.kind === 'ice')) for (const id of ICE_SURFACES) ids.add(id);
     if (sim.hazardSchedule.some((h) => h.kind === 'sand')) for (const id of SAND_SURFACES) ids.add(id);
+    if (options.stage === 0) for (const id of [...TUTORIAL_SURFACES, ...TUTORIAL_HINT_SURFACES]) ids.add(id);
     for (const hangar of sim.hangars) {
       ids.add(hangar.descriptor.surfaces.back);
       ids.add(hangar.descriptor.surfaces.front);
@@ -191,7 +197,7 @@ export class LevelScene {
     const [strings] = await Promise.all([
       data.strings(options.language),
       textures.load(ids),
-      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS, ...LEVEL_INTRO_FONTS]),
+      loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS, ...LEVEL_INTRO_FONTS, ...(options.stage === 0 ? TUTORIAL_FONTS : [])]),
     ]);
 
     const scene = new LevelScene(textures, audio, strings, options, sim);
@@ -205,7 +211,11 @@ export class LevelScene {
       levelMusic();
       if (!options.skipIntro) scene.openIntro();
     };
-    if (shop) {
+    if (options.stage === 0) {
+      // The tutorial has no shop and opens with its own dialogs (level state 1, 0x116a6).
+      scene.startTutorial(options.level, !options.skipIntro);
+      levelMusic();
+    } else if (shop) {
       audio.playMusic('MUSICS.SHOPPING');
       scene.openShop(begin);
     } else begin();
@@ -267,7 +277,7 @@ export class LevelScene {
     const place = plane.place;
     if (!place) return 3;
     if (place.kind === 'runway') return this.options.layout.runwayBalloonCorner;
-    return place.kind === 'stopSpot' ? (this.options.layout.stopSpotBalloonCorner ?? 0) : 1;
+    return place.kind === 'stopSpot' ? (this.options.layout.stopSpotBalloonCorner ?? 0) : (this.options.layout.placeBalloonCorner ?? 1);
   }
 
   /**
@@ -298,6 +308,60 @@ export class LevelScene {
     });
     this.dialog = intro;
     this.root.addChild(intro);
+  }
+
+  /**
+   * A day of the tutorial: its goals, and unless skipped the dialog that presents the day and
+   * then the one that says what it asks for. The goals come up once the last is closed.
+   */
+  private startTutorial(day: number, withDialogs: boolean): void {
+    const tutorial = tutorialFor(day);
+    this.tutorial = tutorial;
+    this.audio.preload(TUTORIAL_SOUNDS);
+    const panel = new GoalsPanel(this.textures, this.strings, tutorial);
+    this.goalsPanel = panel;
+    this.root.addChild(panel);
+    const play = (): void => {
+      panel.visibleNow = true;
+    };
+    if (!withDialogs) return play();
+    const show = (dialog: Container, onClose: () => void): (() => void) => {
+      this.paused = true;
+      this.dialog = dialog;
+      this.root.addChild(dialog);
+      return () => {
+        this.audio.unlock();
+        this.dialog = null;
+        this.paused = false;
+        setTimeout(() => dialog.destroy({ children: true }));
+        onClose();
+      };
+    };
+    const goals = (): void => {
+      const dialog: Container = new TutorialGoalsDialog(this.textures, this.audio, this.strings, day, () => close());
+      const close = show(dialog, play);
+    };
+    const intro: Container = new TutorialIntro(this.textures, this.audio, this.strings, day, () => closeIntro(), () => this.options.onMainMenu());
+    const closeIntro = show(intro, goals);
+  }
+
+  /** A hint stops the game until it is closed (0x4aedc); a later one takes the place of one still up. */
+  private showHint(): void {
+    const tutorial = this.tutorial;
+    if (!tutorial || tutorial.hints.length === 0 || this.endShown) return;
+    if (this.dialog && !(this.dialog instanceof HintDialog)) return;
+    const hint = tutorial.hints.splice(0).at(-1)!;
+    const previous = this.dialog;
+    const dialog = new HintDialog(this.textures, this.audio, this.strings, hint, () => {
+      if (this.dialog !== dialog) return;
+      this.dialog = null;
+      this.paused = false;
+      setTimeout(() => dialog.destroy({ children: true }));
+    });
+    if (previous) setTimeout(() => previous.destroy({ children: true }));
+    this.paused = true;
+    this.dialog = dialog;
+    this.root.addChild(dialog);
   }
 
   private openShop(onLeave: () => void): void {
@@ -365,8 +429,11 @@ export class LevelScene {
       this.sim.update(STEP);
       this.accumulator -= STEP;
       for (const event of this.sim.drainEvents()) this.onEvent(event);
+      this.tutorial?.update(STEP);
     }
     for (const event of this.sim.drainEvents()) this.onEvent(event);
+    this.showHint();
+    this.goalsPanel?.update(seconds);
     this.draw(seconds);
   }
 
@@ -508,6 +575,7 @@ export class LevelScene {
   }
 
   private onEvent(event: SimEvent): void {
+    this.tutorial?.handle(event);
     this.playEvent(event);
     switch (event.type) {
       case 'score':
@@ -830,8 +898,27 @@ export class LevelScene {
     return ((1 - approach.time) * RULES.landing.glideDistance) / RULES.landingSpeed < RULES.landing.gearTime;
   }
 
+  /**
+   * The end of a tutorial day (0x11d36): goals still pending have failed, and the day is passed
+   * with every goal done and something scored. Passing leads to the next day, and the last to
+   * the map; whether the original records the tutorial as done has not been read.
+   */
+  private showTutorialEnd(tutorial: Tutorial): void {
+    tutorial.finish();
+    if (this.goalsPanel) this.goalsPanel.visibleNow = false;
+    const { level, onNavigate, onMainMenu } = this.options;
+    const report = new TutorialReport(this.textures, this.audio, this.strings, tutorial.day, tutorial.passed(this.sim.score), {
+      onContinue: () => onNavigate(level < 3 ? level + 1 : null),
+      onRetry: () => onNavigate(level),
+      onMainMenu,
+    });
+    this.dialog = report;
+    this.root.addChild(report);
+  }
+
   private showEnd(): void {
     this.endShown = true;
+    if (this.tutorial) return this.showTutorialEnd(this.tutorial);
     const tier = tierFor(this.sim.score, this.sim.goals);
     this.audio.playMusic(`MUSICS.FINAL_REPORT.${tier}`);
     this.audio.play(`SOUNDS.FINAL_REPORT.${tier}`);
