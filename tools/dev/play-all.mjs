@@ -1,4 +1,4 @@
-// Plays every level of stages 1 to 3 in order through the simulation API and checks that each
+// Plays every level of stages 1 to 4 in order through the simulation API and checks that each
 // can be passed and that progress chains: the next level opens with this one's score as funds,
 // and clearing a stage opens the next. Usage: node tools/dev/play-all.mjs <baseUrl>
 import { createRequire } from 'node:module';
@@ -6,7 +6,7 @@ const require = createRequire(process.env.PUPPETEER_FROM ?? '/Users/msaucedo/Doc
 const puppeteer = require('puppeteer-core');
 
 const [base] = process.argv.slice(2);
-const LEVELS = [[1, 6], [2, 7], [3, 8]];
+const LEVELS = [[1, 6], [2, 7], [3, 8], [4, 8]];
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: true,
@@ -55,7 +55,7 @@ try {
               continue;
             }
             if (p.state !== 2) continue;
-            const wanted = p.need === 1 || p.need === 6 ? pick(sim.gates, p) : p.need === 3 ? pick(sim.gasStations, p) : p.need === 2 ? pick(sim.hangars, p) : p.need === 7 ? pick(sim.runways, p) : undefined;
+            const wanted = p.need === 1 || p.need === 6 ? pick(sim.gates, p) : p.need === 3 ? pick(sim.gasStations, p) : p.need === 2 ? pick(sim.hangars, p) : p.need === 5 ? pick(sim.luggages, p) : p.need === 7 ? pick(sim.runways, p) : undefined;
             if (wanted) sim.addOrder(p, wanted);
           }
           sim.update(1 / 60);

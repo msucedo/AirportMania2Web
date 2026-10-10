@@ -1,4 +1,4 @@
-import type { GasStationDescriptor, GateDescriptor, HangarDescriptor, RunwayDescriptor } from '../../data/airport';
+import type { GasStationDescriptor, GateDescriptor, HangarDescriptor, LuggageDescriptor, RunwayDescriptor } from '../../data/airport';
 import type { LevelGoals, LevelSchedule, PlaneColor, PlaneSpawn, Sex } from '../../data/levels';
 import type { PlaneDescriptor } from '../../data/planes';
 import type { Point } from '../../data/xml';
@@ -68,9 +68,14 @@ export interface Runway extends PlaceBase {
   idle: number;
   /** Fog lying on it (`runway+0xd0`): no plane may use it until it has lifted. */
   fog: Fog | null;
+  /** Ice on it (`runway+0xcc`), likewise. */
+  ice: Fog | null;
 }
 
-/** Fog over a runway (class `0x3a324`). */
+/** What can close a runway. */
+export type HazardKind = 'fog' | 'ice';
+
+/** Fog over a runway (class `0x3a324`) or ice on it (class `0x4b71c`). */
 export interface Fog {
   /** Seconds since it appeared. */
   age: number;
@@ -78,7 +83,7 @@ export interface Fog {
   fade: number;
   /** Lifting: the runway can be used again and the fog is fading away. */
   lifting: boolean;
-  /** Seconds the anti-fog machine has been at work on it, or null without one. */
+  /** Seconds the anti-fog machine or the deicer has been at work on it, or null without one. */
   machine: number | null;
 }
 
@@ -176,7 +181,18 @@ export interface PaintBooth {
   job: { color: PlaneColor; time: number; applied: boolean } | null;
 }
 
-export type Place = Gate | Runway | GasStation | Hangar | StopSpot;
+/** The luggage conveyor (class with vtable `0x17ad68`, kind 7). */
+export interface Luggage extends PlaceBase {
+  kind: 'luggage';
+  position: Point;
+  descriptor: LuggageDescriptor;
+  /** Original `+0x98`: 0 free, 1 reserved, 2 loading, 3 done with the plane still there. */
+  use: 'free' | 'reserved' | 'loading' | 'done';
+  /** Luggage loading time elapsed, scaled by the conveyor's speed (`+0x9c`). */
+  progress: number;
+}
+
+export type Place = Gate | Runway | GasStation | Hangar | StopSpot | Luggage;
 
 export interface Plane {
   id: number;
@@ -253,9 +269,9 @@ export type SimEvent =
   | { type: 'coffeeServed'; planes: Plane[] }
   | { type: 'moviesReady' }
   | { type: 'moviesShown'; planes: Plane[] }
-  | { type: 'fogAppeared'; runway: Runway }
-  | { type: 'antiFogStarted'; runway: Runway }
-  | { type: 'fogLifted'; runway: Runway; byMachine: boolean }
+  | { type: 'hazardAppeared'; runway: Runway; kind: HazardKind }
+  | { type: 'hazardMachine'; runway: Runway; kind: HazardKind }
+  | { type: 'hazardLifted'; runway: Runway; kind: HazardKind; byMachine: boolean }
   | { type: 'washStarted'; plane: Plane; spot: StopSpot }
   | { type: 'washDone'; plane: Plane; spot: StopSpot }
   | { type: 'paintingReady'; spot: StopSpot }
@@ -267,6 +283,8 @@ export type SimEvent =
   | { type: 'serviceStartedAtHangar'; plane: Plane; hangar: Hangar }
   | { type: 'serviceFinishedAtHangar'; plane: Plane; hangar: Hangar }
   | { type: 'parked'; plane: Plane; spot: StopSpot }
+  | { type: 'luggageStarted'; plane: Plane; luggage: Luggage }
+  | { type: 'luggageFinished'; plane: Plane; luggage: Luggage }
   | { type: 'fuelingStarted'; plane: Plane; station: GasStation }
   | { type: 'fuelingFinished'; plane: Plane; station: GasStation }
   | { type: 'punctuality'; plane: Plane; result: Punctuality }
@@ -291,6 +309,7 @@ export interface SimulationConfig {
   gates: Map<number, GateDescriptor>;
   runways: Map<number, RunwayDescriptor>;
   gasStations?: Map<number, GasStationDescriptor>;
+  luggages?: Map<number, LuggageDescriptor>;
   hangars?: Map<number, HangarDescriptor>;
   /** Level number within the stage; some places only exist from a given level. */
   level?: number;
@@ -311,6 +330,7 @@ export class Simulation {
   readonly gates: Gate[] = [];
   readonly runways: Runway[] = [];
   readonly gasStations: GasStation[] = [];
+  readonly luggages: Luggage[] = [];
   readonly hangars: Hangar[] = [];
   readonly stopSpots: StopSpot[] = [];
   /** This level's bonus event, if it has one, and the seconds until it starts. */
@@ -325,10 +345,13 @@ export class Simulation {
   private helicopterDue = false;
   private nextBonusId = 1;
   private readonly random: () => number;
-  /** Fogs still to come: when, and on which runway (`level+0x110`). */
-  readonly fogSchedule: { time: number; runway: number }[] = [];
-  /** The anti-fog system is owned (`airport+0xad`). */
-  readonly antiFog: boolean;
+  /**
+   * Fog and ice still to come: when, and on which runway (`level+0x110`). The fogs are listed
+   * first, then the ices, and only the first entry is ever looked at, as in the original.
+   */
+  readonly hazardSchedule: { time: number; runway: number; kind: HazardKind }[] = [];
+  /** The machines owned: anti-fog (`airport+0xad`) and deicer (`airport+0xac`). */
+  readonly machines: Readonly<Record<HazardKind, boolean>>;
   /** The coffee and cake service, when the improvement is owned. */
   readonly coffee: ServiceButton | null;
   /** The in-flight movies, likewise. */
@@ -359,7 +382,9 @@ export class Simulation {
     for (const slot of layout.gates) {
       if (slot.requires && !slot.requires.some((id) => owned.has(id))) continue;
       const upgraded = owned.has(slot.upgradedBy);
-      const type = layout.gateTypes[upgraded ? 1 : 0];
+      // A second upgrade, in the stages that have one, wins over the first.
+      const again = slot.upgradedAgainBy !== undefined && owned.has(slot.upgradedAgainBy) ? layout.gateTypes[2] : undefined;
+      const type = again ?? layout.gateTypes[upgraded ? 1 : 0];
       const descriptor = config.gates.get(type);
       if (!descriptor) throw new Error(`Missing gate descriptor ${type}`);
       const position = (upgraded && slot.upgradedPosition) || slot.position;
@@ -398,6 +423,26 @@ export class Simulation {
         position: layout.gasStation.position,
         descriptor: stationDescriptor,
         node,
+        taxiNode: this.graph.addGasStation(node),
+        click: { x1: x + click.x1, y1: y + click.y1, x2: x + click.x2, y2: y + click.y2 },
+        plane: null,
+        use: 'free',
+        progress: 0,
+      });
+    }
+    const luggageDescriptor = layout.luggage ? config.luggages?.get(layout.luggage.type) : undefined;
+    if (layout.luggage && luggageDescriptor && (config.level ?? 1) >= layout.luggage.minLevel) {
+      const { x, y } = layout.luggage.position;
+      const node = { x: x + luggageDescriptor.node.x, y: y + luggageDescriptor.node.y };
+      const click = luggageDescriptor.click;
+      this.luggages.push({
+        kind: 'luggage',
+        id: 'luggage',
+        position: layout.luggage.position,
+        descriptor: luggageDescriptor,
+        node,
+        // Its own nodes (`AuxNode1`, `AuxNode2` and the barrier nodes) have not been read; it
+        // joins the taxi graph the way the gas station does.
         taxiNode: this.graph.addGasStation(node),
         click: { x1: x + click.x1, y1: y + click.y1, x2: x + click.x2, y2: y + click.y2 },
         plane: null,
@@ -451,6 +496,7 @@ export class Simulation {
         takeOffs: { count: 0, value: 0, active: false },
         idle: 0,
         fog: null,
+        ice: null,
       });
     }
 
@@ -492,8 +538,9 @@ export class Simulation {
       if (this.bonus.kind === 'balloons') this.balloonsLeft = RULES.bonus.balloons.count;
       else this.helicopterDue = true;
     }
-    this.antiFog = owned.has(IMPROVEMENT.ANTI_FOG);
-    this.scheduleFogs(config.goals.fogs);
+    this.machines = { fog: owned.has(IMPROVEMENT.ANTI_FOG), ice: owned.has(IMPROVEMENT.DEICER) };
+    this.scheduleHazards('fog', config.goals.fogs);
+    this.scheduleHazards('ice', config.goals.ices);
     // It starts empty, like the painting spot (0x24010).
     this.coffee = owned.has(IMPROVEMENT.COFFEE_AND_CAKE) ? { recharge: RULES.coffee.recharge, left: RULES.coffee.recharge, ready: false } : null;
     this.movies = owned.has(IMPROVEMENT.IN_FLIGHT_MOVIES) ? { recharge: RULES.movies.recharge, left: RULES.movies.recharge, ready: false } : null;
@@ -502,7 +549,7 @@ export class Simulation {
   }
 
   get places(): Place[] {
-    return [...this.gates, ...this.gasStations, ...this.hangars, ...this.stopSpots, ...this.runways];
+    return [...this.gates, ...this.gasStations, ...this.hangars, ...this.luggages, ...this.stopSpots, ...this.runways];
   }
 
   get goals(): LevelGoals {
@@ -613,6 +660,13 @@ export class Simulation {
       // 0x4785c: only for a plane that has unloaded and still needs servicing.
       return !plane.serviceDone && plane.unloaded;
     }
+    if (place.kind === 'luggage') {
+      // 0x570a8: only for a plane that has unloaded and still needs its luggage, with the hangar
+      // and the gas it needs done or queued before.
+      if (plane.luggageDone || !plane.unloaded) return false;
+      if (!plane.serviceDone && !this.itineraryHas(plane, 'hangar')) return false;
+      return plane.gasDone || this.itineraryHas(plane, 'gasStation');
+    }
     if (place.kind === 'gasStation') {
       // 0x410d0: only for a plane that has unloaded and still needs fuel. Hangar service, when
       // needed, has to be done or queued first.
@@ -625,17 +679,19 @@ export class Simulation {
     if (plane.loaded) return false;
     if (!plane.gasDone && !this.itineraryHas(plane, 'gasStation')) return false;
     if (!plane.serviceDone && !this.itineraryHas(plane, 'hangar')) return false;
-    return plane.luggageDone;
+    return plane.luggageDone || this.itineraryHas(plane, 'luggage');
   }
 
   /** Place virtual slot 15 (gate `0x43530`, runway `0x6da34`, gas station `0x40d4c`): may the plane go there now? */
   private canEnter(place: Place, plane: Plane): boolean {
     if (place.kind === 'runway') {
-      // 0x6da72: nothing lands on or leaves from a runway under fog.
-      if (place.fog && !place.fog.lifting) return false;
+      // 0x6da58: nothing lands on or leaves from a runway under fog or ice.
+      if ((place.fog && !place.fog.lifting) || (place.ice && !place.ice.lifting)) return false;
       return !plane.landed || (plane.unloaded && plane.loaded);
     }
     if (place.kind === 'gasStation') return plane.landed && plane.unloaded && plane.serviceDone && !plane.gasDone;
+    // 0x56c18: everything before it done, and the luggage still to take on.
+    if (place.kind === 'luggage') return plane.landed && plane.unloaded && plane.serviceDone && plane.gasDone && !plane.luggageDone;
     if (place.kind === 'stopSpot') return plane.landed;
     if (place.kind === 'hangar') return plane.landed && plane.unloaded && !plane.serviceDone;
     if (!plane.landed || plane.loaded) return false;
@@ -654,7 +710,7 @@ export class Simulation {
     if (place.kind === 'gate') {
       place.samePlane = place.plane === plane;
       place.service = 'reserved';
-    } else if (place.kind === 'gasStation' || place.kind === 'stopSpot' || place.kind === 'hangar') {
+    } else if (place.kind === 'gasStation' || place.kind === 'stopSpot' || place.kind === 'hangar' || place.kind === 'luggage') {
       place.use = 'reserved';
     } else {
       place.use = plane.state === PlaneState.FLYING ? 'landing' : 'takeOffReserved';
@@ -671,9 +727,10 @@ export class Simulation {
     while (this.pending.length > 0 && this.pending[0]!.time <= this.time) this.spawn(this.pending.shift()!);
 
     for (const runway of this.runways) this.updateRunway(runway, dt);
-    this.updateFogs(dt);
+    this.updateHazards(dt);
     for (const gate of this.gates) this.updateGate(gate, dt);
     for (const station of this.gasStations) this.updateGasStation(station, dt);
+    for (const luggage of this.luggages) this.updateLuggage(luggage, dt);
     for (const hangar of this.hangars) this.updateHangar(hangar, dt);
     for (const spot of this.stopSpots) if (spot.painting) this.updatePainting(spot, spot.painting, dt);
     for (const spot of this.stopSpots) if (spot.wash) this.updateWash(spot, spot.wash, dt);
@@ -708,59 +765,62 @@ export class Simulation {
   }
 
   /**
-   * 0x102d8: the level's fogs. The time, less a margin, is cut into equal slices and each fog
-   * gets a random moment in its slice and a random runway, kept apart from another on that runway.
+   * 0x102d8: the level's fogs or ices. The time, less a margin, is cut into equal slices and each
+   * one gets a random moment in its slice and a random runway, kept apart from another on that
+   * runway.
    */
-  private scheduleFogs(count: number): void {
-    const rule = RULES.fog;
+  private scheduleHazards(kind: HazardKind, count: number): void {
+    const rule = RULES.hazards;
     if (count < 1 || this.runways.length === 0) return;
     const slice = (this.totalTime - rule.margin) / count;
     for (let i = 0; i < count; i++) {
-      for (let attempt = 0; attempt < rule.tries; attempt++) {
+      for (let attempt = 0; attempt < RULES[kind].tries; attempt++) {
         const runway = Math.floor(this.random() * this.runways.length) % this.runways.length;
         const time = i * slice + this.random() * slice;
-        if (this.fogSchedule.some((fog) => fog.runway === runway && Math.abs(fog.time - time) < rule.apart)) continue;
-        this.fogSchedule.push({ time, runway });
+        if (this.hazardSchedule.some((other) => other.runway === runway && Math.abs(other.time - time) < rule.apart)) continue;
+        this.hazardSchedule.push({ time, runway, kind });
         break;
       }
     }
   }
 
-  /** 0x1094c for the fog due next, and the fogs already lying (0x3a41c, 0x19b78). */
-  private updateFogs(dt: number): void {
-    const rule = RULES.fog;
+  /** 0x1094c for the one due next, and those already lying (fog 0x3a41c, ice 0x4b850). */
+  private updateHazards(dt: number): void {
+    const rule = RULES.hazards;
     for (const runway of this.runways) runway.idle = runway.use === 'free' ? runway.idle + dt : 0;
 
-    const due = this.fogSchedule[0];
+    const due = this.hazardSchedule[0];
     if (due && this.time >= due.time) {
       const runway = this.runways[due.runway]!;
-      if (this.time - due.time >= rule.patience) this.fogSchedule.shift();
+      if (this.time - due.time >= rule.patience) this.hazardSchedule.shift();
       else if (runway.use === 'free' && runway.idle > rule.idle) {
-        this.fogSchedule.shift();
-        runway.fog = { age: 0, fade: 0, lifting: false, machine: null };
-        this.emit({ type: 'fogAppeared', runway });
+        this.hazardSchedule.shift();
+        runway[due.kind] = { age: 0, fade: 0, lifting: false, machine: null };
+        this.emit({ type: 'hazardAppeared', runway, kind: due.kind });
       }
     }
 
     for (const runway of this.runways) {
-      const fog = runway.fog;
-      if (!fog) continue;
-      fog.age += dt;
-      if (fog.lifting) {
-        fog.fade -= rule.fade * dt;
-        if (fog.fade < 0) runway.fog = null;
-        continue;
-      }
-      fog.fade = Math.min(1, fog.fade + rule.fade * dt);
-      if (fog.machine !== null) fog.machine += dt;
-      else if (this.antiFog && fog.age > rule.machineAt) {
-        fog.machine = 0;
-        this.emit({ type: 'antiFogStarted', runway });
-      }
-      const byMachine = fog.machine !== null && fog.machine > rule.machineTime;
-      if (byMachine || fog.age > rule.time) {
-        fog.lifting = true;
-        this.emit({ type: 'fogLifted', runway, byMachine });
+      for (const kind of ['fog', 'ice'] as const) {
+        const hazard = runway[kind];
+        if (!hazard) continue;
+        hazard.age += dt;
+        if (hazard.lifting) {
+          hazard.fade -= rule.fade * dt;
+          if (hazard.fade < 0) runway[kind] = null;
+          continue;
+        }
+        hazard.fade = Math.min(1, hazard.fade + rule.fade * dt);
+        if (hazard.machine !== null) hazard.machine += dt;
+        else if (this.machines[kind] && hazard.age > rule.machineAt) {
+          hazard.machine = 0;
+          this.emit({ type: 'hazardMachine', runway, kind });
+        }
+        const byMachine = hazard.machine !== null && hazard.machine > RULES[kind].machineTime;
+        if (byMachine || hazard.age > RULES[kind].time) {
+          hazard.lifting = true;
+          this.emit({ type: 'hazardLifted', runway, kind, byMachine });
+        }
       }
     }
   }
@@ -1326,6 +1386,7 @@ export class Simulation {
     }
     if (place.kind === 'gate') this.gateArrival(place, plane);
     else if (place.kind === 'gasStation') this.gasStationArrival(place, plane);
+    else if (place.kind === 'luggage') this.luggageArrival(place, plane);
     else if (place.kind === 'hangar' && place.use === 'leaving') {
       // Out at the exit node: the hangar pays and waits for the plane to move on (0x472f4).
       place.use = 'done';
@@ -1476,6 +1537,33 @@ export class Simulation {
     gate.service = 'idle';
     this.reserve(gate, plane);
     this.gateArrival(gate, plane);
+  }
+
+  /** `Luggage::planeArrived` (0x56b78). */
+  private luggageArrival(luggage: Luggage, plane: Plane): void {
+    luggage.progress = 0;
+    if (!plane.luggageDone) {
+      plane.state = PlaneState.LUGGAGE;
+      luggage.use = 'loading';
+      this.emit({ type: 'luggageStarted', plane, luggage });
+    }
+    this.addEnergy(plane, RULES.energyBoost);
+  }
+
+  /** `Luggage::update` (0x56ca0). */
+  private updateLuggage(luggage: Luggage, dt: number): void {
+    const plane = luggage.plane;
+    if (!plane || luggage.use !== 'loading') return;
+    luggage.progress += luggage.descriptor.speed * dt;
+    if (luggage.progress <= plane.descriptor.times.luggageLoading) return;
+
+    luggage.use = 'done';
+    // `Plane::luggageFinished` (0x6848).
+    plane.luggageDone = true;
+    plane.state = PlaneState.WAITING;
+    plane.need = Need.LOAD;
+    this.emit({ type: 'luggageFinished', plane, luggage });
+    this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.luggage), 1, 'service');
   }
 
   /** `GasStation::planeArrived` (0x40cbc). */

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseGasStationTable, parseGateTable, parseHangarTable, parseRunwayTable } from '../src/data/airport';
+import { parseGasStationTable, parseGateTable, parseHangarTable, parseLuggageTable, parseRunwayTable } from '../src/data/airport';
 import { findGoals, findLevel, parseLevelsDb, parseStageSchedule } from '../src/data/levels';
 import { parsePlaneTable } from '../src/data/planes';
 import type { XmlNode } from '../src/data/xml';
@@ -10,6 +10,7 @@ import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulatio
 import { ARCHES } from '../src/game/stages/arches';
 import { ISLAND } from '../src/game/stages/island';
 import { MONSTERS } from '../src/game/stages/monsters';
+import { NORTH_POLE } from '../src/game/stages/northPole';
 
 const generated = path.resolve(__dirname, '../src/data/generated');
 const tree = (rel: string): XmlNode[] => JSON.parse(fs.readFileSync(path.join(generated, rel), 'utf8')) as XmlNode[];
@@ -19,6 +20,7 @@ const gates = parseGateTable(tree('data/descriptors/gate_descriptor_table.json')
 const runways = parseRunwayTable(tree('data/descriptors/runway_descriptor_table.json'));
 const gasStations = parseGasStationTable(tree('data/descriptors/gas_station_descriptor_table.json'));
 const hangars = parseHangarTable(tree('data/descriptors/hangar_descriptor_table.json'));
+const luggages = parseLuggageTable(tree('data/descriptors/luggage_descriptor_table.json'));
 const stage = parseStageSchedule(tree('data/maps/stage_levels_01.json'));
 const area = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(1)!;
 
@@ -1047,13 +1049,13 @@ describe('simulation, stage 3 (monsters)', () => {
   });
 
   it('schedules as many fogs as the level has, one in each slice of its time', () => {
-    expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => monsters(level).fogSchedule.length)).toEqual([0, 0, 1, 2, 2, 4, 2, 2]);
+    expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => monsters(level).hazardSchedule.length)).toEqual([0, 0, 1, 2, 2, 4, 2, 2]);
     // Level 4 lasts 220 s: two slices of 95 s, and this dice picks the middle of each.
     const sim = steady(4);
     expect(sim.totalTime).toBe(220);
-    expect(sim.fogSchedule).toEqual([
-      { time: 47.5, runway: 1 },
-      { time: 142.5, runway: 1 },
+    expect(sim.hazardSchedule).toEqual([
+      { time: 47.5, runway: 1, kind: 'fog' },
+      { time: 142.5, runway: 1, kind: 'fog' },
     ]);
   });
 
@@ -1072,7 +1074,7 @@ describe('simulation, stage 3 (monsters)', () => {
     expect(sim.addOrder(plane, sim.runways[0]!)).toBe(true);
     runUntil(sim, () => runway.fog?.lifting === true, 20, events);
     expect(sim.time - appeared).toBeCloseTo(RULES.fog.time, 1);
-    expect(events.filter((e) => e.type === 'fogLifted')).toEqual([{ type: 'fogLifted', runway, byMachine: false }]);
+    expect(events.filter((e) => e.type === 'hazardLifted')).toEqual([{ type: 'hazardLifted', runway, kind: 'fog', byMachine: false }]);
     // Lifting, it can be used again, and it has gone half a second later.
     const other = sim.planes.find((p) => !p.gone && !p.landed && p.state === PlaneState.FLYING && p !== plane);
     if (other) expect(sim.addOrder(other, runway)).toBe(true);
@@ -1087,10 +1089,10 @@ describe('simulation, stage 3 (monsters)', () => {
     runUntil(sim, () => runway.fog !== null, 60, events);
     const appeared = sim.time;
     runUntil(sim, () => runway.fog?.machine !== null && runway.fog?.machine !== undefined, 5, events);
-    expect(sim.time - appeared).toBeCloseTo(RULES.fog.machineAt, 1);
+    expect(sim.time - appeared).toBeCloseTo(RULES.hazards.machineAt, 1);
     runUntil(sim, () => runway.fog?.lifting === true, 10, events);
-    expect(sim.time - appeared).toBeCloseTo(RULES.fog.machineAt + RULES.fog.machineTime, 1);
-    expect(events.filter((e) => e.type === 'fogLifted')).toEqual([{ type: 'fogLifted', runway, byMachine: true }]);
+    expect(sim.time - appeared).toBeCloseTo(RULES.hazards.machineAt + RULES.fog.machineTime, 1);
+    expect(events.filter((e) => e.type === 'hazardLifted')).toEqual([{ type: 'hazardLifted', runway, kind: 'fog', byMachine: true }]);
   });
 
   it('waits for a busy runway and gives up on the fog after twenty-five seconds', () => {
@@ -1102,13 +1104,100 @@ describe('simulation, stage 3 (monsters)', () => {
     plane.energy = 100;
     sim.addOrder(plane, runway);
     runUntil(sim, () => plane.landed, 40);
-    run(sim, 47.5 + RULES.fog.patience + 1 - sim.time);
+    run(sim, 47.5 + RULES.hazards.patience + 1 - sim.time);
     expect(runway.fog).toBeNull();
-    expect(sim.fogSchedule).toEqual([{ time: 142.5, runway: 1 }]);
+    expect(sim.hazardSchedule).toEqual([{ time: 142.5, runway: 1, kind: 'fog' }]);
   });
 
   it('has its bonus events on levels 2, 6 and 8', () => {
     expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => monsters(level).bonus?.kind ?? null)).toEqual([null, 'balloons', null, null, null, 'helicopter', null, 'balloons']);
+  });
+});
+
+describe('simulation, stage 4 (north pole)', () => {
+  const stage4 = parseStageSchedule(tree('data/maps/stage_levels_04.json'));
+  const area4 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(4)!;
+  const pole = (level = 1, owned: number[] = [], random?: () => number): Simulation =>
+    new Simulation({ layout: NORTH_POLE, schedule: findLevel(stage4, level, false), goals: findGoals(area4, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480, ...(random ? { random } : {}) });
+
+  it('builds the airport the stage script builds, with its luggage conveyor', () => {
+    const sim = pole();
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 6, { x: 40, y: 105 }],
+      ['B', 6, { x: 110, y: 105 }],
+    ]);
+    expect(sim.luggages.map((l) => [l.position, l.descriptor.type])).toEqual([[{ x: 440, y: 120 }, 1]]);
+    expect(sim.gasStations.map((g) => g.position)).toEqual([{ x: 420, y: 255 }]);
+    expect(sim.hangars.map((h) => h.position)).toEqual([{ x: 340, y: 85 }]);
+    for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.luggages, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('has three tiers of gate, the last improvement winning', () => {
+    const sim = pole(1, [0x1e, 0x28, 0x1f, 0x2a, 0x17]);
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type])).toEqual([
+      ['A', 8],
+      ['B', 7],
+      ['C', 8],
+      ['D', 6],
+    ]);
+  });
+
+  it('loads luggage on a plane that needs it, between the services and the gate', () => {
+    const sim = pole(8);
+    const conveyor = sim.luggages[0]!;
+    const events: SimEvent[] = [];
+    runUntil(sim, () => sim.planes.some((p) => !p.gone && !p.luggageDone && p.serviceDone && p.gasDone), 300, events);
+    const plane = sim.planes.find((p) => !p.gone && !p.luggageDone && p.serviceDone && p.gasDone)!;
+    plane.energy = 100;
+    sim.addOrder(plane, sim.runways[0]!);
+    // Not before it has unloaded.
+    runUntil(sim, () => plane.landed, 60, events);
+    expect(sim.addOrder(plane, conveyor)).toBe(false);
+    sim.addOrder(plane, sim.gates[0]!);
+    runUntil(sim, () => plane.unloaded && plane.state === PlaneState.WAITING, 80, events);
+    expect(plane.need).toBe(Need.LUGGAGE);
+    // The gate will not take it back until the luggage is on or queued.
+    expect(sim.addOrder(plane, sim.gates[1]!)).toBe(false);
+    expect(sim.addOrder(plane, conveyor)).toBe(true);
+    runUntil(sim, () => plane.state === PlaneState.LUGGAGE, 60, events);
+    const started = sim.time;
+    plane.energy = 0.5;
+    runUntil(sim, () => plane.state === PlaneState.WAITING, 60, events);
+    expect(sim.time - started).toBeCloseTo(plane.descriptor.times.luggageLoading / conveyor.descriptor.speed, 1);
+    expect(plane.luggageDone).toBe(true);
+    expect(plane.need).toBe(Need.LOAD);
+    // Loading luggage costs no energy (it is waiting again for the last frame) and pays the
+    // plane's luggage points.
+    expect(plane.energy).toBeCloseTo(0.5, 2);
+    const award = events.filter((e) => e.type === 'score' && e.plane === plane && e.reason === 'service').at(-1)!;
+    expect(award).toMatchObject({ points: roundScore(0.5 * plane.descriptor.points.luggage) });
+    expect(conveyor.use).toBe('done');
+  });
+
+  it('freezes a runway for thirty seconds, or nine with the deicer', () => {
+    const steady = (owned: number[]): Simulation => pole(4, owned, () => 0.5);
+    const sim = steady([]);
+    expect(sim.hazardSchedule.map((h) => h.kind)).toEqual(['ice', 'ice']);
+    const first = sim.hazardSchedule[0]!;
+    const runway = sim.runways[first.runway]!;
+    const events: SimEvent[] = [];
+    runUntil(sim, () => runway.ice !== null, 200, events);
+    const appeared = sim.time;
+    const plane = sim.planes.find((p) => !p.gone && !p.landed && p.state === PlaneState.FLYING);
+    if (plane) expect(sim.addOrder(plane, runway)).toBe(false);
+    runUntil(sim, () => runway.ice?.lifting === true, 40, events);
+    expect(sim.time - appeared).toBeCloseTo(RULES.ice.time, 1);
+
+    const quick = steady([0x6e]);
+    const other = quick.runways[quick.hazardSchedule[0]!.runway]!;
+    runUntil(quick, () => other.ice !== null, 200);
+    const from = quick.time;
+    runUntil(quick, () => other.ice?.lifting === true, 40);
+    expect(quick.time - from).toBeCloseTo(RULES.hazards.machineAt + RULES.ice.machineTime, 1);
+  });
+
+  it('has its bonus events on levels 2, 6 and 8', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => pole(level).bonus?.kind ?? null)).toEqual([null, 'helicopter', null, null, null, 'balloons', null, 'helicopter']);
   });
 });
 

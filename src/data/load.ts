@@ -1,11 +1,13 @@
 import {
   parseGasStationTable,
+  parseLuggageTable,
   parseGateTable,
   parseHangarTable,
   parseRunwayTable,
   type GasStationDescriptor,
   type GateDescriptor,
   type HangarDescriptor,
+  type LuggageDescriptor,
   type RunwayDescriptor,
 } from './airport';
 import { parseLevelsDb, parseStageSchedule, type AreaInfo, type StageSchedule } from './levels';
@@ -21,6 +23,7 @@ export interface GameData {
   runways: Map<number, RunwayDescriptor>;
   gasStations: Map<number, GasStationDescriptor>;
   hangars: Map<number, HangarDescriptor>;
+  luggages: Map<number, LuggageDescriptor>;
   areas: Map<number, AreaInfo>;
   stage(number: number): Promise<StageSchedule>;
   /** Where each level's marker sits on the world map, in map pixels: `positions.get(stage)[level - 1]`. */
@@ -38,7 +41,7 @@ async function json<T>(rel: string): Promise<T> {
 }
 
 export async function loadGameData(): Promise<GameData> {
-  const [resources, planes, gates, runways, levelsDb, gasStations, hangars] = await Promise.all([
+  const [resources, planes, gates, runways, levelsDb, gasStations, hangars, luggages] = await Promise.all([
     json<ResourcesData>('resources.json'),
     json<XmlNode[]>('data/descriptors/plane_descriptor_table.json'),
     json<XmlNode[]>('data/descriptors/gate_descriptor_table.json'),
@@ -46,6 +49,7 @@ export async function loadGameData(): Promise<GameData> {
     json<XmlNode[]>('data/descriptors/levels_db.json'),
     json<XmlNode[]>('data/descriptors/gas_station_descriptor_table.json'),
     json<XmlNode[]>('data/descriptors/hangar_descriptor_table.json'),
+    json<XmlNode[]>('data/descriptors/luggage_descriptor_table.json'),
   ]);
   return {
     resources: new Resources(resources),
@@ -54,6 +58,7 @@ export async function loadGameData(): Promise<GameData> {
     runways: parseRunwayTable(runways),
     gasStations: parseGasStationTable(gasStations),
     hangars: parseHangarTable(hangars),
+    luggages: parseLuggageTable(luggages),
     areas: parseLevelsDb(levelsDb),
     stage: async (number) =>
       parseStageSchedule(await json<XmlNode[]>(`data/maps/stage_levels_${String(number).padStart(2, '0')}.json`)),

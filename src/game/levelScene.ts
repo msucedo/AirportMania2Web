@@ -23,6 +23,8 @@ import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from 
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { BONUS_SURFACES, BonusView } from './view/bonusView';
 import { FOG_SURFACES, FogView } from './view/fogView';
+import { ICE_SURFACES, IceView } from './view/iceView';
+import { LuggageView, luggageSurfaceIds } from './view/luggageView';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
 import { GateView, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
@@ -91,8 +93,10 @@ export class LevelScene {
   moviesTab: ServiceTab | null = null;
   private readonly bonusView: BonusView;
   private readonly fogViews: FogView[] = [];
-  /** The anti-fog machines' fans, by runway number. */
-  private readonly fans = new Map<number, ReturnType<AudioPlayer['loop']>>();
+  private readonly iceViews: IceView[] = [];
+  private readonly luggageViews: LuggageView[] = [];
+  /** The anti-fog machines' fans and the deicers' motors, by kind and runway number. */
+  private readonly fans = new Map<string, ReturnType<AudioPlayer['loop']>>();
   /** The helicopter's engine while it crosses. */
   private rotor: ReturnType<AudioPlayer['loop']> = null;
   /** Seconds until each plane filling up may whistle. */
@@ -145,6 +149,7 @@ export class LevelScene {
       gates: data.gates,
       runways: data.runways,
       gasStations: data.gasStations,
+      luggages: data.luggages,
       hangars: data.hangars,
       level: options.level,
       screenWidth: SCREEN_WIDTH,
@@ -160,11 +165,13 @@ export class LevelScene {
     if (sim.stopSpots.some((spot) => spot.painting)) for (const id of PAINTING_SURFACES) ids.add(id);
     if (sim.stopSpots.some((spot) => spot.wash)) ids.add('WASH_AND_GO.GRATING');
     if (sim.bonus) for (const id of BONUS_SURFACES[sim.bonus.kind]) ids.add(id);
-    if (sim.fogSchedule.length > 0) for (const id of FOG_SURFACES) ids.add(id);
+    if (sim.hazardSchedule.some((h) => h.kind === 'fog')) for (const id of FOG_SURFACES) ids.add(id);
     sim.gates.forEach((gate) => {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
     for (const station of sim.gasStations) for (const id of gasStationSurfaceIds(station)) ids.add(id);
+    for (const luggage of sim.luggages) for (const id of luggageSurfaceIds(luggage)) ids.add(id);
+    if (sim.hazardSchedule.some((h) => h.kind === 'ice')) for (const id of ICE_SURFACES) ids.add(id);
     for (const hangar of sim.hangars) {
       ids.add(hangar.descriptor.surfaces.back);
       ids.add(hangar.descriptor.surfaces.front);
@@ -262,8 +269,8 @@ export class LevelScene {
   /**
    * Image for the thought cloud: the one the place the plane goes to next was built with
    * (`place+0xc`, loaded as `INDICATORS.THOUGHT_ICONS.<n>` by 0x6abc8). Runways use their number
-   * less one, gates 5 onwards by letter, the gas station 10, the hangar 11, a stop spot 12 and
-   * the painting stop spot 15.
+   * less one, gates 5 onwards by letter, the gas station 10, the hangar 11, a stop spot 12, the
+   * wash and go 13, the luggage conveyor 14 and the painting stop spot 15.
    */
   private destinationIcon(plane: Plane): number {
     const next = plane.queue[0]!;
@@ -271,6 +278,7 @@ export class LevelScene {
     if (next.kind === 'gate') return 5 + next.letter.charCodeAt(0) - 'A'.charCodeAt(0);
     if (next.kind === 'gasStation') return 10;
     if (next.kind === 'hangar') return 11;
+    if (next.kind === 'luggage') return 14;
     return next.painting ? 15 : next.wash ? 13 : 12;
   }
 
@@ -385,7 +393,12 @@ export class LevelScene {
     for (const runway of this.sim.runways) {
       const view = new RunwayView(this.textures, runway);
       this.runwayViews.push(view);
-      if (this.sim.fogSchedule.length > 0) {
+      if (this.sim.hazardSchedule.some((h) => h.kind === 'ice')) {
+        const ice = new IceView(this.textures, runway);
+        this.iceViews.push(ice);
+        this.ground.addChild(ice);
+      }
+      if (this.sim.hazardSchedule.some((h) => h.kind === 'fog')) {
         const fog = new FogView(this.textures, runway);
         this.fogViews.push(fog);
         this.planeLayer.addChild(fog);
@@ -451,6 +464,11 @@ export class LevelScene {
       const view = new GasStationView(this.textures, station);
       this.ground.addChild(view);
       this.stationViews.push(view);
+    }
+    for (const luggage of this.sim.luggages) {
+      const view = new LuggageView(this.textures, luggage);
+      this.ground.addChild(view);
+      this.luggageViews.push(view);
     }
     for (const decoration of layout.decorations) {
       const sprite = this.textures.sprite(decoration.resource);
@@ -574,14 +592,22 @@ export class LevelScene {
       case 'washStarted':
         this.audio.play('SOUNDS.WASHING');
         break;
-      case 'antiFogStarted':
-        this.fans.set(event.runway.number, this.audio.loop('SOUNDS.ANTI_FOG_SYSTEM_FAN'));
+      case 'luggageStarted':
+        this.audio.play(event.luggage.descriptor.sound);
         break;
-      case 'fogLifted':
-        this.fans.get(event.runway.number)?.stop(0.5);
-        this.fans.delete(event.runway.number);
+      case 'hazardAppeared':
+        if (event.kind === 'ice') this.audio.play('SOUNDS.RUNWAY_FREEZING');
+        break;
+      case 'hazardMachine':
+        this.fans.set(`${event.kind}-${event.runway.number}`, this.audio.loop(event.kind === 'fog' ? 'SOUNDS.ANTI_FOG_SYSTEM_FAN' : 'SOUNDS.DE_ICER_WORKING'));
+        break;
+      case 'hazardLifted': {
+        const key = `${event.kind}-${event.runway.number}`;
+        this.fans.get(key)?.stop(0.5);
+        this.fans.delete(key);
         if (event.byMachine) this.audio.play('SOUNDS.ANTI_FOG_DEICER_FINISH');
         break;
+      }
       case 'paintingReady':
         this.audio.play('SOUNDS.PAINTING_READY');
         break;
@@ -628,6 +654,8 @@ export class LevelScene {
     this.drawPainting(elapsed);
     this.bonusView.update(elapsed);
     for (const fog of this.fogViews) fog.update(elapsed);
+    for (const ice of this.iceViews) ice.update(elapsed);
+    for (const luggage of this.luggageViews) luggage.update(elapsed);
     if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);
     this.coffeeTab?.update(elapsed);

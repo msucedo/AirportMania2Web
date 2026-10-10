@@ -15,6 +15,8 @@ export const PlaneState = {
   PAINTING: 8,
   /** Being washed on a wash and go (0x67b8). */
   WASHING: 9,
+  /** Taking its luggage on at the conveyor (0x6820). */
+  LUGGAGE: 10,
   TAKING_OFF: 11,
   /** In the air after the take-off run. */
   AIRBORNE: 12,
@@ -122,13 +124,17 @@ export const RULES = {
   painting: { recharge: 42, colorAt: 4, duration: 5.5, energy: 0.4 },
 
   /**
-   * Runway fog. The schedule (0x102d8) leaves `margin` seconds free at the end of the level and
-   * keeps two fogs on one runway `apart` seconds from each other, in `tries` attempts. A fog due
-   * (0x1094c) waits for its runway to have been idle `idle` seconds, for at most `patience`. It
-   * lasts `time` seconds (0x3a41c), fading in and out at `fade` a second; with the anti-fog a
-   * machine comes `machineAt` seconds in and ends it `machineTime` seconds later (0x19b78).
+   * Things that close a runway for a while: fog and ice. The schedule (0x102d8) leaves `margin`
+   * seconds free at the end of the level and keeps two on one runway `apart` seconds from each
+   * other. One that is due (0x1094c) waits for its runway to have been idle `idle` seconds, for
+   * at most `patience`. It fades in and out at `fade` a second, and with its improvement a
+   * machine comes `machineAt` seconds in. Per kind: the attempts made to place it, how long it
+   * lasts, and how long the machine takes to end it (fog 0x3a41c and 0x19b78, ice 0x4b850 and
+   * 0x2ad80).
    */
-  fog: { margin: 30, apart: 30, tries: 30, idle: 3, patience: 25, time: 15, fade: 2, machineAt: 2, machineTime: 5 },
+  hazards: { margin: 30, apart: 30, idle: 3, patience: 25, fade: 2, machineAt: 2 },
+  fog: { tries: 30, time: 15, machineTime: 5 },
+  ice: { tries: 20, time: 30, machineTime: 7 },
 
   /**
    * Wash and go (0x84d60, 0x852b0): a wash takes `time` seconds, the plane is clean with `rinse`

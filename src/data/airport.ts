@@ -89,6 +89,39 @@ export function parseGateTable(tree: XmlNode[]): Map<number, GateDescriptor> {
   return table;
 }
 
+/** A luggage conveyor: where planes that need it take their luggage on before loading. */
+export interface LuggageDescriptor {
+  type: number;
+  /** Multiplier applied to the luggage loading speed. */
+  speed: number;
+  surfaces: { back: string; front: string; remark: string; spot: string };
+  sound: string;
+  node: Point;
+  click: Rect;
+  /** The conveyor's animation: frames `<resource>.<n>` at an offset, at `speed` frames a second. */
+  animation: { resource: string; position: Point; frames: number; speed: number };
+  parcelMarks: Point;
+}
+
+export function parseLuggageTable(tree: XmlNode[]): Map<number, LuggageDescriptor> {
+  const table = new Map<number, LuggageDescriptor>();
+  for (const node of children(root(tree, 'LuggageDescriptorTable'), 'Luggage')) {
+    const animation = requireChild(node, 'Animation');
+    const luggage: LuggageDescriptor = {
+      type: num(node, 'Type'),
+      speed: num(node, 'Speed'),
+      surfaces: { back: str(node, 'BackSurfaceResource'), front: str(node, 'FrontSurfaceResource'), remark: str(node, 'RemarkSurfaceResource'), spot: str(node, 'SpotSurfaceResource') },
+      sound: str(node, 'SoundResource'),
+      node: point(requireChild(node, 'NodePosition')),
+      click: rect(requireChild(node, 'ClickRectangle')),
+      animation: { resource: str(animation, 'Resource'), position: point(animation), frames: num(animation, 'frames'), speed: Number.parseFloat(str(animation, 'speed')) },
+      parcelMarks: point(requireChild(node, 'ParcerMarksPosition')),
+    };
+    table.set(luggage.type, luggage);
+  }
+  return table;
+}
+
 export function parseGasStationTable(tree: XmlNode[]): Map<number, GasStationDescriptor> {
   const table = new Map<number, GasStationDescriptor>();
   for (const node of children(root(tree, 'GasStationDescriptorTable'), 'GasStation')) {

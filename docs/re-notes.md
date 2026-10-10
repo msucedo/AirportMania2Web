@@ -1126,6 +1126,58 @@ one adds, removes or changes; `--level` shows what depends on the level.
 - Limits: what a builder does with its arguments still has to be read; a call whose return
   value the script tests gets a blank object, which may take a branch the game would not.
 
+## Stage 4 ("North Pole") — read with the emulated script (`0xd2958`)
+
+- Gates of descriptor types 6, 7 (improved) and 8 (improved again, new here): A (40, 105),
+  B (110, 105), C (180, 105) with `0x16`, `0x20` or `0x2a`, D (250, 105) with `0x17`, `0x21` or
+  `0x2b`. First upgrades `0x1e`–`0x21`, second upgrades `0x28`–`0x2b`.
+- Gas station type 4 at (420, 255), hangar type 2 at (340, 85) and luggage conveyor type 1 at
+  (440, 120), all from level 1.
+- Taxi nodes (250, 225), (290, 225), (265, 245), (305, 245), (280, 265), (320, 265), (360, 300),
+  (380, 300), (380, 312).
+- Runways of type 3 created with flag 0: (−5, 217) and (30, 257); with `0x34`, (−5, 202),
+  (30, 232) and (65, 262). Stop spots, wash and go and painting stop spot as in stage 3.
+- Backdrop: sky 70, `BACKGROUND_DOWN` at (0, 162) scaled 16×14.5, clouds, `BACKGROUND_TOP` at
+  (0, 45), and a flying Santa (`0x13f84`). The neutral gate colour is (0.549, 0.345, 1).
+- Offers in the order registered: `0x01` 25000, `0x77` 160000, `0x02` 35000, `0x0a` 60000,
+  `0x72` 160000, `0x16` 60000, `0x17` 70000, `0x1e` 55000, `0x1f` 65000, `0x20` 75000, `0x21`
+  85000, `0x28` 50000, `0x29` 60000, `0x2a` 70000, `0x34` 120000, deicer `0x6e` 100000, `0x74`
+  80000, `0x73` 80000, licence `0xce` 200000, `0x2b` 80000. Single-improvement runs show the
+  same pattern of conditions as stage 3, with each second upgrade needing the first and hiding
+  it; the run over every combination has not finished.
+- Bonus events: helicopter on level 2 (25.2 s, coins of 1000) and level 8 (64.9 s, 1500),
+  balloons on level 6 (132.1 s, 1000).
+- Ice per level, from the levels database: 1 on levels 3 and 8, 2 on 4, 5 and 7, 4 on 6.
+
+## Luggage conveyor — confirmed
+
+Class with vtable `0x17ad68`, kind 7, built by `0x14738`; thought image 14. Its descriptor
+(`luggage_descriptor_table`) gives the speed, images, sound, node, touch area and the belt's
+animation.
+
+- Accepts (`0x570a8`) a plane that has unloaded and still lacks its luggage, has no conveyor in
+  its itinerary already, and has the hangar and the gas it needs done or in the itinerary.
+- May be entered (`0x56c18`) once the plane has landed, unloaded and had its service and gas.
+- Arrival (`0x56b78`): 0.25 energy; a plane lacking luggage goes to state 10 and the conveyor's
+  sound starts. Update (`0x56ca0`): the clock advances by the descriptor's speed and when it
+  passes the plane's `LuggageLoadingTime` the plane waits again with the luggage on and loading
+  as its need (`0x6848`), scoring `round5(clamp(energy) × LuggagePoints)`.
+- The gate takes an unloaded plane back only with its luggage on or queued (as with gas and
+  the hangar).
+- Web version: its draw routine (`0x56dac`, with the parcels on the belt) and its own taxi
+  nodes have not been read; the belt just runs while loading.
+
+## Runway ice — confirmed
+
+- Scheduled like fog (the ices are appended after the fogs, with 20 attempts each instead of
+  30) and created by `0x6d41c` at `runway+0xcc`. Class `0x4b71c`.
+- It lasts 30 s (`0x4b850`) and plays `SOUNDS.RUNWAY_FREEZING`. With the deicer `0x6e`
+  (`airport+0xac`) a deicer (`0x2ac90`, `SOUNDS.DE_ICER_WORKING`) comes 2 s in and ends it 7 s
+  later (`0x2ad80`).
+- Drawn (`0x4b9d4`) as `RUNWAY.FROZEN` over the runway, with the fade as opacity.
+- Web version: the deicer's draw (`0x2ae50`) has only been read in part; it is shown rocking
+  over the runway. Sand (`runway+0xd4`, `0x6d4d0`, anti-sand `0x70`) is not built yet.
+
 ## Stage 3: what is still approximate
 
 - Scenery not drawn: the six stars, the scary clouds and the witch crossing the sky, the five

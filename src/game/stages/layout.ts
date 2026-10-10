@@ -11,6 +11,8 @@ export interface GateSlot {
   requires: number[] | null;
   /** Improvement that switches the gate to its upgraded descriptor. */
   upgradedBy: number;
+  /** Improvement that switches it to the stage's third gate descriptor, where there is one. */
+  upgradedAgainBy?: number;
   /** Where the upgraded gate goes, when the stage script puts it somewhere else. */
   upgradedPosition?: Point;
 }
@@ -67,8 +69,8 @@ export interface StageLayout {
   stage: number;
   /** Colour of a gate nobody has used yet: each stage script overwrites entry 0 of the colour table. */
   neutralColor: number;
-  /** Gate descriptor types: [normal, upgraded]. */
-  gateTypes: [number, number];
+  /** Gate descriptor types: normal, upgraded and, in later stages, upgraded again. */
+  gateTypes: [number, number] | [number, number, number];
   runwayType: number;
   gasStationType: number;
   backdrop: {
@@ -97,6 +99,8 @@ export interface StageLayout {
   gasStation: { position: Point; minLevel: number };
   /** Repair hangar, when the stage has one. */
   hangar: { position: Point; type: number; minLevel: number } | null;
+  /** Luggage conveyor, when the stage has one. */
+  luggage?: { position: Point; type: number; minLevel: number } | null;
   taxiNodes: Point[];
   runways: RunwaySlot[];
   /** The runways the stage builds instead once an improvement that adds one is owned. */
@@ -143,7 +147,12 @@ export const IMPROVEMENT = {
   UPGRADED_GATE_B: 0x1f,
   UPGRADED_GATE_C: 0x20,
   UPGRADED_GATE_D: 0x21,
+  MORE_UPGRADED_GATE_A: 0x28,
+  MORE_UPGRADED_GATE_B: 0x29,
+  MORE_UPGRADED_GATE_C: 0x2a,
+  MORE_UPGRADED_GATE_D: 0x2b,
   EXTRA_RUNWAY_3: 0x34,
+  DEICER: 0x6e,
   ANTI_FOG: 0x6f,
   PAINTING_STOP_SPOT: 0x72,
   IN_FLIGHT_MOVIES: 0x73,
@@ -152,6 +161,7 @@ export const IMPROVEMENT = {
   PLANE_4_LICENCE: 0xcb,
   PLANE_5_LICENCE: 0xcc,
   PLANE_6_LICENCE: 0xcd,
+  PLANE_7_LICENCE: 0xce,
 } as const;
 
 const offer = (
