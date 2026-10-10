@@ -9,6 +9,7 @@ import { Need, PlaneState, RULES, punctuality, roundScore } from '../src/game/si
 import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulation';
 import { ARCHES } from '../src/game/stages/arches';
 import { ISLAND } from '../src/game/stages/island';
+import { MONSTERS } from '../src/game/stages/monsters';
 
 const generated = path.resolve(__dirname, '../src/data/generated');
 const tree = (rel: string): XmlNode[] => JSON.parse(fs.readFileSync(path.join(generated, rel), 'utf8')) as XmlNode[];
@@ -911,6 +912,61 @@ describe('simulation, stage 2 (island)', () => {
     const landedAt = plane.energy;
     for (let i = 0; i < 60; i++) sim.update(1 / 60);
     expect(landedAt - plane.energy).toBeCloseTo(1 / fall, 2);
+  });
+});
+
+describe('simulation, stage 3 (monsters)', () => {
+  const stage3 = parseStageSchedule(tree('data/maps/stage_levels_03.json'));
+  const area3 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(3)!;
+  const monsters = (level = 1, ...owned: number[]): Simulation =>
+    new Simulation({
+      layout: MONSTERS,
+      schedule: findLevel(stage3, level, false),
+      goals: findGoals(area3, level, false),
+      planes,
+      gates,
+      runways,
+      gasStations,
+      hangars,
+      level,
+      improvements: new Set(owned),
+      screenWidth: 480,
+    });
+
+  it('builds the airport the stage script builds', () => {
+    const sim = monsters();
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 4, { x: 365, y: 145 }],
+      ['B', 4, { x: 395, y: 188 }],
+    ]);
+    // Water-style runways: the node is at the right end.
+    expect(sim.runways.map((r) => [r.number, r.node])).toEqual([
+      [1, { x: 139, y: 210 }],
+      [2, { x: 174, y: 250 }],
+    ]);
+    expect(sim.gasStations.map((g) => g.position)).toEqual([{ x: 60, y: 107 }]);
+    expect(sim.hangars.map((h) => h.position)).toEqual([{ x: 170, y: 107 }]);
+    expect(sim.stopSpots.map((s) => s.position)).toEqual([{ x: 270, y: 300 }]);
+    for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('adds gates C and D and lays the runways out again with the third one', () => {
+    const sim = monsters(1, 0x16, 0x21, 0x34);
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type])).toEqual([
+      ['A', 4],
+      ['B', 4],
+      ['C', 4],
+      ['D', 5],
+    ]);
+    expect(sim.runways.map((r) => [r.number, r.position])).toEqual([
+      [1, { x: -5, y: 195 }],
+      [2, { x: 30, y: 225 }],
+      [3, { x: 65, y: 255 }],
+    ]);
+  });
+
+  it('has its bonus events on levels 2, 6 and 8', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => monsters(level).bonus?.kind ?? null)).toEqual([null, 'balloons', null, null, null, 'helicopter', null, 'balloons']);
   });
 });
 

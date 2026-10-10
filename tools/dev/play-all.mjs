@@ -1,12 +1,12 @@
-// Plays every level of stages 1 and 2 in order through the simulation API and checks that each
+// Plays every level of stages 1 to 3 in order through the simulation API and checks that each
 // can be passed and that progress chains: the next level opens with this one's score as funds,
-// and clearing stage 1 opens stage 2. Usage: node tools/dev/play-all.mjs <baseUrl>
+// and clearing a stage opens the next. Usage: node tools/dev/play-all.mjs <baseUrl>
 import { createRequire } from 'node:module';
 const require = createRequire(process.env.PUPPETEER_FROM ?? '/Users/msaucedo/Documents/code/node_modules/');
 const puppeteer = require('puppeteer-core');
 
 const [base] = process.argv.slice(2);
-const LEVELS = [[1, 6], [2, 7]];
+const LEVELS = [[1, 6], [2, 7], [3, 8]];
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: true,

@@ -5,7 +5,7 @@ import type { Point } from '../../data/xml';
 // how the backdrop is built. Coordinates are screen pixels at 480×320.
 
 export interface GateSlot {
-  letter: 'A' | 'B' | 'C';
+  letter: 'A' | 'B' | 'C' | 'D';
   position: Point;
   /** Improvement that must be owned for the gate to exist; null when it always exists. */
   requires: number[] | null;
@@ -72,8 +72,11 @@ export interface StageLayout {
   runwayType: number;
   gasStationType: number;
   backdrop: {
-    /** Height given to the original `Sky` object: its gradient and clouds fit in it. */
-    sky: number;
+    /**
+     * Height given to the original `Sky` object: its gradient and clouds fit in it. Null for a
+     * stage that paints its own sky as one of the layers.
+     */
+    sky: number | null;
     /** Screen y down to which the sky's bottom colour is kept painted, behind the backdrop layers. */
     horizon: number;
     layers: BackdropLayer[];
@@ -96,6 +99,8 @@ export interface StageLayout {
   hangar: { position: Point; type: number; minLevel: number } | null;
   taxiNodes: Point[];
   runways: RunwaySlot[];
+  /** The runways the stage builds instead once an improvement that adds one is owned. */
+  runwaysWith?: { improvement: number; runways: RunwaySlot[] };
   stopSpots: { position: Point; requires: number | null; upgradedBy?: number; replacedBy?: number }[];
   /** Sprites of a stop spot, bottom to top, for the plain and the VIP version. */
   stopSpotSurfaces: { normal: string[]; vip: string[] };
@@ -129,13 +134,20 @@ export const IMPROVEMENT = {
   EXTRA_STOP_SPOT_2: 0x02,
   UPGRADED_STOP_SPOT: 0x0a,
   EXTRA_GATE_C: 0x16,
+  EXTRA_GATE_D: 0x17,
   UPGRADED_GATE_A: 0x1e,
   UPGRADED_GATE_B: 0x1f,
   UPGRADED_GATE_C: 0x20,
+  UPGRADED_GATE_D: 0x21,
+  EXTRA_RUNWAY_3: 0x34,
+  ANTI_FOG: 0x6f,
   PAINTING_STOP_SPOT: 0x72,
+  IN_FLIGHT_MOVIES: 0x73,
   COFFEE_AND_CAKE: 0x74,
+  WASH_AND_GO: 0x77,
   PLANE_4_LICENCE: 0xcb,
   PLANE_5_LICENCE: 0xcc,
+  PLANE_6_LICENCE: 0xcd,
 } as const;
 
 const offer = (

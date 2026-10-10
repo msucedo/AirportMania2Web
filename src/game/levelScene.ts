@@ -67,7 +67,7 @@ export class LevelScene {
   private readonly overlay = new Container();
   private readonly gateViews: { gate: Gate; view: GateView }[] = [];
   private readonly flags: OrderFlags;
-  private sky!: SkyView;
+  private sky: SkyView | null = null;
   private readonly runwayViews: RunwayView[] = [];
   private sparkles: SeaSparkles | null = null;
   private rings: WaterRings | null = null;
@@ -345,8 +345,10 @@ export class LevelScene {
   private build(): void {
     const { layout } = this.options;
     const { horizon, layers } = layout.backdrop;
-    this.sky = new SkyView(this.textures, layout.backdrop.sky, horizon);
-    this.ground.addChild(this.sky);
+    if (layout.backdrop.sky !== null) {
+      this.sky = new SkyView(this.textures, layout.backdrop.sky, horizon);
+      this.ground.addChild(this.sky);
+    }
 
     layers.forEach((layer, index) => {
       const sprite = this.textures.sprite(layer.resource);
@@ -581,7 +583,7 @@ export class LevelScene {
     for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, gate.lastColor ? tintOf(gate.lastColor) : this.options.layout.neutralColor);
     this.report?.update(seconds);
     const elapsed = this.paused ? 0 : seconds;
-    this.sky.update(elapsed);
+    this.sky?.update(elapsed);
     this.sparkles?.update(elapsed);
     this.rings?.update(elapsed);
     this.drawPainting(elapsed);

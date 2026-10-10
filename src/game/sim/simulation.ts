@@ -398,7 +398,8 @@ export class Simulation {
 
     const runwayDescriptor = config.runways.get(layout.runwayType);
     if (!runwayDescriptor) throw new Error(`Missing runway descriptor ${layout.runwayType}`);
-    for (const slot of layout.runways) {
+    const runwaySlots = layout.runwaysWith && owned.has(layout.runwaysWith.improvement) ? layout.runwaysWith.runways : layout.runways;
+    for (const slot of runwaySlots) {
       const { x, y } = slot.position;
       this.runways.push({
         kind: 'runway',
