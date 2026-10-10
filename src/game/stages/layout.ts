@@ -98,11 +98,13 @@ export interface StageLayout {
   gates: GateSlot[];
   gasStation: { position: Point; minLevel: number };
   /** Repair hangar, when the stage has one. */
-  hangar: { position: Point; type: number; minLevel: number } | null;
+  hangar: { position: Point; type: number; minLevel: number; improved?: { improvement: number; type: number } } | null;
   /** Luggage conveyor, when the stage has one. */
   luggage?: { position: Point; type: number; minLevel: number } | null;
   taxiNodes: Point[];
   runways: RunwaySlot[];
+  /** An improvement that gives runway 1 another descriptor (the VIP runway). */
+  vipRunway?: { improvement: number; type: number };
   /** The runways the stage builds instead once an improvement that adds one is owned. */
   runwaysWith?: { improvement: number; runways: RunwaySlot[] };
   /**
@@ -152,6 +154,8 @@ export const IMPROVEMENT = {
   MORE_UPGRADED_GATE_C: 0x2a,
   MORE_UPGRADED_GATE_D: 0x2b,
   EXTRA_RUNWAY_3: 0x34,
+  VIP_RUNWAY: 0x3c,
+  IMPROVED_HANGAR: 0x50,
   DEICER: 0x6e,
   ANTI_FOG: 0x6f,
   PAINTING_STOP_SPOT: 0x72,
@@ -162,6 +166,7 @@ export const IMPROVEMENT = {
   PLANE_5_LICENCE: 0xcc,
   PLANE_6_LICENCE: 0xcd,
   PLANE_7_LICENCE: 0xce,
+  PLANE_14_LICENCE: 0xd5,
 } as const;
 
 const offer = (

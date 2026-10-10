@@ -1149,6 +1149,35 @@ one adds, removes or changes; `--level` shows what depends on the level.
   balloons on level 6 (132.1 s, 1000).
 - Ice per level, from the levels database: 1 on levels 3 and 8, 2 on 4, 5 and 7, 4 on 6.
 
+## Stage 5 ("Airborne") — read with the emulated script (`0xd4f54`)
+
+- Gates of descriptor types 9, 10 (improved) and 11 (improved again), along the building:
+  A (345, 147), B (375, 192), C (405, 237) with `0x16`, `0x20` or `0x2a`, D (435, 282) with
+  `0x17`, `0x21` or `0x2b`.
+- Gas station type 5 at (137, 115), luggage conveyor type 2 at (240, 115) and hangar type 3 at
+  (48, 115); with the improved hangar `0x50` the script builds a hangar of type 8 there instead.
+- Taxi nodes (250, 185), (265, 205), (280, 225), (295, 245), (355, 312), (370, 312), (355, 300).
+- Runways of type 3: (−5, 200) and (35, 240); with `0x34`, (−5, 190), (25, 220) and (55, 250).
+  With the VIP runway `0x3c` runway 1 is built with type 7, whose descriptor doubles the combo
+  time (10 s against 5 s).
+- Stop spots at (270, 300), (170, 300) with `0x01` and (50, 300) with `0x02`; wash and go at
+  (169, 301) and the painting stop spot as in stages 3 and 4.
+- Backdrop: sky 140, `BACKGROUND_DOWN` at (0, 155) scaled 16×, `BACKGROUND_TOP` at (0, 44),
+  `HANGAR_BACK` at (0, 56) and `AIRPORT` at (360, 90). The neutral gate colour is
+  (0.804, 0.816, 1).
+- Offers in the order registered: `0x01` 40000, `0x77` 300000, `0x02` 60000, `0x0a` 120000,
+  `0x72` 300000, `0x16` 120000, `0x17` 135000, `0x1e` 110000, `0x1f` 125000, `0x20` 145000,
+  `0x21` 165000, `0x28` 100000, `0x29` 110000, `0x2a` 130000, `0x34` 200000, VIP runway `0x3c`
+  220000, improved hangar `0x50` 250000, `0x74` 150000, `0x73` 150000, anti-fog `0x6f` 150000,
+  licence `0xce` 400000, `0x2b` 150000. As for stage 4, when each is on sale follows the
+  pattern confirmed for stages 1 to 3 and single-improvement runs; the run over every
+  combination has not been done.
+- Bonus events: balloons on level 2 (39.9 s, 1500) and level 8 (118.3 s, 2000), helicopter
+  from the left on level 6 (134.3 s, coins of 1500).
+- Fog per level, from the levels database: 1 on level 3, 2 on levels 4, 5, 7 and 8, 4 on 6.
+- Web version: the scrolling clouds (`0x14858` ×5), the two propellers (`0x14928`) and the
+  four `0x14b5c` pieces of scenery are not drawn; only their arguments have been read.
+
 ## Luggage conveyor — confirmed
 
 Class with vtable `0x17ad68`, kind 7, built by `0x14738`; thought image 14. Its descriptor

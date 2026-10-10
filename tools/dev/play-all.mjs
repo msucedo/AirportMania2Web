@@ -1,4 +1,4 @@
-// Plays every level of stages 1 to 4 in order through the simulation API and checks that each
+// Plays every level of stages 1 to 5 in order through the simulation API and checks that each
 // can be passed and that progress chains: the next level opens with this one's score as funds,
 // and clearing a stage opens the next. Usage: node tools/dev/play-all.mjs <baseUrl>
 import { createRequire } from 'node:module';
@@ -6,13 +6,12 @@ const require = createRequire(process.env.PUPPETEER_FROM ?? '/Users/msaucedo/Doc
 const puppeteer = require('puppeteer-core');
 
 const [base] = process.argv.slice(2);
-const LEVELS = [[1, 6], [2, 7], [3, 8], [4, 8]];
+const LEVELS = [[1, 6], [2, 7], [3, 8], [4, 8], [5, 8]];
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: true,
   args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--window-size=960,640'],
 });
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failures = 0;
 const check = (ok, text) => {
   if (!ok) failures++;
@@ -46,7 +45,13 @@ try {
         const free = (place, plane) => !sim.planes.some((q) => q !== plane && !q.gone && (q.place === place || q.queue.includes(place)));
         // A free place if there is one; otherwise the plane queues for a taken one, as a player
         // would, which is what lets planes waiting for each other swap.
-        const pick = (places, plane) => places.find((place) => free(place, plane)) ?? places[plane.id % Math.max(1, places.length)];
+        // A runway under fog or ice takes no orders, so a clear one is preferred.
+        const clear = (place) => !((place.fog && !place.fog.lifting) || (place.ice && !place.ice.lifting));
+        const pick = (places, plane) => {
+          const usable = places.filter(clear);
+          const pool = usable.length > 0 ? usable : places;
+          return pool.find((place) => free(place, plane)) ?? pool[plane.id % Math.max(1, pool.length)];
+        };
         for (let i = 0; i < 60 * 900 && !sim.ended; i++) {
           for (const p of sim.planes) {
             if (p.gone || p.queue.length > 0) continue;
@@ -62,7 +67,8 @@ try {
         }
         return { ended: sim.ended, time: Math.round(sim.time), score: sim.score, goal: sim.goals.goal, served: sim.planesServed, lost: sim.planesLost, planes: sim.planes.length };
       });
-      await sleep(400);
+      // The scene saves the result on its next frame; wait for it rather than a fixed time.
+      await page.waitForFunction(([s, l, score]) => window.progress.result(s, l).best === score, { timeout: 5000 }, [stage, level, played.score]).catch(() => {});
       const after = await page.evaluate(([s, l]) => ({ result: window.progress.result(s, l), funds: window.progress.funds(s, l), error: document.body.dataset.error ?? null }), [stage, level]);
       check(played.ended, `ended after ${played.time} s: ${played.served} of ${played.planes} planes served, ${played.lost} lost`);
       check(played.score >= played.goal, `score ${played.score} reaches the goal of ${played.goal}`);

@@ -16,7 +16,8 @@ npm test
 
 The game opens on the original main menu and world map: touch a level's marker, or Play for the
 current one, and confirm in its dialog.
-Two stages are playable, Arches with six levels and the island with seven. Options in the main
+Five stages are playable (37 levels): Arches, the island, the monsters' stage, the North Pole
+and Airborne. Options in the main
 menu set the sound and music volume and, under Advanced, the language (eight are available);
 during a level the menu button opens the original menu, with the options and the ways out.
 
@@ -34,9 +35,9 @@ Planes have their full faces (mood, blinking, talking), landing gear, propellers
 colours; the sky runs its day and night cycle with sun, stars and clouds; the island has its sea
 glints, rings and buoys; runways show their combo arrows.
 
-Not there yet: dirt and washing, the help, users, credits and
-awards screens, and stages 5 to 10. Stage 3 can be played, without yet its animated scenery
-or the wash's rollers and water.
+Not there yet: the help, users, credits and awards screens, the tutorial, and stages 6 to 10.
+Stages 3 to 5 are played without their animated scenery, and the wash and the luggage conveyor
+without their full drawing; `docs/re-notes.md` lists what is still approximate.
 
 The rules come from the original binary. What was read, what is assumed and what is still a
 placeholder (some draw details, the payout rule) is tracked
@@ -63,5 +64,5 @@ after running it.
   `python3 -m venv .tools/venv && .tools/venv/bin/pip install unicorn`).
 - `tools/dev/play.mjs` — plays the first plane in a headless browser and takes screenshots.
 - `tools/dev/shoot-level.mjs` — drives a plane that needs fuel through a level and takes screenshots.
-- `tools/dev/play-all.mjs` — plays every level of stages 1 to 4 in order and checks that each can be passed and that progress chains.
+- `tools/dev/play-all.mjs` — plays every level of stages 1 to 5 in order and checks that each can be passed and that progress chains.
 - `tools/dev/shoot-flow.mjs` — checks a finished level, its report, saved progress, the shop and the next level.

@@ -7,6 +7,7 @@ import { parsePlaneTable } from '../src/data/planes';
 import type { XmlNode } from '../src/data/xml';
 import { Need, PlaneState, RULES, punctuality, roundScore } from '../src/game/sim/rules';
 import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulation';
+import { AIRBORNE } from '../src/game/stages/airborne';
 import { ARCHES } from '../src/game/stages/arches';
 import { ISLAND } from '../src/game/stages/island';
 import { MONSTERS } from '../src/game/stages/monsters';
@@ -1198,6 +1199,48 @@ describe('simulation, stage 4 (north pole)', () => {
 
   it('has its bonus events on levels 2, 6 and 8', () => {
     expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => pole(level).bonus?.kind ?? null)).toEqual([null, 'helicopter', null, null, null, 'balloons', null, 'helicopter']);
+  });
+});
+
+describe('simulation, stage 5 (airborne)', () => {
+  const stage5 = parseStageSchedule(tree('data/maps/stage_levels_05.json'));
+  const area5 = parseLevelsDb(tree('data/descriptors/levels_db.json')).get(5)!;
+  const airborne = (level = 1, owned: number[] = []): Simulation =>
+    new Simulation({ layout: AIRBORNE, schedule: findLevel(stage5, level, false), goals: findGoals(area5, level, false), planes, gates, runways, gasStations, hangars, luggages, level, improvements: new Set(owned), screenWidth: 480 });
+
+  it('builds the airport the stage script builds', () => {
+    const sim = airborne();
+    expect(sim.gates.map((g) => [g.letter, g.descriptor.type, g.position])).toEqual([
+      ['A', 9, { x: 345, y: 147 }],
+      ['B', 9, { x: 375, y: 192 }],
+    ]);
+    expect(sim.runways.map((r) => [r.number, r.descriptor.type, r.position])).toEqual([
+      [1, 3, { x: -5, y: 200 }],
+      [2, 3, { x: 35, y: 240 }],
+    ]);
+    expect([sim.gasStations[0]!.position, sim.hangars[0]!.position, sim.luggages[0]!.position]).toEqual([
+      { x: 137, y: 115 },
+      { x: 48, y: 115 },
+      { x: 240, y: 115 },
+    ]);
+    expect(sim.hangars[0]!.descriptor.type).toBe(3);
+    for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.luggages, ...sim.stopSpots]) expect(sim.graph.route(sim.runways[0]!.taxiNode, place.taxiNode)).not.toBeNull();
+  });
+
+  it('makes runway 1 the VIP runway and swaps in the improved hangar when owned', () => {
+    const sim = airborne(1, [0x3c, 0x50, 0x34]);
+    // The VIP runway keeps a combo going twice as long.
+    expect(sim.runways.map((r) => [r.number, r.descriptor.type, r.descriptor.comboTime])).toEqual([
+      [1, 7, 10],
+      [2, 3, 5],
+      [3, 3, 5],
+    ]);
+    expect(sim.hangars[0]!.descriptor.type).toBe(8);
+  });
+
+  it('has fog from level 3 and its bonus events on levels 2, 6 and 8', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => airborne(level).hazardSchedule.filter((h) => h.kind === 'fog').length)).toEqual([0, 0, 1, 2, 2, 4, 2, 2]);
+    expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => airborne(level).bonus?.kind ?? null)).toEqual([null, 'balloons', null, null, null, 'helicopter', null, 'balloons']);
   });
 });
 

@@ -450,7 +450,8 @@ export class Simulation {
         progress: 0,
       });
     }
-    const hangarDescriptor = layout.hangar ? config.hangars?.get(layout.hangar.type) : undefined;
+    const hangarType = layout.hangar?.improved && owned.has(layout.hangar.improved.improvement) ? layout.hangar.improved.type : layout.hangar?.type;
+    const hangarDescriptor = hangarType !== undefined ? config.hangars?.get(hangarType) : undefined;
     if (layout.hangar && hangarDescriptor && (config.level ?? 1) >= layout.hangar.minLevel) {
       const { x, y } = layout.hangar.position;
       const node = { x: x + hangarDescriptor.node.x, y: y + hangarDescriptor.node.y };
@@ -474,6 +475,8 @@ export class Simulation {
 
     const runwayDescriptor = config.runways.get(layout.runwayType);
     if (!runwayDescriptor) throw new Error(`Missing runway descriptor ${layout.runwayType}`);
+    // The VIP runway is runway 1 with another descriptor, whichever way the runways are laid out.
+    const vipRunway = layout.vipRunway && owned.has(layout.vipRunway.improvement) ? config.runways.get(layout.vipRunway.type) : undefined;
     const runwaySlots = layout.runwaysWith && owned.has(layout.runwaysWith.improvement) ? layout.runwaysWith.runways : layout.runways;
     for (const slot of runwaySlots) {
       const { x, y } = slot.position;
@@ -482,7 +485,7 @@ export class Simulation {
         id: `runway-${slot.number}`,
         number: slot.number,
         position: slot.position,
-        descriptor: runwayDescriptor,
+        descriptor: (slot.number === 1 && vipRunway) || runwayDescriptor,
         node: slot.node,
         taxiNode: this.graph.addRunway(slot.position, slot.node.x < x ? -1 : 1, Math.abs(slot.node.x - x)),
         // The node sits at the end where landings stop and take-offs start, so the take-off run
