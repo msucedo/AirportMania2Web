@@ -1514,6 +1514,13 @@ The stage scripts make these between their backdrop images; the web version keep
 list in that order (`backdrop.layers`) and makes a view for each piece
 (`src/game/view/scenery/`).
 
+Backdrop images and scenery are added to a list of the airport's own (`airport+8`, by
+`0xa3490(airport + 8, object)`), drawn in the order they were made. Places, planes and images
+with a depth go to another (`airport+0x14`), sorted by depth. When the stage script ends
+(`0x12fba`) that second list is sorted and added to the first as one more item (`0x12fce`). So
+everything the script made as scenery, even after the places, is drawn under every runway,
+place and plane; only what is added later (the service tabs) lies over them.
+
 - Flag (`0x1503c` → class `0x39484`, draw `0x39558`): its image, sheared by
   `0.05·sin(2π·frac(0.2·t))`, at its position. The tutorial has `STAGES.TUTORIAL.FLAG` at
   (245, 56).
@@ -1573,8 +1580,7 @@ list in that order (`backdrop.layers`) and makes a view for each piece
   With `c = π·clock` it is at position +
   (`10·sin(2c + phase) − 150·sin(0.3c)`,
   `1.1·(cos 2c + cos(11c + 0.13) + cos(20c + 0.15)) − 120·cos(0.3c)`), showing image
-  `STAGES.MONSTERS.BAT.<n>`, `n = int(6·frac(2t) + phase) mod 6`. Its clock is also its depth,
-  so it is drawn over the ground and under the gates and planes. Five, made after the places,
+  `STAGES.MONSTERS.BAT.<n>`, `n = int(6·frac(2t) + phase) mod 6`. Five, made after the places,
   all with loop 25 and span 10 and y 190: x 520 start 0 phase 15; 510, 0.37, 5; 540, 10.1, 7;
   540, 11.1, 0; 530, 1.27, 11.
 

@@ -2,7 +2,7 @@
 """Runs a compiled stage script in an emulator and reports what it builds.
 
 Usage: .tools/venv/bin/python -I tools/re/stage_layout.py <script> [--stage N] [--level N]
-                                                         [--own id,id,...] [--all] [--raw]
+                                                         [--own id,id,...] [--all] [--raw] [--floats]
 
 The script (a hex address such as 0xce178 for Arches) is executed on the thinned armv7 slice
 with a made-up airport, profile and level record. Every call that leaves the stage scripts'
@@ -221,13 +221,16 @@ class Run:
                 stack = [self.r32(sp + 4 * i) for i in range(8)]
                 args = [self.describe(v) for v in regs[1:]] + ['|'] + [self.describe(v) for v in stack]
                 s0 = struct.unpack('<f', struct.pack('<I', uc.reg_read(UC_ARM_REG_S0) & 0xffffffff))[0]
-                self.calls.append({'pc': lr & ~1, 'name': label, 'args': args, 'this': self.describe(regs[0]), 's0': s0})
+                self.calls.append({'pc': lr & ~1, 'name': label, 'args': args, 'this': self.describe(regs[0]), 's0': s0, 'words': list(regs[1:4]) + stack[:6]})
                 if address not in BUILDERS:
                     self.unknown[address] = self.unknown.get(address, 0) + 1
             result = self.alloc(0x800)
             self.objects[result] = f'{label}#{sum(1 for c in self.calls if c["name"] == label)}'
         uc.reg_write(UC_ARM_REG_R0, result)
         uc.reg_write(UC_ARM_REG_PC, lr | 1)
+
+
+FLOATS = False
 
 
 def line(call, raw):
@@ -237,7 +240,13 @@ def line(call, raw):
         args = args[:args.index('|') + 1 + keep]
         if args[-1] == '|':
             args = args[:-1]
-    return f"{call['name']:14s} {' '.join(args)}"
+    text = f"{call['name']:14s} {' '.join(args)}"
+    if FLOATS and 'words' in call:
+        # Every word as a float too: one whose bits happen to be a mapped address shows above as a pointer.
+        as_float = lambda v: f"{struct.unpack('<f', struct.pack('<I', v))[0]:.6g}"
+        words = call['words']
+        text += '   # floats: ' + ' '.join(as_float(v) for v in words[:3]) + ' | ' + ' '.join(as_float(v) for v in words[3:])
+    return text
 
 
 def tested_ids(run, script):
@@ -316,6 +325,7 @@ def main():
     parser.add_argument('--own', default='')
     parser.add_argument('--all', action='store_true')
     parser.add_argument('--raw', action='store_true')
+    parser.add_argument('--floats', action='store_true', help='show every argument word as a float as well')
     parser.add_argument('--offers', action='store_true')
     parser.add_argument('--only', default='', help='comma-separated call names to show')
     options = parser.parse_args()
@@ -328,6 +338,8 @@ def main():
     keep = lambda call: not only or call['name'] in only  # noqa: E731
 
     base = Run(script, options.stage, options.level, owned)
+    global FLOATS
+    FLOATS = options.floats
     lines = [line(c, options.raw) for c in base.calls if keep(c)]
     print(f'# script {script:#x}, stage {options.stage}, level {options.level}, owned {[hex(i) for i in owned]}')
     for call, text in zip([c for c in base.calls if keep(c)], lines):

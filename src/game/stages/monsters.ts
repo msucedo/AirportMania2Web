@@ -38,9 +38,8 @@ export const MONSTERS: StageLayout = {
       { scenery: 'fogPatch', resource: 'STAGES.MONSTERS.FOG_0', position: { x: 35, y: 98 }, flipped: false, loop: 16.3, span: 8, speed: -4.1, start: 1.7 },
       { scenery: 'fogPatch', resource: 'STAGES.MONSTERS.FOG_1', position: { x: 96, y: 93 }, flipped: true, loop: 16.3, span: 8, speed: 3.3, start: 10.7 },
       { scenery: 'fogPatch', resource: 'STAGES.MONSTERS.FOG_2', position: { x: 43, y: 100 }, flipped: false, loop: 19, span: 14, speed: 3.5, start: 7 },
-    ],
-    // Five bats, made last: they swoop in at the right edge, each on its own beat.
-    after: [
+      // Five bats, made once the airport's places are: they swoop in at the right edge, each on
+      // its own beat. Like all scenery they are drawn under the runways, the gates and the planes.
       { scenery: 'bat', position: { x: 520, y: 190 }, loop: 25, span: 10, start: 0, phase: 15 },
       { scenery: 'bat', position: { x: 510, y: 190 }, loop: 25, span: 10, start: 0.37, phase: 5 },
       { scenery: 'bat', position: { x: 540, y: 190 }, loop: 25, span: 10, start: 10.1, phase: 7 },

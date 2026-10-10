@@ -116,9 +116,12 @@ export interface StageLayout {
     sky: number | null;
     /** Screen y down to which the sky's bottom colour is kept painted, behind the backdrop layers. */
     horizon: number;
+    /**
+     * In the order the script makes them. The airport's own objects (runways, places, planes) are
+     * drawn after all of these, whenever the script made them: it hands them over, sorted by
+     * depth, when it ends (0x12fce).
+     */
     layers: BackdropEntry[];
-    /** Scenery the script makes once the airport's places are built: it lies over the ground and under the planes. */
-    after?: SceneryItem[];
   };
   /** The balloon corner the stage script gives its runways (see `BalloonCorner`). */
   runwayBalloonCorner: 0 | 1 | 2 | 3;
