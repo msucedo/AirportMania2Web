@@ -31,6 +31,7 @@ import { hintFor, hintImages } from './sim/hints';
 import { AWARD, awardSound, awardText } from './awards';
 import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView';
 import { SMOKE_SURFACES, SmokeTails } from './view/smokeTail';
+import { noticePose, noticeStart, noticeStep, type NoticeState } from './view/awardNotice';
 import { helpSurfaces } from './help';
 import { HELP_FONTS, HELP_SURFACES, HelpDialog } from './view/helpDialog';
 import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
@@ -128,7 +129,7 @@ export class LevelScene {
   /** Awards earned in this play, in order. */
   readonly awardsEarned: number[] = [];
   private readonly notices: number[] = [];
-  private notice: { text: Text; left: number } | null = null;
+  private notice: { text: Text; state: NoticeState; touched: boolean } | null = null;
 
   private constructor(
     private readonly textures: TextureStore,
@@ -443,14 +444,20 @@ export class LevelScene {
 
   /**
    * Announces the awards earned, one at a time (0x318e4 → 0x31dc4): the award's `EARN` text in
-   * `FONTS.MAIN` at 0.8, wrapped to 240 px, in the middle of the screen, with the award's sound.
-   * How long it stays and how it comes and goes have not been read: three seconds, fading.
+   * `FONTS.MAIN` at 0.8, wrapped to 240 px, at (240, 160), with the award's sound. See
+   * view/awardNotice.ts for how it comes, stays and goes.
    */
   private updateNotices(seconds: number): void {
     if (this.notice) {
-      this.notice.left -= seconds;
-      this.notice.text.alpha = Math.max(0, Math.min(1, 4 * this.notice.left, 4 * (3 - this.notice.left)));
-      if (this.notice.left > 0) return;
+      const next = noticeStep(this.notice.state, seconds, this.notice.touched);
+      this.notice.touched = false;
+      if (next) {
+        this.notice.state = next;
+        const pose = noticePose(next);
+        this.notice.text.scale.set(0.8 * pose.scale);
+        this.notice.text.alpha = pose.alpha;
+        return;
+      }
       this.notice.text.destroy();
       this.notice = null;
     }
@@ -463,12 +470,14 @@ export class LevelScene {
       style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 }, align: 'center', wordWrap: true, wordWrapWidth: 240 / 0.8 },
     });
     text.anchor.set(0.5);
-    text.scale.set(0.8);
     text.position.set(240, 160);
     text.alpha = 0;
-    text.eventMode = 'none';
+    // A touch on it sends it away early.
+    text.eventMode = 'static';
+    const notice = { text, state: noticeStart(), touched: false };
+    text.on('pointerdown', () => (notice.touched = true));
     this.root.addChild(text);
-    this.notice = { text, left: 3 };
+    this.notice = notice;
   }
 
   /** The plane says what it needs, in the voice of its mood (0x5bd4). */

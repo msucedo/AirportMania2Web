@@ -13,6 +13,17 @@ export interface AwardPlace {
   text: string;
 }
 
+/** Where an award's sparkles appear (`AwardShine`), by the award's id. */
+export function parseAwardShines(nodes: XmlNode[]): Map<number, { x: number; y: number }[]> {
+  const table = nodes.find((node) => node.t === 'AwardsDescriptorTable');
+  const shines = new Map<number, { x: number; y: number }[]>();
+  for (const node of table?.c ?? []) {
+    if (node.t !== 'AwardShine') continue;
+    shines.set(Number(node.a.Id), node.c.filter((shine) => shine.t === 'Shine').map((shine) => ({ x: Number(shine.a.X), y: Number(shine.a.Y) })));
+  }
+  return shines;
+}
+
 export function parseAwardsTable(nodes: XmlNode[]): AwardPlace[] {
   const table = nodes.find((node) => node.t === 'AwardsDescriptorTable');
   const places: AwardPlace[] = [];

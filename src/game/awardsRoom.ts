@@ -1,4 +1,4 @@
-import { type Application, Container, type FederatedPointerEvent, NineSliceSprite, Rectangle, type Sprite, Text } from 'pixi.js';
+import { type Application, Container, type FederatedPointerEvent, NineSliceSprite, Rectangle, type Sprite, Text, type Ticker } from 'pixi.js';
 import type { AwardPlace } from '../data/awards';
 import type { GameData } from '../data/load';
 import type { Strings } from '../data/strings';
@@ -7,6 +7,7 @@ import { fontFamily, loadFonts } from '../engine/fonts';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../engine/screen';
 import type { TextureStore } from '../engine/textures';
 import { awardCount, medalLevel, type AwardsData } from './awards';
+import { PAGE_WIDTH, SPARKLE_EVERY, curtainEdge, pageNumberPose, pageTouched, slideStep, sparklePose, swipeStep } from './awardsRoomMotion';
 import { DIALOG_SURFACES, dialogButton } from './view/dialog';
 import { SCORE_FONT } from './view/floatingText';
 import { centred, textBox, title, white } from './view/tutorialViews';
@@ -17,7 +18,7 @@ import { centred, textBox, title, white } from './view/tutorialViews';
 
 const HEADS = ['AWARDS_ROOM.MEDALS.HEAD_BRONZE', 'AWARDS_ROOM.MEDALS.HEAD_SILVER', 'AWARDS_ROOM.MEDALS.HEAD_GOLD'];
 const MATERIALS = ['AWARDS.MEDALS_MATERIALS.0', 'AWARDS.MEDALS_MATERIALS.1', 'AWARDS.MEDALS_MATERIALS.2'];
-const ROOM_SURFACES = ['AWARDS_ROOM.BACK', 'AWARDS_ROOM.SHELF', 'AWARDS_ROOM.CURTAIN_TOP', 'AWARDS_ROOM.CURTAIN_BOTTOM', 'AWARDS_ROOM.RIBBON', 'AWARDS_ROOM.BACK_BUTTON', 'AWARDS_ROOM.DIPLOMA', 'AWARDS_ROOM.PIG', 'AWARDS_ROOM.CLOCK', ...HEADS];
+const ROOM_SURFACES = ['AWARDS_ROOM.BACK', 'AWARDS_ROOM.SHELF', 'AWARDS_ROOM.CURTAIN_TOP', 'AWARDS_ROOM.CURTAIN_BOTTOM', 'AWARDS_ROOM.RIBBON', 'AWARDS_ROOM.BACK_BUTTON', 'AWARDS_ROOM.DIPLOMA', 'AWARDS_ROOM.PIG', 'AWARDS_ROOM.CLOCK', ...HEADS, 'AWARDS_ROOM.1', 'AWARDS_ROOM.2', 'AWARDS_ROOM.3', 'AWARDS_ROOM.SPARKLE'];
 
 /** Where the shelves' top left corners are on the wall (0x1ee00). */
 export const SHELVES = [
@@ -27,8 +28,8 @@ export const SHELVES = [
   { x: 490, y: 285 },
 ] as const;
 
-/** The wall is two screens wide: it can be pulled 480 px to the left. */
-export const ROOM_SCROLL = 480;
+/** The wall's pages: the medals and the plane trophies. The original has a third, an online leaderboard. */
+export const ROOM_PAGES = 2;
 
 /** The images an award is drawn with: one picture, or for a medal its ribbon, its silhouette and its icon. */
 export function awardImages(place: AwardPlace): { picture: string } | { tail: string; silhouette: string; icon: string } {
@@ -60,15 +61,28 @@ export interface AwardsRoomOptions {
 export class AwardsRoom {
   readonly root = new Container();
   private readonly wall = new Container();
+  private readonly sparkles = new Container();
+  private readonly curtain: Sprite;
+  private readonly fringe: Sprite;
+  private readonly numbers: Sprite[] = [];
+  /** 0 shut to 1 open; it opens over a second and shuts as long before leaving. */
+  private open = 0;
+  private leaving = false;
+  private page = 0;
   private scroll = 0;
-  private drag: { x: number; scroll: number; moved: boolean } | null = null;
+  private speed = 0;
+  private sparkleIn = 0;
+  private live: { sprite: Sprite; clock: number; size: number; angle: number }[] = [];
+  private drag: { x: number; y: number; kept: { x: number; y: number }; moved: boolean } | null = null;
   private dialog: Container | null = null;
 
   private constructor(
     private readonly textures: TextureStore,
     private readonly audio: AudioPlayer,
     private readonly options: AwardsRoomOptions,
-    places: AwardPlace[],
+    private readonly places: AwardPlace[],
+    private readonly shines: Map<number, { x: number; y: number }[]>,
+    private readonly ticker: Ticker,
   ) {
     const { strings, awards } = options;
     // The wall's picture is stretched 16 times across and 10 down, starting 48 px to the left.
@@ -82,10 +96,13 @@ export class AwardsRoom {
       this.wall.addChild(sprite);
     }
     for (const place of places) this.wall.addChild(this.award(place, awards));
+    this.wall.addChild(this.sparkles);
 
-    const top = textures.sprite('AWARDS_ROOM.CURTAIN_TOP');
-    const bottom = textures.sprite('AWARDS_ROOM.CURTAIN_BOTTOM');
-    bottom.position.set(0, SCREEN_HEIGHT - bottom.height);
+    // The curtain is its picture stretched 13 times down, its edge hanging at `curtainEdge`,
+    // with the fringe below it.
+    this.curtain = textures.sprite('AWARDS_ROOM.CURTAIN_TOP');
+    this.curtain.scale.y = 13;
+    this.fringe = textures.sprite('AWARDS_ROOM.CURTAIN_BOTTOM');
 
     // The ribbon is centred at (240, 25) with the user's name in dark brown.
     const name = new Text({ text: strings.t('AWARDS_ROOM.USERS_AWARDS', options.user ?? ''), style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 10, fill: 0x46280c } });
@@ -95,43 +112,125 @@ export class AwardsRoom {
     ribbon.setSize(Math.max(186, name.width + 100), 35);
     ribbon.position.set(240 - ribbon.width / 2, 25 - 35 / 2);
 
+    // 0x1e2b6: the way back, 50 by 40 at (430, 20).
     const backButton = textures.sprite('AWARDS_ROOM.BACK_BUTTON');
-    backButton.position.set(50, 40);
+    backButton.position.set(430, 20);
     backButton.eventMode = 'static';
     backButton.cursor = 'pointer';
+    backButton.hitArea = new Rectangle(-25, -20, 50, 40);
     backButton.on('pointerdown', (event: FederatedPointerEvent) => {
       event.stopPropagation();
+      if (this.leaving) return;
       audio.play('SOUNDS.CLICK');
-      options.onBack();
+      this.leaving = true;
     });
 
-    this.root.addChild(this.wall, top, bottom, ribbon, name, backButton);
+    this.root.addChild(this.wall, this.curtain, this.fringe, ribbon, name, backButton);
+    for (let index = 0; index < ROOM_PAGES; index++) {
+      const number = textures.sprite(`AWARDS_ROOM.${index + 1}`);
+      number.eventMode = 'none';
+      this.numbers.push(number);
+      this.root.addChild(number);
+    }
 
-    // The wall is pulled sideways with a finger.
     this.root.eventMode = 'static';
     this.root.hitArea = new Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-    this.root.on('pointerdown', (event: FederatedPointerEvent) => (this.drag = { x: event.getLocalPosition(this.root).x, scroll: this.scroll, moved: false }));
+    this.root.on('pointerdown', (event: FederatedPointerEvent) => {
+      if (this.dialog) return;
+      const at = event.getLocalPosition(this.root);
+      // 0x1e944: a touch on the strip of numbers goes to that page.
+      const picked = pageTouched(at.x, at.y, ROOM_PAGES);
+      if (picked !== null) this.page = picked;
+      this.drag = { x: at.x, y: at.y, kept: { x: 0, y: 0 }, moved: false };
+    });
     this.root.on('globalpointermove', (event: FederatedPointerEvent) => {
       if (!this.drag || this.dialog) return;
-      const by = event.getLocalPosition(this.root).x - this.drag.x;
-      if (Math.abs(by) > 4) this.drag.moved = true;
-      this.scroll = Math.max(-ROOM_SCROLL, Math.min(0, this.drag.scroll + by));
-      this.wall.x = this.scroll;
+      const at = event.getLocalPosition(this.root);
+      const swipe = swipeStep(this.drag.kept, at.x - this.drag.x, at.y - this.drag.y);
+      if (Math.hypot(at.x - this.drag.x, at.y - this.drag.y) > 0) this.drag.moved = true;
+      this.drag.x = at.x;
+      this.drag.y = at.y;
+      this.drag.kept = swipe.kept;
+      this.page = Math.max(0, Math.min(ROOM_PAGES - 1, this.page + swipe.turn));
     });
     const release = (): void => void (this.drag = null);
     this.root.on('pointerup', release);
     this.root.on('pointerupoutside', release);
+
+    this.ticker.add(this.step, this);
+    this.place();
   }
 
   static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: AwardsRoomOptions): Promise<AwardsRoom> {
-    const places = await data.awards();
+    const [places, shines] = await Promise.all([data.awards(), data.awardShines()]);
     const surfaces = new Set<string>([...ROOM_SURFACES, ...DIALOG_SURFACES]);
     for (const place of places) for (const id of Object.values(awardImages(place))) surfaces.add(id);
     await Promise.all([textures.load(surfaces), loadFonts(data.resources, ['FONTS.TEEN_BD', 'FONTS.BRADY_BUNCH', SCORE_FONT])]);
-    const room = new AwardsRoom(textures, audio, options, places);
+    const room = new AwardsRoom(textures, audio, options, places, shines, app.ticker);
     app.stage.addChild(room.root);
     audio.preload(['SOUNDS.CLICK']);
     return room;
+  }
+
+  private step(ticker: Ticker): void {
+    const dt = Math.min(0.1, ticker.deltaMS / 1000);
+    if (this.leaving) {
+      this.open -= dt;
+      if (this.open <= 0) {
+        this.ticker.remove(this.step, this);
+        this.options.onBack();
+        return;
+      }
+    } else if (this.open < 1) this.open = Math.min(1, this.open + dt);
+    else this.sparkle(dt);
+
+    const slid = slideStep(this.scroll, this.speed, -this.page * PAGE_WIDTH, dt);
+    this.scroll = slid.scroll;
+    this.speed = slid.speed;
+    this.live = this.live.filter((sparkle) => {
+      sparkle.clock -= dt;
+      if (sparkle.clock > 0) return true;
+      sparkle.sprite.destroy();
+      return false;
+    });
+    this.place();
+  }
+
+  /** 0x1e766: every 0.15 s one of the 42 award ids is drawn; if that award is had, a sparkle shows on one of its three points. */
+  private sparkle(dt: number): void {
+    this.sparkleIn -= dt;
+    if (this.sparkleIn >= 0) return;
+    this.sparkleIn += SPARKLE_EVERY;
+    const id = Math.floor(Math.random() * 42);
+    const points = this.shines.get(id);
+    if (!points || points.length === 0 || this.options.awards[id]?.earned !== true || !this.places.some((place) => place.id === id)) return;
+    const at = points[Math.floor(Math.random() * 3) % points.length]!;
+    const sprite = this.textures.sprite('AWARDS_ROOM.SPARKLE');
+    sprite.position.set(at.x, at.y);
+    sprite.eventMode = 'none';
+    this.sparkles.addChild(sprite);
+    this.live.push({ sprite, clock: 2, size: 0.5 + 0.5 * Math.random(), angle: 360 * Math.random() });
+  }
+
+  private place(): void {
+    this.wall.x = this.scroll;
+    const edge = curtainEdge(this.open);
+    this.curtain.y = edge - 13 * this.curtain.texture.height;
+    this.fringe.y = edge;
+    this.numbers.forEach((number, index) => {
+      const pose = pageNumberPose(index, this.scroll);
+      number.position.set(pose.x, pose.y);
+      number.scale.set(pose.scale);
+    });
+    for (const sparkle of this.live) {
+      const pose = sparklePose(sparkle.clock, sparkle.size, sparkle.angle);
+      sparkle.sprite.scale.set(pose.scale);
+      sparkle.sprite.angle = pose.angle;
+      sparkle.sprite.alpha = pose.alpha;
+      // 0x1eefe: only those on screen are drawn.
+      const x = sparkle.sprite.x + this.scroll;
+      sparkle.sprite.visible = x > -40 && x < 520;
+    }
   }
 
   /**
@@ -173,19 +272,21 @@ export class AwardsRoom {
     return node;
   }
 
-  /** What an award is: its name, and how to earn it or what it was given for. The original's dialog (0x1aaf4) has not been read. */
+  /**
+   * What a touched award opens (0x1aaf4): a 400×250 frame with its name in
+   * (−190, −110)–(190, −80), a medal's with its material, and below, in (−180, −70)–(180, 70),
+   * how to earn it or, once earned, what it was given for, with what it counts.
+   */
   private describe(place: AwardPlace, awards: Readonly<AwardsData>): void {
     const { strings } = this.options;
     const earned = awards[place.id]?.earned === true;
-    const { overlay, centre } = centred(this.textures, 400, 200);
-    const material = place.kind === 'medal' && earned ? ` ${strings.t(MATERIALS[medalLevel(awards, place.id)]!)}` : '';
-    textBox(centre, strings.t(`${place.text}.NAME`) + material, { x1: -187, y1: -90, x2: 187, y2: -60 }, title(), true);
-    // A plane trophy's description is "N/A": what was said when it was earned stands in for it.
-    const told = strings.t(`${place.text}.DESCRIPTION`);
-    const text = !earned ? strings.t(`${place.text}.PRE_DESCRIPTION`) : told === 'N/A' ? strings.t(`${place.text}.EARN`) : told;
-    textBox(centre, text, { x1: -187, y1: -50, x2: 187, y2: 50 }, white(), true);
+    const { overlay, centre } = centred(this.textures, 400, 250);
+    const material = place.kind === 'medal' && earned ? strings.t(MATERIALS[medalLevel(awards, place.id)]!) : '';
+    textBox(centre, strings.t(`${place.text}.NAME`, material).trim(), { x1: -190, y1: -110, x2: 190, y2: -80 }, title(), true);
+    const text = earned ? strings.t(`${place.text}.DESCRIPTION`, String(awardCount(awards, place.id))) : strings.t(`${place.text}.PRE_DESCRIPTION`);
+    textBox(centre, text, { x1: -180, y1: -70, x2: 180, y2: 70 }, white(), false);
     const dialog = new Container();
-    dialogButton(this.textures, this.audio, centre, { x: 0, y: 75, width: 380, height: 30 }, strings.t('CLOSE'), fontFamily(SCORE_FONT), () => {
+    dialogButton(this.textures, this.audio, centre, { x: 0, y: 105, width: 340, height: 30 }, strings.t('CLOSE'), fontFamily(SCORE_FONT), () => {
       this.dialog = null;
       setTimeout(() => dialog.destroy({ children: true }));
     });

@@ -1,3 +1,4 @@
+import { noticePose, noticeStart, noticeStep } from '../src/game/view/awardNotice';
 import { describe, expect, it } from 'vitest';
 import { parseAwardsTable } from '../src/data/awards';
 import type { XmlNode } from '../src/data/xml';
@@ -134,6 +135,26 @@ describe('awards', () => {
     for (const place of of('medal')) expect(place.text).toBe(awardText(place.id));
     expect(awardImages(of('medal')[3]!)).toEqual({ tail: 'AWARDS_ROOM.MEDALS.TAILS.3', silhouette: 'AWARDS_ROOM.MEDALS.SILHOUETTE_1', icon: 'AWARDS_ROOM.MEDALS.ICONS.3' });
     expect(awardImages(of('plane')[11]!)).toEqual({ picture: 'AWARDS_ROOM.PLANES_TROPHIES.12' });
+  });
+
+  it('brings the notice in a fifth of a second, keeps it four and sends it away in a fifth', () => {
+    let state = noticeStart();
+    expect(noticePose(state)).toEqual({ scale: 1.5, alpha: 0 });
+    state = noticeStep(state, 0.1, false)!;
+    expect(noticePose(state)).toEqual({ scale: 1.25, alpha: 0.5 });
+    state = noticeStep(state, 0.1, false)!;
+    expect(state).toEqual({ phase: 'shown', clock: 4 });
+    expect(noticePose(state)).toEqual({ scale: 1, alpha: 1 });
+    state = noticeStep(state, 3.9, false)!;
+    expect(state.phase).toBe('shown');
+    state = noticeStep(state, 0.2, false)!;
+    expect(state).toEqual({ phase: 'going', clock: 1 });
+    state = noticeStep(state, 0.1, false)!;
+    expect(noticePose(state)).toEqual({ scale: 0.75, alpha: 0.5 });
+    expect(noticeStep(state, 0.1, false)).toBeNull();
+    // A touch while it is shown sends it away at once.
+    expect(noticeStep({ phase: 'shown', clock: 3 }, 0.01, true)).toEqual({ phase: 'going', clock: 1 });
+    expect(noticeStep({ phase: 'coming', clock: 0.2 }, 0.01, true)!.phase).toBe('coming');
   });
 });
 

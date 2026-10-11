@@ -1,4 +1,4 @@
-import { parseAwardsTable, type AwardPlace } from './awards';
+import { parseAwardShines, parseAwardsTable, type AwardPlace } from './awards';
 import {
   parseGasStationTable,
   parseLuggageTable,
@@ -31,6 +31,7 @@ export interface GameData {
   levelPositions(): Promise<Map<number, Point[]>>;
   /** Where each award is in the awards room. */
   awards(): Promise<AwardPlace[]>;
+  awardShines(): Promise<Map<number, Point[]>>;
   strings(language: Language): Promise<Strings>;
 }
 
@@ -65,6 +66,7 @@ export async function loadGameData(): Promise<GameData> {
     areas: parseLevelsDb(levelsDb),
     stage: async (number) =>
       parseStageSchedule(await json<XmlNode[]>(`data/maps/stage_levels_${String(number).padStart(2, '0')}.json`)),
+    awardShines: async () => parseAwardShines(await json<XmlNode[]>('data/descriptors/awards_room_descriptor_table.json')),
     awards: async () => parseAwardsTable(await json<XmlNode[]>('data/descriptors/awards_room_descriptor_table.json')),
     levelPositions: async () => {
       const table = new Map<number, Point[]>();

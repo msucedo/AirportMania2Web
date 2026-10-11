@@ -1979,9 +1979,38 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   medals also what they count, as `%d` in `FONTS.SMALL_WHITE` at (1, 23), when it is 2 or
   more (`0x1b65c`). Not earned (`0x1b920`): the picture in black at 0.25; a medal
   (`0x1c644`) its silhouette (`SILHOUETTE_<(n−1) mod 3 + 1>`) in black at 0.2.
-- Web version: the room is opened from the map's Awards button and shows the wall, shelves,
-  awards, curtains (still, at the top and bottom edges), ribbon and back button; it is pulled
-  sideways by hand over its two screens. Not read, and so ours: how the scroll moves and
-  settles, the ribbon's width, the dialog a touched award opens (name, with the material for a
-  medal, and its description, or how to earn it), how long the announcement stays and how it
-  comes and goes. Not built: shines, sparkles, the curtains' opening, the leaderboard.
+- Room update (`0x1e6f0`), states 1 opening, 2 open, 3 leaving: the clock at `+0x50` rises
+  to 1 over a second, and falls as fast before the room is left (`0x1e5cc`).
+  - Curtain (`0x1efb8`): with `t = clamp(1.5·(1 − clock))` and `e = 27 + 300·t²(3 − 2t)`,
+    `CURTAIN_TOP` is drawn stretched 13 times down with its lower edge at e, and
+    `CURTAIN_BOTTOM` hangs from e.
+  - Sparkles (`0x1e766`), while open: every 0.15 s `rand mod 42` picks an award id; if that
+    award is had, a sparkle is made with a clock of 2, a size `0.5 + rand·0.5`, an angle
+    `rand·360`, at one of the award's three `Shine` points (`rand mod 3`). Drawn (`0x1eef2`)
+    with scale `size + 0.2·sin(2·clock)`, turned `angle + 200·clock`, opacity
+    `clamp(2·min(clock, 2 − clock))`, while −40 < x < 520.
+  - Pages (`+0x78`, count `+0x3c`): a touch within x 0–110, y 0–48 goes to page
+    `min(x div 36, count − 1)`; a finger's movement is smoothed (0.7 kept, 0.3 new) and, over
+    3 px, turns the page on when its direction's x is under −0.6 and back when over 0.6.
+  - Slide (`0x1eac0`): the wall's place (`+0x70`) goes to `−480·page` with a speed (`+0x74`)
+    that gains 8000 px/s² towards it; within `1.5·v²/8000` of it and moving towards it, the
+    speed is kept at 50 at least and loses 8000 px/s², and the wall is put on the page when
+    the next step would pass it. Within 1 px the speed is zeroed.
+  - Page numbers (`0x1f0f4`): `AWARDS_ROOM.<n>` at (`30 + 26·i`, 24), with d the page's
+    distance from the wall's place in pages: scale `1 − (d < 0.75 ? d/2 : 0.375)`, nudged
+    8 px aside per page of distance, at most 8.
+  - Back button (`0x1e2b6`): 50 by 40 at (430, 20).
+- Award dialog (`0x1aaf4`): 400×250; the name (`<text>.NAME`, a medal's with its material
+  filled in once earned) in `FONTS.MAIN` centred in (−190, −110)–(190, −80); in
+  (−180, −70)–(180, 70), `FONTS.WHITE`, `<text>.PRE_DESCRIPTION`, or `<text>.DESCRIPTION`
+  once earned; Close 340 wide at (0, 105).
+- Notice (`0x31b48`): state 1, its clock rises at 5 a second to 1, drawn at scale
+  `1.5 − 0.5·clock` and opacity the clock; state 2, the clock is set to 4 and falls, and a
+  touch or its end goes to state 3 (`0x32030`), where it falls from 1 at 5 a second, drawn at
+  scale `0.5 + 0.5·clock` and opacity the clock. Particles are thrown as it starts (`0x31648`,
+  as many as `0x1b798` gives for the award).
+- Web version: the room is opened from the map's Awards button. Not built: the third page (an
+  online leaderboard, `0x1f2d4`), the keys that turn pages, the notice's particles, an award
+  swelling while touched. Taken, not read: the ribbon's width, that the value filled into a
+  description is what the award counts, that a touch must be on the notice to send it away,
+  and what the earned branch of the dialog computes at `0x1ae08`.
