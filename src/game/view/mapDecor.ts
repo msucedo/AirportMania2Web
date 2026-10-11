@@ -12,6 +12,7 @@ export const MAP_DECOR_SURFACES = [
   'MAP.CLOUDS.BIG',
   'MAP.SATELLITE',
   'MAP.SATELLITE_BRIGHT',
+  'MAP.AIRBORNE_PROPELLER',
   'SNOW_FLAKES.3',
   'SNOW_FLAKES.4',
   'AMBIENT.STAR',
@@ -124,3 +125,49 @@ export const MAP_STARS: readonly [number, number, number][] = [
   [1202, 30, 8], [1336, 93, 7], [1399, 30, 10], [1485, 38, 9], [1415, 135, 14], [1448, 229, 8], [1605, 356, 12],
   [1678, 379, 8], [1932, 30, 18], [1844, 74, 7], [1980, 115, 10], [1902, 208, 13], [1875, 147, 13],
 ];
+
+/** The four propellers of stage 5's icon (0x5d886): turn they start at, squeeze, tilt and place from the icon. */
+export const ICON_PROPELLERS: readonly { turn: number; scaleX: number; scaleY: number; tilt: number; x: number; y: number }[] = [
+  { turn: 0, scaleX: 0.5, scaleY: 0.9, tilt: 38, x: -30, y: 30 },
+  { turn: 135, scaleX: 0.53, scaleY: 0.95, tilt: 34, x: -2, y: 25 },
+  { turn: 90, scaleX: 0.5, scaleY: 0.9, tilt: 28, x: 49, y: -1 },
+  { turn: 45, scaleX: 0.4, scaleY: 0.8, tilt: 16, x: 61, y: -17 },
+];
+
+/** Stage 5's icon `time` seconds on (0x5d7ac): it hangs up to 5 px off its place, round every ten seconds, and its propellers make forty turns in that time. */
+export function airborneIconPose(time: number): { drop: number; spin: number } {
+  const round = fraction(0.1 * time);
+  return { drop: 5 * Math.sin(2 * Math.PI * round), spin: 14400 * round };
+}
+
+/** Puts the propellers on stage 5's icon and keeps it moving; `icon` must already be at its place. */
+export class MapAirborneIcon implements Decoration {
+  readonly view: Container;
+  private readonly blades: Sprite[] = [];
+  private readonly y: number;
+  private time = 0;
+
+  constructor(textures: TextureStore, icon: Container) {
+    this.view = icon;
+    this.y = icon.y;
+    for (const propeller of ICON_PROPELLERS) {
+      // The blades turn, then are squeezed and tilted, then put in place.
+      const mount = new Container();
+      mount.position.set(propeller.x, propeller.y);
+      mount.angle = propeller.tilt;
+      mount.scale.set(propeller.scaleX, propeller.scaleY);
+      const blades = textures.sprite('MAP.AIRBORNE_PROPELLER');
+      mount.addChild(blades);
+      icon.addChild(mount);
+      this.blades.push(blades);
+    }
+    this.update(0);
+  }
+
+  update(dt: number): void {
+    this.time += dt;
+    const pose = airborneIconPose(this.time);
+    this.view.y = this.y + pose.drop;
+    this.blades.forEach((blades, i) => (blades.angle = pose.spin + ICON_PROPELLERS[i]!.turn));
+  }
+}

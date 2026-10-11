@@ -1,4 +1,4 @@
-import { birdPose, cloudBob, satellitePose } from '../src/game/view/mapDecor';
+import { airborneIconPose, birdPose, cloudBob, satellitePose } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
 import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
 import { barSpark, barStar, hangarSpark, sparkPose, tierBurst, tierTextPose } from '../src/game/view/goalEffects';
@@ -724,6 +724,9 @@ describe('scenery', () => {
     expect(mid.y).toBeCloseTo(350 * Math.cos(0.375 * Math.PI), 4);
     expect(mid.angle).toBeCloseTo(-9.375, 5);
     expect(satellitePose(0)).toMatchObject({ y: 350, scale: 0.5, bright: 0 });
+    expect(airborneIconPose(2.5).drop).toBeCloseTo(5, 5);
+    expect(airborneIconPose(2.5).spin).toBeCloseTo(3600, 5);
+    expect(airborneIconPose(12.5).drop).toBeCloseTo(5, 5);
   });
 });
 

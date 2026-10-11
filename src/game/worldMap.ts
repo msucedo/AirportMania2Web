@@ -11,7 +11,7 @@ import { DIALOG_SURFACES } from './view/dialog';
 import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { LevelDialog, MAP_DIALOG_FONTS, StageDialog } from './view/mapDialogs';
 import { findGoals } from '../data/levels';
-import { MAP_DECOR_SURFACES, MAP_STARS, MapBird, MapCloud, MapSatellite, type Decoration } from './view/mapDecor';
+import { MAP_DECOR_SURFACES, MAP_STARS, MapAirborneIcon, MapBird, MapCloud, MapSatellite, type Decoration } from './view/mapDecor';
 import { AuroraView, StarView } from './view/scenery/night';
 import { SnowView } from './view/scenery/northPole';
 
@@ -96,13 +96,14 @@ export class WorldMap {
     this.cursor = textures.sprite('MAP.LEVEL_SELECTED');
     this.cursor.visible = false;
 
-    const icon = (stage: number): void => {
+    const icon = (stage: number): Sprite => {
       const picture = textures.sprite(`MAP.STAGES.${stage}`);
       picture.position.copyFrom(STAGE_ICONS[stage - 1]!.icon);
       picture.eventMode = 'static';
       picture.cursor = 'pointer';
       picture.on('pointertap', () => this.askStage(stage));
       this.map.addChild(picture);
+      return picture;
     };
     const ribbon = (stage: number): void => {
       const at = STAGE_ICONS[stage - 1]!.ribbon;
@@ -121,7 +122,8 @@ export class WorldMap {
     };
     // In the order the script makes them, which is the order they are drawn in. Still missing,
     // each where it belongs: the sea's glints first of all, the wind after stage 5, the carrier's
-    // waves after stage 7, the shooting stars before the stars and the sign last.
+    // waves after stage 7 and the shooting stars before the stars. The "coming soon" sign is only
+    // made when the game ends before stage 10 (0xcd6c6), which this one does not.
     icon(1);
     ribbon(1);
     icon(2);
@@ -139,7 +141,8 @@ export class WorldMap {
     put(new MapCloud(textures, 'MAP.CLOUDS.SMALL', { x: 994, y: 34 }, 0.1, 1));
     put(new MapCloud(textures, 'MAP.CLOUDS.MEDIUM', { x: 1015, y: 73 }, 0.2, 2));
     put(new MapCloud(textures, 'MAP.CLOUDS.BIG', { x: 938, y: 72 }, 0.3, 3.5));
-    icon(5);
+    // 0x60408: stage 5's icon hangs in the air on four propellers.
+    this.decor.push(new MapAirborneIcon(textures, icon(5)));
     ribbon(5);
     icon(6);
     ribbon(6);

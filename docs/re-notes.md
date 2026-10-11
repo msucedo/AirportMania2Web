@@ -2324,7 +2324,7 @@ drawn in the order made, each moved by the map's scroll (`app+0x154`, `+4`/`+8`)
 6. Clouds `0x61210(image, place, phase | swing)`: `MAP.CLOUDS.SMALL` (994, 34) 0.1 | 1, `MEDIUM`
    (1015, 73) 0.2 | 2, `BIG` (938, 72) 0.3 | 3.5. Class `0x63354`, draw `0x634dc`: y is moved by
    `swing·sin(2π·(frac(0.1·T) + phase))`, T the app's clock (`app+0x1ec`).
-7. Stage 5 icon (`0x60408`, with a propeller, **not built**) and ribbon; four winds
+7. Stage 5 icon (`0x60408`, see below) and ribbon; four winds
    `0x60bec('MAP.WIND', p0, p1 | p2, delay, 2)`: (1014 164, 914 96, 860 52, 1.8),
    (991 189, 914 130, 841 67, 0.95), (980 220, 901 155, 824 106, 1.4),
    (916 218, 839 164, 778 137, 0.4). Class `0x39dcc`. **Not built yet.**
@@ -2342,5 +2342,13 @@ drawn in the order made, each moved by the map's scroll (`app+0x154`, `+4`/`+8`)
     `15·clock − 15`°, scaled `0.5 + 0.5·sin(π·clock/0.75)`, at
     `(−380·sin(π·clock), 350·cos(π·clock))` from its place; `MAP.SATELLITE_BRIGHT` over it at
     opacity `clamp(2·sin(250·clock) − 1)`.
-13. Level markers (`0x606bc`), then the sign `0x6033c('MAP.SIGN_COMING_SOON', 10, 1630, 417)`.
-    **Not built yet.**
+13. Level markers (`0x606bc`), then the sign `0x6033c('MAP.SIGN_COMING_SOON', 10, 1630, 417)`
+    (a stage icon's class, `0x5d3e8`), made only when the last stage (`app+0x248`) is not 10
+    (`0xcd6c6`): never in this game, so the web version has none.
+
+Stage 5's icon (`0x60408` → `0x5d680`, draw `0x5d7ac`, run in the emulator): with
+`r = frac(0.1·T)` it is drawn `5·sin(2π·r)` px lower, with four `MAP.AIRBORNE_PROPELLER` on
+it (`0x5d74c`: turn, scale, tilt, move), turned `14400·r` plus 0, 135, 90, 45°; scaled
+(0.5, 0.9), (0.53, 0.95), (0.5, 0.9), (0.4, 0.8); tilted 38, 34, 28, 16°; at (−30, 30),
+(−2, 25), (49, −1), (61, −17). Every icon is drawn `1 + 0.08·press` big (`+8`, eased by
+`0xa068`), which the web version does not do.
