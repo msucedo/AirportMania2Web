@@ -805,20 +805,41 @@ Vtable `0x17a8e8`, kind 5.
   level 1 of stage 1; leaving it starts the level. The web version does the same and reloads the
   level after a purchase or sale, to rebuild the airport.
 
-## Main menu (`0x597b0`)
+## Main menu (`0x597b0`) — confirmed
 
-- Built in this order: background (`0x5d138`), `MAIN_MENU.TOWER` at (36, 77) and
-  `MAIN_MENU.FRONT` at (−48, 152) through `0x5c45c` with factors 0.4 and 0.6 (not read; likely
-  how far each slides in), the sign (`0x5c250`) at (240, 118), `MAIN_MENU.TITLE` at (213, 43)
-  scale 0.8, `MAIN_MENU.FRANCHISE` at (270, 96) scale 0.7, `MAIN_MENU.NUMBER_TWO` at (411, 46)
-  scale 0.7, a star badge (`ORANGE`/`YELLOW`) at (95, 200), the Facebook button at (206, 290) and
-  `MAIN_MENU.MORE_GAMES` at (95, 290). Music `MUSICS.MAIN`.
-- Sign entries (`0x5c030`): Play, Users, Options and Credits at x 119 and y 43, 81, 119, 157 from
-  the sign's corner, each a button (`0x5c7a0`) 160×30 with `MAIN_MENU.BUTTON_OVER` and the text
-  in `FONTS.MAIN`.
-- Not read: the entrance animations, the plane flying past (`0x59f7c`), the greeting sign and the
-  dialogs behind Users and Credits. The web menu shows the scene in place, with Play and
-  Options working, and leaves out the badge and the promotional buttons.
+One of the app's screens (vtable `0x17ae30`: enter `0x597b0`, update `0x59bf0`). Its pieces are
+objects of their own, drawn in the order made (`tools/re/vtable.py` gives each one's draw and
+update).
+
+- A shift `V` (`menu+0x30`) starts at 80 and loses 1.5 of itself a second (`0x59c80`), dropped
+  under 0.02. Every piece is drawn `share·V` to the right of its place. What the builder passes
+  as each piece's third number is that share, not a size: nothing is scaled.
+- Sky (`0x5d138`; draw `0x5d2c8`, update `0x5d35c`): `MAIN_MENU.BACK`, `CLOUD1` and `CLOUD2`,
+  each drawn three times side by side from y 0 (the clouds' images carry their own height) and
+  sliding left `0.0025 + 0.002·i²` of its width a second, layer `i` from 0.
+- `MAIN_MENU.TOWER` at (36, 77) share 0.4 and `MAIN_MENU.FRONT` at (−48, 152) share 0.6 (class
+  `0x5c45c`, draw `0x5c700`). The sign (`0x5c250`) is the same with `MAIN_MENU.PANEL` at
+  (240, 118), share 5, and its four entries at x 119 and y 43, 81, 119, 157 (buttons `0x5c7a0`,
+  160×30, `MAIN_MENU.BUTTON_OVER`, text in `FONTS.MAIN`).
+- `MAIN_MENU.TITLE` at (213, 43) share 0.8 (update `0x5c030`) and `MAIN_MENU.FRANCHISE` at
+  (270, 96) share 0.7 (update `0x5bc68`), not drawn while waiting: after 0.1 s (0.6 s) with its
+  sound (`SOUNDS.TITLE`, `SOUNDS.FRANCHISE`) it comes from 480 px to the left (right) as a clock
+  runs to 1 at 3 a second, skewed 0.3 (−0.3); then the clock runs back at 2 a second and the
+  skew is `±0.3·c·cos(4π·c²)`. Leaving (state 5) it goes off `480·(1 − c)²` the way it came,
+  skewed `∓0.3·√(1 − c)`, c from 1 at 3 a second.
+- `MAIN_MENU.NUMBER_TWO` at (411, 46) share 0.7 (update `0x5b8bc`): after 2.9 s, with
+  `SOUNDS.NUMBER_TWO`, scaled `2^(−10c)·sin((c − 0.0477465)·2π/0.3) + 1` for one second.
+- A plane (`0x59f7c`; update `0x5a228`, draw `0x5a1c8`) every 18 s from the start, drawn right
+  after the sky, with `SOUNDS.PLANE_PASSBY`; they alternate, first `PLANE_PASSING_OUT`. For 4 s,
+  with depth `z = 2(5 − t)` (`2(t + 1)` for `PLANE_PASSING_IN`): at
+  `(240 + V/z + R/(z + 1), 340 − 1180/z)`, scaled `3/z`, `R` random from −240 to 240.
+- A label (`0x5a380`): `G%d.L%d` with 495 and 498 (`0x23250`, `0xcac18`) in `FONTS.TEEN` at
+  half strength, right-aligned at (455, 302); it shows after 5.8 s, over half a second.
+- Not built: the star badge (`0x5b0f8`, `MAIN_MENU.YELLOW`/`ORANGE`, `TRY_PC`, from 3.2 s), the
+  Facebook button (`0x5ac44`) and more games (`0x5a634`, from 3.6 s): they promote the
+  publisher's other products and open its pages. Music `MUSICS.MAIN`.
+- Web version: the pieces do not play their leaving, since choosing an entry opens another
+  page or a dialog over the menu. How high the label's text sits on its line is ours.
 
 ## Menu dialog (`0x66bbc`) and finish dialog (`0x376c4`)
 

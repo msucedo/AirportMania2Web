@@ -1,3 +1,4 @@
+import { menuShiftStep, numberPop, passingPlanePose, skySpeed, slidePose, slideStep, type SlideState } from '../src/game/mainMenu';
 import { beltPose, inRuns } from '../src/game/loadingScreen';
 import { publisherFades, publisherGlint, publisherOver, publisherSweeps, studioWindV } from '../src/game/opening';
 import { levelAwardPlaces, levelDialogHeight, stageDialogLayout } from '../src/game/view/mapDialogs';
@@ -810,6 +811,35 @@ describe('scenery', () => {
     expect(shut.rightStrap[0]).toBe(287);
     expect(shut.rightStrap.at(-1)).toBe(491);
     expect(inRuns([1, 2, 3, 4, 5], 2)).toEqual([[1, 2, 3], [4, 5]]);
+  });
+
+  it('brings the main menu in as the original does', () => {
+    expect(menuShiftStep(80, 0.1)).toBeCloseTo(68, 5);
+    expect(menuShiftStep(0.02, 0.1)).toBe(0);
+    expect(skySpeed(0)).toBeCloseTo(0.0025, 9);
+    expect(skySpeed(1)).toBeCloseTo(0.0045, 9);
+    expect(skySpeed(2)).toBeCloseTo(0.0105, 9);
+    const title: SlideState = { phase: 'waiting', clock: 0 };
+    expect(slidePose(title, -1)).toBeNull();
+    expect(slideStep(title, 0.05, 0.1)).toBe(false);
+    expect(slideStep(title, 0.06, 0.1)).toBe(true);
+    expect(slidePose(title, -1)).toEqual({ dx: -480, lean: 0.3 });
+    slideStep(title, 0.1, 0.1);
+    expect(slidePose(title, -1)!.dx).toBeCloseTo(-336, 4);
+    slideStep(title, 0.3, 0.1);
+    expect(title).toEqual({ phase: 'settling', clock: 1 });
+    // Against a run of the franchise's update in that state with its clock at 0.6.
+    expect(slidePose({ phase: 'settling', clock: 0.6 }, 1)!.lean).toBeCloseTo(0.0337286, 5);
+    slideStep(title, 0.6, 0.1);
+    expect(title.phase).toBe('still');
+    expect(slidePose(title, -1)).toEqual({ dx: 0, lean: 0 });
+    expect(numberPop(0)).toBe(0);
+    expect(numberPop(1)).toBe(1);
+    expect(numberPop(0.1)).toBeGreaterThan(1.2);
+    const near = passingPlanePose(0, true, 240);
+    expect(near).toMatchObject({ y: -250, scale: 1.5, depth: 2, x: 80 });
+    expect(passingPlanePose(0, false, 0)).toMatchObject({ y: 222, depth: 10 });
+    expect(passingPlanePose(0, false, 0).scale).toBeCloseTo(0.3, 6);
   });
 });
 
