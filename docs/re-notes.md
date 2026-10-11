@@ -1733,7 +1733,8 @@ place and plane; only what is added later (the service tabs) lies over them.
   - gas station (`0x40924`): y + its node's y + `Z` (−20 in every descriptor);
   - hangar (`0x46d50`): y + its node's y + `DespZ`, with its back half a static image of its
     own 50 behind that (`0x46e12`), so a plane inside is drawn between the two.
-- Web version: a plane being serviced is drawn at the hangar's centre and sorted there.
+- A plane being serviced stays on the hangar's node (`0x47234` moves nothing), which is at the
+  front half's depth; the web version draws it just behind that half.
 
 ## Stage 3: what is still approximate
 

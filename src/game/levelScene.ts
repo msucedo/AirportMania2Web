@@ -891,12 +891,11 @@ export class LevelScene {
         this.planeLayer.addChild(view);
         this.planeViews.set(plane.id, view);
       }
-      // While it is being serviced the plane sits inside the hangar, behind its front half. The
-      // original walks it in; here it is simply drawn at the building's centre.
-      const inside = plane.state === PlaneState.IN_HANGAR && plane.place?.kind === 'hangar' ? plane.place : null;
-      if (inside) view.position.set(inside.position.x, inside.position.y + 8);
-      else view.position.set(plane.x, plane.y);
-      view.zIndex = plane.altitude > 0 ? 10000 : inside ? view.y : plane.y;
+      // While it is being serviced the plane stays on the hangar's node (0x47234), which is at the
+      // depth of the hangar's front half: it is drawn behind that half.
+      const inside = plane.state === PlaneState.IN_HANGAR && plane.place?.kind === 'hangar';
+      view.position.set(plane.x, plane.y);
+      view.zIndex = plane.altitude > 0 ? 10000 : inside ? plane.y - 0.5 : plane.y;
       if (this.rings && elapsed > 0) {
         // On the water a plane leaves rings, the faster it moves the closer together (0x6cb2).
         const wake = this.wakes.get(plane.id) ?? { x: plane.x, y: plane.y, next: 0 };
