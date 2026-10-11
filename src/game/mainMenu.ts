@@ -159,7 +159,7 @@ export class MainMenu {
     this.title = slider('MAIN_MENU.TITLE');
     this.franchise = slider('MAIN_MENU.FRANCHISE');
     this.two = textures.sprite('MAIN_MENU.NUMBER_TWO');
-    // 0x5a574: `FONTS.TEEN` at half strength, its right end at (455, 302). How high the text sits on that line is ours.
+    // 0x5a574: `FONTS.TEEN` at half strength, its right end and its middle at (455, 302).
     this.label = new Text({ text: BUILD_LABEL, style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 10, fill: 0x808080 } });
     this.label.anchor.set(1, 0.5);
     this.label.scale.x = 0.9;

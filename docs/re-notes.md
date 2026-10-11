@@ -885,7 +885,7 @@ update).
   Facebook button (`0x5ac44`) and more games (`0x5a634`, from 3.6 s): they promote the
   publisher's other products and open its pages. Music `MUSICS.MAIN`.
 - Web version: the pieces do not play their leaving, since choosing an entry opens another
-  page or a dialog over the menu. How high the label's text sits on its line is ours.
+  page or a dialog over the menu.
 
 ## Menu dialog (`0x66bbc`) and finish dialog (`0x376c4`)
 
@@ -2340,9 +2340,11 @@ It is a testing back door; the owner of this port chose to leave it out (2026-10
 - The hangar (`0x4747e`), while working, counts `hangar+0x90` down by its `Speed` × dt; under 0
   it throws a spark from (plane x − 10…+10, plane y − 35…−15) at (−50…50, −100) and adds
   0.1 to 0.6.
-- Web version: all of it, with these marked as ours: the effects are drawn over the HUD (the
-  order of the level's list against the HUD is not read); the name's top is put at its place
-  (the engine's vertical alignment for `0x94650` is not read); the hangar's first wait is 0.
+- The level's draw (`0x12430`) draws its list in order; the HUD is put on it as the airport is
+  built (`0x13128`), so what play adds later is drawn over it: the combo's stars too.
+- The hangar's wait is set to 0.3 as its work begins (`0x47250`).
+- Web version: all of it. The
+  name is drawn centred both ways on its place (`0x71c20`).
 
 ## Black smoke of a plane that needs the hangar — confirmed
 
@@ -2355,8 +2357,8 @@ It is a testing back door; the owner of this port chose to leave it out (2026-10
   0.8 a second, one second of life. Update (`0x76058`): after moving, its speed is moved towards
   (0, −50) by `0.2^dt` of the gap, nearly all of it at any usual frame rate. Draw (`0x7615c`):
   opacity `4·clock` under a quarter of a second, `2 − 2·clock` after.
-- Web version: the plane's speed is taken from how far it moved in the frame; the first wait is
-  taken as 0 (where `+0x274` starts is not read).
+- The wait starts at 1.2 s (`0x572e`, the same number as its period's base).
+- Web version: the plane's speed is taken from how far it moved in the frame.
 
 ## Fireworks of an award's notice — confirmed
 

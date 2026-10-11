@@ -1,4 +1,4 @@
-import { TITLE_ROOM, ULTRA_EFFECT, titleText } from './effectText';
+import { ULTRA_EFFECT, titleText } from './effectText';
 import { Container, type Sprite } from 'pixi.js';
 import { } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
@@ -83,11 +83,10 @@ export class GoalEffects extends Container {
 
   /** The bar reached `tier`, whose name is `name`. */
   reach(tier: number, name: string): void {
-    // `FONTS.ULTRA`: this face at 20 and 0.8 of its width, with its effect. The picture keeps
-    // some room over the text, which is taken off its place.
+    // `FONTS.ULTRA`: this face at 20 and 0.8 of its width, with its effect, its middle at its
+    // place (0x71c20 draws it centred both ways).
     const text = titleText(name, GOAL_EFFECT_FONT, 20, 0.8, ULTRA_EFFECT);
-    text.anchor.set(0.5, 0);
-    text.pivot.y = TITLE_ROOM;
+    text.anchor.set(0.5);
     this.addChild(text);
     this.texts.push({ text, age: 0 });
     const burst = tierBurst(tier);

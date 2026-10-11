@@ -189,8 +189,10 @@ export class LevelScene {
     } else this.hud.behind.addChild(serviceGrip(textures, SERVICE_SLOTS.coffee));
     this.flags = new OrderFlags(textures);
     this.bonusView = new BonusView(textures, sim);
-    this.explosions = new ComboExplosions(textures, this.planeLayer, this.overlay);
     this.goalEffects = new GoalEffects(textures);
+    // 0x13128: the HUD is put on the level's list when the airport is built, and what play adds
+    // to that list later (stars, sparks, the tier's name) is drawn after it, over it.
+    this.explosions = new ComboExplosions(textures, this.planeLayer, this.goalEffects);
     this.fireworks = new Fireworks(textures);
     this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud, this.goalEffects, this.fireworks);
     this.build();
@@ -994,10 +996,11 @@ export class LevelScene {
     for (const { hangar, panel, ticks } of this.hangarPanels) {
       const plane = hangar.plane;
       panel.visible = hangar.use === 'working' && plane !== null;
+      if (hangar.use !== 'working') this.sparkWaits.delete(hangar);
       if (hangar.use === 'working' && plane) {
-        // 0x4747e: sparks fly off the plane while it is worked on. Where the wait starts is not
-        // read; it is taken as nothing, so the first comes at once.
-        let wait = (this.sparkWaits.get(hangar) ?? 0) - hangar.descriptor.speed * elapsed;
+        // 0x4747e: sparks fly off the plane while it is worked on, the first after 0.3 of the
+        // hangar's time (0x47250, set as the work begins).
+        let wait = (this.sparkWaits.get(hangar) ?? 0.3) - hangar.descriptor.speed * elapsed;
         if (wait < 0) {
           this.goalEffects.spark(hangarSpark(plane, Math.random));
           wait += hangarSparkWait(Math.random);

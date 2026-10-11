@@ -70,8 +70,8 @@ export class BlackSmoke {
     for (const plane of planes) {
       // Where the plane is on screen, its height above the ground taken off.
       const at = { x: plane.x, y: plane.y - plane.altitude };
-      // Where the wait starts is not read; it is taken as nothing, so the first puff comes at once.
-      const state = this.planes.get(plane.id) ?? { ...at, wait: 0 };
+      // 0x572e: the wait starts at 1.2 s.
+      const state = this.planes.get(plane.id) ?? { ...at, wait: 1.2 };
       this.planes.set(plane.id, state);
       if (dt > 0 && !plane.gone && !plane.serviceDone) {
         state.wait -= dt;
