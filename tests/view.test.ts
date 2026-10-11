@@ -23,6 +23,7 @@ import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace, nagFlash } from '../src/game/planeView';
 import { listLimit, listRest, listRowAt, listRowY, listSettle } from '../src/game/view/improvementsDialog';
 import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoading';
+import { gateLabelStrength } from '../src/game/view/gateView';
 import { coast, dragSpeed, markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
@@ -984,5 +985,15 @@ describe('the scene-loading screen', () => {
     expect(barWidth(1)).toBe(100);
     expect(veilStep(1, 0.1, true)).toBeCloseTo(0.7);
     expect(veilStep(0, 0.1, false)).toBeCloseTo(0.3);
+  });
+});
+
+describe('a gate\'s label', () => {
+  it('shows once the gate and the airport are both past a half', () => {
+    expect(gateLabelStrength(0.5, 1)).toBe(0);
+    expect(gateLabelStrength(1, 0.5)).toBe(0);
+    expect(gateLabelStrength(1, 1)).toBe(1);
+    expect(gateLabelStrength(0.75, 1)).toBeCloseTo(0.5);
+    expect(gateLabelStrength(1, 0.8)).toBeCloseTo(0.2);
   });
 });

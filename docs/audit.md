@@ -68,10 +68,12 @@ In the order they would be seen. None is a rule of play except the second.
 2. ~~**Advanced options**~~ (`0x2220`): built on 2026-10-11, both kinds, with show tips and tap
    on bubbles; and the touch area of a plane as the original has it.
 3. ~~**Colour help**~~ (`0x265ac`): built on 2026-10-11, with the three other colour tables.
-4. **The gate's label on hover** (`0x43d2a`, `GATES.ON_OVER_LABEL`, `GATES.LETTERS.LABEL.%d`):
-   for gate types with `LabelOver`, while the pointer is over the gate.
-5. **The pause screen** (`0x6a210`, `PAUSE.PAUSED`, `PAUSE.TEXT`): most likely when the app is
-   interrupted.
+4. ~~**The gate's label on hover**~~ (`0x43d2a`): built on 2026-10-11.
+5. **The pause screen** (`0x6a210`; update `0x6a328`, draw `0x6a5d4`; kept at `app+0x148`):
+   `PAUSE.PAUSED` 30 px above the screen's middle and `PAUSE.TEXT` 30 px below, coming in, held
+   until a touch, and going. Nothing in the game's own code switches to it: the device does,
+   when the app is interrupted. What would stand for that on the web is ours to choose, so it
+   is left for the owner to decide.
 6. **Small looks not read**: the bouncing of the shop's and the menu's buttons (`Bonucer`,
    `0x25bd0`), the check box's pressed picture (`GUI.DIALOGS.CHECKBOX_OVER`),
    `EFFECTS.BONUS_REMARK` (`0x271b0`), the money sign of the HUD

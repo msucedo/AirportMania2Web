@@ -508,8 +508,15 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
     fraction as opacity.
 - Colour multiplier (`0x43cdc`): `INDICATORS.X%d` at gate + `BonusPosition` whenever the gate's
   combo (`+0xc4`) is 2 or more, not only during service.
-- Hover label (`0x43d2a`): only for descriptors with `LabelOver`, when the pointer is over the
-  gate; not drawn in the web version.
+- Hover label (`0x43d2a`), only for descriptors with `LabelOver`. With a plane picked, the place
+  under the pointer is marked every frame (`0x11214`, cleared for all at `0x10e14`); a place's
+  value (`+0x2c`) follows that mark at 7 a second (`0x6aee0` → `0xa014`). A marked gate raises
+  a mark of the airport's (`0x43624`), whose value (`+0x16c`) follows at 2 a second
+  (`0x9e28`). With both values past a half, `v` is the lesser of the gate's and twice the
+  airport's less 1, and the label is drawn `2v − 1` clear and large at 15 px left of the gate
+  and its `DespZ` above: `GATES.ON_OVER_LABEL`, `GATES.LETTERS.LABEL.<n>`, and
+  `ON_OVER_LABEL_COLOR` in the gate's colours when it has any. Web version: the same, the
+  coloured part in one colour.
 - Not read: the first part of the gate draw (`0x436e4`–`0x439ac`: building, colour, letter) and
   the order flag offsets. The runway draw is covered under "Runway drawing".
 

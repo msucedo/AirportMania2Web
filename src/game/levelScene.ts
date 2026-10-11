@@ -50,7 +50,7 @@ import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
 import { GoalsPanel, HintDialog, TUTORIAL_FONTS, TUTORIAL_HINT_SURFACES, TUTORIAL_SOUNDS, TUTORIAL_SURFACES, TutorialGoalsDialog, TutorialIntro, TutorialReport } from './view/tutorialViews';
 import { LuggageView, luggageSurfaceIds } from './view/luggageView';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
-import { GateView, gateSurfaceIds } from './view/gateView';
+import { GateView, gateLabelStrength, gateSurfaceIds } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
@@ -109,7 +109,10 @@ export class LevelScene {
   private readonly ground = new Container();
   private readonly planeLayer = new Container();
   private readonly overlay = new Container();
-  private readonly gateViews: { gate: Gate; view: GateView }[] = [];
+  private readonly gateViews: { gate: Gate; view: GateView; pointed?: number }[] = [];
+  /** Where the pointer was last, and how much some gate has been pointed at of late. */
+  pointer: { x: number; y: number } | null = null;
+  private anyGatePointed = 0;
   private readonly flags: OrderFlags;
   private sky: SkyView | null = null;
   private readonly runwayViews: RunwayView[] = [];
@@ -305,9 +308,15 @@ export class LevelScene {
     } else begin();
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
-    app.stage.on('pointerdown', (event: FederatedPointerEvent) => scene.press(event.global.x, event.global.y));
+    app.stage.on('pointerdown', (event: FederatedPointerEvent) => {
+      scene.pointer = { x: event.global.x, y: event.global.y };
+      scene.press(event.global.x, event.global.y);
+    });
     // The colour chooser of a painting spot follows the finger while it is held down.
-    app.stage.on('globalpointermove', (event: FederatedPointerEvent) => scene.heldChooser?.move(event.global.y));
+    app.stage.on('globalpointermove', (event: FederatedPointerEvent) => {
+      scene.heldChooser?.move(event.global.y);
+      scene.pointer = { x: event.global.x, y: event.global.y };
+    });
     const release = (event: FederatedPointerEvent): void => {
       scene.heldChooser?.release(event.global.y);
       scene.heldChooser = null;
@@ -1014,7 +1023,17 @@ export class LevelScene {
   }
 
   private draw(seconds: number): void {
-    for (const { gate, view } of this.gateViews) view.update(this.paused ? 0 : seconds, gate.lastColor ? tintOf(gate.lastColor) : this.options.layout.neutralColor);
+    // 0x111d0, 0x43610: with a plane picked, the place under the pointer is pointed at; a
+    // gate's own value follows that at 7 a second (0xa014) and the airport's follows any gate's
+    // being pointed at, at 2 a second (0x9e28).
+    const pointed = !this.paused && !this.dialog && this.sim.selected && this.pointer ? this.sim.placeAt(this.pointer.x, this.pointer.y) : null;
+    const step = this.paused ? 0 : seconds;
+    this.anyGatePointed = Math.max(0, Math.min(1, this.anyGatePointed + (this.gateViews.some(({ gate }) => gate === pointed) ? 2 : -2) * step));
+    for (const entry of this.gateViews) {
+      const { gate, view } = entry;
+      entry.pointed = Math.max(0, Math.min(1, (entry.pointed ?? 0) + (gate === pointed ? 7 : -7) * step));
+      view.update(step, gate.lastColor ? tintOf(gate.lastColor) : this.options.layout.neutralColor, gateLabelStrength(entry.pointed, this.anyGatePointed));
+    }
     this.report?.update(seconds);
     const elapsed = this.paused ? 0 : seconds;
     this.sky?.update(elapsed);

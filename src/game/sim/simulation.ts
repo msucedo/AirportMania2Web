@@ -658,7 +658,7 @@ export class Simulation {
     }
     const selected = this.selected;
     if (!selected) return;
-    const place = this.places.find((p) => inside(p.click, x, y));
+    const place = this.placeAt(x, y);
     if (place) {
       if (again && selected.queue.length > 0) {
         selected.queue.length = 0;
@@ -685,6 +685,11 @@ export class Simulation {
       if (!best || best.y < plane.y) best = plane;
     }
     return best;
+  }
+
+  /** The place a touch at (x, y) is on (0x6b3c8). */
+  placeAt(x: number, y: number): Place | null {
+    return this.places.find((p) => inside(p.click, x, y)) ?? null;
   }
 
   /** A touch that is taken as one on `plane`, whatever is under it (its balloon, 0x10fb8). */
