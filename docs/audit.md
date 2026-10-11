@@ -105,12 +105,12 @@ level helpers called from many places), `0x64d38`–`0x65f88` (2 844), `0x17c2c`
 
 ## What this says
 
-- About 60 KB of the unread code is behaviour the port lacks and the data supports: mostly
+- About 63 KB of the unread code is behaviour the port lacks and the data supports: mostly
   things seen around the game rather than its rules: the ending, the plane's information
   dialog, the loading screen, the map's life, the opening logos, effects, a few dialogs.
 - About 35 KB is not applicable on the web, about 36 KB is covered another way, about 5 KB is
   for things this build has no images for.
-- About 55 KB is not identified: the small runs and the eight above. Rules could be in there.
+- About 52 KB is not identified: the small runs and the eight above. Rules could be in there.
 
 ## Worth doing next, in this order
 
