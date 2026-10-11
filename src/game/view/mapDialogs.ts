@@ -1,4 +1,4 @@
-import { Container, Text } from 'pixi.js';
+import { Container, Graphics, Text } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
@@ -81,49 +81,84 @@ export class LevelDialog extends Container {
   }
 }
 
+/** Where the stage dialog's parts go, from the frame's centre (0x63d28–0x642e8); `prize` is whether the stage is cleared. */
+export function stageDialogLayout(prize: boolean): {
+  height: number;
+  name: number;
+  description: { top: number; bottom: number };
+  cleared: number;
+  stars: number;
+  rule: number;
+  total: number;
+  close: number;
+} {
+  const extra = prize ? 20 : 0;
+  const cleared = 26 - extra;
+  return {
+    height: 220 + 2 * extra,
+    // Centred in a box from −110 − 2·extra to −40.
+    name: -75 - extra,
+    description: { top: -40 - 2 * extra, bottom: 60 - extra },
+    cleared,
+    stars: cleared + 28,
+    rule: cleared + 46,
+    total: cleared + 64,
+    close: 90 + extra,
+  };
+}
+
 /**
  * What the map shows for a stage (dialog `0x63c60`): its name and description and, once it is
- * cleared, the prize: the stars earned and the total paid. The layout is ours; only the texts,
- * their fonts and the Close button are taken from the original.
+ * cleared, the prize on the right half: the bonus for clearing it, the stars earned times the
+ * stage's rate, a rule and the total. Labels start at x 5 (the stars' count at 30, after a small
+ * star at 15) and amounts end at x 200. The original also makes room when the stage has awards;
+ * what it draws for them is not read. The description's box is the frame's whole width; the 10 px
+ * kept clear on each side here are ours.
  */
 export class StageDialog extends Container {
   constructor(
     textures: TextureStore,
     audio: AudioPlayer,
     strings: Strings,
-    stage: { number: number; prize: { stars: number; total: number } | null },
+    stage: { number: number; prize: { stars: number; perStar: number; clearBonus: number } | null },
     onClose: () => void,
   ) {
     super();
-    const size = { width: 420, height: 240 };
+    const layout = stageDialogLayout(stage.prize !== null);
+    const size = { width: 420, height: layout.height };
     const { overlay, panel } = dialogFrame(textures, size.width, size.height);
     const centre = new Container();
     centre.position.set(size.width / 2, size.height / 2);
     panel.addChild(centre);
     this.addChild(overlay);
 
-    const name = dialogText(centre, strings.t(`STAGES.${stage.number}.NAME`), 0, -92, 14, fontFamily(MAIN_FONT), 0.5);
+    const name = dialogText(centre, strings.t(`STAGES.${stage.number}.NAME`), 0, layout.name, 14, fontFamily(MAIN_FONT), 0.5);
     name.style.fill = 0xffc23a;
-    if (name.width > 390) name.scale.set(390 / name.width);
+    if (name.width > 400) name.scale.set(400 / name.width);
     const description = new Text({
       text: strings.t(`STAGES.${stage.number}.DESCRIPTION`),
-      style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 10, fill: 0xffffff, wordWrap: true, wordWrapWidth: 380, align: 'center', lineHeight: 13 },
+      style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, wordWrap: true, wordWrapWidth: 400, lineHeight: 13 },
     });
-    description.anchor.set(0.5, 0);
-    description.position.set(0, -76);
+    description.position.set(-200, layout.description.top);
     centre.addChild(description);
 
     if (stage.prize) {
       const money = fontFamily(SCORE_FONT);
-      dialogText(centre, strings.t('MAP_INFO_DIALOG.STAGE_CLEARED'), -150, 30, 13, fontFamily(MAIN_FONT), 0).style.fill = 0xffc23a;
+      const main = fontFamily(MAIN_FONT);
+      const { stars, perStar, clearBonus } = stage.prize;
+      const amount = (value: number, y: number): void => void (dialogText(centre, String(value), 200, y, 14, money, 1).style.fill = 0xffe45c);
+      dialogText(centre, strings.t('MAP_INFO_DIALOG.STAGE_CLEARED'), 5, layout.cleared, 14, main, 0).style.fill = 0xffc23a;
+      amount(clearBonus, layout.cleared);
       const star = textures.sprite('GUI.FINAL_REPORT.STAR_SMALL');
-      star.position.set(96, 22);
-      star.scale.set(0.7);
+      star.position.set(15, layout.stars);
       centre.addChild(star);
-      dialogText(centre, `x ${stage.prize.stars}`, 150, 30, 14, money, 1).style.fill = 0xffe45c;
-      dialogText(centre, strings.t('MAP_INFO_DIALOG.TOTAL'), -150, 54, 13, fontFamily(MAIN_FONT), 0).style.fill = 0xffc23a;
-      dialogText(centre, String(stage.prize.total), 150, 54, 14, money, 1).style.fill = 0xffe45c;
+      dialogText(centre, `x ${stars}`, 30, layout.stars, 14, main, 0).style.fill = 0xffc23a;
+      amount(stars * perStar, layout.stars);
+      // 0x2c26c: a rule 210 wide centred at x 100; what it is drawn with is not read.
+      centre.addChild(new Graphics().rect(100 - 105, layout.rule, 210, 1).fill({ color: 0xffffff, alpha: 0.5 }));
+      dialogText(centre, strings.t('MAP_INFO_DIALOG.TOTAL'), 5, layout.total, 14, main, 0).style.fill = 0xffc23a;
+      amount(stars * perStar + clearBonus, layout.total);
     }
-    dialogButton(textures, audio, centre, { x: 0, y: size.height / 2 - 20, width: 160, height: 36 }, strings.t('CLOSE'), fontFamily(SCORE_FONT), onClose);
+    dialogButton(textures, audio, centre, { x: 0, y: layout.close, width: 380, height: 36 }, strings.t('CLOSE'), fontFamily(SCORE_FONT), onClose);
   }
 }

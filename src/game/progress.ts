@@ -237,6 +237,12 @@ export class Progress {
     return rules ? this.stageStars(stage) * rules.perStar + rules.clearBonus : 0;
   }
 
+  /** What a stage pays for each star and for clearing it. */
+  stageRates(stage: number): { perStar: number; clearBonus: number } {
+    const rules = this.stages.get(stage);
+    return { perStar: rules?.perStar ?? 0, clearBonus: rules?.clearBonus ?? 0 };
+  }
+
   /** Opens the next stage with no improvements and the stage's reward as funds (0x78a9c). */
   private openNextStage(stage: number): void {
     if (!this.stages.has(stage + 1) || this.stored(stage + 1, 1)) return;

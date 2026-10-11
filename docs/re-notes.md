@@ -876,9 +876,16 @@ Vtable `0x17a8e8`, kind 5.
   (100, ∓40) (140, ∓40) (180, ∓40).
 - Stage dialog (`0x63c60`, from a stage icon): `STAGES.%d.NAME`, `STAGES.%d.DESCRIPTION`,
   `MAP_INFO_DIALOG.STAGE_CLEARED` with a small star and `x %d`, `MAP_INFO_DIALOG.TOTAL` and
-  `CLOSE`. Positions not read.
-- Web version: dragging scrolls the map; both dialogs use the original texts and buttons in a
-  layout of ours where the positions are not known.
+  `CLOSE`. With `e` = 20 when the stage is cleared or has awards (`0x63d28`), else 0: the frame
+  is 420 × `220 + 2e`; the name (`FONTS.MAIN`) is centred in the box (−210, −110 − 2e)–(210, −40)
+  and the description (`FONTS.WHITE`, from the left and the top) is in (−210, −40 − 2e)–
+  (210, 60 − e); Close is 380 wide at (0, 90 + e). Cleared (`0x63eec`): at y `26 − e` the label
+  from x 5 and the stage's clearing bonus ending at x 200 (`FONTS.SCORE`); 28 lower
+  `GUI.FINAL_REPORT.STAR_SMALL` at x 15, `x N` from x 30 and N times the stage's rate ending at
+  200, N being the stars earned on its levels; 18 lower a rule 210 wide at x 100 (`0x2c26c`);
+  18 lower `TOTAL` from x 5 and the sum ending at 200. What is drawn for a stage's awards is
+  not read.
+- Web version: dragging scrolls the map; both dialogs follow the positions above.
 
 ## End of the level — confirmed
 

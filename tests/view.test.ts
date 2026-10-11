@@ -1,4 +1,4 @@
-import { levelAwardPlaces, levelDialogHeight } from '../src/game/view/mapDialogs';
+import { levelAwardPlaces, levelDialogHeight, stageDialogLayout } from '../src/game/view/mapDialogs';
 import { MAP_GLINTS, MAP_STREAKS, streakPose, airborneIconPose, birdPose, cloudBob, glintShow, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
 import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
@@ -759,6 +759,8 @@ describe('scenery', () => {
     expect(levelAwardPlaces(1)).toEqual([{ x: 145, y: -10 }]);
     expect(levelAwardPlaces(5)).toEqual([{ x: 105, y: -50 }, { x: 145, y: -50 }, { x: 185, y: -50 }, { x: 125, y: 30 }, { x: 165, y: 30 }]);
     expect(levelAwardPlaces(6)).toHaveLength(6);
+    expect(stageDialogLayout(false)).toMatchObject({ height: 220, name: -75, description: { top: -40, bottom: 60 }, close: 90 });
+    expect(stageDialogLayout(true)).toMatchObject({ height: 260, name: -95, description: { top: -80, bottom: 40 }, cleared: 6, stars: 34, rule: 52, total: 70, close: 110 });
   });
 });
 

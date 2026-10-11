@@ -279,7 +279,7 @@ export class WorldMap {
     if (this.dialog) return;
     const { strings, progress, playable } = this.options;
     const cleared = playable.has(stage) && progress.record(stage, playable.get(stage)!).tier > 0;
-    const prize = cleared ? { stars: progress.stageStars(stage), total: progress.stageReward(stage) } : null;
+    const prize = cleared ? { stars: progress.stageStars(stage), ...progress.stageRates(stage) } : null;
     this.open(new StageDialog(this.textures, this.audio, strings, { number: stage, prize }, () => this.close()));
   }
 
