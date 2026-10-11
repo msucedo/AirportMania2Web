@@ -124,8 +124,9 @@ async function main(): Promise<void> {
     // 0x55a38: the ending comes after the loading screen.
     const strings = await data.strings(chosen);
     document.body.dataset.ready = 'true';
-    await LoadingScreen.run(app, data, textures, strings, [() => EndingScene.preload(data, textures)]);
-    await EndingScene.create(app, data, textures, makeAudio(), { strings, onReturn: () => navigate(null, null) });
+    const audio = makeAudio();
+    await LoadingScreen.run(app, data, textures, strings, [() => EndingScene.preload(data, textures)], audio);
+    await EndingScene.create(app, data, textures, audio, { strings, onReturn: () => navigate(null, null) });
   } else if (params.has('awards')) {
     // The awards room, reached from the map and going back to it.
     await AwardsRoom.create(app, data, textures, makeAudio(), {
@@ -177,7 +178,7 @@ async function main(): Promise<void> {
         });
       });
       window.opening?.root.destroy({ children: true });
-      await LoadingScreen.run(app, data, textures, strings, [...inRuns(surfaces, 12).map((run) => () => textures.load(run)), () => loadFonts(data.resources, fonts)]);
+      await LoadingScreen.run(app, data, textures, strings, [...inRuns(surfaces, 12).map((run) => () => textures.load(run)), () => loadFonts(data.resources, fonts)], audio);
       try {
         sessionStorage.setItem('am2web.opened', '1');
       } catch {

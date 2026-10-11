@@ -245,12 +245,22 @@ export class WorldMap {
       zone.on('pointerover', () => (pressed.visible = true));
       zone.on('pointerout', () => (pressed.visible = false));
       zone.on('pointertap', () => {
+        if (button.id === 'PLAY') {
+          // 0x5f54c: with the mark on the level the player has reached, Play starts it at once,
+          // with its own sound (0x5f590); on any other it would open that level's dialog. The
+          // mark here is always on the level reached. The wait lets the sound be heard before
+          // the page changes, and is ours.
+          const mark = this.selected;
+          if (!mark || this.dialog) return;
+          audio.play('SOUNDS.MAP_PLAY');
+          setTimeout(() => options.onPlay(mark.stage, mark.level), 400);
+          return;
+        }
         audio.play('SOUNDS.CLICK');
         if (button.id === 'RETURN') options.onMenu();
         // The tutorial is stage 0; its first day starts at once.
         else if (button.id === 'TUTORIAL') options.onPlay(0, 1);
         else if (button.id === 'AWARDS') options.onAwards();
-        else if (button.id === 'PLAY' && this.selected) this.askLevel(this.selected.stage, this.selected.level);
       });
       bar.addChild(zone);
     }
@@ -373,7 +383,7 @@ export class WorldMap {
     const map = new WorldMap(textures, audio, data, positions, awardPlaces, options);
     app.stage.addChild(map.root);
     app.ticker.add((ticker) => map.update(ticker.deltaMS / 1000));
-    audio.preload(['SOUNDS.CLICK']);
+    audio.preload(['SOUNDS.CLICK', 'SOUNDS.MAP_PLAY']);
     return map;
   }
 }

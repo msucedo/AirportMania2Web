@@ -208,7 +208,11 @@ export class LevelScene {
     const owned = options.progress.improvements(options.stage, options.level);
     const extraPlane = owned.has(layout.extraPlaneLicence);
     const schedule = findLevel(stage, options.level, extraPlane);
+    // 0x105e8: a level that opens with one of the game's tips has its arrivals 6 s later.
+    const texts = await data.strings(options.language);
+    const tipDue = options.stage !== 0 && options.progress.tipDue(Number.parseInt(texts.t('GAME_TIP.COUNT'), 10) || 0);
     const sim = new Simulation({
+      arrivalDelay: tipDue ? 6 : 0,
       difficulty: options.progress.difficulty,
       layout,
       schedule,
@@ -812,7 +816,9 @@ export class LevelScene {
   private playEvent(event: SimEvent): void {
     switch (event.type) {
       case 'spawn':
-        this.planeSound(event.plane, 'In');
+        // 0x591e: a plane with an emergency aboard comes in with a sound of its own.
+        if (event.plane.passenger) this.audio.play('SOUNDS.PLANE_EMERGENCY_IN');
+        else this.planeSound(event.plane, 'In');
         break;
       case 'select':
         this.audio.play('SOUNDS.SELECT_PLANE');

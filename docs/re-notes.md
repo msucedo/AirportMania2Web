@@ -80,6 +80,8 @@ Read from pseudocode and the callee disassembly.
 - With a plane selected, pressing on a place hit-tests the place list (`0x6b3c8`) and calls
   `Plane::addOrder` (`0x5ad8`). Success plays `SOUNDS.PLACE_CLICK`; failure `SOUNDS.FORBIDDEN_CLICK`.
 - In rerouting mode the plane's queue is cleared first (`0x609c`, `SOUNDS.REROUTING`).
+  Rerouting is a second touch (`0x10c2c`): let go within the engine's double-touch time (0.4 s)
+  of the one before and within `((1 − t/0.4)·0.6 + 0.4)·60` px of it.
 - Pressing on nothing with a plane selected cancels its queue (`0x6028`, `SOUNDS.QUEUE_CANCEL`).
 - The selected plane is stored at controller `+0x118`.
 
@@ -923,6 +925,22 @@ update).
   updates but is not used.
 - Web version: all of it; the menu being a page of its own, the planes' wait and turn are kept
   with the visit (session storage) between its showings, and `+0x138` is not looked at.
+
+## Sounds found by what the game names and the port did not
+
+`tools/re/unused.py` lists what the game's code names, its data has and the port's code never
+names. From it:
+
+- A plane made with its emergency flag set (a special passenger) comes in with
+  `SOUNDS.PLANE_EMERGENCY_IN` instead of its descriptor's `In` sound (`0x591e`). Built.
+- The map's Play (`0x5f54c`): with the profile's stage and level (`+0x1c`, `+0x20`) on the
+  ones reached (`+0x14`, `+0x18`) it starts that level at once with `SOUNDS.MAP_PLAY`
+  (`0x5f590`); otherwise it opens that level's dialog. Built; the port's mark is always on the
+  level reached, and it waits 0.4 s of its own so the sound is heard before the page changes.
+- The loading screen plays `SOUNDS.CLICKING_SEATBUCKLE` as it goes to its buckled state
+  (`0x55c82`). Built.
+- `SOUNDS.REPAIRING_LOOP` is loaded by the hangar (`0x46ac8`, kept at `+0x6c`) and never
+  played: nothing reads that field.
 
 ## Menu dialog (`0x66bbc`) and finish dialog (`0x376c4`)
 
@@ -2254,6 +2272,12 @@ verifies that each can be passed and that funds, stars and the opening of stage 
 - Web version: the second button's label is taken to be `NO`.
 
 ## Tips as a level starts — confirmed
+
+- As the level is set up (`0x105e8`, called at `0x102b4` before the fogs are scheduled): when
+  it is not the tutorial (`+0x128` empty), tips are on (the byte at `0x1781e0`, 1 unless the
+  Advanced options clear it) and the profile's count of tips shown is under the number of
+  tips, every arrival is put back 6 s. Then the level's time is raised to 5 s after its last
+  arrival if it is less. Web version: both.
 
 - As the day's opening is closed (`0x519e2` → `0xf4ac`): if the profile's count of tips shown
   (`+0x30`) is under the number of tips (`+0xc0` of the texts), a `GameTip` is made with that

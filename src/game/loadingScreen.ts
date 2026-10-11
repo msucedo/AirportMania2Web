@@ -1,3 +1,4 @@
+import type { AudioPlayer } from '../engine/audio';
 import { BORDER, MAIN_FILL } from './view/faces';
 import { Container, Graphics, Text, type Application, type Sprite, type TextStyleOptions } from 'pixi.js';
 import type { GameData } from '../data/load';
@@ -79,7 +80,7 @@ export class LoadingScreen {
    * Shows the screen while `tasks` are done one after another (0x55b3c): it comes out of white
    * over a second, the belt closes a step for each task, and it stays buckled for a second.
    */
-  static async run(app: Application, data: GameData, textures: TextureStore, strings: Strings, tasks: (() => Promise<unknown>)[]): Promise<void> {
+  static async run(app: Application, data: GameData, textures: TextureStore, strings: Strings, tasks: (() => Promise<unknown>)[], audio?: AudioPlayer): Promise<void> {
     await Promise.all([textures.load(SURFACES), loadFonts(data.resources, [MAIN_FONT, WHITE_FONT])]);
     const screen = new LoadingScreen(textures, strings);
     app.stage.addChild(screen.root);
@@ -101,6 +102,8 @@ export class LoadingScreen {
       screen.show((done + 1) / tasks.length, 0);
     }
     screen.show(1, 0);
+    // 0x55c82: buckled, with its click.
+    audio?.play('SOUNDS.CLICKING_SEATBUCKLE');
     await wait(1, () => {});
     screen.root.destroy({ children: true });
   }
