@@ -1,3 +1,5 @@
+import type { AwardPlace } from '../data/awards';
+import { levelAwardPictures, levelAwardSurfaces } from './awardsRoom';
 import { Container, Graphics, Text, type Application, type Sprite, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
@@ -118,6 +120,8 @@ export class LevelScene {
   private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating = new FloatingTexts();
   private readonly remarks = new Map<Place, PlaceRemark>();
+  /** Where each award hangs in its room, for their pictures in the level's announcement. */
+  private awardPlaces: AwardPlace[] = [];
   private readonly explosions: ComboExplosions;
   private readonly goalEffects: GoalEffects;
   private readonly fireworks: Fireworks;
@@ -251,6 +255,8 @@ export class LevelScene {
       ids.add(planeTrophy(spawn.type));
       for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, spawn.sex === 'FEMALE', layout.pontoons, spawn.passengers in PASSENGER_ICONS ? (spawn.passengers as Passenger) : null, spawn.needWash)) ids.add(id);
     }
+    const awardPlaces = await data.awards();
+    for (const id of levelAwardSurfaces(awardPlaces)) ids.add(id);
     const [strings] = await Promise.all([
       data.strings(options.language),
       textures.load(ids),
@@ -258,6 +264,7 @@ export class LevelScene {
     ]);
 
     const scene = new LevelScene(textures, audio, strings, options, sim);
+    scene.awardPlaces = awardPlaces;
     app.stage.addChild(scene.root);
     const levelMusic = (): void => audio.playMusic(`${area.music}.LOOP`, `${area.music}.INTRO`);
     // The shop comes before every level except the very first (`Level::start`, 0xfe8c), with its
@@ -357,11 +364,10 @@ export class LevelScene {
   private openIntro(): void {
     const { stage, level, progress } = this.options;
     this.paused = true;
-    const intro = new LevelIntro(this.textures, this.strings, { stage, number: level, goals: this.sim.goals, best: progress.result(stage, level).best }, () => {
+    const intro = new LevelIntro(this.textures, this.strings, { stage, number: level, goals: this.sim.goals, best: progress.result(stage, level).best, awards: levelAwardPictures(this.textures, this.awardPlaces, progress.awards, stage, level) }, () => {
       this.audio.unlock();
       this.dialog = null;
       this.paused = false;
-      setTimeout(() => intro.destroy({ children: true }));
       this.showGameTip();
     });
     this.dialog = intro;

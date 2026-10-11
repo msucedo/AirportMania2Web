@@ -1,4 +1,4 @@
-import { Container, Graphics, Rectangle, Text } from 'pixi.js';
+import { Container, Rectangle, Text } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import { fontFamily } from '../../engine/fonts';
@@ -45,18 +45,69 @@ export function goalRows(textures: TextureStore, strings: Strings, goals: LevelG
   return rows;
 }
 
+export type IntroState = { phase: 'coming' | 'shown' | 'going'; clock: number };
+
+/** A step of the announcement (0x519f0); false once it has gone. */
+export function introStep(state: IntroState, dt: number, touched: boolean): boolean {
+  switch (state.phase) {
+    case 'coming':
+      state.clock += 2 * dt;
+      if (state.clock >= 1) {
+        state.phase = 'shown';
+        state.clock = 0;
+      }
+      return true;
+    case 'shown':
+      state.clock += dt;
+      if (state.clock > 5.5 || touched) {
+        state.phase = 'going';
+        state.clock = 1;
+      }
+      return true;
+    case 'going':
+      state.clock -= 2 * dt;
+      return state.clock > 0;
+  }
+}
+
+/** Its size and opacity: half size and clear at the ends of its coming and going. */
+export function introPose(state: IntroState): { scale: number; alpha: number } {
+  if (state.phase === 'shown') return { scale: 1, alpha: 1 };
+  const c = Math.max(0, Math.min(1, state.clock));
+  return { scale: 0.5 + 0.5 * c, alpha: c };
+}
+
+/** Where the awards won on the level go, from the screen's centre, by how many there are (0x51e5e): one row of up to three, or two. */
+export function introAwardPlaces(count: number): { x: number; y: number }[] {
+  const row = (xs: number[], y: number): { x: number; y: number }[] => xs.map((x) => ({ x, y }));
+  switch (Math.min(count, 6)) {
+    case 1:
+      return row([140], 40);
+    case 2:
+      return row([120, 160], 40);
+    case 3:
+      return row([100, 140, 180], 40);
+    case 4:
+      return [...row([120, 160], 0), ...row([120, 160], 80)];
+    case 5:
+      return [...row([100, 140, 180], 0), ...row([120, 160], 80)];
+    case 6:
+      return [...row([100, 140, 180], 0), ...row([100, 140, 180], 80)];
+    default:
+      return [];
+  }
+}
+
 /**
  * What a level opens with (panel `0x514cc`, drawn by `0x51be8`): "Stage – Level N", the
  * airport's name, the five scores to aim for and the best one so far. Heights are from the
  * screen's centre: the title at −100 (−80 with no best score), 20 higher when five scores are
- * listed; the name 45 below it and the first row 50 below that. The original can also list what
- * the level introduces, which is not drawn. It is dismissed here with a touch, over a dimmed
- * airport; how the original dismisses it has not been read.
+ * listed; the name 45 below it and the first row 50 below that; the awards already won on the
+ * level to the right, the scores then 60 px to the left.
  */
 export class LevelIntro extends Container {
-  constructor(textures: TextureStore, strings: Strings, level: { stage: number; number: number; goals: LevelGoals; best: number }, onStart: () => void) {
+  constructor(textures: TextureStore, strings: Strings, level: { stage: number; number: number; goals: LevelGoals; best: number; awards?: Container[] }, onStart: () => void) {
     super();
-    const shade = new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill({ color: 0x000000, alpha: 0.5 });
     // The touch area is its own node, as with the dialog buttons.
     const zone = new Container();
     zone.hitArea = new Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -64,11 +115,41 @@ export class LevelIntro extends Container {
     zone.cursor = 'pointer';
     zone.on('pointerdown', (event) => {
       event.stopPropagation();
-      onStart();
+      touched = true;
     });
     const centre = new Container();
     centre.position.set(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-    this.addChild(shade, centre, zone);
+    this.addChild(centre, zone);
+
+    // 0x519f0: it swells in over half a second, stays 5.5 s or until a touch, and goes the way
+    // it came while the level is already running.
+    const state: IntroState = { phase: 'coming', clock: 0 };
+    let touched = false;
+    let last = performance.now();
+    const show = (): void => {
+      const pose = introPose(state);
+      centre.scale.set(pose.scale);
+      centre.alpha = pose.alpha;
+    };
+    show();
+    this.onRender = () => {
+      const now = performance.now();
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      const was = state.phase;
+      const alive = introStep(state, dt, touched);
+      touched = false;
+      if (was === 'shown' && state.phase === 'going') {
+        zone.eventMode = 'none';
+        onStart();
+      }
+      if (!alive) {
+        this.onRender = null;
+        setTimeout(() => this.destroy({ children: true }));
+        return;
+      }
+      show();
+    };
 
     const top = (level.best > 0 ? -100 : -80) - 20;
     const title = new Text({
@@ -84,7 +165,13 @@ export class LevelIntro extends Container {
     name.anchor.set(0.5);
     name.position.set(0, top + 45);
     const rows = goalRows(textures, strings, level.goals, level.best);
-    rows.y = top + 95;
+    const awards = level.awards ?? [];
+    // 0x51cf6: the scores make room for the awards won on this level, shown to their right.
+    rows.position.set(awards.length > 0 ? -60 : 0, top + 95);
     centre.addChild(title, name, rows);
+    introAwardPlaces(awards.length).forEach((at, i) => {
+      awards[i]!.position.set(at.x, at.y);
+      centre.addChild(awards[i]!);
+    });
   }
 }

@@ -537,15 +537,21 @@ Draw routine `0x40ed4`:
 - Draw, from the screen's centre: the title "<title> - <LEVEL_NUMBER>" in `FONTS.ULTRA` at y −100
   (−80 when the level has no best score), 20 higher when more than four scores are listed; the
   name 45 below in `FONTS.MAIN`; the first score row 50 below that, shifted 60 px left when the
-  level introduces something (a list drawn at the right, not read).
+  level has awards. Those are the awards given once a level that this level's record holds
+  (`0x51858`, as in the map's level dialog), each drawn by its own draw at, for one to six
+  (`0x51e5e`): (140, 40); (120, 40) (160, 40); (100, 40) (140, 40) (180, 40); (120, 0)
+  (160, 0) (120, 80) (160, 80); (100, 0) (140, 0) (180, 0) (120, 80) (160, 80); (100, 0)
+  (140, 0) (180, 0) (100, 80) (140, 80) (180, 80). Nothing is drawn behind the panel.
 - A score row (`0x51b18`): `GUI.INGAMEGUI.SCORE_GOAL_BACK` in the tier's colour, the tier name
   (`0x12520`) in `FONTS.WHITE` at (−125, −2) and the amount in `FONTS.SCORE` right-aligned at 115.
   Rows are 26 px apart; the best score follows 20 px further down in a darker plate.
 - Tier colours (confirmed): the table at `0x181314` is filled by the static initialiser
   `0x4f788` with five RGBA colours, goal to perfect: `#FFAC32`, `#E6E530`, `#6FE546`,
   `#50AFFF`, `#A055CC`. The bar's draw (`0x4ec78`) reads the same table.
-- Not read: the list of what a level introduces, and how the panel is dismissed. The web
-  version closes the panel with a touch.
+- Update (`0x519f0`), state `+0xfc` and clock `+0xec`: coming, the clock runs to 1 at 2 a
+  second and the panel is drawn scaled `0.5 + 0.5·clock` at opacity `clock`, about the screen's
+  centre; shown, until 5.5 s (`0x178504`) or a touch; then (`0x519c4`) the level is let go at
+  once and the panel goes the way it came, the clock running back from 1.
 
 ## Final report (dialog `0x3241c`, steps `0x328d4`)
 

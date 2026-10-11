@@ -12,8 +12,7 @@ import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { LevelDialog, MAP_DIALOG_FONTS, StageDialog } from './view/mapDialogs';
 import { findGoals } from '../data/levels';
 import type { AwardPlace } from '../data/awards';
-import { awardKind } from './awards';
-import { earnedAwardPicture, earnedAwardSurfaces } from './awardsRoom';
+import { levelAwardPictures, levelAwardSurfaces } from './awardsRoom';
 import { MAP_DECOR_SURFACES, MAP_GLINTS, MAP_STARS, MAP_STREAKS, MapAirborneIcon, MapBird, MapCarrierWaves, MapCloud, MapGlints, MapSatellite, MapStreak, type Decoration } from './view/mapDecor';
 import { AuroraView, StarView } from './view/scenery/night';
 import { SnowView } from './view/scenery/northPole';
@@ -265,13 +264,8 @@ export class WorldMap {
     this.open(new LevelDialog(this.textures, this.audio, strings, { stage, level, goals, best: progress.result(stage, level).best, awards: this.levelAwards(stage, level) }, () => this.options.onPlay(stage, level), () => this.close()));
   }
 
-  /** The pictures of the awards won on a level (0x64a48): those given once a level, in the awards' order. */
   private levelAwards(stage: number, level: number): Container[] {
-    const awards = this.options.progress.awards;
-    return this.awardPlaces
-      .filter((place) => awardKind(place.id) === 2 && awards[place.id]?.pairs.includes(`${level}-${stage}`))
-      .sort((a, b) => a.id - b.id)
-      .map((place) => earnedAwardPicture(this.textures, place, awards));
+    return levelAwardPictures(this.textures, this.awardPlaces, this.options.progress.awards, stage, level);
   }
 
   /** Touching a stage's icon describes it (0x63c60). */
@@ -313,7 +307,7 @@ export class WorldMap {
     for (const { stage } of STAGE_ICONS) surfaces.push(`MAP.STAGES.${stage}`);
     for (const button of BUTTONS) surfaces.push(`MAP.HUD.BUTTONS.${button.id}_ON`);
     const awardPlaces = await data.awards();
-    for (const place of awardPlaces) if (awardKind(place.id) === 2) surfaces.push(...earnedAwardSurfaces(place));
+    surfaces.push(...levelAwardSurfaces(awardPlaces));
     const [positions] = await Promise.all([data.levelPositions(), textures.load(surfaces), loadFonts(data.resources, [MAIN_FONT, SCORE_FONT, ...MAP_DIALOG_FONTS])]);
     const map = new WorldMap(textures, audio, data, positions, awardPlaces, options);
     app.stage.addChild(map.root);

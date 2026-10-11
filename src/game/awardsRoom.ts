@@ -8,7 +8,7 @@ import type { AudioPlayer } from '../engine/audio';
 import { fontFamily, loadFonts } from '../engine/fonts';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../engine/screen';
 import type { TextureStore } from '../engine/textures';
-import { awardCount, medalLevel, type AwardsData } from './awards';
+import { awardCount, awardKind, medalLevel, type AwardsData } from './awards';
 import { PAGE_WIDTH, SPARKLE_EVERY, curtainEdge, pageNumberPose, pageTouched, slideStep, sparklePose, swipeStep } from './awardsRoomMotion';
 import { DIALOG_SURFACES, dialogButton } from './view/dialog';
 import { SCORE_FONT } from './view/floatingText';
@@ -69,6 +69,19 @@ export function earnedAwardPicture(textures: TextureStore, place: AwardPlace, aw
   if ('picture' in images) node.addChild(textures.sprite(images.picture));
   else node.addChild(textures.sprite(images.tail), textures.sprite(HEADS[Math.max(0, medalLevel(awards, place.id))]!), textures.sprite(images.icon));
   return node;
+}
+
+/** The pictures of the awards won on a level (0x64a48, 0x51858): those given once a level, in the awards' order. */
+export function levelAwardPictures(textures: TextureStore, places: readonly AwardPlace[], awards: Readonly<AwardsData>, stage: number, level: number): Container[] {
+  return places
+    .filter((place) => awardKind(place.id) === 2 && awards[place.id]?.pairs.includes(`${level}-${stage}`))
+    .sort((a, b) => a.id - b.id)
+    .map((place) => earnedAwardPicture(textures, place, awards));
+}
+
+/** The images those pictures can need. */
+export function levelAwardSurfaces(places: readonly AwardPlace[]): string[] {
+  return places.filter((place) => awardKind(place.id) === 2).flatMap(earnedAwardSurfaces);
 }
 
 /** The images that picture needs. */
