@@ -209,6 +209,7 @@ export class LevelScene {
     const extraPlane = owned.has(layout.extraPlaneLicence);
     const schedule = findLevel(stage, options.level, extraPlane);
     const sim = new Simulation({
+      difficulty: options.progress.difficulty,
       layout,
       schedule,
       goals: findGoals(area, options.level, extraPlane),
@@ -1182,6 +1183,8 @@ export class LevelScene {
     const { progress, stage, level, onNavigate } = this.options;
     const stars = ['FAIL', 'GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'].indexOf(tier);
     const cleared = progress.complete(stage, level, this.sim.score, stars, this.sim.planesLost);
+    // 0x11ce6: the level over, passed or not, the player's difficulty follows the result.
+    progress.settleDifficulty(stars);
     // 0x11a30: what the end of a passed level gives.
     if (stars > 0) {
       const { unload, takeOff } = this.sim.counts;

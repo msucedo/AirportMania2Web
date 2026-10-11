@@ -1013,7 +1013,14 @@ In the playing state of the level update (`0x117c6`):
   (state 2), otherwise it sets 10 s (landed) or 6 s. With nobody holding it, `0x10684` ends the
   level.
 - `+0x8c` counts the seconds played after the time ran out (reported to the awards, code 0x29).
-- Web version: the profile's factor at `+0x48` is taken as 1.
+- The profile's `+0x48` is the player's difficulty. A new profile has 1 (`0x82176`). When a
+  finished level is left (`0x11ce6`, passed or not) it becomes
+  `0.75·d + 0.25·(0.5·tier)`, `tier` being the level's (`+0x158`, 0 for one not passed), kept
+  from 0.7 to 1.1, and the profile is saved. It is read in three places: the level's clock
+  (`0x117f0`), the planes' energy drain (`0x8966`) and a line the level's draw writes when its
+  `+0x9c` is set (`0x1247a`).
+- Web version: the same, kept with the player's progress; the tutorial's end does not move it
+  (whether the original's does is not read).
 
 ## Patience and loading speed labels — confirmed
 
@@ -1896,8 +1903,8 @@ This is what is not, as of the fifth milestone.
 
 Rules:
 
-- The profile's factor at `+0x48` (it scales the level clock and the energy drain) is taken
-  as 1.
+- The profile's factor at `+0x48` is the player's difficulty, now read and built (see "End of
+  the level").
 - The loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
 - Plane state 10 (set from `0x56b78`) is unknown; it has not been seen to matter here.
 - The service tab acts when the finger goes down, not when it is lifted.
@@ -1995,8 +2002,12 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   `GUI.DIALOGS.COMBOBOX.TEXT_REMARK` stretched to width + 12, 38 tall, from −width/2 − 6;
   `ARROW`, `REMARK_UP` and `REMARK_DOWN` are for the caps. Text in `FONTS.WHITE`.
   - Update (`0x2e6ec`): a touch within the rows' width in the 30 px above them picks the row
-    before, and in the 30 px below the row after (keys too); the rows themselves take no
-    touch. The first row shown follows (`0x2e678`): the picked row less the rows shown plus
+    before, and in the 30 px below the row after, as it is let go (keys too); held there, the
+    cap's highlight comes in at 8 a second (`0x9dd4`). Let go on a row (`0x2e9e6`: within the
+    width, all but 8 px at the top and bottom of the rows) a touch picks it; on the picked
+    one again within 0.4 s it calls the list's slot 7, which does nothing for this list. The
+    box keeps 12 px of its picture's left and what is past 24 px of its right (`0x2ebd4`).
+    The first row shown follows (`0x2e678`): the picked row less the rows shown plus
     one if it is past the last shown, the picked row if it is before the first.
   - Draw (`0x2e478`): the frame; the caps' highlights while pressed; `ARROW` in the 30 px
     above the rows and, turned over, in the 30 px below, at 0.7 when there is no row that way;

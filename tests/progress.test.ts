@@ -1,6 +1,6 @@
 import { gameTipStep } from '../src/game/view/tipsShower';
 import { describe, expect, it } from 'vitest';
-import { Progress, type StageRules } from '../src/game/progress';
+import { Progress, difficultyAfter, type StageRules } from '../src/game/progress';
 import { ARCHES, IMPROVEMENT } from '../src/game/stages/arches';
 import { ISLAND } from '../src/game/stages/island';
 import { onSale } from '../src/game/stages/layout';
@@ -12,6 +12,19 @@ const RULES = new Map<number, StageRules>([
 ]);
 
 describe('progress', () => {
+  it('moves the difficulty with each level, between 0.7 and 1.1', () => {
+    expect(difficultyAfter(1, 2)).toBe(1);
+    expect(difficultyAfter(1, 0)).toBe(0.75);
+    expect(difficultyAfter(0.75, 0)).toBe(0.7);
+    expect(difficultyAfter(1, 5)).toBe(1.1);
+    expect(difficultyAfter(1, 3)).toBe(1.1);
+    expect(difficultyAfter(0.7, 1)).toBeCloseTo(0.7);
+    const progress = Progress.load(RULES);
+    expect(progress.difficulty).toBe(1);
+    progress.settleDifficulty(0);
+    expect(progress.difficulty).toBe(0.75);
+  });
+
   it('opens a stage that did not exist yet when the one before it was cleared', () => {
     // Stage 2 cleared with only two stages in the game: nothing to open then.
     const before = Progress.load(RULES);

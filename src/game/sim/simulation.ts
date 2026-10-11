@@ -334,6 +334,8 @@ export type SimEvent =
   | { type: 'levelEnd'; score: number };
 
 export interface SimulationConfig {
+  /** The player's difficulty (profile `+0x48`): it scales the level's clock and the planes' energy drain. 1 when left out. */
+  difficulty?: number;
   layout: StageLayout;
   schedule: LevelSchedule;
   goals: LevelGoals;
@@ -831,7 +833,8 @@ export class Simulation {
 
   update(dt: number): void {
     if (this.ended) return;
-    this.time += dt;
+    // 0x117f0: the level's clock runs at the player's difficulty.
+    this.time += dt * (this.config.difficulty ?? 1);
 
     while (this.pending.length > 0 && this.pending[0]!.time <= this.time) this.spawn(this.pending.shift()!);
 
@@ -1308,7 +1311,8 @@ export class Simulation {
     const fallTime = plane.sex === 'MALE' ? plane.descriptor.times.maleEnergyFall : plane.descriptor.times.femaleEnergyFall;
     // A stop spot the plane is parked on scales the drain (`plane+0x320`, set by 0x79788).
     const parked = plane.place?.kind === 'stopSpot' && plane.place.use === 'occupied' ? plane.place.drain : 1;
-    const rate = (1 / fallTime) * (plane.passenger ? RULES.specialPassengerDrainFactor : 1) * parked;
+    // 0x8966: and by the player's difficulty.
+    const rate = (1 / fallTime) * (plane.passenger ? RULES.specialPassengerDrainFactor : 1) * parked * (this.config.difficulty ?? 1);
     plane.energy = Math.max(RULES.minEnergy, plane.energy - rate * dt);
   }
 

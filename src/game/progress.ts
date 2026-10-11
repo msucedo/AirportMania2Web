@@ -37,7 +37,20 @@ export interface ProgressData {
   started?: boolean;
   /** How many of the game's tips have been shown at the start of a level (profile `+0x30`). */
   tips?: number;
+  /** The player's difficulty (profile `+0x48`); 1 for a new player. */
+  difficulty?: number;
 }
+
+/**
+ * The player's difficulty after a level ended at `tier`, 0 for one not passed (0x11ce6): three
+ * quarters of what it was and an eighth of the tier, kept from 0.7 to 1.1. It scales the level's
+ * clock and the planes' energy drain, so the game eases off after poor levels and tightens
+ * after good ones.
+ */
+export const difficultyAfter = (difficulty: number, tier: number): number => {
+  const next = 0.75 * difficulty + 0.25 * (0.5 * tier);
+  return next < 0.7 ? 0.7 : Math.min(1.1, next);
+};
 
 /** Stars a level is worth: none for the goal up to four for a perfect score (0x78442). */
 export const starsOf = (tier: number): number => Math.max(0, tier - 1);
@@ -104,6 +117,17 @@ export class Progress {
 
   private stored(stage: number, level: number): LevelRecord | undefined {
     return this.data.records[key(stage, level)];
+  }
+
+  /** The player's difficulty (profile `+0x48`). */
+  get difficulty(): number {
+    return this.data.difficulty ?? 1;
+  }
+
+  /** Moves the difficulty for a level ended at `tier` (0x11ce6), and keeps it. */
+  settleDifficulty(tier: number): void {
+    this.data.difficulty = difficultyAfter(this.difficulty, tier);
+    this.save();
   }
 
   /** The record of a level, without creating it. */
