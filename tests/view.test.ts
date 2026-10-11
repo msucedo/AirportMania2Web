@@ -1,3 +1,4 @@
+import { fanPose, fanRays, comboStar, comboStarPose, starThrows } from '../src/game/view/comboExplosion';
 import { hsv, remarkRings, rgb, stopSpotRemark } from '../src/game/view/placeRemark';
 import { floatingAlpha, floatingPush, floatingStretch } from '../src/game/view/floatingText';
 import { puffPeriod, smokeAlpha, smokes } from '../src/game/view/smokeTail';
@@ -592,6 +593,50 @@ describe('scenery', () => {
     expect(stopSpotRemark('STOPSPOT_VIP', true)).toBe('STOPSPOT_REMARK');
     expect(stopSpotRemark('STOPSPOT_ISLAND_BACK', false)).toBe('STOPSPOT_ISLAND_REMARK');
     expect(stopSpotRemark('STOPSPOT_ISLAND_VIP_BACK', true)).toBe('STOPSPOT_ISLAND_VIP_REMARK');
+  });
+  it('fans light out behind a combo as the original draws it', () => {
+    // What the original's draw hands the renderer for a fan at (200, 150), from running it
+    // (tools/re/draw_trace.py 0x692e8): the matrix of rays 0, 1 and 8 at two moments.
+    const matrix = (t: number, i: number): number[] => {
+      const pose = fanPose(t);
+      const ray = fanRays(t)[i]!;
+      const turn = (ray.angle * Math.PI) / 180;
+      return [
+        ray.scaleX * Math.cos(turn) * pose.scaleX,
+        ray.scaleX * Math.sin(turn) * pose.scaleY,
+        -Math.sin(turn) * pose.scaleX,
+        Math.cos(turn) * pose.scaleY,
+        200 + ray.x * pose.scaleX,
+        150 + ray.y * pose.scaleY,
+      ];
+    };
+    const close = (got: number[], want: number[]): void => got.forEach((value, k) => expect(value).toBeCloseTo(want[k]!, 3));
+    close(matrix(0.1, 0), [1.00966, -0.210055, 0.178938, 1.18523, 192.104, 146.63]);
+    close(matrix(0.35, 1), [1.79244, -0.16001, 0.133309, 1.49406, 198.95, 150.3]);
+    close(matrix(0.35, 8), [1.9492, -0.0357336, 0.0274807, 1.49975, 200, 147]);
+    close(matrix(0.9, 6), [1.24452, -0.523146, 0.581273, 1.38279, 203.15, 146.7]);
+    expect(fanRays(0).map((ray) => ray.tint & 0xff)).toEqual([255, 221, 187, 238, 204, 255, 221, 187, 238]);
+    expect(fanPose(0).alpha).toBe(0);
+    expect(fanPose(0.1).alpha).toBe(1);
+    expect(fanPose(0.9).alpha).toBeCloseTo(0.2, 6);
+  });
+
+  it('throws more stars the higher the combo, and dims them as their opacity runs out', () => {
+    expect(starThrows(1)).toEqual([]);
+    expect(starThrows(2)).toEqual([{ x: -45, y: -270 }, { x: 45, y: -270 }]);
+    expect(starThrows(3)).toHaveLength(4);
+    expect(starThrows(4)).toHaveLength(8);
+    const numbers = [0.25, 0.75, 1, 0.5, 0, 0.5];
+    const star = comboStar(100, 200, -45, -270, () => numbers.shift()!);
+    expect(star).toMatchObject({ angle: 90, spin: 90, red: 0.3, green: 0.15, blue: 0, alpha: 3.5 });
+    // Opacity 3.5: red 0.3 is over 1 and held there, green 0.15 gives 0.525.
+    expect(comboStarPose(star, 0)).toEqual({ x: 100, y: 200, angle: 90, scale: 0.7, tint: (255 << 16) | (133 << 8) });
+    const later = comboStarPose(star, 1);
+    expect(later).toMatchObject({ x: 55, y: 5, angle: 180, scale: 1 });
+    // Opacity 1.5: red 0.45, green 0.225.
+    expect(later.tint).toBe((114 << 16) | (57 << 8));
+    // From 1.75 s its opacity is under zero: nothing is added.
+    expect(comboStarPose(star, 1.9).tint).toBe(0);
   });
 });
 

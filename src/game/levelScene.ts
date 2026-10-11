@@ -32,6 +32,7 @@ import { AWARD, awardSound, awardText } from './awards';
 import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView';
 import { SMOKE_SURFACES, SmokeTails } from './view/smokeTail';
 import { PlaceRemark, stopSpotRemark } from './view/placeRemark';
+import { COMBO_SURFACES, ComboExplosions } from './view/comboExplosion';
 import { noticePose, noticeStart, noticeStep, type NoticeState } from './view/awardNotice';
 import { PlaneInfoDialog, planeTrophy } from './view/planeInfoDialog';
 import { TIPS_SHOWER_SURFACES, gameTipStep, tipsShower } from './view/tipsShower';
@@ -114,6 +115,7 @@ export class LevelScene {
   private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating = new FloatingTexts();
   private readonly remarks = new Map<Place, PlaceRemark>();
+  private readonly explosions: ComboExplosions;
   private readonly hud: Hud;
   private accumulator = 0;
   private endShown = false;
@@ -174,6 +176,7 @@ export class LevelScene {
     } else this.hud.behind.addChild(serviceGrip(textures, SERVICE_SLOTS.coffee));
     this.flags = new OrderFlags(textures);
     this.bonusView = new BonusView(textures, sim);
+    this.explosions = new ComboExplosions(textures, this.planeLayer, this.overlay);
     this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud);
     this.build();
   }
@@ -202,7 +205,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...SMOKE_SURFACES, ...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
+    const ids = new Set<string>([...SMOKE_SURFACES, ...COMBO_SURFACES, ...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
     for (const entry of backdropOf(layout, options.level).layers) {
       if (isScenery(entry)) for (const id of scenerySurfaceIds(entry)) ids.add(id);
       else ids.add(entry.resource);
@@ -753,7 +756,11 @@ export class LevelScene {
         if (event.points > 0) this.float(String(event.points), event.plane, 'score', -30);
         else if (event.points < 0) this.float(String(event.points), event.plane, 'penalty', -30);
         // The bonus text sits where the original puts it, 50 px above the plane.
-        if (event.multiplier > 1) this.float(this.strings.t('IN_GAME.BONUS_X', event.multiplier), event.plane, 'message', -66);
+        if (event.multiplier > 1) {
+          this.float(this.strings.t('IN_GAME.BONUS_X', event.multiplier), event.plane, 'message', -66);
+          // 0x4340a, 0x6d6ac, 0x6d814: with the text, at the plane's place and depth.
+          this.explosions.explode(event.plane.x, event.plane.y, event.plane.y, event.multiplier);
+        }
         break;
       case 'punctuality':
         this.float(this.strings.t(`IN_GAME.${event.result}`), event.plane, 'message', -50);
@@ -1028,6 +1035,7 @@ export class LevelScene {
 
     this.floating.update(seconds);
     for (const remark of this.remarks.values()) remark.update(seconds);
+    this.explosions.update(this.paused ? 0 : seconds);
 
     const remaining = this.sim.totalTime > 0 ? Math.max(0, this.sim.totalTime - this.sim.time) / this.sim.totalTime : 0;
     this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds);

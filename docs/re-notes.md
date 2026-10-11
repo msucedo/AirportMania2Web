@@ -2153,6 +2153,50 @@ set to 1, colour kept).
 - Web version: the stop spot's is drawn over its image on the ground; where the original's draw
   puts it has not been read. `tools/re/dataref.py` finds the code that forms a data address.
 
+## Combo explosion — confirmed
+
+Made with the `IN_GAME.BONUS_X` text, at the plane's place (`plane+0x30c`) and three behind its
+depth (`plane+4` − 3): by the gate with its combo (`0x4340a`) and by the runway with its count,
+4 at most (`0x6d6ac`, `0x6d814`). Constructor `0x26bd8(place, depth, multiplier)`.
+
+- The explosion itself shows nothing. It loads `EFFECTS.BONUS_REMARK` and lives two seconds
+  (`0x270c0`), but its draw (`0x270e8`) only works a transform out and never hands it to the
+  image: the picture is never drawn.
+- It makes a fan of light (`0x691dc`), put among the airport's sorted objects at that depth, and
+  from a multiplier of 2 stars (`0x6989c`), put on the airport's own list after everything, so
+  over planes and places: thrown at (−45, −270) and (45, −270); from 3 also (60, −260) and
+  (−60, −260); from 4 also (−40, −250), (40, −250), (70, −220) and (−70, −220) px/s.
+- Fan (`EFFECTS.LIGHT_FAN`): its clock `T` runs from 0 to 1 at 0.6 a second (`0x692b4`). Draw
+  (`0x692e8`): the whole is scaled `1.5·(1 − ((0.4 − T)/0.4)⁴)` across until 0.4 and
+  `1.5·(1 − ((0.3 − T)/0.3)⁴)` up until 0.3, 1.5 after; opacity `min(1, 10T, 2(1 − T))`. Nine
+  rays, ray `i` with, before that scale: length `1 + ((3 + 123i) mod 13 − 3)/30`; turned
+  `((3 + 119i) mod 13 − 6)·3 + ((1 + 117i) mod 19 − 8)·1.5·T` degrees; blue
+  `1 − (7i mod 5)/15`; at (`(171i mod 23 − 11)·0.7`, `(131i mod 29 − 14)·0.2`).
+- Star (`EFFECTS.BONUS_STAR`, additive): two seconds of life; it moves with its speed and falls
+  at 150 px/s² (`0x9f18`: place += (speed + ½·a·dt)·dt, so an exact parabola); angle random,
+  turning at −180 to 180°/s; size 0.7 growing 0.3 a second; colour three random parts from 0 to
+  0.3 and opacity from 3 to 4 dropping 2 a second (`0x69a88`). Draw `0x69b40`.
+- Checked by running the fan's draw (`tools/re/draw_trace.py 0x692e8 …`): the web version's
+  matrices agree with the original's to the fourth figure.
+
+## How the engine draws: transforms and colour — confirmed
+
+- A transform (`0xb3e80` makes one) is flags, then red, green, blue and opacity (`+4`…`+0x10`),
+  then a 3×3 matrix at `+0x14` that multiplies a row vector: in Pixi's terms a `+0x14`, b
+  `+0x18`, c `+0x20`, d `+0x24`, tx `+0x2c`, ty `+0x30`.
+- Each step is applied after the ones before: `0xb40e4` moves, `0xb41e0` scales, `0xb4114` turns
+  by degrees (the same way round as Pixi's `angle`), `0xb4240` skews, `0xb4290` multiplies the
+  colour by four floats, `0xb42f8` multiplies the opacity, `0xb4318(out, a, b)` is `a` then `b`.
+  An image is drawn by slot 6 of its vtable (`+0x18`) with a transform.
+- Colour to the renderer (`0x9c148`): for an additive image (blending 2: `glBlendFunc(ONE,
+  ONE)`) and for blending 4 (`ONE, ONE_MINUS_SRC_ALPHA`) red, green and blue are first
+  multiplied by the opacity; then each of the four is held within 0 and 1 (`0x9a240`) and sent
+  as a byte. So an additive image's opacity may be over 1 and brightens it. Blending 1 does not
+  blend, 3 is the usual (`SRC_ALPHA, ONE_MINUS_SRC_ALPHA`), 5 multiplies (`DST_COLOR, ZERO`)
+  (`0x9be74`).
+- `tools/re/draw_trace.py <function> [field …]` runs a draw routine in the emulator on a made-up
+  object and prints the transform of every image it draws.
+
 ## What has not been read
 
 See `docs/audit.md`: the share of the game logic read so far and the runs of code not yet
