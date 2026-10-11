@@ -316,6 +316,27 @@ describe('simulation, level 1-1', () => {
     expect(sim.score).toBe(-2750);
     expect(events.at(-1)).toEqual({ type: 'levelEnd', score: -2750 });
   });
+
+  it('runs the goal bar after the score and reaches or loses a tier when it gets there', () => {
+    const sim = newSim();
+    const goal = sim.goals.goal;
+    sim.score = Math.round(goal * 1.5);
+    const events: SimEvent[] = [];
+    const step = (seconds: number): void => void run(sim, seconds, events);
+    // 0.9 of a tier a second at most: not there after one second, there after two.
+    step(1);
+    expect(sim.tier).toBe(0);
+    expect(sim.tierProgress).toBeCloseTo(0.9, 1);
+    step(1);
+    expect(sim.tier).toBe(1);
+    expect(events.filter((e) => e.type === 'tierReached')).toEqual([{ type: 'tierReached', tier: 1 }]);
+    // Back under the goal: the bar runs down and the tier is lost.
+    sim.score = Math.round(goal * 0.5);
+    step(3);
+    expect(sim.tier).toBe(0);
+    expect(events.filter((e) => e.type === 'tierLost')).toEqual([{ type: 'tierLost', tier: 1 }]);
+    expect(sim.tierProgress).toBeCloseTo(0.5, 1);
+  });
 });
 
 describe('simulation, holding pattern', () => {

@@ -326,6 +326,9 @@ export type SimEvent =
   | { type: 'timeOver' }
   /** An event for the awards (posted through 0x9db0): the award's id and a value. */
   | { type: 'award'; id: number; value: number }
+  /** The goal bar reached score tier `tier` (1 the goal, 5 a perfect score), or fell back from it. */
+  | { type: 'tierReached'; tier: number }
+  | { type: 'tierLost'; tier: number }
   /** A repair or a wash finished: the profile counts them over all games (0x66c8, 0x67c8). */
   | { type: 'counted'; what: 'repairs' | 'washes' }
   | { type: 'levelEnd'; score: number };
@@ -408,6 +411,10 @@ export class Simulation {
   timeOver = false;
   /** Seconds until the end of the level is next considered (`level+0x1dc`). */
   private endDelay = 0;
+  /** Score tiers the goal bar has reached (`level+0x1b4`): 1 the goal, 5 a perfect score. */
+  tier = 0;
+  /** How far the bar is through the tier after those, 0 to 1 (`level+0x1ac`). It runs after the score. */
+  tierProgress = 0;
 
   constructor(private readonly config: SimulationConfig) {
     const owned = config.improvements ?? new Set<number>();
@@ -852,6 +859,7 @@ export class Simulation {
     this.updateBonus(dt);
 
     this.updateEnd(dt);
+    this.updateGoalBar(dt);
   }
 
   /**
@@ -1896,6 +1904,50 @@ export class Simulation {
   private addScore(plane: Plane, points: number, multiplier: number, reason: 'landing' | 'gate' | 'takeOff' | 'gas' | 'service' | 'left'): void {
     this.gain(points);
     this.emit({ type: 'score', plane, points, multiplier, reason });
+  }
+
+  /**
+   * The goal bar (0x11e1c). Its progress runs after the score's share of the tier it is in, at
+   * that distance a second, 0.05 at least and 0.9 at most. Filling the tier reaches it and going
+   * under it loses the one before; either way the end of the level is put off again.
+   */
+  private updateGoalBar(dt: number): void {
+    const marks = [this.goals.goal, this.goals.expert, this.goals.master, this.goals.supreme, this.goals.perfect];
+    const putOff = (): void => {
+      const end = RULES.levelEnd;
+      this.endDelay = this.planes.some((p) => !p.gone && p.landed) ? end.afterTimeOverLanded : end.afterTimeOver;
+    };
+    if (this.tier < marks.length) {
+      const from = this.tier >= 1 ? marks[this.tier - 1]! : 0;
+      const target = (this.score - from) / (marks[this.tier]! - from);
+      const apart = target - this.tierProgress;
+      if (apart !== 0) {
+        const step = (Math.abs(apart) < 0.05 ? 0.05 : Math.min(0.9, Math.abs(apart))) * Math.sign(apart) * dt;
+        this.tierProgress = Math.abs(step) >= Math.abs(apart) ? target : this.tierProgress + step;
+      }
+      if (this.tierProgress >= 1) {
+        this.tier++;
+        this.tierProgress -= 1;
+        this.emit({ type: 'tierReached', tier: this.tier });
+        putOff();
+      }
+    } else if (this.score < marks[this.tier - 1]!) {
+      // 0x12258: down from a full bar.
+      this.emit({ type: 'tierLost', tier: this.tier });
+      this.tier--;
+      this.tierProgress = 0.999;
+      putOff();
+      return;
+    }
+    if (this.tierProgress < 0) {
+      if (this.tier >= 1) {
+        this.emit({ type: 'tierLost', tier: this.tier });
+        this.tier--;
+        this.tierProgress += 1;
+        putOff();
+      }
+      if (this.tier === 0 && this.tierProgress < 0) this.tierProgress = 0;
+    }
   }
 
   /** Adds to the score (0xfffc), with the two awards that watch it. */

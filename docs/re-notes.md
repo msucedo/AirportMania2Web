@@ -2230,3 +2230,35 @@ A user named `qatester911` switches two things on:
   (`0x4d37c` → `0x4c154`) adds 1 000 000 to the level's funds and plays a sound.
 
 It is a testing back door; the owner of this port chose to leave it out (2026-10-10).
+
+## The goal bar's tiers, and what reaching one throws — confirmed
+
+`0x11d94`, called by the level's update after its main part (`0x1238c`).
+
+- Tiers reached `level+0x1b4`, of `+0x1b8`; progress inside the next `+0x1ac`; goals at `+0x1bc`.
+  Below the last tier (`0x11e1c`) the progress runs after
+  `(score − G[t−1]) / (G[t] − G[t−1])` at that distance a second, 0.05 at least and 0.9 at most
+  (`0x11e78`), stopping on it.
+- Progress at 1 (`0x11efa`): the tier is counted and 1 taken off the progress. The level then
+  makes the tier's name (`0x71a24`, from the table `0x17971c`: `SCORE.GOAL_SCORE` …
+  `SCORE.PERFECT_SCORE`), plays `SOUNDS.GOAL_%1d_ACHIEVED`, and throws `10·tier` stars
+  (`0x69640`) and `13·tier` sparks (`0x69c28`), all on the level's own list (`level+8`).
+  Reaching the first tier with the time over is what posts award event 0x29.
+- Progress under 0 with a tier reached (`0x12188`): `SOUNDS.GOAL_1_LOST` for the first tier,
+  `SOUNDS.GOAL_GENERIC_LOST` otherwise; the tier is taken back and 1 added to the progress. With
+  every tier reached and the score under the last goal (`0x12258`) the same, the progress set
+  to 0.999. With no tier a negative progress is set to 0.
+- Either way `level+0x1dc` is set again to 10 if a plane is on the ground and 3 otherwise: the
+  end of the level waits for it.
+- Name (`0x71a34`; update `0x71b58`, draw `0x71c20`): `FONTS.ULTRA`, centred at (253, 16),
+  three seconds: it sinks 20 px/s, is scaled `0.6 + 0.1·age`, comes in over half a second and
+  goes over the third.
+- Star off the bar (`0x69650`): at x 195–315, y 10–15; speed x −60…60, y −100…0; the rest as the
+  combo's star. Spark (`0x69c38`, `EFFECTS.SPARK`, additive): the same place, speed x −60…60,
+  y −70…0; one second, falling at 150 px/s², opacity twice the time left (`0x69d5c`).
+- The hangar (`0x4747e`), while working, counts `hangar+0x90` down by its `Speed` × dt; under 0
+  it throws a spark from (plane x − 10…+10, plane y − 35…−15) at (−50…50, −100) and adds
+  0.1 to 0.6.
+- Web version: all of it, with these marked as ours: the effects are drawn over the HUD (the
+  order of the level's list against the HUD is not read); the name's top is put at its place
+  (the engine's vertical alignment for `0x94650` is not read); the hangar's first wait is 0.

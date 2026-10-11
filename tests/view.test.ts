@@ -1,3 +1,5 @@
+import { barSpark, barStar, hangarSpark, sparkPose, tierBurst, tierTextPose } from '../src/game/view/goalEffects';
+import { goalBarReach } from '../src/game/view/hud';
 import { fanPose, fanRays, comboStar, comboStarPose, starThrows } from '../src/game/view/comboExplosion';
 import { hsv, remarkRings, rgb, stopSpotRemark } from '../src/game/view/placeRemark';
 import { floatingAlpha, floatingPush, floatingStretch } from '../src/game/view/floatingText';
@@ -637,6 +639,29 @@ describe('scenery', () => {
     expect(later.tint).toBe((114 << 16) | (57 << 8));
     // From 1.75 s its opacity is under zero: nothing is added.
     expect(comboStarPose(star, 1.9).tint).toBe(0);
+  });
+
+  it('throws stars and sparks off the goal bar and shows the tier going down', () => {
+    expect(tierBurst(1)).toEqual({ stars: 10, sparks: 13 });
+    expect(tierBurst(4)).toEqual({ stars: 40, sparks: 52 });
+    const half = (): number => 0.5;
+    expect(barStar(half)).toMatchObject({ x: 255, y: 12.5, vx: 0, vy: -50, angle: 180, spin: 0, alpha: 3.5 });
+    expect(barSpark(() => 0)).toEqual({ x: 195, y: 10, vx: -60, vy: -0 });
+    expect(hangarSpark({ x: 100, y: 200 }, half)).toEqual({ x: 100, y: 175, vx: 0, vy: -100 });
+    const spark = { x: 0, y: 0, vx: 10, vy: -100 };
+    expect(sparkPose(spark, 0.25)).toEqual({ x: 2.5, y: -25 + 75 / 16, alpha: 1 });
+    expect(sparkPose(spark, 0.75).alpha).toBeCloseTo(0.5, 5);
+    expect(tierTextPose(0.25)).toEqual({ x: 253, y: 21, scale: 0.625, alpha: 0.5 });
+    expect(tierTextPose(1)).toMatchObject({ y: 36, alpha: 1 });
+    expect(tierTextPose(2.5).alpha).toBeCloseTo(0.5, 5);
+  });
+
+  it('stands the goal bar by the tiers reached and the progress in the next', () => {
+    const goals = { goal: 1000, expert: 2000, master: 3000, supreme: 4000, perfect: 5000 } as never;
+    expect(goalBarReach(0, 0, goals)).toBe(0);
+    expect(goalBarReach(0, 0.5, goals)).toBeCloseTo(0.2 * Math.pow(0.5, 0.6));
+    expect(goalBarReach(1, 0, goals)).toBeCloseTo(0.2);
+    expect(goalBarReach(5, 0, goals)).toBe(1);
   });
 });
 

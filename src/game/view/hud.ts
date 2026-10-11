@@ -47,6 +47,14 @@ export function goalBarFraction(score: number, goals: LevelGoals): number {
   return (Math.pow(within, 0.6) * (to - from) + from) / goals.perfect;
 }
 
+/** Where the bar stands with `tier` tiers reached and `progress` through the next (0x4e8cc). */
+export function goalBarReach(tier: number, progress: number, goals: LevelGoals): number {
+  const marks = [goals.goal, goals.expert, goals.master, goals.supreme, goals.perfect];
+  if (tier >= marks.length) return 1;
+  const from = tier > 0 ? marks[tier - 1]! : 0;
+  return (Math.pow(Math.max(0, Math.min(1, progress)), 0.6) * (marks[tier]! - from) + from) / goals.perfect;
+}
+
 /** The time left as three base-9 digits, coarse to fine: what the clock's rings show (0x4efa6). */
 export function clockDigits(remaining: number): [number, number, number] {
   const r = Math.max(0, Math.min(1, remaining));
@@ -138,7 +146,7 @@ export class Hud extends Container {
   }
 
   /** @param remaining share of the level's time still left, 1 at the start */
-  update(score: number, remaining: number, dt: number): void {
+  update(score: number, remaining: number, dt: number, bar: { tier: number; progress: number }): void {
     this.time += dt;
     this.timeOver.visible = remaining <= 0;
     this.timeOver.alpha = 0.5 + 0.5 * Math.sin(this.time * 11);
@@ -148,9 +156,9 @@ export class Hud extends Container {
     // Reached tiers in full colour up to where the bar stands, the rest dimmed; a cleared bar
     // pulses. The bar stops at the tier it is in and creeps towards the next.
     const marks = [this.goals.goal, this.goals.expert, this.goals.master, this.goals.supreme, this.goals.perfect];
-    const reach = BAR.x + BAR.width * goalBarFraction(score, this.goals);
+    const reach = BAR.x + BAR.width * goalBarReach(bar.tier, bar.progress, this.goals);
     this.fill.clear();
-    if (score >= this.goals.perfect) {
+    if (bar.tier >= marks.length) {
       const pulse = 0.5 + 0.5 * Math.sin(this.time * 10);
       this.fill.rect(BAR.x, BAR.y, BAR.width, BAR.height).fill({ color: 0xffe45c, alpha: 0.6 + 0.4 * pulse });
     } else {

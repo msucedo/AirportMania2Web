@@ -33,6 +33,7 @@ import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView
 import { SMOKE_SURFACES, SmokeTails } from './view/smokeTail';
 import { PlaceRemark, stopSpotRemark } from './view/placeRemark';
 import { COMBO_SURFACES, ComboExplosions } from './view/comboExplosion';
+import { GOAL_EFFECT_SURFACES, GoalEffects, TIER_NAMES, hangarSpark, hangarSparkWait } from './view/goalEffects';
 import { noticePose, noticeStart, noticeStep, type NoticeState } from './view/awardNotice';
 import { PlaneInfoDialog, planeTrophy } from './view/planeInfoDialog';
 import { TIPS_SHOWER_SURFACES, gameTipStep, tipsShower } from './view/tipsShower';
@@ -116,6 +117,9 @@ export class LevelScene {
   private readonly floating = new FloatingTexts();
   private readonly remarks = new Map<Place, PlaceRemark>();
   private readonly explosions: ComboExplosions;
+  private readonly goalEffects: GoalEffects;
+  /** Seconds of each hangar's work to its next spark (`hangar+0x90`). */
+  private readonly sparkWaits = new Map<Hangar, number>();
   private readonly hud: Hud;
   private accumulator = 0;
   private endShown = false;
@@ -177,7 +181,8 @@ export class LevelScene {
     this.flags = new OrderFlags(textures);
     this.bonusView = new BonusView(textures, sim);
     this.explosions = new ComboExplosions(textures, this.planeLayer, this.overlay);
-    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud);
+    this.goalEffects = new GoalEffects(textures);
+    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud, this.goalEffects);
     this.build();
   }
 
@@ -205,7 +210,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...SMOKE_SURFACES, ...COMBO_SURFACES, ...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
+    const ids = new Set<string>([...SMOKE_SURFACES, ...COMBO_SURFACES, ...GOAL_EFFECT_SURFACES, ...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
     for (const entry of backdropOf(layout, options.level).layers) {
       if (isScenery(entry)) for (const id of scenerySurfaceIds(entry)) ids.add(id);
       else ids.add(entry.resource);
@@ -837,6 +842,15 @@ export class LevelScene {
         // 0x6764: it may whistle three to eight seconds into the fill-up.
         this.whistles.set(event.plane.id, 3 + Math.random() * 5);
         break;
+      case 'tierReached':
+        // 0x11f74: the tier's name, its sound, and stars and sparks off the bar.
+        this.audio.play(`SOUNDS.GOAL_${event.tier}_ACHIEVED`);
+        this.goalEffects.reach(event.tier, this.strings.t(TIER_NAMES[event.tier]!));
+        break;
+      case 'tierLost':
+        // 0x1219e.
+        this.audio.play(event.tier === 1 ? 'SOUNDS.GOAL_1_LOST' : 'SOUNDS.GOAL_GENERIC_LOST');
+        break;
       case 'timeOver':
         this.audio.play('SOUNDS.TIME_OVER');
         break;
@@ -964,6 +978,16 @@ export class LevelScene {
     for (const { hangar, panel, ticks } of this.hangarPanels) {
       const plane = hangar.plane;
       panel.visible = hangar.use === 'working' && plane !== null;
+      if (hangar.use === 'working' && plane) {
+        // 0x4747e: sparks fly off the plane while it is worked on. Where the wait starts is not
+        // read; it is taken as nothing, so the first comes at once.
+        let wait = (this.sparkWaits.get(hangar) ?? 0) - hangar.descriptor.speed * elapsed;
+        if (wait < 0) {
+          this.goalEffects.spark(hangarSpark(plane, Math.random));
+          wait += hangarSparkWait(Math.random);
+        }
+        this.sparkWaits.set(hangar, wait);
+      }
       if (!panel.visible || !plane) continue;
       ticks.forEach((tick, i) => {
         // A tick lands at each quarter of the job and pops in with a wobble.
@@ -1036,9 +1060,10 @@ export class LevelScene {
     this.floating.update(seconds);
     for (const remark of this.remarks.values()) remark.update(seconds);
     this.explosions.update(this.paused ? 0 : seconds);
+    this.goalEffects.update(this.paused ? 0 : seconds);
 
     const remaining = this.sim.totalTime > 0 ? Math.max(0, this.sim.totalTime - this.sim.time) / this.sim.totalTime : 0;
-    this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds);
+    this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds, { tier: this.sim.tier, progress: this.sim.tierProgress });
 
     if (this.sim.ended && !this.endShown) this.showEnd();
   }
