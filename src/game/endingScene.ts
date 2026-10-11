@@ -140,8 +140,13 @@ export class EndingScene {
     this.place();
   }
 
-  static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: EndingOptions): Promise<EndingScene> {
+  /** Loads what the scene needs, so that it can be done behind the loading screen. */
+  static async preload(data: GameData, textures: TextureStore): Promise<void> {
     await Promise.all([textures.load([...SURFACES, ...CREDITS_SURFACES]), loadFonts(data.resources, ['FONTS.BLUE_STONE', 'FONTS.BRADY_BUNCH', ...CREDITS_FONTS])]);
+  }
+
+  static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: EndingOptions): Promise<EndingScene> {
+    await EndingScene.preload(data, textures);
     const scene = new EndingScene(textures, options, app.ticker);
     app.stage.addChild(scene.root);
     // Browsers only allow sound after a gesture; the page was reached by one, but a reload is not.

@@ -2424,3 +2424,21 @@ Two of the app's screens (vtables `0x17b4b0` and `0x17b990`: update, draw, enter
   menu once for each visit to the page (kept in the browser's session), since the menu here is
   a page come back to from the map; `?logos` shows them again and `?nologos` never. A browser
   plays no sound before the first touch, so the first screen is usually silent.
+
+## The loading screen — confirmed
+
+Another of the app's screens (vtable `0x17ad10`; enter `0x55a38`, update `0x55b3c`, draw
+`0x55cc0`).
+
+- Update: state 0 waits one second (`+0x54`, from 1); state 1 does the queued loading steps, as
+  many as fit in a hundredth of a second each frame, counting them (`+0x5c` of `+0x58`); with
+  the queue empty state 2 holds for one second, then (after a message when `app+0x244` is set)
+  the next screen is entered.
+- Draw: `LOADING_SCREEN.BACK` at (0, 0); `LOADING_SCREEN.FASTEN_YOUR_SEAT_BELTS` in `FONTS.MAIN`
+  centred at (240, 210) and `LOADING_SCREEN.LOADING` in `FONTS.WHITE` at (240, 238). With
+  `g = (1 − done/total)·180`: `BELT_ROPE` every 12 px from `193 − g` down to −18 and from
+  `287 + g` up to 498, `BELT_PIN_LEFT` at `217 − g` and `BELT_PIN_RIGHT` at `263 + g`, all at
+  y 280. In state 0 a white veil at the opacity of the wait left.
+- Web version: shown after the opening screens, while the menu's images and fonts load in
+  thirteen steps, and before the ending. Loading here takes a moment, so it is mostly the two
+  seconds of its own. The message of `app+0x244` is not read.

@@ -1,3 +1,4 @@
+import { LoadingScreen, inRuns } from './game/loadingScreen';
 import { Opening } from './game/opening';
 import { loadGameData } from './data/load';
 import { isLanguage } from './data/strings';
@@ -117,7 +118,11 @@ async function main(): Promise<void> {
   const playable = new Map([...STAGES.keys()].map((s) => [s, data.areas.get(s)!.levelsCount]));
   if (params.has('ending')) {
     // The ending, reached from the last stage's clear screen; it goes back to the main menu.
-    await EndingScene.create(app, data, textures, makeAudio(), { strings: await data.strings(chosen), onReturn: () => navigate(null, null) });
+    // 0x55a38: the ending comes after the loading screen.
+    const strings = await data.strings(chosen);
+    document.body.dataset.ready = 'true';
+    await LoadingScreen.run(app, data, textures, strings, [() => EndingScene.preload(data, textures)]);
+    await EndingScene.create(app, data, textures, makeAudio(), { strings, onReturn: () => navigate(null, null) });
   } else if (params.has('awards')) {
     // The awards room, reached from the map and going back to it.
     await AwardsRoom.create(app, data, textures, makeAudio(), {
@@ -149,9 +154,10 @@ async function main(): Promise<void> {
   } else if (level === null) {
     const audio = makeAudio();
     const strings = await data.strings(chosen);
-    await Promise.all([textures.load([...GAME_MENU_SURFACES, ...CREDITS_SURFACES, ...USERS_SURFACES, ...TUTORIAL_QUESTION_SURFACES]), loadFonts(data.resources, [...CREDITS_FONTS, ...USERS_FONTS])]);
-    // The two opening screens come first, once for each visit: the menu is a page of its own
-    // here and is come back to from the map, where the original does not show them again.
+    const surfaces = [...GAME_MENU_SURFACES, ...CREDITS_SURFACES, ...USERS_SURFACES, ...TUTORIAL_QUESTION_SURFACES];
+    const fonts = [...CREDITS_FONTS, ...USERS_FONTS];
+    // The two opening screens and the loading come first, once for each visit: the menu is a
+    // page of its own here and is come back to from the map, where the original shows neither.
     const seen = ((): boolean => {
       try {
         return sessionStorage.getItem('am2web.opened') === '1';
@@ -167,12 +173,13 @@ async function main(): Promise<void> {
         });
       });
       window.opening?.root.destroy({ children: true });
+      await LoadingScreen.run(app, data, textures, strings, [...inRuns(surfaces, 12).map((run) => () => textures.load(run)), () => loadFonts(data.resources, fonts)]);
       try {
         sessionStorage.setItem('am2web.opened', '1');
       } catch {
         // Storage is off: they are shown every time.
       }
-    }
+    } else await Promise.all([textures.load(surfaces), loadFonts(data.resources, fonts)]);
     await MainMenu.create(app, data, textures, audio, {
       strings,
       enabled: ['PLAY', 'USERS', 'OPTIONS', 'CREDITS'],

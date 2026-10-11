@@ -1,3 +1,4 @@
+import { beltPose, inRuns } from '../src/game/loadingScreen';
 import { publisherFades, publisherGlint, publisherOver, publisherSweeps, studioWindV } from '../src/game/opening';
 import { levelAwardPlaces, levelDialogHeight, stageDialogLayout } from '../src/game/view/mapDialogs';
 import { MAP_GLINTS, MAP_STREAKS, streakPose, airborneIconPose, birdPose, cloudBob, glintShow, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
@@ -793,6 +794,22 @@ describe('scenery', () => {
     expect(publisherOver(0.8, true)).toBe(true);
     expect(publisherOver(6.6, false)).toBe(true);
     expect(studioWindV(0.3, 0.2)).toBeCloseTo(0.6, 6);
+  });
+
+  it('closes the loading screen\'s belt as the loading goes', () => {
+    const open = beltPose(0);
+    expect(open.leftPin).toBe(37);
+    expect(open.rightPin).toBe(443);
+    expect(open.leftStrap).toEqual([13, 1, -11]);
+    expect(open.rightStrap).toEqual([467, 479, 491]);
+    const shut = beltPose(1);
+    expect(shut.leftPin).toBe(217);
+    expect(shut.rightPin).toBe(263);
+    expect(shut.leftStrap[0]).toBe(193);
+    expect(shut.leftStrap.at(-1)).toBe(-11);
+    expect(shut.rightStrap[0]).toBe(287);
+    expect(shut.rightStrap.at(-1)).toBe(491);
+    expect(inRuns([1, 2, 3, 4, 5], 2)).toEqual([[1, 2, 3], [4, 5]]);
   });
 });
 
