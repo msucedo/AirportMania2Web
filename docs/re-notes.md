@@ -1859,6 +1859,13 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   rows, a cap), from (−width/2 − 12, −rows·18 − 32); the picked row lies on
   `GUI.DIALOGS.COMBOBOX.TEXT_REMARK` stretched to width + 12, 38 tall, from −width/2 − 6;
   `ARROW`, `REMARK_UP` and `REMARK_DOWN` are for the caps. Text in `FONTS.WHITE`.
+  - Update (`0x2e6ec`): a touch within the rows' width in the 30 px above them picks the row
+    before, and in the 30 px below the row after (keys too); the rows themselves take no
+    touch. The first row shown follows (`0x2e678`): the picked row less the rows shown plus
+    one if it is past the last shown, the picked row if it is before the first.
+  - Draw (`0x2e478`): the frame; the caps' highlights while pressed; `ARROW` in the 30 px
+    above the rows and, turned over, in the 30 px below, at 0.7 when there is no row that way;
+    then the rows shown, 36 px apart from `floor((36 − height)/2)`.
 - Name dialog (`0x805ac(dialog, mode)`): 340×200; `ENTER_YOUR_NAME`, or `RENAME_THE_USER` in
   mode 2, centred at y −80 in `FONTS.WHITE`; a text field `0x2e1e8` 170 wide at (0, −20); an
   accept button (`0x81bec`, Enter presses it too: `0x81e58`) at (−90, 70) and `CANCEL`
@@ -1867,6 +1874,8 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   (`0x80704`).
   - Text field (`0x2e208`): `GUI.DIALOGS.EDITBOX` stretched sideways to width + 36, from
     (−width/2 − 18, −31); a text too wide for the width loses its last characters (`0x2e3d0`).
+    Drawn (`0x2dbf8`) with the text centred, a character at a time, and a caret 3 px after
+    it with opacity `4·(sin(8t) + 0.5)`.
   - Accepting (`0x80124`): spaces around the name are dropped; an empty name opens the note
     with `NAME_NULL`, one some user already has (`0x82808`) the note with `NAME_REPEATED`;
     otherwise modes 0 and 1 add the user (`0x82694`) and mode 2 renames the current one, and
@@ -1880,8 +1889,7 @@ verifies that each can be passed and that funds, stars and the opening of stage 
 - Web version: users and each one's progress are kept in the browser (`am2web.users.v1`,
   `am2web.progress.v2.user<id>`); the first user takes over the progress made before there
   were users, and without a user the game plays on that. The name is asked when the menu
-  opens with no user. Not read, and so ours: how rows are aligned and scrolled (one row per
-  press of a cap), where the field's text and caret sit, the buttons' height (30), that a new
+  opens with no user. Not read, and so ours: how a row's text is aligned, the caret's shape and colour, the buttons' height (30), that a new
   user becomes the current one, who is current after a deletion (the first left), and that the
   note's and the question's texts are centred in their boxes (their text call's second flag
   is 0 where the hint's is 1). The browser's keyboard stands in for the device's.

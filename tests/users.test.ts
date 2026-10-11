@@ -1,3 +1,4 @@
+import { caretAlpha, firstRowShown } from '../src/game/view/usersDialogs';
 import { describe, expect, it } from 'vitest';
 import { Users, progressKey, type UserStorage } from '../src/game/users';
 
@@ -79,4 +80,21 @@ describe('users', () => {
     users.create('Eva');
     expect(storage.items.get('progress')).toBe('{"old":true}');
   });
+
+  it('keeps the picked row among the three the list shows', () => {
+    expect(firstRowShown(0, 0, 3)).toBe(0);
+    expect(firstRowShown(0, 2, 3)).toBe(0);
+    expect(firstRowShown(0, 3, 3)).toBe(1);
+    expect(firstRowShown(4, 2, 3)).toBe(2);
+    expect(firstRowShown(1, 2, 3)).toBe(1);
+    expect(firstRowShown(2, -1, 3)).toBe(2);
+  });
+
+  it('blinks the caret', () => {
+    expect(caretAlpha(0)).toBe(1);
+    expect(caretAlpha(Math.PI / 16)).toBe(1);
+    expect(caretAlpha((3 * Math.PI) / 16)).toBe(0);
+    expect(caretAlpha((7 * Math.PI) / 48)).toBeCloseTo(0, 5);
+  });
 });
+

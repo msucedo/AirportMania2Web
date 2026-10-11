@@ -1,4 +1,4 @@
-import { Container, type FederatedPointerEvent, NineSliceSprite, Rectangle, Text } from 'pixi.js';
+import { Container, type FederatedPointerEvent, NineSliceSprite, Rectangle, type Sprite, Text } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -29,14 +29,26 @@ interface Common {
 
 const label = (value: string): Text => new Text({ text: value, style: { fontFamily: white().family, fontSize: white().size, fill: white().fill } });
 
+/** The row a list shows first so the picked one is in view (0x2e678). */
+export function firstRowShown(first: number, picked: number, rows: number): number {
+  if (picked < 0) return first;
+  if (picked >= first + rows) return picked - rows + 1;
+  return picked < first ? picked : first;
+}
+
+/** How solid the text field's caret is `time` seconds on (0x2ddac): it blinks 8 radians a second. */
+export const caretAlpha = (time: number): number => Math.max(0, Math.min(1, 4 * (Math.sin(8 * time) + 0.5)));
+
 /**
- * The list box (0x2f0e8 over 0x2ead0): `rows` rows of 36 px, `width` wide, in a frame 24 px
- * wider with a 32 px cap above and below holding the arrows; the picked row lies on a yellow
- * band 12 px wider than the rows.
+ * The list box (0x2f0e8 over 0x2ead0; update 0x2e6ec, draw 0x2e478): `rows` rows of 36 px,
+ * `width` wide, in a frame 24 px wider with a 32 px cap above and below. The picked row lies on
+ * a yellow band 12 px wider than the rows. The caps' arrows pick the row before and the row
+ * after, the rows shown following; an arrow that leads nowhere is drawn at 0.7.
  */
 class ListBox extends Container {
   private first = 0;
   private readonly rows = new Container();
+  private readonly arrows: Sprite[] = [];
 
   constructor(
     private readonly textures: TextureStore,
@@ -52,36 +64,37 @@ class ListBox extends Container {
     frame.setSize(width_ + 24, height + 2 * CAP);
     frame.position.set(-width_ / 2 - 12, -height / 2 - CAP);
     this.addChild(frame, this.rows);
-    const cap = (y: number, by: number, flipped: boolean): void => {
+    const cap = (edge: number, by: number, flipped: boolean): void => {
+      // The arrow fills the 30 px beyond the rows; the lower one is the upper one turned over.
       const arrow = textures.sprite('GUI.DIALOGS.COMBOBOX.ARROW');
-      arrow.anchor.set(0.5);
-      arrow.position.set(0, y);
+      arrow.anchor.set(0.5, 1);
+      arrow.position.set(0, edge);
       if (flipped) arrow.scale.y = -1;
       arrow.eventMode = 'none';
+      this.arrows.push(arrow);
       const zone = new Container();
-      zone.hitArea = new Rectangle(-width_ / 2 - 12, y - CAP / 2, width_ + 24, CAP);
+      zone.hitArea = new Rectangle(-width_ / 2, flipped ? edge : edge - 30, width_, 30);
       zone.eventMode = 'static';
       zone.on('pointerdown', (event: FederatedPointerEvent) => {
         event.stopPropagation();
-        this.scroll(by);
+        const next = this.selected() + by;
+        if (next < 0 || next >= this.names().length) return;
+        this.onSelect(next);
+        this.draw();
       });
       this.addChild(zone, arrow);
     };
-    cap(-height / 2 - CAP / 2, -1, false);
-    cap(height / 2 + CAP / 2, 1, true);
-    this.reveal();
+    cap(-height / 2, -1, false);
+    cap(height / 2, 1, true);
+    this.draw();
   }
 
-  /** Scrolls so the picked row shows, and draws. */
-  reveal(): void {
-    const at = this.selected();
-    if (at >= 0) this.first = Math.max(Math.min(this.first, at), at - this.count + 1);
-    this.scroll(0);
-  }
-
-  private scroll(by: number): void {
+  private draw(): void {
     const names = this.names();
-    this.first = Math.max(0, Math.min(names.length - this.count, this.first + by));
+    const picked = this.selected();
+    this.first = Math.max(0, firstRowShown(this.first, picked, this.count));
+    this.arrows[0]!.alpha = picked > 0 ? 1 : 0.7;
+    this.arrows[1]!.alpha = picked >= 0 && picked < names.length - 1 ? 1 : 0.7;
     for (const child of this.rows.removeChildren()) child.destroy({ children: true });
     const top = (-this.count * ROW) / 2;
     for (let row = 0; row < this.count; row++) {
@@ -89,7 +102,7 @@ class ListBox extends Container {
       const name = names[index];
       if (name === undefined) break;
       const y = top + row * ROW + ROW / 2;
-      if (index === this.selected()) {
+      if (index === picked) {
         const band = new NineSliceSprite({ texture: this.textures.texture('GUI.DIALOGS.COMBOBOX.TEXT_REMARK'), leftWidth: 12, rightWidth: 12, topHeight: 0, bottomHeight: 0 });
         band.setSize(this.width_ + 12, 38);
         band.position.set(-this.width_ / 2 - 6, y - 19);
@@ -99,16 +112,7 @@ class ListBox extends Container {
       text.anchor.set(0.5);
       text.position.set(0, y);
       if (text.width > this.width_) text.scale.x = this.width_ / text.width;
-      const zone = new Container();
-      zone.hitArea = new Rectangle(-this.width_ / 2, y - ROW / 2, this.width_, ROW);
-      zone.eventMode = 'static';
-      zone.cursor = 'pointer';
-      zone.on('pointerdown', (event: FederatedPointerEvent) => {
-        event.stopPropagation();
-        this.onSelect(index);
-        this.scroll(0);
-      });
-      this.rows.addChild(text, zone);
+      this.rows.addChild(text);
     }
   }
 }
@@ -195,9 +199,10 @@ export class NameDialog extends Container {
     const field = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.EDITBOX'), leftWidth: 18, rightWidth: 18, topHeight: 0, bottomHeight: 0 });
     field.setSize(170 + 36, 62);
     field.position.set(-85 - 18, -20 - 31);
+    // 0x2dc58: the text is centred in the field, the caret 3 px after it.
     this.shown = label('');
-    this.shown.anchor.set(0, 0.5);
-    this.shown.position.set(-85, -20);
+    this.shown.anchor.set(0.5);
+    this.shown.position.set(0, -20);
     this.caret = label('|');
     this.caret.anchor.set(0, 0.5);
     centre.addChild(asked, field, this.shown, this.caret);
@@ -221,7 +226,8 @@ export class NameDialog extends Container {
     this.input.focus();
     this.eventMode = 'static';
     this.on('pointerdown', () => this.input.focus());
-    this.blink = setInterval(() => (this.caret.visible = !this.caret.visible), 500);
+    const since = performance.now();
+    this.blink = setInterval(() => (this.caret.alpha = caretAlpha((performance.now() - since) / 1000)), 33);
     this.typed();
   }
 
@@ -232,7 +238,7 @@ export class NameDialog extends Container {
       this.input.value = this.input.value.slice(0, -1);
       this.shown.text = this.input.value;
     }
-    this.caret.position.set(this.shown.x + this.shown.width, -20);
+    this.caret.position.set(this.shown.x + this.shown.width / 2 + 3, -20);
   }
 
   /** 0x80124: an empty name or one already in use is turned down with a note. */
