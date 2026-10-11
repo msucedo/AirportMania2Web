@@ -2557,7 +2557,9 @@ Another of the app's screens (vtable `0x17ad10`; enter `0x55a38`, update `0x55b3
   y 280. In state 0 a white veil at the opacity of the wait left.
 - Web version: shown after the opening screens, while the menu's images and fonts load in
   thirteen steps, and before the ending. Loading here takes a moment, so it is mostly the two
-  seconds of its own. The message of `app+0x244` is not read.
+  seconds of its own. The message of `app+0x244` (`0x55c1c`) is a notice 400 by 280 saying
+  "You are playing a beta version of Aiport Mania - Wild Trips"; nothing in the binary sets
+  that byte, so it is never shown, here either.
 
 ## How a dialog opens and closes — confirmed
 
