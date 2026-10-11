@@ -120,7 +120,18 @@ level helpers called from many places), `0x64d38`–`0x65f88` (2 844), `0x17c2c`
    message turned out never to be shown (nothing reads where it is kept).
 4. ~~**In-level tips** (`GameTip`, `0x40314`)~~: built. Coffee and Cake and In-Flight Movies
    were the service tabs, already built; the message class beside them is not used by the data.
-5. **Effects**: fireworks and the notice's particles, the combo's explosion, the bonus star,
-   the fan of light, black smoke, birds and bats.
+5. **Effects**: not built yet. Read so far:
+   - The combo's explosion (`0x26bd8`), made at the plane's place, three behind it, by the gate
+     on arrival (`0x4340a`, with the gate's combo) and by the runway (`0x6d6ac`, `0x6d814`, with
+     its count, 4 at most): `EFFECTS.BONUS_REMARK`, a fan of light (`0x691dc`) and, from a
+     multiplier of 2, stars (`0x6989c`) thrown at (∓45, −270); from 3 also (±60, −260); from 4
+     also (∓40, −250) and (±70, −220).
+   - The fan of light draws nine rays whose size, turn, opacity and place come from whole-number
+     hashes of the ray's index (`0x69432`–`0x695c8`). Reading them off the listing is error
+     prone; the sure way is to run the routine in the emulator (`tools/re/stage_layout.py` has
+     the harness) and log its transform calls.
+   - Stars and sparks are also thrown by the level when a score tier is reached (`0x11d94` →
+     `0x69640`, `0x69c28`) and sparks by the hangar (`0x473dc`); black smoke by the plane
+     (`0x75ed8`); fireworks by the award notice (`0x38bbc`); birds by the level (`0x22c2c`).
 6. **The map's life**, the loading screen and the opening logos.
 7. **The unidentified runs**, starting with `0x15434`–`0x179a8`, to rule rules in or out.
