@@ -160,17 +160,19 @@ export function dialogButton(
 }
 
 /**
- * A rule across a dialog (0x2c26c) or down it (0x2c3c0): `GUI.DIALOGS.SEPARATOR` drawn out to
- * `length`, centred on (x, y), turned a quarter for the upright one. Its ends are kept as they
- * are and its middle stretched (0xe4a28); how much of the picture is an end is taken as 6 px.
+ * A rule across a dialog (0x2c26c) or down it (0x2c3c0): `GUI.DIALOGS.SEPARATOR`, its two halves
+ * as ends (0xe48d4 with 7), drawn out to `length` and 4 px more. Across, it starts 2 px before
+ * the length and 4 px above (x, y); the upright one is the same strip turned a quarter about its
+ * start, which is put 3 px right of x and 6 px above the length's top (0x2c40a).
  */
 export function dialogRule(textures: TextureStore, parent: Container, x: number, y: number, length: number, upright = false): void {
   const texture = textures.texture('GUI.DIALOGS.SEPARATOR');
-  const rule = new NineSliceSprite({ texture, leftWidth: 6, rightWidth: 6, topHeight: 0, bottomHeight: 0 });
-  rule.setSize(length, texture.height);
-  rule.pivot.set(length / 2, texture.height / 2);
-  rule.position.set(x, y);
-  if (upright) rule.angle = 90;
+  const rule = new NineSliceSprite({ texture, leftWidth: 7, rightWidth: 7, topHeight: 0, bottomHeight: 0 });
+  rule.setSize(length + 4, texture.height);
+  if (upright) {
+    rule.position.set(x + 3, y - length / 2 - 6);
+    rule.angle = 90;
+  } else rule.position.set(x - length / 2 - 2, y - 4);
   rule.eventMode = 'none';
   parent.addChild(rule);
 }

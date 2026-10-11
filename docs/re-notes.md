@@ -2561,9 +2561,11 @@ and clock `+0x50`, its transform kept at `+0x18` and handed to every widget.
   drawn behind a dialog, and its frame (`0x2c550`) is `GUI.DIALOGS.BACK.BOX` alone, whose
   filling is itself half clear.
 - Rules: across (`0x2c26c`) and down (`0x2c3c0`, turned 90°) are `GUI.DIALOGS.SEPARATOR` drawn
-  out to their length with its ends kept (`0xe4a28`).
-- Web version: all of that; one that is taken away stays on the screen for its closing. How
-  much of the separator is an end is taken as 6 px. The frame (`0x2c55e`) is drawn 21 px
+  out to their length plus 4 with its two 7 px halves as ends (`0xe48d4`). Across, the strip
+  starts at (x − length/2 − 2, y − 4); down, it is turned about its start at
+  (x + 3, y − length/2 − 6), which leaves it 4 px higher than centred.
+- Web version: all of that; one that is taken away stays on the screen for its closing.
+  The frame (`0x2c55e`) is drawn 21 px
   beyond the dialog's size on every side, with 20 px ends of its 62 px picture (`0xe4704`).
 - A button (`0x2cc58`): `GUI.DIALOGS.BUTTON` (46 px square), drawn at its own height with its
   two halves as ends (`0xe48d4` with 23) and stretched to the button's width plus 28, centred
