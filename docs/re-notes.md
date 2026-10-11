@@ -2469,8 +2469,8 @@ drawn in the order made, each moved by the map's scroll (`app+0x154`, `+4`/`+8`)
    `0.8·min(1, 5(1 − t))`; triangles join points 0 and 1 of a row to the next row's, and 2 and
    3 likewise, so two bands. Draw `0x63024`: every row's v is set to
    `(1 − frac(0.2·T))/3 + row·2/93`; the mesh is skewed −0.5, turned 35° and moved, which the
-   emulator gives as the matrix (0.819152, 0.573576, −0.983153, 0.532364). Web version: each
-   strip between two rows has one opacity, the mean of its rows'.
+   emulator gives as the matrix (0.819152, 0.573576, −0.983153, 0.532364). Web version: the
+   same, the points' opacities being had by rubbing out what each lacks from the whole bands.
 10. Two shooting stars `0x60bec('AMBIENT.SHOOTING_STAR', …)`: (1445 12, 1423 97, 1390 212, 0, 30)
     and (1487 12, 1436 97, 1394 212, 15, 30).
 11. Thirteen stars `0x60cc4(place, size)` (the level's class `0x292bc`): (1202 30) 8, (1336 93) 7,

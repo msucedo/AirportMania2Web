@@ -1,4 +1,4 @@
-import { Container, Matrix, MeshSimple, type Sprite } from 'pixi.js';
+import { AlphaFilter, Container, Matrix, MeshSimple, Texture, type Sprite } from 'pixi.js';
 import type { TextureStore } from '../../engine/textures';
 
 // What moves on the world map (script 0xccc8c): clouds, birds and the satellite. The aurora,
@@ -191,8 +191,9 @@ export const wakeV = (time: number, row: number): number => (1 - fraction(0.2 * 
 
 /**
  * The carrier's waves (class 0x62a24, draw 0x63024): `MAP.CARRIER_WAVES` over those two bands,
- * the image running along them. The original fades the last rows point by point; here each
- * strip between two rows has one opacity, the mean of theirs.
+ * the image running along them. The original fades the last rows point by point. Here the
+ * bands are drawn whole on a surface of their own and the same bands, with a picture that goes
+ * from nothing to solid, then rub out what each point lacks: the same fade, point by point.
  */
 export class MapCarrierWaves implements Decoration {
   readonly view = new Container();
@@ -203,15 +204,31 @@ export class MapCarrierWaves implements Decoration {
     // 0x630b0: skewed by −0.5, turned 35° and moved, as the emulator gives it.
     this.view.setFromMatrix(new Matrix(0.819152, 0.573576, -0.983153, 0.532364, at.x, at.y));
     const texture = textures.texture('MAP.CARRIER_WAVES');
+    const dots = document.createElement('canvas');
+    dots.width = 1;
+    dots.height = 2;
+    const paint = dots.getContext('2d')!;
+    paint.fillStyle = '#fff';
+    paint.fillRect(0, 1, 1, 1);
+    const fade = Texture.from(dots);
+    const rubbers = new Container();
     for (let row = 0; row < WAKE_ROWS - 1; row++) {
       const [near, far] = [wakeRow(row), wakeRow(row + 1)];
       const vertices = new Float32Array([...near.x.flatMap((x) => [x, near.y]), ...far.x.flatMap((x) => [x, far.y])]);
       // Points 0 and 1 with 4 and 5 are one band, 2 and 3 with 6 and 7 the other.
       const strip = new MeshSimple({ texture, vertices, uvs: new Float32Array(16), indices: new Uint32Array([0, 1, 4, 1, 4, 5, 2, 3, 7, 2, 7, 6]) });
-      strip.alpha = (near.alpha + far.alpha) / 2;
       this.strips.push(strip);
       this.view.addChild(strip);
+      // A picture of two dots, clear and solid: taken a quarter and three quarters of the way
+      // down it gives each, and in between as much as a point's opacity falls short of whole.
+      const lack = (alpha: number): number => 0.25 + 0.5 * (1 - alpha);
+      const uvs = new Float32Array([...near.x.flatMap(() => [0.5, lack(near.alpha)]), ...far.x.flatMap(() => [0.5, lack(far.alpha)])]);
+      const rubber = new MeshSimple({ texture: fade, vertices, uvs, indices: new Uint32Array([0, 1, 4, 1, 4, 5, 2, 3, 7, 2, 7, 6]) });
+      rubber.blendMode = 'erase';
+      rubbers.addChild(rubber);
     }
+    this.view.addChild(rubbers);
+    this.view.filters = [new AlphaFilter()];
     this.update(0);
   }
 
