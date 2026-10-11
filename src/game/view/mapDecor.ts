@@ -1,4 +1,4 @@
-import { Container, type Sprite } from 'pixi.js';
+import { Container, Matrix, MeshSimple, type Sprite } from 'pixi.js';
 import type { TextureStore } from '../../engine/textures';
 
 // What moves on the world map (script 0xccc8c): clouds, birds and the satellite. The aurora,
@@ -13,6 +13,7 @@ export const MAP_DECOR_SURFACES = [
   'MAP.SATELLITE',
   'MAP.SATELLITE_BRIGHT',
   'MAP.AIRBORNE_PROPELLER',
+  'MAP.CARRIER_WAVES',
   'SNOW_FLAKES.3',
   'SNOW_FLAKES.4',
   'AMBIENT.STAR',
@@ -169,5 +170,53 @@ export class MapAirborneIcon implements Decoration {
     const pose = airborneIconPose(this.time);
     this.view.y = this.y + pose.drop;
     this.blades.forEach((blades, i) => (blades.angle = pose.spin + ICON_PROPELLERS[i]!.turn));
+  }
+}
+
+/** The carrier's wake is 32 rows of four points: two bands that open out behind it. */
+const WAKE_ROWS = 32;
+
+/** Row `row` of the wake (0x62c36): its four x and its y, before the wake is skewed and turned. */
+export function wakeRow(row: number): { x: [number, number, number, number]; y: number; alpha: number } {
+  const t = row / (WAKE_ROWS - 1);
+  const spread = Math.sin(2.19911 * t);
+  return { x: [-65 * spread, -10 * spread, 10 * spread, 55 * spread], y: 45 * (3.2 * Math.pow(t, 1.3) - 1.1), alpha: 0.8 * Math.min(1, 5 * (1 - t)) };
+}
+
+/** How far down its image a row is taken from `time` seconds on (0x63036): two thirds of the image over the rows, sliding a third every five seconds. */
+export const wakeV = (time: number, row: number): number => (1 - fraction(0.2 * time)) / 3 + (row * 2) / 93;
+
+/**
+ * The carrier's waves (class 0x62a24, draw 0x63024): `MAP.CARRIER_WAVES` over those two bands,
+ * the image running along them. The original fades the last rows point by point; here each
+ * strip between two rows has one opacity, the mean of theirs.
+ */
+export class MapCarrierWaves implements Decoration {
+  readonly view = new Container();
+  private readonly strips: MeshSimple[] = [];
+  private time = 0;
+
+  constructor(textures: TextureStore, at: { x: number; y: number }) {
+    // 0x630b0: skewed by −0.5, turned 35° and moved, as the emulator gives it.
+    this.view.setFromMatrix(new Matrix(0.819152, 0.573576, -0.983153, 0.532364, at.x, at.y));
+    const texture = textures.texture('MAP.CARRIER_WAVES');
+    for (let row = 0; row < WAKE_ROWS - 1; row++) {
+      const [near, far] = [wakeRow(row), wakeRow(row + 1)];
+      const vertices = new Float32Array([...near.x.flatMap((x) => [x, near.y]), ...far.x.flatMap((x) => [x, far.y])]);
+      // Points 0 and 1 with 4 and 5 are one band, 2 and 3 with 6 and 7 the other.
+      const strip = new MeshSimple({ texture, vertices, uvs: new Float32Array(16), indices: new Uint32Array([0, 1, 4, 1, 4, 5, 2, 3, 7, 2, 7, 6]) });
+      strip.alpha = (near.alpha + far.alpha) / 2;
+      this.strips.push(strip);
+      this.view.addChild(strip);
+    }
+    this.update(0);
+  }
+
+  update(dt: number): void {
+    this.time += dt;
+    this.strips.forEach((strip, row) => {
+      const [near, far] = [wakeV(this.time, row), wakeV(this.time, row + 1)];
+      strip.geometry.uvs = new Float32Array([1, near, 0, near, 0, near, 1, near, 1, far, 0, far, 0, far, 1, far]);
+    });
   }
 }

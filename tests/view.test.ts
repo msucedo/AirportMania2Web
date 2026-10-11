@@ -1,4 +1,4 @@
-import { airborneIconPose, birdPose, cloudBob, satellitePose } from '../src/game/view/mapDecor';
+import { airborneIconPose, birdPose, cloudBob, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
 import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
 import { barSpark, barStar, hangarSpark, sparkPose, tierBurst, tierTextPose } from '../src/game/view/goalEffects';
@@ -727,6 +727,17 @@ describe('scenery', () => {
     expect(airborneIconPose(2.5).drop).toBeCloseTo(5, 5);
     expect(airborneIconPose(2.5).spin).toBeCloseTo(3600, 5);
     expect(airborneIconPose(12.5).drop).toBeCloseTo(5, 5);
+    // The wake's points as the original's constructor leaves them (read off a run of it).
+    expect(wakeRow(0).y).toBeCloseTo(-49.5, 5);
+    expect(wakeRow(0).alpha).toBe(0.8);
+    const second = wakeRow(1);
+    expect(second.x[0]).toBeCloseTo(-4.60718, 4);
+    expect(second.x[3]).toBeCloseTo(3.89838, 4);
+    expect(second.y).toBeCloseTo(-47.842, 3);
+    expect(wakeRow(31).x[1]).toBeCloseTo(-8.09017, 4);
+    expect(wakeRow(31).alpha).toBe(0);
+    expect(wakeV(0, 0)).toBeCloseTo(1 / 3, 6);
+    expect(wakeV(2.5, 31)).toBeCloseTo(1 / 6 + 2 / 3, 6);
   });
 });
 

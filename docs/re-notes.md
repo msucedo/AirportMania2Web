@@ -2331,7 +2331,15 @@ drawn in the order made, each moved by the map's scroll (`app+0x154`, `+4`/`+8`)
 8. Stage 6 icon and ribbon; the aurora (`0x60b44` → `0x637b8`, the level's class drawn with a
    transform, `0x63918`): scale (0.4, 0.85), turned 25°, at (1146, −63).
 9. Stage 7 icon and ribbon; the carrier's waves `0x612d0` at (1368, 331), class `0x62a24`,
-   `MAP.CARRIER_WAVES`. **Not built yet.** Stages 8, 9, 10.
+   `MAP.CARRIER_WAVES`; stages 8, 9, 10. The constructor, run in the emulator
+   (`tools/re/draw_trace.py 0x62a24 --r1 obj --stub 0xa4f30 0xa2e4c --vector 0x1c:f 0x28:f
+   0x34:x 0x40:i`), leaves 32 rows of four points: with `t = row/31` and `s = sin(2.19911·t)`,
+   x −65s, −10s, 10s, 55s at y `45·(3.2·t^1.3 − 1.1)`, u 1, 0, 0, 1, colour white at opacity
+   `0.8·min(1, 5(1 − t))`; triangles join points 0 and 1 of a row to the next row's, and 2 and
+   3 likewise, so two bands. Draw `0x63024`: every row's v is set to
+   `(1 − frac(0.2·T))/3 + row·2/93`; the mesh is skewed −0.5, turned 35° and moved, which the
+   emulator gives as the matrix (0.819152, 0.573576, −0.983153, 0.532364). Web version: each
+   strip between two rows has one opacity, the mean of its rows'.
 10. Two shooting stars `0x60bec('AMBIENT.SHOOTING_STAR', …)`: (1445 12, 1423 97, 1390 212, 0, 30)
     and (1487 12, 1436 97, 1394 212, 15, 30). **Not built yet.**
 11. Thirteen stars `0x60cc4(place, size)` (the level's class `0x292bc`): (1202 30) 8, (1336 93) 7,

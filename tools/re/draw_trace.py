@@ -82,6 +82,13 @@ class Run:
         except Exception as error:  # noqa: BLE001 - report where the run stopped
             self.error = self.error or f'{error} at {uc.reg_read(UC_ARM_REG_PC):#x}'
         print(f'returned {uc.reg_read(UC_ARM_REG_R0):#x}' if not self.error else f'# stopped: {self.error}')
+        for spec in args.vector:
+            # offset:f or offset:i - the vector (begin, end pointers) at that offset of the object.
+            offset, kind = spec.split(':')
+            begin, end = struct.unpack('<II', uc.mem_read(self.object + int(offset, 16), 8))
+            count = (end - begin) // 4
+            values = struct.unpack(f'<{count}{"f" if kind == "f" else "i"}', uc.mem_read(begin, 4 * count)) if count else ()
+            print(f'vector +{offset} ({count}):', ' '.join(f'{v:.6g}' if kind == 'f' else (f'{v & 0xffffffff:08x}' if kind == 'x' else str(v)) for v in values))
         if args.dump:
             words = struct.unpack(f'<{args.dump}I', uc.mem_read(self.object, 4 * args.dump))
             print('object:', ' '.join(f'+{4 * i:#x}={w:#x}' + (f'({i2f(w):g})' if 0x30000000 < w & 0x7fffffff < 0x50000000 else '') for i, w in enumerate(words)))
@@ -136,6 +143,9 @@ class Run:
                 print(f'virtual call from {lr & ~1:#x} on {regs[0]:#x}: {regs[1]:#x} {regs[2]:#x} {regs[3]:#x}')
         elif address in self.skip:
             print(f'call {address:#x} from {lr & ~1:#x}: {regs[0]:#x} ' + ' '.join(f'{v:#x}({i2f(v):g})' for v in regs[1:]))
+            for v in regs:
+                if STACK <= v < STACK + STACK_SIZE:
+                    print(f'  on the stack at {v:#x}: {self.transform(v)}')
         elif name in DOUBLE1:
             result = list(d2i(DOUBLE1[name](i2d(regs[0], regs[1]))))
         elif name == '_pow':
@@ -149,6 +159,15 @@ class Run:
             self.random += 1
             result[0] = self.random
             print(f'rand #{self.random} from {lr & ~1:#x}')
+        elif name in ('_memmove', '_memcpy'):
+            if regs[2]:
+                uc.mem_write(regs[0], bytes(uc.mem_read(regs[1], regs[2])))
+            result[0] = regs[0]
+        elif name == '_memset':
+            uc.mem_write(regs[0], bytes([regs[1] & 0xff]) * regs[2])
+            result[0] = regs[0]
+        elif name in ('__ZdlPv', '__ZdaPv', '_free'):
+            pass
         elif name in ('__Znwm', '__Znam', '_malloc'):
             result[0] = self.alloc(max(regs[0], 16) + 0x100)
         elif name == '___cxa_guard_acquire':
@@ -173,4 +192,5 @@ if __name__ == '__main__':
     parser.add_argument('--app', nargs='*', default=[])
     parser.add_argument('--stub', nargs='*', default=[])
     parser.add_argument('--dump', type=int, default=0)
+    parser.add_argument('--vector', nargs='*', default=[], help='offset:f or offset:i, vectors of the object to print afterwards')
     Run(parser.parse_args())
