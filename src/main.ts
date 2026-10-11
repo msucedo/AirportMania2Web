@@ -108,6 +108,7 @@ async function main(): Promise<void> {
       strings: await data.strings(chosen),
       awards: progress.awards,
       user: users.current?.name ?? null,
+      planes: data.planes,
       onBack: () => navigate(null, null, ''),
     });
   } else if (level === null && (params.has('map') || params.has('stage'))) {

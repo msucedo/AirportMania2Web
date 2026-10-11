@@ -114,7 +114,7 @@ level helpers called from many places), `0x64d38`–`0x65f88` (2 844), `0x17c2c`
 
 ## Worth doing next, in this order
 
-1. **The plane's information dialog** (`0xdbfc`): it is part of earning a plane trophy.
+1. ~~**The plane's information dialog** (`0xdbfc`)~~: built.
 2. **The ending** (`0x342a4` on): what finishing the game shows.
 3. **The questions before leaving or restarting a level**, and the perfect scores message:
    small, and they change what a button does.

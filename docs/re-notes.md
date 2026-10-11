@@ -2049,6 +2049,21 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   choice is not read (a check box with its text to its right), nor what `+0x44` and
   `app+0x120` are.
 
+## Plane information dialog — confirmed
+
+- Built by `0xdbfc(dialog, award)`: 400×250; the plane (`0xa83c` by the award's id) gives its
+  name (`Name`) in `FONTS.MAIN` centred at y −108 and its description (`Description`) in
+  `FONTS.WHITE` in (−210, −90)–(210, −35). Rows, label left from x −83 and value right to
+  x 191: y −30 `PASSENGERS` and the passengers (`+0xa8`); −10 `PATIENCE` and the text named by
+  `Patience` (`+0xa0`); 10 `LOAD_SPEED` and the text named by `LoadingSpeed` (`+0xa4`); 30
+  `MAXIMUM_EARNINGS` alone; 55 `LANDING_TAKEOFF` and the runway points (`+0xc0`) as money in
+  `FONTS.SCORE`; 80 `ARRIVAL_DEPARTURE` and the gate points (`+0xac`) likewise. Close 380 wide
+  at (0, 110).
+- Its draw (`0xe45c`) adds the award itself, drawn as earned, at (−150, 20).
+- Opened as the notice of an award with id 1 to 20 leaves (`0x32044`), and from a plane trophy
+  in the awards room when it is had (`0x1bed6`); a trophy not had opens the award dialog.
+- Web version: in a level it is not opened if another dialog is up.
+
 ## What has not been read
 
 See `docs/audit.md`: the share of the game logic read so far and the runs of code not yet

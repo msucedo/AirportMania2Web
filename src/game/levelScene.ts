@@ -32,6 +32,7 @@ import { AWARD, awardSound, awardText } from './awards';
 import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView';
 import { SMOKE_SURFACES, SmokeTails } from './view/smokeTail';
 import { noticePose, noticeStart, noticeStep, type NoticeState } from './view/awardNotice';
+import { PlaneInfoDialog, planeTrophy } from './view/planeInfoDialog';
 import { helpSurfaces } from './help';
 import { HELP_FONTS, HELP_SURFACES, HelpDialog } from './view/helpDialog';
 import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
@@ -129,7 +130,7 @@ export class LevelScene {
   /** Awards earned in this play, in order. */
   readonly awardsEarned: number[] = [];
   private readonly notices: number[] = [];
-  private notice: { text: Text; state: NoticeState; touched: boolean } | null = null;
+  private notice: { text: Text; id: number; state: NoticeState; touched: boolean } | null = null;
 
   private constructor(
     private readonly textures: TextureStore,
@@ -212,6 +213,7 @@ export class LevelScene {
       for (const id of runwaySurfaceIds(runway)) ids.add(id);
     }
     for (const spawn of schedule.planes) {
+      ids.add(planeTrophy(spawn.type));
       for (const id of planeSurfaceIds(data.planes.get(spawn.type)!, spawn.sex === 'FEMALE', layout.pontoons, spawn.passengers in PASSENGER_ICONS ? (spawn.passengers as Passenger) : null, spawn.needWash)) ids.add(id);
     }
     const [strings] = await Promise.all([
@@ -459,7 +461,22 @@ export class LevelScene {
         return;
       }
       this.notice.text.destroy();
+      const told = this.notice.id;
       this.notice = null;
+      // 0x32044: after the notice of a plane landed for the first time, the plane's dialog.
+      const plane = told >= 1 && told <= 20 ? this.sim.planes.find((p) => p.descriptor.type === told)?.descriptor : undefined;
+      if (plane && !this.dialog && !this.endShown && this.textures.has(planeTrophy(plane.type))) {
+        const dialog = new PlaneInfoDialog(this.textures, this.audio, this.strings, plane, () => {
+          if (this.dialog !== dialog) return;
+          this.dialog = null;
+          this.paused = false;
+          setTimeout(() => dialog.destroy({ children: true }));
+        });
+        this.paused = true;
+        this.dialog = dialog;
+        this.root.addChild(dialog);
+        return;
+      }
     }
     const id = this.notices.shift();
     if (id === undefined) return;
@@ -474,7 +491,7 @@ export class LevelScene {
     text.alpha = 0;
     // A touch on it sends it away early.
     text.eventMode = 'static';
-    const notice = { text, state: noticeStart(), touched: false };
+    const notice = { text, id, state: noticeStart(), touched: false };
     text.on('pointerdown', () => (notice.touched = true));
     this.root.addChild(text);
     this.notice = notice;

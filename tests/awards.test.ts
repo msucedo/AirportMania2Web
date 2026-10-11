@@ -1,3 +1,4 @@
+import { planeInfoRows, planeTrophy } from '../src/game/view/planeInfoDialog';
 import { noticePose, noticeStart, noticeStep } from '../src/game/view/awardNotice';
 import { describe, expect, it } from 'vitest';
 import { parseAwardsTable } from '../src/data/awards';
@@ -155,6 +156,19 @@ describe('awards', () => {
     // A touch while it is shown sends it away at once.
     expect(noticeStep({ phase: 'shown', clock: 3 }, 0.01, true)).toEqual({ phase: 'going', clock: 1 });
     expect(noticeStep({ phase: 'coming', clock: 0.2 }, 0.01, true)!.phase).toBe('coming');
+  });
+
+  it("lists a plane's figures in its dialog", () => {
+    const plane = { type: 3, passengers: 40, patience: 'PATIENCE_VALUES.HIGH', loadingSpeed: 'SPEED_VALUES.FAST', points: { runway: 750, gate: 450 } } as never;
+    expect(planeTrophy(3)).toBe('AWARDS_ROOM.PLANES_TROPHIES.3');
+    expect(planeInfoRows(plane).map((row) => [row.label.split('.')[1], row.value, row.y])).toEqual([
+      ['PASSENGERS', '40', -30],
+      ['PATIENCE', 'PATIENCE_VALUES.HIGH', -10],
+      ['LOAD_SPEED', 'SPEED_VALUES.FAST', 10],
+      ['MAXIMUM_EARNINGS', null, 30],
+      ['LANDING_TAKEOFF', '750', 55],
+      ['ARRIVAL_DEPARTURE', '450', 80],
+    ]);
   });
 });
 

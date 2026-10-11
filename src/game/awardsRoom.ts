@@ -1,5 +1,7 @@
 import { type Application, Container, type FederatedPointerEvent, NineSliceSprite, Rectangle, type Sprite, Text, type Ticker } from 'pixi.js';
 import type { AwardPlace } from '../data/awards';
+import type { PlaneDescriptor } from '../data/planes';
+import { PlaneInfoDialog } from './view/planeInfoDialog';
 import type { GameData } from '../data/load';
 import type { Strings } from '../data/strings';
 import type { AudioPlayer } from '../engine/audio';
@@ -55,6 +57,8 @@ export interface AwardsRoomOptions {
   awards: Readonly<AwardsData>;
   /** The user's name, for the ribbon; null when there is no user. */
   user: string | null;
+  /** The planes, by type, for what an earned plane trophy opens. */
+  planes: ReadonlyMap<number, PlaneDescriptor>;
   onBack: () => void;
 }
 
@@ -267,7 +271,15 @@ export class AwardsRoom {
     node.cursor = 'pointer';
     node.on('pointerup', () => {
       if (this.drag?.moved || this.dialog) return;
-      this.describe(place, awards);
+      // 0x1be8c: a plane trophy that is had opens the plane's own dialog.
+      const plane = place.kind === 'plane' && awards[place.id]?.earned === true ? this.options.planes.get(place.number) : undefined;
+      if (!plane) return this.describe(place, awards);
+      const dialog = new PlaneInfoDialog(this.textures, this.audio, this.options.strings, plane, () => {
+        this.dialog = null;
+        setTimeout(() => dialog.destroy({ children: true }));
+      });
+      this.dialog = dialog;
+      this.root.addChild(dialog);
     });
     return node;
   }
