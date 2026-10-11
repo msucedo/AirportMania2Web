@@ -844,8 +844,12 @@ Vtable `0x17a8e8`, kind 5.
   by (0.7, 0.7, 0.9); `IMPROVEMENTS.BOUGHT` over it when owned; and, marked "try me",
   `IMPROVEMENTS_DIALOG.TRY_ME` in `FONTS.MAIN` at 0.8, right-aligned at (+40, +10), fading
   near the list's ends. The description's box is (−105, −80)–(220, 40), from its left and top.
-- Not read: how fast `item+8` rises and falls, and the list's scrolling. In the web version
-  the highlight is simply on the chosen item, and the list's place and pitch are ours.
+- The list (`0x4d388`) is made at (−170, 0), 75 wide, 4.5 rows high, its rows 50 px apart
+  (`0x4d638`). Its update (`0x4d688`) drags it with the touch inside ±55 by ±115 of its middle,
+  lets it run on and settle (a factor of 0.03 a second), and picks the item touched.
+- Not read in full: that update's limits and where the rows rest, and how fast `item+8` rises
+  and falls. In the web version the rows are put evenly about the list's middle, the list is
+  dragged without running on, and the highlight is simply on the chosen item.
 - The dialog object is made once at start-up (`0x4be20`, kept at `app+0x1b4`) and shown by
   `Level::start` (`0xfe8c`) with `MUSICS.SHOPPING` before every level except the tutorial and
   level 1 of stage 1; leaving it starts the level. The web version does the same and reloads the

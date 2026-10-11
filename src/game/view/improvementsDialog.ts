@@ -19,14 +19,16 @@ export function improvementsSurfaceIds(offers: readonly ImprovementOffer[]): str
 
 const BOX = { width: 430, height: 270 };
 /** The list of improvements: a scrolling column on the left. Its exact place has not been read. */
-const LIST = { x: -165, top: -122, bottom: 122, pitch: 44 };
+// 0x4c4ce: the list is made at (−170, 0), 75 wide and four and a half rows high, its rows 50 px
+// apart (0x4d638). Where its rows rest is not read: they are put evenly about its middle.
+const LIST = { x: -170, top: -125, bottom: 125, pitch: 50 };
 
 /**
  * The shop of improvements, after the original dialog (`0x4c3c8`): a 430×270 box with the list
  * on the left and, for the chosen one, its title, description and cost, the funds available, and
  * the Buy or Sell and Exit buttons. Positions are from the centre of the box. Buying takes the
  * price from the funds of the level about to be played and selling gives it back (`0x4c020`,
- * `0x4bf08`). The list's place and pitch are approximations, and the two
+ * `0x4bf08`). How the list is dragged and settles is ours, and the two
  * amounts are drawn 10 px left of the original's x 220 to stay inside the frame.
  */
 export class ImprovementsDialog extends Container {
