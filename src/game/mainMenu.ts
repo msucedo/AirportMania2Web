@@ -151,6 +151,7 @@ export class MainMenu {
   private readonly franchise: { sprite: Sprite; state: SlideState };
   private readonly two: Sprite;
   private readonly label: Text;
+  private readonly presses: { highlight: Sprite; held: boolean; value: number }[] = [];
 
   private constructor(
     private readonly textures: TextureStore,
@@ -218,14 +219,17 @@ export class MainMenu {
       button.hitArea = new Rectangle(BUTTON.x - BUTTON.halfWidth, y - BUTTON.halfHeight, BUTTON.halfWidth * 2, BUTTON.halfHeight * 2);
       button.eventMode = 'static';
       button.cursor = 'pointer';
-      const over = (on: boolean): void => {
-        highlight.visible = on;
-        label.style.fill = on ? 0x4a4450 : MAIN_FILL;
-      };
-      button.on('pointerover', () => over(true));
-      button.on('pointerout', () => over(false));
-      button.on('pointerdown', () => {
-        over(true);
+      // 0x25bd0, 0x5caa8: held, an entry's highlight comes in at 5 a second, and goes as fast;
+      // let go on it, the entry is chosen.
+      const press = { highlight, held: false, value: 0 };
+      this.presses.push(press);
+      button.on('pointerdown', () => (press.held = true));
+      const release = (): void => void (press.held = false);
+      button.on('pointerout', release);
+      button.on('pointerupoutside', release);
+      button.on('pointerup', () => {
+        if (!press.held) return;
+        press.held = false;
         audio.play('SOUNDS.CLICK');
         options.onSelect(entry);
       });
@@ -237,6 +241,11 @@ export class MainMenu {
 
   update(dt: number): void {
     this.time += dt;
+    for (const press of this.presses) {
+      press.value = Math.max(0, Math.min(1, press.value + (press.held ? 5 : -5) * dt));
+      press.highlight.visible = press.value > 0;
+      press.highlight.alpha = press.value;
+    }
     this.clock = Math.min(1, this.clock + dt);
     this.shift = menuShiftStep(this.shift, dt, this.clock);
     const shift = this.shift;

@@ -936,6 +936,10 @@ update).
   planes' wait or turn, so on coming back they go on from where they were; turn 1 is
   `PLANE_PASSING_IN` (`0x5a016`), and the wait only runs while the app's `+0x2c` has `+0x138`
   set.
+- An entry (`0x5c7a0` on the button base `0x25bd0`): held, a value rises at 5 a second
+  (`0xa068`) and falls as fast when not; its draw (`0x5ca60`) lays `MAIN_MENU.BUTTON_OVER` over
+  the sign at that strength, under the text, which does not change. Let go on it, it is
+  chosen (twice within 0.4 s calls another slot, which these entries leave alone).
 - Nothing ever sets a piece's state to 5: the leaving of title and franchise is in their
   updates but is not used.
 - Web version: all of it; the menu being a page of its own, the planes' wait and turn are kept

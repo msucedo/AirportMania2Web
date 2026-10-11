@@ -74,11 +74,14 @@ In the order they would be seen. None is a rule of play except the second.
    until a touch, and going. Nothing in the game's own code switches to it: the device does,
    when the app is interrupted. What would stand for that on the web is ours to choose, so it
    is left for the owner to decide.
-6. **Small looks not read**: the bouncing of the shop's and the menu's buttons (`Bonucer`,
-   `0x25bd0`), the check box's pressed picture (`GUI.DIALOGS.CHECKBOX_OVER`),
-   `EFFECTS.BONUS_REMARK` (`0x271b0`), the money sign of the HUD
-   (`GUI.INGAMEGUI.MONEY_SIGNS`), the island's water mesh (`MESHES.WATER_MESH`,
-   `STAGES.ISLAND.WAVES`, `0x501d4`), the level marker's own draw (`0x5def0`).
+6. **Small looks**, gone through on 2026-10-11:
+   - built: the island's shore waves (`MESHES.WATER_MESH`, `0x5021c`), the check box's
+     pressed picture, the menu entries' highlight and their acting as they are let go
+     (`0x25bd0` is the engine's plain button, not a bounce);
+   - never drawn by the game, so nothing to build: the HUD's money sign (loaded at `0x4e482`,
+     kept at `+0x24` and read nowhere) and `EFFECTS.BONUS_REMARK` (see the combo explosion);
+   - still not read: the level marker's own draw (`0x5def0`) and update (`0x5de28`); the port
+     builds the markers from the map's script.
 7. **The original's language dialog** (`0x5073c`): this build takes the language from the
    device; the port's own choice stands in for it.
 

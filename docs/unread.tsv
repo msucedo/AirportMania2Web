@@ -85,7 +85,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 18a0c	276	cubierta	the carrier's islands, built	floats=5 stores=2 <- 14dd4* tables=0 STAGES.CARRIER.ISLANDS.2
 18b20	276	cubierta	the carrier's islands, built	floats=5 stores=2 <- 14d08* tables=0 STAGES.CARRIER.ISLANDS.1
 18c34	276	cubierta	the carrier's islands, built	floats=5 stores=2 <- 14c3c* tables=0 STAGES.CARRIER.ISLANDS.0
-195d0	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 25b94 25bd0 2e6ec* 2ead0* 2edb4 tables=0
+195d0	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 25b94 25bd0* 2e6ec* 2ead0* 2edb4 tables=0
 195fc	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 195d0 3bbb4 82678 tables=0
 19728	44	cubierta	anti-fog machine, built	floats=0 stores=0 <-  tables=1 Graph_Node; AntiFog
 19754	108	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=5 <- 199c8 19a8c tables=0 ANTI_FOG.BASE; ANTI_FOG.NOSE; ANTI_FOG.PROPELLER; SOUNDS.ANTI_FOG_SYSTEM_FAN
@@ -112,7 +112,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 1fb98	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 1fb4c tables=0
 1fe08	56	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 1e6f0* tables=0
 1fe40	68	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=7 <- 1fe08 tables=0
-20080	64	cubierta	awards room items and dialog, built	floats=0 draws,stores=0 <- 1f2d4* 3a924 55cc0* 5ca60 740b8 tables=0
+20080	64	cubierta	awards room items and dialog, built	floats=0 draws,stores=0 <- 1f2d4* 3a924 55cc0* 5ca60* 740b8 tables=0
 200c0	144	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 1f200 20a50 tables=0
 20354	1776	no aplica	online leaderboard page of the awards room, achievements notice	floats=0 loads,new×1,stores=61 <- 1e1b4* tables=0 FONTS.MAIN; FONTS.TEEN; AWARDS_ROOM.GREEN_VELVET; AWARDS_ROOM.BAR; AWARDS_ROOM.MODE_REMARK
 20a50	32	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 20a44 tables=0
@@ -168,7 +168,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 2582c	60	sin datos	ClickeableMessage: not used by the data	floats=3 stores=1 <-  tables=1
 25868	248	cubierta	by rule: only loads resources or makes objects	floats=33 loads,sound,stores=2 <-  tables=1
 25b5c	56	fontanería	type names	floats=0 stores=0 <-  tables=1 ClickSplash; ClickeableSoundZone
-25bd0	244	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=20 touch,stores=5 <- 4bcd0 5ca14 tables=0 Bonucer
 25e5c	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 21a48* 49518* 59140* bca34* tables=1
 25eb8	64	fontanería	by rule: names of types only	floats=0 stores=0 <- 21870 49108 58db0 bc6b0 tables=1 CoinBonus
 25ef8	100	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
@@ -361,8 +360,8 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 4b67c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 HorizonObject; Ice
 4b6a8	100	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 RUNWAY.FROZEN
 4bb64	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Ice
-4bcd0	44	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=5 stores=1 <-  tables=2
-4bcfc	292	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=24 draws,stores=0 <-  tables=2
+4bcd0	44	vista	a button of the hint dialog (near 0x4bb84); not read	floats=5 stores=1 <-  tables=2
+4bcfc	292	vista	a button of the hint dialog (near 0x4bb84); not read	floats=24 draws,stores=0 <-  tables=2
 4c1d8	64	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 11654* tables=0
 4ca38	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 4cc68	68	cubierta	shop: buttons, list reset and draw; read this session	floats=0 stores=1 <- 4c218* tables=0 IMPROVEMENTS_DIALOG.BUY; IMPROVEMENTS_DIALOG.SELL
@@ -374,7 +373,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 4f4c0	116	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 50160	116	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 StoneHengeIsland; TikiIsland; TropicalIsland; VulcanoIsland; IslandWater
 501d4	60	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <- 5022c tables=0 STAGES.ISLAND.WAVES; MESHES.WATER_MESH
-5034c	112	pendiente	language dialog of the original (the port has a choice of its own)	floats=7 draws,stores=1 <-  tables=1
 505e0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 IslandWater
 50600	124	pendiente	language dialog of the original (the port has a choice of its own)	floats=0 stores=0 <- 50bec 510bc tables=0 LANGUAGE_SELECTION_DIALOG.CHANGES_NEED_RESTART
 5073c	580	cubierta	by rule: only loads resources or makes objects	floats=0 new×5,stores=2 <-  tables=1 FONTS.WHITE; LANGUAGE_SELECTION_DIALOG.TITLE; CANCEL
@@ -433,8 +431,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 5be88	232	cubierta	main menu pieces and entries; built	floats=0 draws,loads,stores=6 <- 597b0* tables=0 MAIN_MENU.TITLE
 5c6d4	44	fontanería	by rule: small helper	floats=1 stores=0 <-  tables=1
 5c74c	84	cubierta	main menu pieces and entries; built	floats=0 stores=1 <- 5c030* tables=0 MAIN_MENU.CREDITS
-5ca14	76	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=8 stores=2 <-  tables=5
-5ca60	192	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=20 draws,stores=0 <-  tables=5
+5ca14	76	cubierta	the engine's plain button (press value, click, double click) and the menu entry's draw; read and built	floats=8 stores=2 <-  tables=5
 5cc2c	84	cubierta	main menu pieces and entries; built	floats=0 stores=1 <- 5c030* tables=0 MAIN_MENU.OPTIONS
 5cd8c	84	cubierta	main menu pieces and entries; built	floats=0 stores=1 <- 5c030* tables=0 MAIN_MENU.USERS
 5ceec	84	cubierta	main menu pieces and entries; built	floats=0 stores=1 <- 5c030* tables=0 MAIN_MENU.PLAY
