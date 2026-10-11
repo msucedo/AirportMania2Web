@@ -2048,3 +2048,8 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   set when the question is answered, either way, or a level has been played. The inside of a
   choice is not read (a check box with its text to its right), nor what `+0x44` and
   `app+0x120` are.
+
+## What has not been read
+
+See `docs/audit.md`: the share of the game logic read so far and the runs of code not yet
+opened, by what each seems to be (`tools/re/audit.py`).
