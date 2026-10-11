@@ -557,10 +557,14 @@ Draw routine `0x40ed4`:
   colour ((0.76, 0.83, 1) for Ultra, (1, 0.76, 0.83) for Giant) and blurred 0.75; the copy is
   laid over it; the border 2 goes under; and the power 2.2 is applied.
 - Web version: the title fonts are drawn letter by letter through those same steps
-  (`src/game/view/effectText.ts`), at three of our pixels to one of the engine's. The other
-  fonts stay texts of the browser's with the gradient as a fill (one over a whole text, where
-  the original has one in each letter) and the border as a black outline a pixel and a half
-  wide (`src/game/view/faces.ts`).
+  (`src/game/view/effectText.ts`), at three of our pixels to one of the engine's. The plain
+  fonts with an effect are drawn letter by letter too (`Label`, same file): each letter takes
+  its gradient over the rows it covers, and its border is worked out on the engine's pixels
+  (the letter's coverage averaged over each, blurred 1.5 as the engine does) and spread
+  smoothly over ours. Ours: the lines are broken and the letters placed as the browser places
+  them, not by the cached fonts' own widths, and all of a text's borders are laid before any
+  of its letters (how the engine keeps bordered letters from covering each other is not read).
+  Fonts with `NoneEffect` stay texts of the browser's.
 - Floating texts: points use `FONTS.SCORE` (`0x5d2c`), negative points `FONTS.SCORE_NEGATIVE`
   (`0x5de0`), punctuality and bonus texts `FONTS.MAIN`, 50 px above the plane (`0x6110`).
 ## Level announcement (panel `0x514cc`, draw `0x51be8`)

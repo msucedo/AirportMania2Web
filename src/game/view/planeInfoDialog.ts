@@ -1,3 +1,4 @@
+import { Label } from './effectText';
 import { SCORE_FILL } from './faces';
 import { Container, Text } from 'pixi.js';
 import type { PlaneDescriptor } from '../../data/planes';
@@ -39,7 +40,7 @@ export class PlaneInfoDialog extends Container {
     centre.addChild(trophy);
 
     const heading = title();
-    const name = new Text({ text: strings.t(plane.nameId), style: { fontFamily: heading.family, fontSize: heading.size, fill: heading.fill, stroke: { color: heading.stroke ?? 0, width: 3 } } });
+    const name = new Label({ text: strings.t(plane.nameId), style: { fontFamily: heading.family, fontSize: heading.size, fill: heading.fill, stroke: { color: heading.stroke ?? 0, width: 3 } } });
     name.anchor.set(0.5);
     name.position.set(0, -108);
     centre.addChild(name);

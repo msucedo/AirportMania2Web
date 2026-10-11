@@ -1,5 +1,6 @@
+import { Label } from './effectText';
 import { BORDER } from './faces';
-import { Container, NineSliceSprite, Rectangle, Text, type FederatedPointerEvent, type Sprite } from 'pixi.js';
+import { Container, NineSliceSprite, Rectangle, type FederatedPointerEvent, type Sprite } from 'pixi.js';
 import { LANGUAGES, type Language, type Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -100,7 +101,7 @@ export class GameMenu extends Container {
       // The question in (−200, −100)–(200, 40), Yes at (−105, 80) and No at (105, 80), 170 wide.
       // No goes back to the finish dialog (0x38384, 0x388c4).
       const restart = page === 'askRestart';
-      const question = new Text({
+      const question = new Label({
         text: strings.t(restart ? 'RESTART_LEVEL_DIALOG.TEXT' : 'GO_TO_MAP_LEVEL_DIALOG.TEXT'),
         style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER, align: 'center', wordWrap: true, wordWrapWidth: 400 },
       });

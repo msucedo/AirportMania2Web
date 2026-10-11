@@ -1,5 +1,6 @@
+import { Label } from './effectText';
 import { BORDER, MAIN_FILL, SCORE_FILL } from './faces';
-import { Container, NineSliceSprite, Rectangle, Sprite, Text, Texture, type FederatedPointerEvent, type FillInput } from 'pixi.js';
+import { Container, NineSliceSprite, Rectangle, Sprite, Texture, type FederatedPointerEvent, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -108,7 +109,7 @@ export class ImprovementsDialog extends Container {
     this.addChild(overlay);
     this.chosen = this.offers[0]!;
 
-    const heading = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TEXT_SHORT'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
+    const heading = new Label({ text: strings.t('IMPROVEMENTS_DIALOG.TEXT_SHORT'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
     heading.anchor.set(0.5, 0.85);
     heading.position.set(55, -116);
     this.panel.addChild(heading);
@@ -296,7 +297,7 @@ export class ImprovementsDialog extends Container {
         row.addChild(textures.sprite('IMPROVEMENTS.BOUGHT'));
       } else if (this.tryMe(offer)) {
         // 0x4dc8a: "try me" in `FONTS.MAIN` at 0.8, ending 40 px right of the icon and 10 px under its middle.
-        const mark = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TRY_ME'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
+        const mark = new Label({ text: strings.t('IMPROVEMENTS_DIALOG.TRY_ME'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
         mark.anchor.set(1, 0.5);
         mark.scale.set(0.8);
         mark.position.set(40, 10);
@@ -308,8 +309,8 @@ export class ImprovementsDialog extends Container {
 
     for (const child of this.detail.removeChildren()) child.destroy({ children: true });
     const offer = this.chosen;
-    const text = (value: string, x: number, y: number, family: string, size: number, anchorX: number, fill: FillInput = 0xffffff): Text => {
-      const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
+    const text = (value: string, x: number, y: number, family: string, size: number, anchorX: number, fill: FillInput = 0xffffff): Label => {
+      const node = new Label({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
       node.anchor.set(anchorX, 0.85);
       node.position.set(x, y);
       this.detail.addChild(node);
@@ -317,7 +318,7 @@ export class ImprovementsDialog extends Container {
     };
     const title = text(strings.t(offer.titleId), 60, -86, fontFamily(MAIN_FONT), 14, 0.5, MAIN_FILL);
     if (title.width > 310) title.scale.set(310 / title.width);
-    const description = new Text({
+    const description = new Label({
       text: strings.t(offer.descriptionId),
       style: { fontFamily: fontFamily(ROW_FONT), fontSize: 11, fill: 0xffffff, stroke: BORDER, wordWrap: true, wordWrapWidth: 325, lineHeight: 13 },
     });

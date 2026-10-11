@@ -1,6 +1,6 @@
-import { ULTRA_EFFECT, titleText } from './effectText';
+import { Label, ULTRA_EFFECT, titleText } from './effectText';
 import { BORDER, SCORE_FILL } from './faces';
-import { Container, Text, type FillInput } from 'pixi.js';
+import { Container, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -26,7 +26,7 @@ export class StageClear extends Container {
     this.addChild(overlay);
 
     const text = (value: string, x: number, y: number, family: string, size: number, anchorX: number, fill: FillInput = 0xffffff): void => {
-      const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
+      const node = new Label({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
       node.anchor.set(anchorX, 0.85);
       node.position.set(x, y);
       centre.addChild(node);

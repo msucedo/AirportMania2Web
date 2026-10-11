@@ -1,6 +1,6 @@
-import { ULTRA_EFFECT, titleText } from './effectText';
+import { Label, ULTRA_EFFECT, titleText } from './effectText';
 import { BORDER, SCORE_FILL, SCORE_NEGATIVE_FILL } from './faces';
-import { Container, Text, TilingSprite, type Sprite, type FillInput } from 'pixi.js';
+import { Container, TilingSprite, type Sprite, type FillInput } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
@@ -112,8 +112,8 @@ export class FinalReport extends Container {
     dialogRule(textures, this.panel, 42, 10, 82, true);
 
     const white = fontFamily(ROW_FONT);
-    const row = (text: string, x: number, y: number, align: 0 | 2, family = white, size = 11, fill: FillInput = 0xffffff): Text => {
-      const node = new Text({ text, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
+    const row = (text: string, x: number, y: number, align: 0 | 2, family = white, size = 11, fill: FillInput = 0xffffff): Label => {
+      const node = new Label({ text, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
       // Rows are placed by their baseline: each sits just above the rule drawn under it.
       node.anchor.set(align === 2 ? 1 : 0, 0.85);
       node.position.set(x, y);

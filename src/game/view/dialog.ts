@@ -1,7 +1,8 @@
+import { Label } from './effectText';
 import { MAIN_FONT } from './floatingText';
 import { fontFamily } from '../../engine/fonts';
 import { BORDER, MAIN_FILL } from './faces';
-import { Container, Matrix, NineSliceSprite, Rectangle, Text } from 'pixi.js';
+import { Container, Matrix, NineSliceSprite, Rectangle } from 'pixi.js';
 import type { AudioPlayer } from '../../engine/audio';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../engine/screen';
 import type { TextureStore } from '../../engine/textures';
@@ -111,8 +112,8 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
   return { overlay, panel, blocker };
 }
 
-export function dialogText(panel: Container, value: string, x: number, y: number, size: number, family: string, anchorX = 0): Text {
-  const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill: 0xffffff, stroke: BORDER } });
+export function dialogText(panel: Container, value: string, x: number, y: number, size: number, family: string, anchorX = 0): Label {
+  const node = new Label({ text: value, style: { fontFamily: family, fontSize: size, fill: 0xffffff, stroke: BORDER } });
   node.anchor.set(anchorX, 0.5);
   node.position.set(x, y);
   panel.addChild(node);
@@ -152,7 +153,7 @@ export function dialogButton(
   });
   // 0x2cda0: the label is in `FONTS.MAIN`, whatever the caller's face.
   void family;
-  const text = new Text({ text: label, style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
+  const text = new Label({ text: label, style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
   text.anchor.set(0.5);
   text.position.set(x, y);
   if (text.width > width - 16) text.scale.set((width - 16) / text.width);

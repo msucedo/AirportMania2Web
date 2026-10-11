@@ -25,9 +25,8 @@ export const GIANT_FILL: FillInput = downwards([[0, 0xffffff], [0.5, 0xffb237], 
 
 /**
  * The border of the plain effects (0x91dc8 with 1.5): a black copy of the letter, blurred, under
- * it. The engine's blur makes opacity more solid at each pass (runs of it give 1 − (1 − a)⁴), so
- * next to an edge the border is all but solid one pixel out and about 0.43 two out: an outline
- * a pixel and a half wide stands in for it here. `WhiteSilverEffect` (0xbb7a8) is this alone,
- * over white.
+ * it. A text made as a `Label` has it rendered as the engine does; this outline only says that a
+ * text has one, and is what the browser measures it with. `WhiteSilverEffect` (0xbb7a8) is the
+ * border alone, over white.
  */
 export const BORDER: StrokeInput = { color: 0x000000, width: 3, join: 'round' };

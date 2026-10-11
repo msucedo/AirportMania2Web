@@ -1,4 +1,5 @@
-import { Container, type FederatedPointerEvent, Text, type Ticker } from 'pixi.js';
+import { Label } from './effectText';
+import { Container, type FederatedPointerEvent, type Ticker } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -26,9 +27,9 @@ export class CreditsRollView extends Container {
     // The cached font's height is taken for the line's; what the original keeps there is not read.
     const layout = parseCredits(strings.t('CREDITS_DIALOG.TEXT'), (font) => face(font).size, (resource) => textures.sprite(resource).height);
     this.roll = new CreditsRoll(layout.total, delay);
-    const write = (value: string, font: string, x: number): Text => {
+    const write = (value: string, font: string, x: number): Label => {
       const style = face(font);
-      const node = new Text({ text: value, style: { fontFamily: style.family, fontSize: style.size, fill: style.fill, ...(style.stroke === undefined ? {} : { stroke: { color: style.stroke, width: 3 } }) } });
+      const node = new Label({ text: value, style: { fontFamily: style.family, fontSize: style.size, fill: style.fill, ...(style.stroke === undefined ? {} : { stroke: { color: style.stroke, width: 3 } }) } });
       node.anchor.set(0.5, 0);
       node.x = x;
       return node;

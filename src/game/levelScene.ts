@@ -1,7 +1,8 @@
+import { Label } from './view/effectText';
 import { BORDER, MAIN_FILL } from './view/faces';
 import type { AwardPlace } from '../data/awards';
 import { levelAwardPictures, levelAwardSurfaces } from './awardsRoom';
-import { Container, Graphics, Text, type Application, type Sprite, type FederatedPointerEvent } from 'pixi.js';
+import { Container, Graphics, type Application, type Sprite, type FederatedPointerEvent } from 'pixi.js';
 import type { GameData } from '../data/load';
 import { findGoals, findLevel, type PlaneColor } from '../data/levels';
 import type { Language, Strings } from '../data/strings';
@@ -165,7 +166,7 @@ export class LevelScene {
   /** Awards earned in this play, in order. */
   readonly awardsEarned: number[] = [];
   private readonly notices: number[] = [];
-  private notice: { text: Text; id: number; state: NoticeState; touched: boolean } | null = null;
+  private notice: { text: Label; id: number; state: NoticeState; touched: boolean } | null = null;
   private gameTip: { view: Container; clock: number; touched: boolean } | null = null;
 
   private constructor(
@@ -553,7 +554,7 @@ export class LevelScene {
     if (id === undefined) return;
     this.audio.play(awardSound(id));
     const value = this.options.progress.awards[id]?.value ?? 0;
-    const text = new Text({
+    const text = new Label({
       text: this.strings.t(`${awardText(id)}.EARN`, value),
       style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER, align: 'center', wordWrap: true, wordWrapWidth: 240 / 0.8 },
     });

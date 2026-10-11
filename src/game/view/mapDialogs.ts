@@ -1,6 +1,6 @@
-import { ULTRA_EFFECT, titleText } from './effectText';
+import { Label, ULTRA_EFFECT, titleText } from './effectText';
 import { BORDER, MAIN_FILL, SCORE_FILL } from './faces';
-import { Container, Text } from 'pixi.js';
+import { Container } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
@@ -140,7 +140,7 @@ export class StageDialog extends Container {
     const name = dialogText(centre, strings.t(`STAGES.${stage.number}.NAME`), 0, layout.name, 14, fontFamily(MAIN_FONT), 0.5);
     name.style.fill = MAIN_FILL;
     if (name.width > 400) name.scale.set(400 / name.width);
-    const description = new Text({
+    const description = new Label({
       text: strings.t(`STAGES.${stage.number}.DESCRIPTION`),
       style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER, wordWrap: true, wordWrapWidth: 420, lineHeight: 13 },
     });

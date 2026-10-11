@@ -1,6 +1,6 @@
-import { ULTRA_EFFECT, titleText } from './effectText';
+import { Label, ULTRA_EFFECT, titleText } from './effectText';
 import { BORDER, MAIN_FILL, SCORE_FILL } from './faces';
-import { Container, Rectangle, Text } from 'pixi.js';
+import { Container, Rectangle } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import { fontFamily } from '../../engine/fonts';
@@ -20,10 +20,10 @@ export function goalRow(textures: TextureStore, name: string, amount: string, ti
   const row = new Container();
   const plate = textures.sprite('GUI.INGAMEGUI.SCORE_GOAL_BACK');
   plate.tint = tint;
-  const label = new Text({ text: name, style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER } });
+  const label = new Label({ text: name, style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER } });
   label.anchor.set(0, 0.5);
   label.position.set(-125, -2);
-  const value = new Text({ text: amount, style: { fontFamily: fontFamily(SCORE_FONT), fontSize: 14, fill: SCORE_FILL, stroke: BORDER } });
+  const value = new Label({ text: amount, style: { fontFamily: fontFamily(SCORE_FONT), fontSize: 14, fill: SCORE_FILL, stroke: BORDER } });
   value.anchor.set(1, 0.5);
   value.position.set(115, 0);
   row.addChild(plate, label, value);
@@ -157,7 +157,7 @@ export class LevelIntro extends Container {
     const title = titleText(`${strings.t(`STAGES.${level.stage}.TITLE`)} - ${strings.t('LEVEL_NUMBER', level.number)}`, 'FONTS.BLUE_STONE', 20, 0.8, ULTRA_EFFECT);
     title.anchor.set(0.5);
     title.position.set(0, top);
-    const name = new Text({
+    const name = new Label({
       text: strings.t(`STAGES.${level.stage}.NAME`),
       style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER, align: 'center', wordWrap: true, wordWrapWidth: 420 },
     });

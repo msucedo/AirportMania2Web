@@ -1,3 +1,4 @@
+import { Label } from './view/effectText';
 import { BORDER, MAIN_FILL } from './view/faces';
 import { Container, Matrix, Rectangle, Text, type Application, type Sprite } from 'pixi.js';
 import type { GameData } from '../data/load';
@@ -206,7 +207,7 @@ export class MainMenu {
       const highlight = textures.sprite('MAIN_MENU.BUTTON_OVER');
       highlight.position.set(BUTTON.x, y);
       highlight.visible = false;
-      const label = new Text({ text: options.strings.t(`MAIN_MENU.${entry}`), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
+      const label = new Label({ text: options.strings.t(`MAIN_MENU.${entry}`), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
       label.anchor.set(0.5);
       label.position.set(BUTTON.x, y);
       label.alpha = enabled ? 1 : 0.4;

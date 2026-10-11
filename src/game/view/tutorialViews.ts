@@ -1,4 +1,4 @@
-import { ULTRA_EFFECT, titleText } from './effectText';
+import { Label, ULTRA_EFFECT, titleText } from './effectText';
 import { MAIN_FILL } from './faces';
 import { Container, Rectangle, type Sprite, Text, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
@@ -48,7 +48,7 @@ export function centred(textures: TextureStore, width: number, height: number): 
 }
 
 /** A text box (0x2d14c): the text wrapped to the box's width, centred in it or set at its top left. */
-export function textBox(parent: Container, value: string, box: Box, style: Face, centredIn: boolean): Text | Sprite {
+export function textBox(parent: Container, value: string, box: Box, style: Face, centredIn: boolean): Label | Sprite {
   if (style.title) {
     // A title font: its letters are rendered as the engine does, on one line in the box's middle.
     const picture = titleText(value, style.title, style.size, style.widthScale ?? 1, ULTRA_EFFECT);
@@ -57,7 +57,7 @@ export function textBox(parent: Container, value: string, box: Box, style: Face,
     parent.addChild(picture);
     return picture;
   }
-  const node = new Text({
+  const node = new Label({
     text: value,
     style: {
       fontFamily: style.family,

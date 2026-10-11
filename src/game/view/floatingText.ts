@@ -1,5 +1,6 @@
+import { Label } from './effectText';
 import { BORDER, MAIN_FILL, SCORE_FILL, SCORE_NEGATIVE_FILL } from './faces';
-import { Container, Text, type TextStyleOptions } from 'pixi.js';
+import { Container, type TextStyleOptions } from 'pixi.js';
 import { fontFamily } from '../../engine/fonts';
 
 /** Fonts behind the original cached fonts `FONTS.SCORE` and `FONTS.MAIN`. */
@@ -43,8 +44,8 @@ export function floatingPush(existing: readonly { x: number; y: number; offset: 
   return pushes;
 }
 
-// The originals are pre-rendered with "MoneyEffect" and "GoldOrangeEffect" gradients, which have not
-// been read from the binary; these fills and outlines approximate them.
+// `FONTS.SCORE`, `FONTS.SCORE_NEGATIVE` and `FONTS.MAIN`, rendered with their effects by `Label`.
+// Their sizes here and the message's letter spacing are ours.
 const STYLES = {
   score: { fontFamily: fontFamily(SCORE_FONT), fontSize: 16, fill: SCORE_FILL, stroke: BORDER },
   penalty: { fontFamily: fontFamily(SCORE_FONT), fontSize: 16, fill: SCORE_NEGATIVE_FILL, stroke: BORDER },
@@ -55,10 +56,10 @@ export type FloatingStyle = keyof typeof STYLES;
 
 /** Short texts that rise and fade over the airport: points, bonuses and punctuality. */
 export class FloatingTexts extends Container {
-  private readonly items: { text: Text; x: number; y: number; offset: number; age: number }[] = [];
+  private readonly items: { text: Label; x: number; y: number; offset: number; age: number }[] = [];
 
   show(label: string, x: number, y: number, style: FloatingStyle): void {
-    const text = new Text({ text: label, style: STYLES[style] });
+    const text = new Label({ text: label, style: STYLES[style] });
     text.anchor.set(0.5);
     // 0x657d4: the place is taken in whole pixels; a text is 2 px taller than its font.
     const at = { x: Math.floor(x), y: Math.floor(y) };
