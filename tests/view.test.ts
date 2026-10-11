@@ -22,6 +22,7 @@ import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace, nagFlash } from '../src/game/planeView';
 import { listLimit, listRest, listRowAt, listRowY, listSettle } from '../src/game/view/improvementsDialog';
+import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoading';
 import { coast, dragSpeed, markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
@@ -962,5 +963,26 @@ describe('the shop\'s list', () => {
     expect(listRowAt(-64, -1, 8)).toBe(1);
     expect(listRowAt(110, 2.9, 8)).toBe(7);
     expect(listRowAt(-115, -3, 8)).toBe(0);
+  });
+});
+
+describe('the scene-loading screen', () => {
+  it('turns its sun 7.5 degrees a second and lets it breathe', () => {
+    expect(sunPose(2).angle).toBeCloseTo(15);
+    expect(sunPose(0.5).scale).toBeCloseTo(1 + 0.025 * Math.sin(2.5));
+    expect(sunPose(0).scale).toBe(1);
+  });
+
+  it('slides its clouds left, a width at a time', () => {
+    expect(cloudStart(0, 15, 256)).toBeCloseTo(0);
+    expect(cloudStart(5, 15, 256)).toBeCloseTo(-75);
+    expect(cloudStart(20, 15, 256)).toBeCloseTo(-44);
+  });
+
+  it('grows its bar from 5 to 100 px and moves its veil in a third of a second', () => {
+    expect(barWidth(0)).toBe(5);
+    expect(barWidth(1)).toBe(100);
+    expect(veilStep(1, 0.1, true)).toBeCloseTo(0.7);
+    expect(veilStep(0, 0.1, false)).toBeCloseTo(0.3);
   });
 });

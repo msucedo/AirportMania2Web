@@ -42,7 +42,6 @@ f728	92	cubierta	level restart: clears, saves, random seed for the radar; the po
 f784	60	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- f728 fe8c* tables=0
 f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats=0 profile,users,stores=53 <- f7c0* 11654* 37b68* 38b64 tables=0 http://www.southwindsgames.com/airport-mania-wild-trips/playlog/playlog.php; PlayerName; C
 10050	356	cubierta	stage lookup by number ("Invalid Stage Number")	floats=0 profile,users,stores=4 <- fe8c* 10044 tables=0 Invalid Stage Number
-105e8	156	regla	level start (0x105e8): arrivals 6 s later when a tip will show; total time at least last arrival + 5. BUILT	floats=11 profile,users,stores=3 <- 101b4* tables=0
 10920	44	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- e440 31a14* 3730c 375e8 378c8 4a410 tables=0
 12540	904	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 profile,stores=9 <- 128c8 12ac4 tables=0
 128c8	508	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 stores=19 <- 10684* tables=0 %s_%s
@@ -53,7 +52,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 15434	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f5a8 42afc* 42ebc* tables=0
 15460	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f410 563fc 565f4* tables=0
 1548c	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f3d0 40680 40788* 40ed4* tables=0
-154b8	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f3f0 46a38 46c14* tables=0
+154b8	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f3f0 46a38* 46c14* tables=0
 154e4	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 12540 tables=0
 15524	168	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 12540 tables=0
 155cc	664	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 12540 tables=0
@@ -187,7 +186,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 27580	96	cubierta	continue-game question buttons	floats=2 stores=1 <- 27374 tables=0
 277ec	64	pendiente	palette selection dialog of the options; see pending list	floats=0 profile,users,stores=0 <-  tables=1
 2782c	96	cubierta	continue-game question buttons	floats=2 stores=1 <- 27374 tables=0 YES
-27a98	44	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 27ac4	92	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 27bc8* tables=0
 27b20	124	fontanería	by rule: no numbers and no text	floats=0 stores=6 <- 27bc8* tables=0
 28df8	48	cubierta	stars, sun, moon, deicer: built	floats=0 draws,stores=0 <-  tables=1
@@ -350,7 +348,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 4695c	84	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=3 <- 45d58* 466dc* tables=0
 469b0	84	cubierta	hangar helpers; built	floats=4 stores=0 <- 464dc tables=0
 46a04	52	cubierta	by rule: only loads resources or makes objects	floats=0 new×1,stores=3 <- 45bd4* tables=0 Hangar
-46a38	160	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=5 <- 46ad8 46c14* tables=0 HANGARS.PROGRESS; HANGARS.PROGRESS_TICK; SOUNDS.REPAIRING_START; SOUNDS.REPAIRING_LOOP
 46ad8	300	fontanería	by rule: no numbers and no text	floats=0 stores=2 <-  tables=1
 47888	228	cubierta	by rule: only loads resources or makes objects	floats=7 new×1,stores=5,formed@47982 <-  tables=0
 4796c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Hangar
@@ -466,10 +463,8 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 5f3b0	112	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=4 draws,stores=0 <-  tables=5
 5f4a0	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 5f4c4	136	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 stores=1 <- 60e50* tables=0 MAP.PLAY; MAP.HUD.BUTTONS.PLAY_ON
-5f590	76	cubierta	by rule: only loads resources or makes objects	floats=0 loads,sound,stores=0 <- 5f54c* 65530 tables=0 SOUNDS.MAP_PLAY
 5f5dc	132	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 stores=1 <- 60e50* tables=0 MAP.AWARDS_ROOM; MAP.HUD.BUTTONS.AWARDS_ON
 5f660	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-5f708	52	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 profile,users,stores=1 <-  tables=1
 5f74c	576	cubierta	by rule: only loads resources or makes objects	floats=2 loads,stores=35 <- 5f73c tables=0 MAP.LEVELS
 614f4	148	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 5e50c tables=0
 61950	224	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=1 <-  tables=1
@@ -541,10 +536,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 70548	56	fontanería	small constructors of scenery called by built ones	floats=8 stores=0 <- 149d4* tables=0
 70740	112	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 708f4	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScaryFog
-70924	428	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=16 <- 70914 tables=0 LOADING_SCREEN.LOADING
 70b70	372	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 70ad0 70b60 tables=0
-713f8	224	pendiente	SceneLoading (0x70ce4): the screen shown while a stage or the ending loads; its update and draw	floats=23 stores=6 <-  tables=1
-714d8	1144	pendiente	SceneLoading (0x70ce4): the screen shown while a stage or the ending loads; its update and draw	floats=118 draws,stores=1 <-  tables=1 ScoreMessage
 71c40	84	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 FONTS.ULTRA
 71dfc	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScoreMessage; ScrollingCloud
 71e28	40	fontanería	small constructors of scenery called by built ones	floats=4 stores=0 <- 14858* tables=0
@@ -555,7 +547,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 72510	124	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
 72714	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScrollingDistantObject; Sea
 72934	92	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-72990	40	fontanería	small constructors of scenery called by built ones	floats=4 stores=0 <- 13c3c* 70ce4* tables=0
 73100	160	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=12 <- 72db4 tables=0
 731a0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Sea
 73258	312	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=2 <- 737e0 tables=0 SerializableLine

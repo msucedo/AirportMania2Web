@@ -2225,10 +2225,45 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   in the awards room when it is had (`0x1bed6`); a trophy not had opens the award dialog.
 - Web version: in a level it is not opened if another dialog is up.
 
+## The scene-loading screen (`SceneLoading`) — confirmed
+
+One of the app's screens (vtable `0x17b600`: update `0x713f8`, draw `0x714d8`, end `0x712c4`),
+made by `0x70924` with the text `LOADING_SCREEN.LOADING` and a coin thrown for day or night.
+
+- Start (`0x70ce4(screen, mode)`, only while the screen is idle, state 3): mode 0 loads the
+  group `FINAL_VICTORY`, modes 1 and 2 the group `STAGE_%02d` of the profile's stage; any group
+  loaded before is let go. Day and night change places at every start (`0x70f34`). It takes
+  `AMBIENT.SUNRAY`, `SUN`, `MOON`, `MAIN_MENU.CLOUD1`/`2`, `STAGES.CARRIER.OCEAN_BOTTOM`/`TOP`
+  and `FONTS.MAIN`; sets the sky's band from y 20 to y 245 with its colours (kept as bytes
+  `0xffe59900` at the foot and black at the head by night, `0xff4c4cff` and `0xff7fccff` by
+  day); makes a sea's glints (`0x72990`) over (0, 236)–(480, 320) with (1, 1, 0, 11) and a bar
+  from `GUI.FINAL_REPORT.TICK_YELLOW` with its two halves as ends; and goes to state 0 with
+  its veil at 1. It is called by the map's Play (`0x5f5d4`, mode 2), by the stage's clear
+  screen (`0x78b38`, mode 0), by the tutorial question (`0x7ea7e`) and at `0x27abc` and
+  `0x5f734`.
+- Update: a clock always runs. State 0, the veil falls at 3 a second and at 0 comes state 1;
+  state 1, the group is loaded a piece at a time, within a hundredth of a second each frame,
+  and done, comes state 2; state 2, the veil rises at 3 a second and at 1 the end is called.
+- End (`0x712c4`): mode 2 starts the level (`0xfe8c`); mode 1 loads a saved game, with an
+  error dialog if it cannot; mode 0 shows the ending.
+- Draw, read off runs of it (`tools/re/draw_trace.py 0x714d8 0x90=1 0x94=0f 0x98=2f …`): the
+  sky; by night the moon at (80, 175), by day the rays and the sun there, turned `7.5·t`
+  degrees and `1 + 0.025·sin(5t)` large; the sea's body stretched 48 by 6 from (0, 260) and its
+  edge at (0, 237); the glints; `CLOUD1` three times side by side, upside down from y 180 and
+  `15·t` px to the left, and `CLOUD2` likewise from y 170 at `20·t`, each kept within one
+  width; the text in the screen's middle; in states 1 and 2 the bar at (190, 191),
+  `95·done + 5` wide, `done` being the loaded share (1 in state 2); in states 0 and 2 the
+  screen in white at the veil's opacity.
+- Web version: all of it, before every level and before the ending. Ours: the colours' bytes
+  are read red first, as the graphics library does (blue under black by night, red under
+  orange by day); what is behind the sky's band is black; the bar follows the level's
+  pictures as they come, in twelve lots; day or night is kept with the visit; mode 1 (a saved
+  game) is not built.
+
 ## The ending — confirmed in part
 
 - Leaving the clear screen of a stage (`0x78a9c`): below the last stage (`app+0x248`) the next
-  one is opened and the map shown; on the last, the loading screen is asked for mode 0
+  one is opened and the map shown; on the last, the scene-loading screen is asked for mode 0
   (`0x70ce4`), whose end shows the scene kept at `app+0x184` (`0x71390`).
 - Scene (`0x3473c`), in order: `FINAL_VICTORY.SKY` stretched over the screen; clouds
   (`0x36bb8`); ground (`0x361bc`); the little plane (`0x35ffc`) and three more floating

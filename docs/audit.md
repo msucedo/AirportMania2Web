@@ -63,11 +63,8 @@ filler is accounted for (`tools/re/audit.py` prints the figure). The rest is the
 
 In the order they would be seen. None is a rule of play except the second.
 
-1. **The scene-loading screen** (`SceneLoading`, `0x70ce4`; update `0x713f8`, draw `0x714d8`):
-   shown while a stage's pictures load, before every level, and before the ending. It names
-   `AMBIENT.SUN`, `SUNRAY`, `MOON`, `MAIN_MENU.CLOUD1`/`2`, `STAGES.CARRIER.OCEAN_TOP`/`BOTTOM`
-   and `GUI.FINAL_REPORT.TICK_YELLOW`. The port shows nothing before a level, and before the
-   ending it shows the belt screen, which is the start-up's.
+1. ~~**The scene-loading screen**~~ (`SceneLoading`, `0x70ce4`): built on 2026-10-11; see the
+   notes.
 2. **Advanced options** (`0x2220`): three switches. *Show tips* (clears the byte at
    `0x1781e0`: no tips and no 6 s wait), *tap on bubbles* (`BUBBLE_CLICKING`, a way of giving
    orders: not read) and *auto-orientate* (the device's, not applicable). The port opens a

@@ -1,3 +1,4 @@
+import { SceneLoading } from './game/sceneLoading';
 import { dialogSound } from './game/view/dialog';
 import { LoadingScreen, inRuns } from './game/loadingScreen';
 import { Opening } from './game/opening';
@@ -121,11 +122,11 @@ async function main(): Promise<void> {
   const playable = new Map([...STAGES.keys()].map((s) => [s, data.areas.get(s)!.levelsCount]));
   if (params.has('ending')) {
     // The ending, reached from the last stage's clear screen; it goes back to the main menu.
-    // 0x55a38: the ending comes after the loading screen.
     const strings = await data.strings(chosen);
     document.body.dataset.ready = 'true';
     const audio = makeAudio();
-    await LoadingScreen.run(app, data, textures, strings, [() => EndingScene.preload(data, textures)], audio);
+    // 0x78b38: the ending comes after the scene-loading screen, like a stage.
+    await SceneLoading.run(app, data, textures, strings, () => EndingScene.preload(data, textures));
     await EndingScene.create(app, data, textures, audio, { strings, onReturn: () => navigate(null, null) });
   } else if (params.has('awards')) {
     // The awards room, reached from the map and going back to it.
@@ -237,7 +238,9 @@ async function main(): Promise<void> {
     });
   } else {
     const audio = makeAudio();
-    window.game = await LevelScene.create(app, data, textures, audio, {
+    // 0x5f590, 0x70ce4: a level comes after the scene-loading screen, which loads its stage.
+    const texts = await data.strings(chosen);
+    window.game = await SceneLoading.run(app, data, textures, texts, (report) => LevelScene.create(app, data, textures, audio, {
       stage,
       level,
       layout,
@@ -261,7 +264,7 @@ async function main(): Promise<void> {
         saveSettings(next);
       },
       showNodes: params.has('nodes'),
-    });
+    }, report));
   }
   document.body.dataset.ready = 'true';
 }

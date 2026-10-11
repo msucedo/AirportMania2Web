@@ -1,3 +1,4 @@
+import { inRuns } from './loadingScreen';
 import { Label } from './view/effectText';
 import { BORDER, MAIN_FILL } from './view/faces';
 import type { AwardPlace } from '../data/awards';
@@ -201,7 +202,7 @@ export class LevelScene {
     this.build();
   }
 
-  static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: LevelOptions): Promise<LevelScene> {
+  static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: LevelOptions, report: (done: number) => void = () => {}): Promise<LevelScene> {
     const { layout } = options;
     const stage = await data.stage(options.stage);
     const area = data.areas.get(options.stage);
@@ -268,9 +269,17 @@ export class LevelScene {
     }
     const awardPlaces = await data.awards();
     for (const id of levelAwardSurfaces(awardPlaces)) ids.add(id);
+    // The pictures come in a few lots, so that the loading screen has something to show.
+    const lots = inRuns([...ids], 12);
+    const pictures = (async (): Promise<void> => {
+      for (let done = 0; done < lots.length; done++) {
+        await textures.load(lots[done]!);
+        report((done + 1) / lots.length);
+      }
+    })();
     const [strings] = await Promise.all([
       data.strings(options.language),
-      textures.load(ids),
+      pictures,
       loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS, ...LEVEL_INTRO_FONTS, ...HELP_FONTS, ...(options.stage === 0 ? TUTORIAL_FONTS : [])]),
     ]);
 

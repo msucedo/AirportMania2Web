@@ -61,7 +61,7 @@ put('cubierta', 'buttons of the final report and the tutorial dialogs; opening s
 put('cubierta', 'two-colour image, wash and go parts; built', 0x8430c, 0x84994, 0x85a4c, 0x866d4, 0x86844)
 put('sin datos', "silhouettes under the island's water: no such images", 0x87058, 0x87188, 0x87244, 0x87718, 0x87b4c, 0x87c84, 0x87e9c)
 put('no aplica', 'reading and writing saved objects, compression', 0x89238, 0x8952c, 0x8974c, 0x89a74, 0x89ed8, 0x8be84)
-put('pendiente', 'SceneLoading (0x70ce4): the screen shown while a stage or the ending loads; its update and draw', 0x713f8, 0x714d8)
+put('cubierta', 'SceneLoading (0x70ce4): the screen shown while a stage or the ending loads; read and built', 0x713f8, 0x714d8)
 put('vista', "level marker of the map: its own update and draw; the port builds it from the script", 0x5de28, 0x5def0)
 put('cubierta', 'painting stop spot; built', 0x680f8, 0x68388)
 put('no aplica', "the taxi graph drawn over the level when a flag of the level is set: a developer's overlay", 0x460e4)
