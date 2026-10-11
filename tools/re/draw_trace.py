@@ -81,11 +81,22 @@ class Run:
             sp = uc.reg_read(UC_ARM_REG_SP)
             uc.mem_write(sp, struct.pack(f'<{len(args.stack)}I', *(self.word(v) for v in args.stack)))
         self.error = None
-        try:
-            uc.emu_start(int(args.function, 16) | 1, TRAP + 0x800, count=20_000_000)
-        except Exception as error:  # noqa: BLE001 - report where the run stopped
-            self.error = self.error or f'{error} at {uc.reg_read(UC_ARM_REG_PC):#x}'
-        print(f'returned {uc.reg_read(UC_ARM_REG_R0):#x}' if not self.error else f'# stopped: {self.error}')
+        self.peek = args.peek
+        for step, function in enumerate([args.function, *args.then]):
+            if step:
+                # A further routine on the same object, after --poke has set fields of it.
+                for field in args.poke:
+                    offset, value = field.split('=')
+                    uc.mem_write(self.object + int(offset, 16), struct.pack('<I', self.word(value)))
+                uc.reg_write(UC_ARM_REG_SP, STACK + STACK_SIZE - 0x1000)
+                uc.reg_write(UC_ARM_REG_LR, (TRAP + 0x800) | 1)
+                uc.reg_write(UC_ARM_REG_R0, self.object)
+                print(f'-- then {function}')
+            try:
+                uc.emu_start(int(function, 16) | 1, TRAP + 0x800, count=20_000_000)
+            except Exception as error:  # noqa: BLE001 - report where the run stopped
+                self.error = self.error or f'{error} at {uc.reg_read(UC_ARM_REG_PC):#x}'
+            print(f'returned {uc.reg_read(UC_ARM_REG_R0):#x}' if not self.error else f'# stopped: {self.error}')
         for spec in args.vector:
             # offset:f or offset:i - the vector (begin, end pointers) at that offset of the object.
             offset, kind = spec.split(':')
@@ -147,7 +158,16 @@ class Run:
         if address == APP:
             result[0] = self.app
         elif virtual:
-            if regs[0] in self.images and HEAP <= regs[1] < HEAP + HEAP_SIZE or STACK <= regs[1] < STACK + STACK_SIZE:
+            sp = uc.reg_read(UC_ARM_REG_SP)
+            if regs[0] in self.images and HEAP <= regs[3] < HEAP + HEAP_SIZE and HEAP <= regs[2] < HEAP + HEAP_SIZE:
+                # A strip (0x908f8): the image, something, a transform, the points; then on the stack the
+                # texture coordinates and, third, how many points.
+                uvs, _, count = struct.unpack('<3I', uc.mem_read(sp, 12))
+                number = lambda x: f'{x:.5g}'
+                print(f'strip {self.images[regs[0]]} {self.transform(regs[2])} points {count}')
+                print('  xy: ' + ' '.join(number(x) for x in struct.unpack(f'<{2 * count}f', uc.mem_read(regs[3], 8 * count))))
+                print('  uv: ' + ' '.join(number(x) for x in struct.unpack(f'<{2 * count}f', uc.mem_read(uvs, 8 * count))))
+            elif regs[0] in self.images and HEAP <= regs[1] < HEAP + HEAP_SIZE or STACK <= regs[1] < STACK + STACK_SIZE:
                 print(f'draw {self.images.get(regs[0], hex(regs[0]))} {self.transform(regs[1])}')
             else:
                 print(f'virtual call from {lr & ~1:#x} on {regs[0]:#x}: {regs[1]:#x} {regs[2]:#x} {regs[3]:#x}')
@@ -156,6 +176,12 @@ class Run:
             for v in regs:
                 if STACK <= v < STACK + STACK_SIZE:
                     print(f'  on the stack at {v:#x}: {self.transform(v)}')
+            sp = uc.reg_read(UC_ARM_REG_SP)
+            more = struct.unpack('<6I', uc.mem_read(sp, 24))
+            print('  stack: ' + ' '.join(f'{v:#x}({i2f(v):g})' for v in more))
+            for v in [*regs, *more]:
+                if self.peek and (HEAP <= v < HEAP + HEAP_SIZE - 4 * self.peek):
+                    print(f'  at {v:#x}: ' + ' '.join(f'{x:.5g}' for x in struct.unpack(f'<{self.peek}f', uc.mem_read(v, 4 * self.peek))))
         elif name in DOUBLE1:
             result = list(d2i(DOUBLE1[name](i2d(regs[0], regs[1]))))
         elif name == '_pow':
@@ -202,6 +228,9 @@ if __name__ == '__main__':
     parser.add_argument('--app', nargs='*', default=[])
     parser.add_argument('--stub', nargs='*', default=[])
     parser.add_argument('--dump', type=int, default=0)
+    parser.add_argument('--then', nargs='*', default=[], help='further routines to run on the same object')
+    parser.add_argument('--poke', nargs='*', default=[], help='fields set before each further routine')
+    parser.add_argument('--peek', type=int, default=0, help='floats to print at each heap pointer a stubbed call is given')
     parser.add_argument('--stack', nargs='*', default=[], help='arguments after the fourth')
     parser.add_argument('--vector', nargs='*', default=[], help='offset:f or offset:i, vectors of the object to print afterwards')
     Run(parser.parse_args())

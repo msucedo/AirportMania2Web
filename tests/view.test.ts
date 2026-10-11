@@ -1,4 +1,4 @@
-import { MAP_GLINTS, airborneIconPose, birdPose, cloudBob, glintShow, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
+import { MAP_GLINTS, MAP_STREAKS, streakPose, airborneIconPose, birdPose, cloudBob, glintShow, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
 import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
 import { barSpark, barStar, hangarSpark, sparkPose, tierBurst, tierTextPose } from '../src/game/view/goalEffects';
@@ -741,6 +741,14 @@ describe('scenery', () => {
     expect(MAP_GLINTS.map((patch) => patch.glints.length)).toEqual([8, 17, 16]);
     expect(glintShow(0.5, 0)).toBeCloseTo(0.7, 5);
     expect(glintShow(1.5, 0)).toBeCloseTo(-1.3, 5);
+    // A streak, against runs of the original's draw at those clocks.
+    expect(MAP_STREAKS.map((streak) => streak.rows.length)).toEqual([6, 5, 9, 9, 4, 9]);
+    expect(streakPose(0.9)).toBeNull();
+    expect(streakPose(0.45)!.alpha).toBe(1);
+    expect(streakPose(0.27)!.alpha).toBeCloseTo(0.2, 5);
+    expect(streakPose(0.09)!.alpha).toBe(0);
+    expect(streakPose(0.27)!.v(0.36046)).toBeCloseTo(0.23954, 5);
+    expect(streakPose(0.63)!.v(0.64761)).toBeCloseTo(0.75239, 5);
   });
 });
 

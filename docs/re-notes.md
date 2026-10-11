@@ -2333,7 +2333,7 @@ drawn in the order made, each moved by the map's scroll (`app+0x154`, `+4`/`+8`)
 7. Stage 5 icon (`0x60408`, see below) and ribbon; four winds
    `0x60bec('MAP.WIND', p0, p1 | p2, delay, 2)`: (1014 164, 914 96, 860 52, 1.8),
    (991 189, 914 130, 841 67, 0.95), (980 220, 901 155, 824 106, 1.4),
-   (916 218, 839 164, 778 137, 0.4). Class `0x39dcc`. **Not built yet.**
+   (916 218, 839 164, 778 137, 0.4). Class `0x39dcc`, see below.
 8. Stage 6 icon and ribbon; the aurora (`0x60b44` → `0x637b8`, the level's class drawn with a
    transform, `0x63918`): scale (0.4, 0.85), turned 25°, at (1146, −63).
 9. Stage 7 icon and ribbon; the carrier's waves `0x612d0` at (1368, 331), class `0x62a24`,
@@ -2347,7 +2347,7 @@ drawn in the order made, each moved by the map's scroll (`app+0x154`, `+4`/`+8`)
    emulator gives as the matrix (0.819152, 0.573576, −0.983153, 0.532364). Web version: each
    strip between two rows has one opacity, the mean of its rows'.
 10. Two shooting stars `0x60bec('AMBIENT.SHOOTING_STAR', …)`: (1445 12, 1423 97, 1390 212, 0, 30)
-    and (1487 12, 1436 97, 1394 212, 15, 30). **Not built yet.**
+    and (1487 12, 1436 97, 1394 212, 15, 30).
 11. Thirteen stars `0x60cc4(place, size)` (the level's class `0x292bc`): (1202 30) 8, (1336 93) 7,
     (1399 30) 10, (1485 38) 9, (1415 135) 14, (1448 229) 8, (1605 356) 12, (1678 379) 8,
     (1932 30) 18, (1844 74) 7, (1980 115) 10, (1902 208) 13, (1875 147) 13.
@@ -2366,3 +2366,15 @@ it (`0x5d74c`: turn, scale, tilt, move), turned `14400·r` plus 0, 135, 90, 45°
 (0.5, 0.9), (0.53, 0.95), (0.5, 0.9), (0.4, 0.8); tilted 38, 34, 28, 16°; at (−30, 30),
 (−2, 25), (49, −1), (61, −17). Every icon is drawn `1 + 0.08·press` big (`+8`, eased by
 `0xa068`), which the web version does not do.
+
+Winds and shooting stars (class `0x39dcc`; update `0x39f58`, draw `0x39f8c` → `0x39fac`): the
+clock starts at the fourth number, runs with time and wraps at the fifth; drawn while under
+0.9, with `t = clock/0.9`, at opacity `clamp(4·min(t, 1 − t) − 1)`. The image is laid along a
+curve through the three points by the engine's strip (`0x90778`, points `0x903f4`, draw
+`0x908f8`), which cuts the curve into rows as it bends; each row is two points the image's
+width apart with u 0 and 1, and v `clamp(2t − d)`, `d` being how far along the curve the row
+is (0 to 1). Only rows from the last with v at 1 to the first with v at 0 are drawn. The rows
+were read off runs of the draw (`tools/re/draw_trace.py 0x39dcc --r1 ptr:0 --r2 ptr:1014f,164f
+--r3 ptr:914f,96f --stack ptr:860f,52f 0f 2f --stub 0xa4f30 0xa2e4c --then 0x39f8c --poke
+0x24=0.45f 0x4=img:8x170`), and are kept as data in the web version. That draw is given no
+scroll of its own; the web version moves the streaks with the map like everything else.

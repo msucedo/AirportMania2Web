@@ -126,7 +126,11 @@ level helpers called from many places), `0x64d38`–`0x65f88` (2 844), `0x17c2c`
    (`0x75ed8`) and the fireworks of an award's notice (`0x31648`); see the notes. The level's
    bird (`0x22c2c`) turned out never to be made. A draw routine is best read by running it:
    `tools/re/draw_trace.py`.
-6. **The map's life**, the loading screen and the opening logos.
+6. **The map's life**: built, in the script's order: sea glints, the island's front, birds,
+   snow, clouds, stage 5's propellers, winds, the aurora, the carrier's waves, shooting stars,
+   stars and the satellite (see "World map: what the script makes"). The "coming soon" sign is
+   never made in this game. Still to do: the level dialog's layout (`0x64d38`) and the stage
+   dialog's (`0x63c60`), the loading screen and the opening logos.
 7. ~~**The unidentified runs**~~: looked through (`tools/re/runinfo.py <start> <end>` lists a
    run's unread functions with their callers, callees and strings). No rule of play was hiding
    in them. What they held:

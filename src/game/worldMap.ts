@@ -11,7 +11,7 @@ import { DIALOG_SURFACES } from './view/dialog';
 import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { LevelDialog, MAP_DIALOG_FONTS, StageDialog } from './view/mapDialogs';
 import { findGoals } from '../data/levels';
-import { MAP_DECOR_SURFACES, MAP_GLINTS, MAP_STARS, MapAirborneIcon, MapBird, MapCarrierWaves, MapCloud, MapGlints, MapSatellite, type Decoration } from './view/mapDecor';
+import { MAP_DECOR_SURFACES, MAP_GLINTS, MAP_STARS, MAP_STREAKS, MapAirborneIcon, MapBird, MapCarrierWaves, MapCloud, MapGlints, MapSatellite, MapStreak, type Decoration } from './view/mapDecor';
 import { AuroraView, StarView } from './view/scenery/night';
 import { SnowView } from './view/scenery/northPole';
 
@@ -120,10 +120,8 @@ export class WorldMap {
       this.map.addChild(view);
       this.decor.push(item);
     };
-    // In the order the script makes them, which is the order they are drawn in. Still missing,
-    // each where it belongs: the wind after stage 5 and the
-    // shooting stars before the stars. The "coming soon" sign is only
-    // made when the game ends before stage 10 (0xcd6c6), which this one does not.
+    // In the order the script makes them, which is the order they are drawn in. The "coming soon"
+    // sign is only made when the game ends before stage 10 (0xcd6c6), which this one does not.
     for (const patch of MAP_GLINTS) put(new MapGlints(textures, patch));
     icon(1);
     ribbon(1);
@@ -145,6 +143,7 @@ export class WorldMap {
     // 0x60408: stage 5's icon hangs in the air on four propellers.
     this.decor.push(new MapAirborneIcon(textures, icon(5)));
     ribbon(5);
+    for (const wind of MAP_STREAKS.slice(0, 4)) put(new MapStreak(textures, wind));
     icon(6);
     ribbon(6);
     put(new AuroraView(textures, 'STAGES.ANTARCTIC.AURORA_BOREALIS', { x: 1146, y: -63, scaleX: 0.4, scaleY: 0.85, angle: 25 }));
@@ -155,6 +154,7 @@ export class WorldMap {
       icon(stage);
       ribbon(stage);
     }
+    for (const star of MAP_STREAKS.slice(4)) put(new MapStreak(textures, star));
     for (const [x, y, size] of MAP_STARS) put(new StarView(textures, { x, y }, size));
     put(new MapSatellite(textures, { x: 1813, y: 80 }));
     this.map.addChild(this.cursor);

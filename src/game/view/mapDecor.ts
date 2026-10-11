@@ -15,6 +15,8 @@ export const MAP_DECOR_SURFACES = [
   'MAP.AIRBORNE_PROPELLER',
   'MAP.CARRIER_WAVES',
   'AMBIENT.WAVE_REFLECT',
+  'MAP.WIND',
+  'AMBIENT.SHOOTING_STAR',
   'SNOW_FLAKES.3',
   'SNOW_FLAKES.4',
   'AMBIENT.STAR',
@@ -313,6 +315,66 @@ export class MapGlints implements Decoration {
       sprite.visible = show > 0;
       sprite.scale.set(show * size);
       sprite.alpha = 0.7 * show;
+    });
+  }
+}
+
+/**
+ * The winds and the shooting stars (0x60bec → class 0x39dcc): an image run along a curve through
+ * three points. The engine cuts the curve into rows as it goes (0x903f4); these are the rows a
+ * run of it gives, each the two edges of the band, the image's width apart, and how far along
+ * the curve it is, from 0 to 1.
+ */
+export const MAP_STREAKS: readonly { image: string; start: number; period: number; rows: readonly (readonly [number, number, number, number, number])[] }[] = [
+  { image: 'MAP.WIND', start: 1.8, period: 2, rows: [[1011.8, 167.35, 1016.2, 160.65, 0], [955.81, 130.18, 960.3, 123.56, 0.35218], [911.38, 99.038, 916.08, 92.57, 0.63607], [878.52, 73.933, 883.57, 67.734, 0.85181], [866.4, 63.623, 871.74, 57.663, 0.934294], [857.13, 54.783, 862.87, 49.217, 1]] },
+  { image: 'MAP.WIND', start: 0.95, period: 2, rows: [[988.66, 192.24, 993.34, 185.76, 0], [949.57, 163.17, 954.43, 156.82, 0.25123], [911.47, 133.1, 916.52, 126.9, 0.5015], [874.39, 102.03, 879.61, 95.971, 0.75102], [838.3, 69.95, 843.7, 64.05, 1]] },
+  { image: 'MAP.WIND', start: 1.4, period: 2, rows: [[977.3, 222.95, 982.7, 217.05, 0], [957.42, 205.25, 962.67, 199.21, 0.13795], [937.68, 188.56, 942.76, 182.38, 0.27199], [918.07, 172.88, 922.98, 166.56, 0.40221], [898.6, 158.2, 903.32, 151.74, 0.52872], [879.26, 144.52, 883.78, 137.92, 0.65164], [860.07, 131.85, 864.36, 125.1, 0.77106], [841.01, 120.19, 845.07, 113.29, 0.88713], [822.1, 109.52, 825.9, 102.48, 1]] },
+  { image: 'MAP.WIND', start: 0.4, period: 2, rows: [[913.51, 221.13, 918.49, 214.87, 0], [892.75, 205.09, 897.55, 198.69, 0.16364], [873.02, 190.77, 877.61, 184.22, 0.31582], [854.34, 178.17, 858.68, 171.46, 0.45668], [836.71, 167.3, 840.76, 160.39, 0.5864], [820.15, 158.14, 823.83, 151.03, 0.70522], [804.67, 150.69, 807.9, 143.37, 0.81346], [790.28, 144.94, 792.96, 137.4, 0.911541], [777.01, 140.88, 778.99, 133.12, 1]] },
+  { image: 'AMBIENT.SHOOTING_STAR', start: 0, period: 30, rows: [[1447.9, 12.688, 1442.1, 11.312, 0], [1438.3, 51.478, 1432.5, 49.975, 0.19236], [1425.9, 97.768, 1420.1, 96.177, 0.42313], [1392.9, 212.85, 1387.1, 211.15, 1]] },
+  { image: 'AMBIENT.SHOOTING_STAR', start: 15, period: 30, rows: [[1489.4, 13.864, 1484.6, 10.136, 0], [1475.9, 32.093, 1471, 28.694, 0.103], [1463, 52.215, 1457.9, 49.127, 0.21159], [1450.6, 74.236, 1445.3, 71.437, 0.3262], [1438.8, 98.154, 1433.3, 95.623, 0.44716], [1427.5, 123.97, 1421.9, 121.69, 0.57477], [1416.7, 151.69, 1411.1, 149.63, 0.70932], [1406.5, 181.31, 1400.8, 179.46, 0.851], [1396.9, 212.83, 1391.1, 211.17, 1]] },
+];
+
+/**
+ * A streak at its clock (0x39fac), or nothing once it is past 0.9: how far down the image a row
+ * `along` the curve is taken from, before it is held within the image, and the opacity. The
+ * image crosses the curve in 0.9 s, coming in and going out.
+ */
+export function streakPose(clock: number): { v(along: number): number; alpha: number } | null {
+  if (clock >= 0.9) return null;
+  const t = clock / 0.9;
+  return { v: (along) => 2 * t - along, alpha: Math.max(0, Math.min(1, 4 * Math.min(t, 1 - t) - 1)) };
+}
+
+export class MapStreak implements Decoration {
+  readonly view = new Container();
+  private readonly strips: MeshSimple[] = [];
+  private clock: number;
+
+  constructor(textures: TextureStore, private readonly streak: (typeof MAP_STREAKS)[number]) {
+    this.clock = streak.start;
+    const texture = textures.texture(streak.image);
+    for (let i = 0; i + 1 < streak.rows.length; i++) {
+      const [near, far] = [streak.rows[i]!, streak.rows[i + 1]!];
+      const strip = new MeshSimple({ texture, vertices: new Float32Array([...near.slice(0, 4), ...far.slice(0, 4)]), uvs: new Float32Array(8), indices: new Uint32Array([0, 1, 2, 1, 3, 2]) });
+      this.strips.push(strip);
+      this.view.addChild(strip);
+    }
+    this.update(0);
+  }
+
+  update(dt: number): void {
+    this.clock += dt;
+    if (this.clock > this.streak.period) this.clock -= this.streak.period;
+    const pose = streakPose(this.clock);
+    this.view.visible = pose !== null && pose.alpha > 0;
+    if (!pose) return;
+    this.view.alpha = pose.alpha;
+    this.strips.forEach((strip, i) => {
+      const [near, far] = [pose.v(this.streak.rows[i]![4]), pose.v(this.streak.rows[i + 1]![4])];
+      // Only the rows the image is on are drawn (0x90aa6): from the last one past its far end to the first before its near end.
+      strip.visible = !(near >= 1 && far >= 1) && !(near <= 0 && far <= 0);
+      const [a, b] = [Math.max(0, Math.min(1, near)), Math.max(0, Math.min(1, far))];
+      strip.geometry.uvs = new Float32Array([0, a, 1, a, 0, b, 1, b]);
     });
   }
 }
