@@ -842,6 +842,8 @@ describe('scenery', () => {
   it('brings the main menu in as the original does', () => {
     expect(menuShiftStep(80, 0.1)).toBeCloseTo(68, 5);
     expect(menuShiftStep(0.02, 0.1)).toBe(0);
+    expect(menuShiftStep(80, 0.1, -1)).toBe(80);
+    expect(menuShiftStep(80, 0.1, 0.5)).toBeCloseTo(74, 5);
     expect(skySpeed(0)).toBeCloseTo(0.0025, 9);
     expect(skySpeed(1)).toBeCloseTo(0.0045, 9);
     expect(skySpeed(2)).toBeCloseTo(0.0105, 9);

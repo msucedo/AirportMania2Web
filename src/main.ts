@@ -168,7 +168,8 @@ async function main(): Promise<void> {
         return true;
       }
     })();
-    if (params.has('logos') || !(seen || params.has('nologos'))) {
+    const loading = params.has('logos') || !(seen || params.has('nologos'));
+    if (loading) {
       await new Promise<void>((done) => {
         void Opening.create(app, textures, audio, done).then((opening) => {
           document.body.dataset.ready = 'true';
@@ -186,6 +187,7 @@ async function main(): Promise<void> {
     await MainMenu.create(app, data, textures, audio, {
       strings,
       enabled: ['PLAY', 'USERS', 'OPTIONS', 'CREDITS'],
+      afterLoading: loading,
       onSelect: (entry) => {
         if (entry === 'PLAY') {
           // 0x5d024: with no user the name is asked first; a game not begun asks about the

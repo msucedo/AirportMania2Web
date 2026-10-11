@@ -26,14 +26,21 @@ export interface MainMenuOptions {
   /** Entries that do something; the rest are shown dimmed. */
   enabled: readonly MenuEntry[];
   onSelect: (entry: MenuEntry) => void;
+  /** The menu is being started by the loading screen (0x59740), not come back to. */
+  afterLoading: boolean;
 }
 
 /** How far everything starts out of place, in px; each piece takes its own share of it. */
 export const MENU_SHIFT = 80;
 
-/** A step of the shift (0x59c80): it loses one and a half of itself a second and is dropped under 0.02. */
-export function menuShiftStep(shift: number, dt: number): number {
-  const next = shift - 1.5 * shift * dt;
+/**
+ * A step of the shift (0x59c80): it loses one and a half of itself a second, times the menu's
+ * clock, and is dropped under 0.02. The clock (0x59c52) runs up to 1 and nothing is lost while
+ * it is not over 0: started by the loading screen it begins at −3, otherwise at 1.
+ */
+export function menuShiftStep(shift: number, dt: number, clock = 1): number {
+  if (clock <= 0) return shift;
+  const next = shift - 1.5 * shift * dt * Math.min(1, clock);
   return next < 0.02 ? 0 : next;
 }
 
@@ -114,12 +121,15 @@ const FRANCHISE = { x: 270, y: 96, share: 0.7, wait: 0.6, side: 1 as const, soun
 const NUMBER = { x: 411, y: 46, share: 0.7, delay: 2.9 };
 const PLANE_EVERY = 18;
 const PLANE_LIFE = 4;
+const PLANES_KEY = 'am2web.menuPlanes';
 
 /**
  * The main menu (enter 0x597b0, update 0x59bf0): three layers of sky sliding by, the control
  * tower at (36, 77), the terminal at (−48, 152), the sign with its four entries at (240, 118),
  * the title, "Wild Trips" and the "2", and a plane flying past every 18 seconds. Everything
- * starts shifted to the right and eases into place. The promotional pieces (a "try the PC
+ * starts shifted to the right and eases into place. Started by the loading screen (0x59740)
+ * it holds still for 3 s first, its first plane comes after 8 s going in, and the build label
+ * shows later; come back to, the planes go on from where they were. The promotional pieces (a "try the PC
  * version" badge, more games, Facebook) are left out.
  */
 export class MainMenu {
@@ -129,8 +139,10 @@ export class MainMenu {
   private readonly sky: { tiles: Sprite[]; width: number; offset: number }[] = [];
   private readonly planes = new Container();
   private readonly flying: { sprite: Sprite; t: number; inward: boolean; drift: number }[] = [];
-  private nextPlane = 0;
-  private nextInward = false;
+  private clock = 1;
+  private labelAt = 5.8;
+  private nextPlane = 8;
+  private nextInward = true;
   private readonly tower: Sprite;
   private readonly front: Sprite;
   private readonly panel = new Container();
@@ -144,6 +156,27 @@ export class MainMenu {
     private readonly audio: AudioPlayer,
     options: MainMenuOptions,
   ) {
+    if (options.afterLoading) {
+      // 0x59750: the loading screen starts the menu with these.
+      this.clock = -3;
+      this.labelAt = 6.9;
+    } else {
+      // The original keeps one menu for the whole run, so its planes' wait and turn go on.
+      // This one is made anew with each visit and keeps them with the visit instead.
+      try {
+        const kept = /^(-?[\d.]+),([01])$/.exec(sessionStorage.getItem(PLANES_KEY) ?? '');
+        if (kept) [this.nextPlane, this.nextInward] = [Number(kept[1]), kept[2] === '1'];
+      } catch {
+        // Storage is off: they start as after the loading.
+      }
+    }
+    window.addEventListener('pagehide', () => {
+      try {
+        sessionStorage.setItem(PLANES_KEY, `${this.nextPlane.toFixed(2)},${this.nextInward ? 1 : 0}`);
+      } catch {
+        // Storage is off.
+      }
+    });
     const skies = new Container();
     for (const id of ['MAIN_MENU.BACK', 'MAIN_MENU.CLOUD1', 'MAIN_MENU.CLOUD2']) {
       // 0x5d2c8: each layer is drawn three times side by side, at the height its image names.
@@ -203,7 +236,8 @@ export class MainMenu {
 
   update(dt: number): void {
     this.time += dt;
-    this.shift = menuShiftStep(this.shift, dt);
+    this.clock = Math.min(1, this.clock + dt);
+    this.shift = menuShiftStep(this.shift, dt, this.clock);
     const shift = this.shift;
     this.sky.forEach((layer, i) => {
       layer.offset -= skySpeed(i) * dt * layer.width;
@@ -227,10 +261,10 @@ export class MainMenu {
     this.two.visible = since >= 0;
     this.two.scale.set(numberPop(since));
     this.two.position.set(NUMBER.x + NUMBER.share * shift, NUMBER.y);
-    // 0x5a5d4: the build numbers show after 5.8 s, over half a second.
-    this.label.alpha = Math.max(0, Math.min(1, 2 * (this.time - 5.8)));
+    // 0x5a5d4: the build numbers show after 5.8 s (6.9 s after the loading), over half a second.
+    this.label.alpha = Math.max(0, Math.min(1, 2 * (this.time - this.labelAt)));
 
-    // 0x59cca: a plane every 18 s from the start, one coming out and the next going in.
+    // 0x59cca: a plane every 18 s, one going in and the next coming out.
     this.nextPlane -= dt;
     if (this.nextPlane < 0) {
       const sprite = this.textures.sprite(this.nextInward ? 'MAIN_MENU.PLANE_PASSING_IN' : 'MAIN_MENU.PLANE_PASSING_OUT');

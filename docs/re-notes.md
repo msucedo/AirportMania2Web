@@ -897,8 +897,8 @@ update).
   skewed `∓0.3·√(1 − c)`, c from 1 at 3 a second.
 - `MAIN_MENU.NUMBER_TWO` at (411, 46) share 0.7 (update `0x5b8bc`): after 2.9 s, with
   `SOUNDS.NUMBER_TWO`, scaled `2^(−10c)·sin((c − 0.0477465)·2π/0.3) + 1` for one second.
-- A plane (`0x59f7c`; update `0x5a228`, draw `0x5a1c8`) every 18 s from the start, drawn right
-  after the sky, with `SOUNDS.PLANE_PASSBY`; they alternate, first `PLANE_PASSING_OUT`. For 4 s,
+- A plane (`0x59f7c`; update `0x5a228`, draw `0x5a1c8`) every 18 s, drawn right
+  after the sky, with `SOUNDS.PLANE_PASSBY`; they alternate. For 4 s,
   with depth `z = 2(5 − t)` (`2(t + 1)` for `PLANE_PASSING_IN`): at
   `(240 + V/z + R/(z + 1), 340 − 1180/z)`, scaled `3/z`, `R` random from −240 to 240.
 - A label (`0x5a380`): `G%d.L%d` with 495 and 498 (`0x23250`, `0xcac18`) in `FONTS.TEEN` at
@@ -906,8 +906,19 @@ update).
 - Not built: the star badge (`0x5b0f8`, `MAIN_MENU.YELLOW`/`ORANGE`, `TRY_PC`, from 3.2 s), the
   Facebook button (`0x5ac44`) and more games (`0x5a634`, from 3.6 s): they promote the
   publisher's other products and open its pages. Music `MUSICS.MAIN`.
-- Web version: the pieces do not play their leaving, since choosing an entry opens another
-  page or a dialog over the menu.
+- The menu's enter is its builder (`0x597b0`, slot 6 of its vtable `0x17ae18`), which leaves a
+  clock (`+0x24`) at 1 and the shift at 80. The loading screen's update (`0x55b3c`) ends by
+  calling `0x59740`, which builds it and then sets that clock to −3, the planes' wait (`+0x28`)
+  to 8 s with their turn (`+0x2c`) at 1, the promotions' waits to 3.9, 4.1, 5.5 and 4.5 s and
+  the label's to 6.9 s. The clock rises with time up to 1; while it is not over 0 the shift
+  keeps still, and its loss is multiplied by it (`0x59c52`). The builder does not touch the
+  planes' wait or turn, so on coming back they go on from where they were; turn 1 is
+  `PLANE_PASSING_IN` (`0x5a016`), and the wait only runs while the app's `+0x2c` has `+0x138`
+  set.
+- Nothing ever sets a piece's state to 5: the leaving of title and franchise is in their
+  updates but is not used.
+- Web version: all of it; the menu being a page of its own, the planes' wait and turn are kept
+  with the visit (session storage) between its showings, and `+0x138` is not looked at.
 
 ## Menu dialog (`0x66bbc`) and finish dialog (`0x376c4`)
 
