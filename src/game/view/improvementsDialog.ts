@@ -13,7 +13,7 @@ export const IMPROVEMENTS_FONTS = [MAIN_FONT, SCORE_FONT, ROW_FONT];
 export const IMPROVEMENTS_SOUNDS = ['SOUNDS.IMPROVEMENTS_SCREEN', 'SOUNDS.BUY_SOMETHING', 'SOUNDS.CANNOT', 'SOUNDS.CASH', 'SOUNDS.CLICK'];
 
 export function improvementsSurfaceIds(offers: readonly ImprovementOffer[]): string[] {
-  return [...DIALOG_SURFACES, 'IMPROVEMENTS.BOUGHT', ...offers.flatMap((offer) => [`${offer.icon}.ACTIVE`, `${offer.icon}.GRAYED`])];
+  return [...DIALOG_SURFACES, 'IMPROVEMENTS.BOUGHT', 'IMPROVEMENTS.REMARK', ...offers.flatMap((offer) => [`${offer.icon}.ACTIVE`, `${offer.icon}.GRAYED`])];
 }
 
 const BOX = { width: 430, height: 270 };
@@ -25,7 +25,7 @@ const LIST = { x: -165, top: -122, bottom: 122, pitch: 44 };
  * on the left and, for the chosen one, its title, description and cost, the funds available, and
  * the Buy or Sell and Exit buttons. Positions are from the centre of the box. Buying takes the
  * price from the funds of the level about to be played and selling gives it back (`0x4c020`,
- * `0x4bf08`). The list's layout and the description's box are approximations, and the two
+ * `0x4bf08`). The list's place and pitch are approximations, and the two
  * amounts are drawn 10 px left of the original's x 220 to stay inside the frame.
  */
 export class ImprovementsDialog extends Container {
@@ -110,6 +110,16 @@ export class ImprovementsDialog extends Container {
     return offer.price <= this.progress.funds(this.stage, this.level);
   }
 
+  /**
+   * Whether an item is marked "try me" (0x4ca54): not owned, within the funds, the level at or
+   * past the one it is first suggested at, and not owned in any earlier level of the stage.
+   */
+  private tryMe(offer: ImprovementOffer): boolean {
+    if (this.owned(offer) || !this.affordable(offer) || offer.tryFrom === undefined || this.level < offer.tryFrom) return false;
+    for (let level = 1; level < this.level; level++) if (this.progress.improvements(this.stage, level).has(offer.id)) return false;
+    return true;
+  }
+
   private refresh(): void {
     const { strings, textures } = this;
     for (const child of this.rows.removeChildren()) child.destroy({ children: true });
@@ -122,14 +132,28 @@ export class ImprovementsDialog extends Container {
       const lit = this.owned(offer) || this.affordable(offer);
       const icon: Sprite = textures.sprite(`${offer.icon}.${lit ? 'ACTIVE' : 'GRAYED'}`);
       icon.position.set(LIST.x, LIST.top + LIST.pitch * (i + 0.5));
-      if (offer === this.chosen) this.rows.addChild(new Graphics().roundRect(LIST.x - 43, LIST.top + LIST.pitch * i + 1, 86, LIST.pitch - 2, 8).fill({ color: 0xffc23a, alpha: 0.35 }));
+      // 0x4db2a: the grey one is also darkened, a little less in its blue.
+      if (!lit) icon.tint = 0xb3b3e6;
+      if (offer === this.chosen) {
+        // 0x4dab4: the list's own highlight behind the item. The original brings it in and out
+        // (`item+8`); how fast is not read, so it is simply there for the chosen one.
+        const remark = textures.sprite('IMPROVEMENTS.REMARK');
+        remark.position.copyFrom(icon.position);
+        this.rows.addChild(remark);
+      }
       this.rows.addChild(icon);
       if (this.owned(offer)) {
-        // The original's own mark for what has been bought; its place on the row is assumed.
+        // 0x4db70: the mark for what has been bought, over the icon.
         const bought = textures.sprite('IMPROVEMENTS.BOUGHT');
         bought.position.copyFrom(icon.position);
-        bought.scale.set(Math.min(1, (LIST.pitch - 2) / bought.height));
         this.rows.addChild(bought);
+      } else if (this.tryMe(offer)) {
+        // 0x4dc8a: "try me" in `FONTS.MAIN` at 0.8, ending 40 px right of the icon and 10 px under its middle.
+        const mark = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TRY_ME'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 } } });
+        mark.anchor.set(1, 0.5);
+        mark.scale.set(0.8);
+        mark.position.set(icon.x + 40, icon.y + 10);
+        this.rows.addChild(mark);
       }
     });
 
@@ -146,12 +170,12 @@ export class ImprovementsDialog extends Container {
     if (title.width > 310) title.scale.set(310 / title.width);
     const description = new Text({
       text: strings.t(offer.descriptionId),
-      style: { fontFamily: fontFamily(ROW_FONT), fontSize: 10, fill: 0xffffff, wordWrap: true, wordWrapWidth: 310, align: 'center', lineHeight: 13 },
+      style: { fontFamily: fontFamily(ROW_FONT), fontSize: 10, fill: 0xffffff, wordWrap: true, wordWrapWidth: 325, lineHeight: 13 },
     });
-    description.anchor.set(0.5, 0);
-    description.position.set(55, -78);
-    // Long texts shrink to stay above the cost line.
-    if (description.height > 118) description.scale.set(118 / description.height);
+    // 0x4c59e: in the box (−105, −80)–(220, 40), from its left and its top.
+    description.position.set(-105, -80);
+    // Long texts shrink to stay in the box.
+    if (description.height > 120) description.scale.set(120 / description.height);
     this.detail.addChild(description);
 
     const money = fontFamily(SCORE_FONT);
