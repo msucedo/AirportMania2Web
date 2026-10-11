@@ -10,23 +10,48 @@ import { goalRows } from './levelIntro';
 
 export const MAP_DIALOG_FONTS = ['FONTS.BLUE_STONE', 'FONTS.TEEN_BD', MAIN_FONT, SCORE_FONT];
 
+/** Where the awards won on a level go in its dialog, from the frame's centre, by how many there are (0x64ed6). */
+export function levelAwardPlaces(count: number): { x: number; y: number }[] {
+  const row = (xs: number[], y: number): { x: number; y: number }[] => xs.map((x) => ({ x: x + 5, y: y - 10 }));
+  switch (Math.min(count, 6)) {
+    case 1:
+      return row([140], 0);
+    case 2:
+      return row([120, 160], 0);
+    case 3:
+      return row([100, 140, 180], 0);
+    case 4:
+      return [...row([120, 160], -40), ...row([120, 160], 40)];
+    case 5:
+      return [...row([100, 140, 180], -40), ...row([120, 160], 40)];
+    case 6:
+      return [...row([100, 140, 180], -40), ...row([100, 140, 180], 40)];
+    default:
+      return [];
+  }
+}
+
+/** The dialog's height (0x64a94): 200, 25 more with a best score and 25 more for the five scores. */
+export const levelDialogHeight = (hasBest: boolean): number => 225 + (hasBest ? 25 : 0);
+
 /**
- * What the map shows for a level before playing it (dialog `0x64824`): "Stage S-L", the five
- * scores to aim for, the best score so far if there is one, and Cancel and Play, 160 wide at
- * x −100 and 100 on the frame's bottom row. The frame is 420 wide; its height and how the
- * scores are laid out come from a draw routine that has not been read.
+ * What the map shows for a level before playing it (dialog `0x64824`, draw `0x64d38`): "Stage
+ * S-L" 10 px under the frame's top, the five scores to aim for from 50 px under it, the best
+ * score so far 10 px under those, the awards won on that level to the right (the scores then
+ * stand 60 px to the left), and Cancel and Play, 160 wide at x −100 and 100, 20 px over the
+ * frame's bottom. The frame is 420 wide.
  */
 export class LevelDialog extends Container {
   constructor(
     textures: TextureStore,
     audio: AudioPlayer,
     strings: Strings,
-    level: { stage: number; level: number; goals: LevelGoals; best: number },
+    level: { stage: number; level: number; goals: LevelGoals; best: number; awards: Container[] },
     onPlay: () => void,
     onCancel: () => void,
   ) {
     super();
-    const size = { width: 420, height: 270 };
+    const size = { width: 420, height: levelDialogHeight(level.best > 0) };
     const { overlay, panel } = dialogFrame(textures, size.width, size.height);
     const centre = new Container();
     centre.position.set(size.width / 2, size.height / 2);
@@ -38,14 +63,18 @@ export class LevelDialog extends Container {
       style: { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 20, fill: 0xffd75a, stroke: { color: 0x5a2a00, width: 3 } },
     });
     title.anchor.set(0.5);
-    title.position.set(0, -108);
+    title.position.set(0, (20 - size.height) / 2);
     centre.addChild(title);
 
     const money = fontFamily(SCORE_FONT);
-    // The same score rows the level opens with; their place in this dialog is assumed.
-    const rows = goalRows(textures, strings, level.goals, level.best);
-    rows.y = -66;
+    const rows = goalRows(textures, strings, level.goals, level.best, 10);
+    rows.position.set(level.awards.length > 0 ? -60 : 0, Math.floor(50 - size.height / 2));
     centre.addChild(rows);
+    levelAwardPlaces(level.awards.length).forEach((at, i) => {
+      const picture = level.awards[i]!;
+      picture.position.set(at.x, at.y);
+      centre.addChild(picture);
+    });
     const y = size.height / 2 - 20;
     dialogButton(textures, audio, centre, { x: -100, y, width: 160, height: 36 }, strings.t('CANCEL'), money, onCancel);
     dialogButton(textures, audio, centre, { x: 100, y, width: 160, height: 36 }, strings.t('MAP.PLAY'), money, onPlay);

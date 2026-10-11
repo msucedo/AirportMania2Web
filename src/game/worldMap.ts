@@ -11,6 +11,9 @@ import { DIALOG_SURFACES } from './view/dialog';
 import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { LevelDialog, MAP_DIALOG_FONTS, StageDialog } from './view/mapDialogs';
 import { findGoals } from '../data/levels';
+import type { AwardPlace } from '../data/awards';
+import { awardKind } from './awards';
+import { earnedAwardPicture, earnedAwardSurfaces } from './awardsRoom';
 import { MAP_DECOR_SURFACES, MAP_GLINTS, MAP_STARS, MAP_STREAKS, MapAirborneIcon, MapBird, MapCarrierWaves, MapCloud, MapGlints, MapSatellite, MapStreak, type Decoration } from './view/mapDecor';
 import { AuroraView, StarView } from './view/scenery/night';
 import { SnowView } from './view/scenery/northPole';
@@ -88,6 +91,7 @@ export class WorldMap {
     private readonly audio: AudioPlayer,
     private readonly data: GameData,
     positions: Map<number, Point[]>,
+    private readonly awardPlaces: AwardPlace[],
     private readonly options: WorldMapOptions,
   ) {
     const { strings, progress, playable } = options;
@@ -258,7 +262,16 @@ export class WorldMap {
     const area = this.data.areas.get(stage)!;
     const licence = this.options.licences.get(stage);
     const goals = findGoals(area, level, licence !== undefined && progress.improvements(stage, level).has(licence));
-    this.open(new LevelDialog(this.textures, this.audio, strings, { stage, level, goals, best: progress.result(stage, level).best }, () => this.options.onPlay(stage, level), () => this.close()));
+    this.open(new LevelDialog(this.textures, this.audio, strings, { stage, level, goals, best: progress.result(stage, level).best, awards: this.levelAwards(stage, level) }, () => this.options.onPlay(stage, level), () => this.close()));
+  }
+
+  /** The pictures of the awards won on a level (0x64a48): those given once a level, in the awards' order. */
+  private levelAwards(stage: number, level: number): Container[] {
+    const awards = this.options.progress.awards;
+    return this.awardPlaces
+      .filter((place) => awardKind(place.id) === 2 && awards[place.id]?.pairs.includes(`${level}-${stage}`))
+      .sort((a, b) => a.id - b.id)
+      .map((place) => earnedAwardPicture(this.textures, place, awards));
   }
 
   /** Touching a stage's icon describes it (0x63c60). */
@@ -299,8 +312,10 @@ export class WorldMap {
     for (let i = 0; i <= 6; i++) surfaces.push(`MAP.LEVELS.${i}`);
     for (const { stage } of STAGE_ICONS) surfaces.push(`MAP.STAGES.${stage}`);
     for (const button of BUTTONS) surfaces.push(`MAP.HUD.BUTTONS.${button.id}_ON`);
+    const awardPlaces = await data.awards();
+    for (const place of awardPlaces) if (awardKind(place.id) === 2) surfaces.push(...earnedAwardSurfaces(place));
     const [positions] = await Promise.all([data.levelPositions(), textures.load(surfaces), loadFonts(data.resources, [MAIN_FONT, SCORE_FONT, ...MAP_DIALOG_FONTS])]);
-    const map = new WorldMap(textures, audio, data, positions, options);
+    const map = new WorldMap(textures, audio, data, positions, awardPlaces, options);
     app.stage.addChild(map.root);
     app.ticker.add((ticker) => map.update(ticker.deltaMS / 1000));
     audio.preload(['SOUNDS.CLICK']);

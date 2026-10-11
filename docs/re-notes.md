@@ -865,8 +865,15 @@ Vtable `0x17a8e8`, kind 5.
 - Level dialog (`0x64824`, opened by a marker `0x5dda4` or by the bar's Play `0x5f54c`): frame
   420 wide, `MAP.LEVEL_STAGE_NUMBER` in `FONTS.ULTRA`, the level's five goal scores
   (`0x53c24`), `SCORE.BEST_SCORE` when the record has one, and on the bottom row (20 px above
-  the frame's edge) `CANCEL` at x −100 and `MAP.PLAY` at x 100, both 160 wide. Its height and
-  the placing of the scores are in a draw routine that has not been read.
+  the frame's edge) `CANCEL` at x −100 and `MAP.PLAY` at x 100, both 160 wide. Height
+  (`0x64a94`): 200, 225 with a best score, and 25 more when five scores are listed (always).
+  The title is at y `(20 − h)/2`. Draw (`0x64d38`): the score rows (`0x64754`) start at
+  y `floor(50 − h/2)`, 26 apart, the best score 10 further down in grey (0.3); they stand at
+  x −60 when the level has awards and 0 otherwise. The awards are those given once a level
+  (kind 2) that the level's record holds (`0x64a48`), drawn by their own draw at, for one to six
+  of them (`0x64ed6`, each moved (5, −10)): (140, 0); (120, 0) (160, 0); (100, 0) (140, 0)
+  (180, 0); (120, ∓40) (160, ∓40); (100, −40) (140, −40) (180, −40) (120, 40) (160, 40);
+  (100, ∓40) (140, ∓40) (180, ∓40).
 - Stage dialog (`0x63c60`, from a stage icon): `STAGES.%d.NAME`, `STAGES.%d.DESCRIPTION`,
   `MAP_INFO_DIALOG.STAGE_CLEARED` with a small star and `x %d`, `MAP_INFO_DIALOG.TOTAL` and
   `CLOSE`. Positions not read.

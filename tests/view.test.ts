@@ -1,3 +1,4 @@
+import { levelAwardPlaces, levelDialogHeight } from '../src/game/view/mapDialogs';
 import { MAP_GLINTS, MAP_STREAKS, streakPose, airborneIconPose, birdPose, cloudBob, glintShow, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
 import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
@@ -749,6 +750,15 @@ describe('scenery', () => {
     expect(streakPose(0.09)!.alpha).toBe(0);
     expect(streakPose(0.27)!.v(0.36046)).toBeCloseTo(0.23954, 5);
     expect(streakPose(0.63)!.v(0.64761)).toBeCloseTo(0.75239, 5);
+  });
+
+  it('lays out the map\'s level dialog', () => {
+    expect(levelDialogHeight(false)).toBe(225);
+    expect(levelDialogHeight(true)).toBe(250);
+    expect(levelAwardPlaces(0)).toEqual([]);
+    expect(levelAwardPlaces(1)).toEqual([{ x: 145, y: -10 }]);
+    expect(levelAwardPlaces(5)).toEqual([{ x: 105, y: -50 }, { x: 145, y: -50 }, { x: 185, y: -50 }, { x: 125, y: 30 }, { x: 165, y: 30 }]);
+    expect(levelAwardPlaces(6)).toHaveLength(6);
   });
 });
 

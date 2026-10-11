@@ -28,8 +28,8 @@ export function goalRow(textures: TextureStore, name: string, amount: string, ti
   return row;
 }
 
-/** The five score rows, 26 px apart, and the best score 20 px further down when there is one. */
-export function goalRows(textures: TextureStore, strings: Strings, goals: LevelGoals, best: number): Container {
+/** The five score rows, 26 px apart, and the best score `bestGap` px further down when there is one. */
+export function goalRows(textures: TextureStore, strings: Strings, goals: LevelGoals, best: number, bestGap = 20): Container {
   const rows = new Container();
   const amounts = [goals.goal, goals.expert, goals.master, goals.supreme, goals.perfect];
   TIERS.forEach((tier, i) => {
@@ -39,7 +39,7 @@ export function goalRows(textures: TextureStore, strings: Strings, goals: LevelG
   });
   if (best > 0) {
     const row = goalRow(textures, strings.t('SCORE.BEST_SCORE'), String(best), BEST_TINT, false);
-    row.y = TIERS.length * 26 + 20;
+    row.y = TIERS.length * 26 + bestGap;
     rows.addChild(row);
   }
   return rows;

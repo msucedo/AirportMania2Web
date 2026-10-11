@@ -62,6 +62,21 @@ export interface AwardsRoomOptions {
   onBack: () => void;
 }
 
+/** An earned award's own picture (0x1b588): its image, or for a medal its ribbon, the head of its material and its icon. */
+export function earnedAwardPicture(textures: TextureStore, place: AwardPlace, awards: Readonly<AwardsData>): Container {
+  const node = new Container();
+  const images = awardImages(place);
+  if ('picture' in images) node.addChild(textures.sprite(images.picture));
+  else node.addChild(textures.sprite(images.tail), textures.sprite(HEADS[Math.max(0, medalLevel(awards, place.id))]!), textures.sprite(images.icon));
+  return node;
+}
+
+/** The images that picture needs. */
+export function earnedAwardSurfaces(place: AwardPlace): string[] {
+  const images = awardImages(place);
+  return 'picture' in images ? [images.picture] : [images.tail, images.icon, ...HEADS];
+}
+
 export class AwardsRoom {
   readonly root = new Container();
   private readonly wall = new Container();
