@@ -12,7 +12,7 @@ import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { LevelDialog, MAP_DIALOG_FONTS, StageDialog } from './view/mapDialogs';
 import { findGoals } from '../data/levels';
 import type { AwardPlace } from '../data/awards';
-import { levelAwardPictures, levelAwardSurfaces } from './awardsRoom';
+import { levelAwardPictures, levelAwardSurfaces, stageAwardPictures } from './awardsRoom';
 import { MAP_DECOR_SURFACES, MAP_GLINTS, MAP_STARS, MAP_STREAKS, MapAirborneIcon, MapBird, MapCarrierWaves, MapCloud, MapGlints, MapSatellite, MapStreak, type Decoration } from './view/mapDecor';
 import { AuroraView, StarView } from './view/scenery/night';
 import { SnowView } from './view/scenery/northPole';
@@ -105,6 +105,19 @@ export class WorldMap {
       picture.eventMode = 'static';
       picture.cursor = 'pointer';
       picture.on('pointertap', () => this.askStage(stage));
+      // 0x5d54c: while touched an icon swells by up to 8 %, its press easing at 5 a second (0xa068).
+      let held = false;
+      let press = 0;
+      picture.on('pointerdown', () => (held = true));
+      picture.on('pointerup', () => (held = false));
+      picture.on('pointerupoutside', () => (held = false));
+      picture.on('pointerout', () => (held = false));
+      this.decor.push({
+        update: (dt) => {
+          press = Math.max(0, Math.min(1, press + (held ? 5 : -5) * dt));
+          picture.scale.set(1 + 0.08 * press);
+        },
+      });
       this.map.addChild(picture);
       return picture;
     };
@@ -274,7 +287,7 @@ export class WorldMap {
     const { strings, progress, playable } = this.options;
     const cleared = playable.has(stage) && progress.record(stage, playable.get(stage)!).tier > 0;
     const prize = cleared ? { stars: progress.stageStars(stage), ...progress.stageRates(stage) } : null;
-    this.open(new StageDialog(this.textures, this.audio, strings, { number: stage, prize }, () => this.close()));
+    this.open(new StageDialog(this.textures, this.audio, strings, { number: stage, prize, awards: stageAwardPictures(this.textures, this.awardPlaces, progress.awards, stage) }, () => this.close()));
   }
 
   private scrollTo(x: number): void {
@@ -307,7 +320,7 @@ export class WorldMap {
     for (const { stage } of STAGE_ICONS) surfaces.push(`MAP.STAGES.${stage}`);
     for (const button of BUTTONS) surfaces.push(`MAP.HUD.BUTTONS.${button.id}_ON`);
     const awardPlaces = await data.awards();
-    surfaces.push(...levelAwardSurfaces(awardPlaces));
+    surfaces.push(...levelAwardSurfaces(awardPlaces, true));
     const [positions] = await Promise.all([data.levelPositions(), textures.load(surfaces), loadFonts(data.resources, [MAIN_FONT, SCORE_FONT, ...MAP_DIALOG_FONTS])]);
     const map = new WorldMap(textures, audio, data, positions, awardPlaces, options);
     app.stage.addChild(map.root);

@@ -4,7 +4,7 @@ import { introAwardPlaces, introPose, introStep, type IntroState } from '../src/
 import { menuShiftStep, numberPop, passingPlanePose, skySpeed, slidePose, slideStep, type SlideState } from '../src/game/mainMenu';
 import { beltPose, inRuns } from '../src/game/loadingScreen';
 import { publisherFades, publisherGlint, publisherOver, publisherSweeps, studioWindV } from '../src/game/opening';
-import { levelAwardPlaces, levelDialogHeight, stageDialogLayout } from '../src/game/view/mapDialogs';
+import { levelAwardPlaces, levelDialogHeight, stageAwardPlaces, stageDialogLayout } from '../src/game/view/mapDialogs';
 import { MAP_GLINTS, MAP_STREAKS, streakPose, airborneIconPose, birdPose, cloudBob, glintShow, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
 import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
@@ -784,6 +784,9 @@ describe('scenery', () => {
     const touched: IntroState = { phase: 'shown', clock: 1 };
     introStep(touched, 0.01, true);
     expect(touched.phase).toBe('going');
+    expect(stageAwardPlaces(1)).toEqual([{ x: -110, y: 35 }]);
+    expect(stageAwardPlaces(2)).toEqual([{ x: -138, y: 35 }, { x: -82, y: 35 }]);
+    expect(stageAwardPlaces(5).map((at) => at.x)).toEqual([-190, -150, -110, -70, -30]);
     expect(stageDialogLayout(false)).toMatchObject({ height: 220, name: -75, description: { top: -40, bottom: 60 }, close: 90 });
     expect(stageDialogLayout(true)).toMatchObject({ height: 260, name: -95, description: { top: -80, bottom: 40 }, cleared: 6, stars: 34, rule: 52, total: 70, close: 110 });
   });

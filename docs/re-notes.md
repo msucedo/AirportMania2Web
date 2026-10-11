@@ -950,8 +950,9 @@ update).
   from x 5 and the stage's clearing bonus ending at x 200 (`FONTS.SCORE`); 28 lower
   `GUI.FINAL_REPORT.STAR_SMALL` at x 15, `x N` from x 30 and N times the stage's rate ending at
   200, N being the stars earned on its levels; 18 lower a rule 210 wide at x 100 (`0x2c26c`);
-  18 lower `TOTAL` from x 5 and the sum ending at 200. What is drawn for a stage's awards is
-  not read.
+  18 lower `TOTAL` from x 5 and the sum ending at 200. The stage's awards (those given once
+  a stage that it has, `0x63cf0`) are drawn by the dialog's draw (`0x64528`) in a row from
+  (−110, 35): `step = max(40, 70 − 7n)` apart, the first at `floor(−step·(n − 1)/2)`.
 - Web version: dragging scrolls the map; both dialogs follow the positions above.
 
 ## End of the level — confirmed
@@ -2446,8 +2447,8 @@ Stage 5's icon (`0x60408` → `0x5d680`, draw `0x5d7ac`, run in the emulator): w
 `r = frac(0.1·T)` it is drawn `5·sin(2π·r)` px lower, with four `MAP.AIRBORNE_PROPELLER` on
 it (`0x5d74c`: turn, scale, tilt, move), turned `14400·r` plus 0, 135, 90, 45°; scaled
 (0.5, 0.9), (0.53, 0.95), (0.5, 0.9), (0.4, 0.8); tilted 38, 34, 28, 16°; at (−30, 30),
-(−2, 25), (49, −1), (61, −17). Every icon is drawn `1 + 0.08·press` big (`+8`, eased by
-`0xa068`), which the web version does not do.
+(−2, 25), (49, −1), (61, −17). Every icon is drawn `1 + 0.08·press` big, the press running
+to 1 while it is touched and back at 5 a second (`+4`/`+8`, `0xa068`).
 
 Winds and shooting stars (class `0x39dcc`; update `0x39f58`, draw `0x39f8c` → `0x39fac`): the
 clock starts at the fourth number, runs with time and wraps at the fifth; drawn while under

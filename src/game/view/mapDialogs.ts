@@ -80,8 +80,8 @@ export class LevelDialog extends Container {
   }
 }
 
-/** Where the stage dialog's parts go, from the frame's centre (0x63d28–0x642e8); `prize` is whether the stage is cleared. */
-export function stageDialogLayout(prize: boolean): {
+/** Where the stage dialog's parts go, from the frame's centre (0x63d28–0x642e8); `roomy` is whether the stage is cleared or has awards. */
+export function stageDialogLayout(roomy: boolean): {
   height: number;
   name: number;
   description: { top: number; bottom: number };
@@ -91,7 +91,7 @@ export function stageDialogLayout(prize: boolean): {
   total: number;
   close: number;
 } {
-  const extra = prize ? 20 : 0;
+  const extra = roomy ? 20 : 0;
   const cleared = 26 - extra;
   return {
     height: 220 + 2 * extra,
@@ -106,12 +106,18 @@ export function stageDialogLayout(prize: boolean): {
   };
 }
 
+/** Where a stage's awards go in its dialog (0x64562): a row centred on (−110, 35), 40 px apart, or more for a few of them. */
+export function stageAwardPlaces(count: number): { x: number; y: number }[] {
+  const step = Math.max(40, 70 - 7 * count);
+  const start = Math.floor(-0.5 * step * (count - 1));
+  return Array.from({ length: count }, (_, i) => ({ x: -110 + start + i * step, y: 35 }));
+}
+
 /**
  * What the map shows for a stage (dialog `0x63c60`): its name and description and, once it is
  * cleared, the prize on the right half: the bonus for clearing it, the stars earned times the
  * stage's rate, a rule and the total. Labels start at x 5 (the stars' count at 30, after a small
- * star at 15) and amounts end at x 200. The original also makes room when the stage has awards;
- * what it draws for them is not read. The description's box is the frame's whole width; the 10 px
+ * star at 15) and amounts end at x 200, and the stage's awards in a row on the left half. The description's box is the frame's whole width; the 10 px
  * kept clear on each side here are ours.
  */
 export class StageDialog extends Container {
@@ -119,11 +125,11 @@ export class StageDialog extends Container {
     textures: TextureStore,
     audio: AudioPlayer,
     strings: Strings,
-    stage: { number: number; prize: { stars: number; perStar: number; clearBonus: number } | null },
+    stage: { number: number; prize: { stars: number; perStar: number; clearBonus: number } | null; awards: Container[] },
     onClose: () => void,
   ) {
     super();
-    const layout = stageDialogLayout(stage.prize !== null);
+    const layout = stageDialogLayout(stage.prize !== null || stage.awards.length > 0);
     const size = { width: 420, height: layout.height };
     const { overlay, panel } = dialogFrame(textures, size.width, size.height);
     const centre = new Container();
@@ -158,6 +164,10 @@ export class StageDialog extends Container {
       dialogText(centre, strings.t('MAP_INFO_DIALOG.TOTAL'), 5, layout.total, 14, main, 0).style.fill = MAIN_FILL;
       amount(stars * perStar + clearBonus, layout.total);
     }
+    stageAwardPlaces(stage.awards.length).forEach((at, i) => {
+      stage.awards[i]!.position.set(at.x, at.y);
+      centre.addChild(stage.awards[i]!);
+    });
     dialogButton(textures, audio, centre, { x: 0, y: layout.close, width: 380, height: 36 }, strings.t('CLOSE'), fontFamily(SCORE_FONT), onClose);
   }
 }

@@ -79,9 +79,17 @@ export function levelAwardPictures(textures: TextureStore, places: readonly Awar
     .map((place) => earnedAwardPicture(textures, place, awards));
 }
 
+/** The pictures of the awards won for a stage (0x63cf0): those given once a stage, in the awards' order. */
+export function stageAwardPictures(textures: TextureStore, places: readonly AwardPlace[], awards: Readonly<AwardsData>, stage: number): Container[] {
+  return places
+    .filter((place) => awardKind(place.id) === 1 && awards[place.id]?.pairs.includes(`0-${stage}`))
+    .sort((a, b) => a.id - b.id)
+    .map((place) => earnedAwardPicture(textures, place, awards));
+}
+
 /** The images those pictures can need. */
-export function levelAwardSurfaces(places: readonly AwardPlace[]): string[] {
-  return places.filter((place) => awardKind(place.id) === 2).flatMap(earnedAwardSurfaces);
+export function levelAwardSurfaces(places: readonly AwardPlace[], stages = false): string[] {
+  return places.filter((place) => awardKind(place.id) === 2 || (stages && awardKind(place.id) === 1)).flatMap(earnedAwardSurfaces);
 }
 
 /** The images that picture needs. */
