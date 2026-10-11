@@ -127,4 +127,18 @@ level helpers called from many places), `0x64d38`–`0x65f88` (2 844), `0x17c2c`
      fireworks by the award notice (`0x38bbc`); birds by the level (`0x22c2c`).
    - A draw routine is best read by running it: `tools/re/draw_trace.py`.
 6. **The map's life**, the loading screen and the opening logos.
-7. **The unidentified runs**, starting with `0x15434`–`0x179a8`, to rule rules in or out.
+7. ~~**The unidentified runs**~~: looked through (`tools/re/runinfo.py <start> <end>` lists a
+   run's unread functions with their callers, callees and strings). No rule of play was hiding
+   in them. What they held:
+   - `0x15434`–`0x179a8`, `0x17c2c`–`0x1986c`, `0x52f8`, `0x1d160`: list and string plumbing of
+     the level (finding a place in a list, tearing the level down, text lookup), the carrier's
+     islands and the anti-fog machine's image loading, all already covered.
+   - `0x64d38`–`0x65f88`: the map's level dialog draw (`0x64d38`, its layout is still a known
+     gap under 6) and the floating texts (`0x656a8`, `0x65934`), whose wobble, stacking and fade
+     are now built.
+   - `0x6aee0`–`0x6b20c`: the flash of a place taking an order, now built.
+   - `0x5f708`–`0x60218`: the map's entry and draw (under 6), and the tester's name
+     `qatester911`, which opens every level and adds a "$" button to the improvements dialog:
+     noted and deliberately not built.
+   - `0x73100`–`0x74278`: `Sea`, `Sky`, `SerializableLine` loaders and `ShowAreaLevel`, a
+     developer's overlay (`%d-%d`, `%3d %3d`).
