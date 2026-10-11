@@ -1,4 +1,5 @@
-import { BORDER, SCORE_FILL, ULTRA_FILL } from './faces';
+import { ULTRA_EFFECT, titleText } from './effectText';
+import { BORDER, SCORE_FILL } from './faces';
 import { Container, Graphics, Text, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
@@ -32,7 +33,10 @@ export class StageClear extends Container {
     };
     const white = fontFamily('FONTS.TEEN_BD');
     const money = fontFamily(SCORE_FONT);
-    text(strings.t('FINAL_REPORT_DIALOG.STAGE_CLEAR'), 0, -78, fontFamily('FONTS.BLUE_STONE'), 20, 0.5, ULTRA_FILL);
+    const heading = titleText(strings.t('FINAL_REPORT_DIALOG.STAGE_CLEAR'), 'FONTS.BLUE_STONE', 20, 0.8, ULTRA_EFFECT);
+    heading.anchor.set(0.5, 0.85);
+    heading.position.set(0, -78);
+    centre.addChild(heading);
     centre.addChild(new Graphics().rect(-175, -65.5, 350, 1).rect(-175, 15.5, 350, 1).fill({ color: 0xffffff, alpha: 0.5 }));
     text(strings.t('FINAL_REPORT_DIALOG.AREA_CLEAR_BONUS'), -175, -30, white, 11, 0);
     text(String(reward.bonus), 175, -30, money, 14, 1, SCORE_FILL);

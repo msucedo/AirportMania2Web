@@ -1,6 +1,6 @@
-import { TITLE_BORDER, ULTRA_FILL } from './faces';
-import { Container, Text, type Sprite } from 'pixi.js';
-import { fontFamily } from '../../engine/fonts';
+import { TITLE_ROOM, ULTRA_EFFECT, titleText } from './effectText';
+import { Container, type Sprite } from 'pixi.js';
+import { } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import { comboStar, comboStarPose, type Star } from './comboExplosion';
 
@@ -71,7 +71,7 @@ export function tierTextPose(age: number): { x: number; y: number; scale: number
 export class GoalEffects extends Container {
   private stars: { sprite: Sprite; star: Star; age: number }[] = [];
   private sparks: { sprite: Sprite; spark: Spark; age: number }[] = [];
-  private texts: { text: Text; age: number }[] = [];
+  private texts: { text: Sprite; age: number }[] = [];
 
   constructor(
     private readonly textures: TextureStore,
@@ -83,9 +83,11 @@ export class GoalEffects extends Container {
 
   /** The bar reached `tier`, whose name is `name`. */
   reach(tier: number, name: string): void {
-    // `FONTS.ULTRA` is this face at 20 and 0.8 of its width with a colour effect that has not been read.
-    const text = new Text({ text: name, style: { fontFamily: fontFamily(GOAL_EFFECT_FONT), fontSize: 20, fill: ULTRA_FILL, stroke: TITLE_BORDER } });
+    // `FONTS.ULTRA`: this face at 20 and 0.8 of its width, with its effect. The picture keeps
+    // some room over the text, which is taken off its place.
+    const text = titleText(name, GOAL_EFFECT_FONT, 20, 0.8, ULTRA_EFFECT);
     text.anchor.set(0.5, 0);
+    text.pivot.y = TITLE_ROOM;
     this.addChild(text);
     this.texts.push({ text, age: 0 });
     const burst = tierBurst(tier);
@@ -139,7 +141,7 @@ export class GoalEffects extends Container {
       }
       const pose = tierTextPose(entry.age);
       entry.text.position.set(pose.x, pose.y);
-      entry.text.scale.set(0.8 * pose.scale, pose.scale);
+      entry.text.scale.set(pose.scale);
       entry.text.alpha = pose.alpha;
     }
     this.texts = this.texts.filter((entry) => entry.age < TEXT_LIFE);

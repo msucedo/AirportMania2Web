@@ -1,4 +1,5 @@
-import { MAIN_FILL, ULTRA_FILL } from './faces';
+import { ULTRA_EFFECT, titleText } from './effectText';
+import { MAIN_FILL } from './faces';
 import { Container, Graphics, Rectangle, type Sprite, Text, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
@@ -47,7 +48,15 @@ export function centred(textures: TextureStore, width: number, height: number): 
 }
 
 /** A text box (0x2d14c): the text wrapped to the box's width, centred in it or set at its top left. */
-export function textBox(parent: Container, value: string, box: Box, style: Face, centredIn: boolean): Text {
+export function textBox(parent: Container, value: string, box: Box, style: Face, centredIn: boolean): Text | Sprite {
+  if (style.title) {
+    // A title font: its letters are rendered as the engine does, on one line in the box's middle.
+    const picture = titleText(value, style.title, style.size, style.widthScale ?? 1, ULTRA_EFFECT);
+    picture.anchor.set(0.5);
+    picture.position.set((box.x1 + box.x2) / 2, (box.y1 + box.y2) / 2);
+    parent.addChild(picture);
+    return picture;
+  }
   const node = new Text({
     text: value,
     style: {
@@ -76,9 +85,9 @@ export function textBox(parent: Container, value: string, box: Box, style: Face,
 // The dialogs name cached fonts, each a face at a fixed size with an effect: `FONTS.MAIN` is
 // Brady Bunch at 14 in gold, `FONTS.ULTRA` Blue Stone at 20 and 0.8 of its width, `FONTS.WHITE`
 // Teen Bold at 11 and `FONTS.TEEN` Teen Bold at 10 and 0.9 of its width with no effect.
-export type Face = { family: string; size: number; fill: FillInput; stroke?: number; strokeWidth?: number; widthScale?: number };
+export type Face = { family: string; size: number; fill: FillInput; stroke?: number; strokeWidth?: number; widthScale?: number; title?: string };
 export const title = (): Face => ({ family: fontFamily(MAIN_FONT), size: 14, fill: MAIN_FILL, stroke: 0x000000 });
-const ultra = (): Face => ({ family: fontFamily('FONTS.BLUE_STONE'), size: 20, fill: ULTRA_FILL, stroke: 0x000000, strokeWidth: 4, widthScale: 0.8 });
+const ultra = (): Face => ({ family: fontFamily('FONTS.BLUE_STONE'), size: 20, fill: 0xffffff, widthScale: 0.8, title: 'FONTS.BLUE_STONE' });
 export const white = (): Face => ({ family: fontFamily('FONTS.TEEN_BD'), size: 11, fill: 0xffffff, stroke: 0x000000 });
 
 /**

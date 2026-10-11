@@ -1,3 +1,4 @@
+import { ULTRA_EFFECT, blur, titleLetter } from '../src/game/view/effectText';
 import { dialogOpening } from '../src/game/view/dialog';
 import { introAwardPlaces, introPose, introStep, type IntroState } from '../src/game/view/levelIntro';
 import { menuShiftStep, numberPop, passingPlanePose, skySpeed, slidePose, slideStep, type SlideState } from '../src/game/mainMenu';
@@ -872,6 +873,39 @@ describe('scenery', () => {
     expect(late.c).toBeCloseTo(0.175781, 5);
     expect(late.d).toBeCloseTo(0.791016, 5);
     expect(dialogOpening(1)).toEqual({ a: 1, c: 0, d: 1, alpha: 1 });
+  });
+
+  it('renders a title letter the way the engine does', () => {
+    // 0x98b78 on one solid point, against runs of the routine itself (95, 74 and 204 of 255).
+    const dot = new Float32Array(49);
+    dot[24] = 1;
+    const once = blur(dot, 7, 7, 1);
+    expect(Math.trunc(255 * once[24]!)).toBe(95);
+    expect(Math.trunc(255 * once[16]!)).toBe(95);
+    expect(once[10]).toBe(0);
+    const soft = blur(dot, 7, 7, 0.75);
+    expect(Math.round(255 * soft[24]!)).toBe(205);
+    expect(Math.trunc(255 * soft[16]!)).toBe(74);
+    const wide = blur(dot, 7, 7, 2);
+    expect(Math.abs(255 * wide[24]! - 215)).toBeLessThan(3);
+    expect(Math.abs(255 * wide[8]! - 39)).toBeLessThan(3);
+    expect(Math.abs(255 * wide[17]! - 173)).toBeLessThan(3);
+    // A solid 3×3 block in a 9×9 picture.
+    const cover = new Float32Array(81);
+    for (let y = 3; y < 6; y++) for (let x = 3; x < 6; x++) cover[9 * y + x] = 1;
+    const letter = titleLetter(cover, 9, 9, ULTRA_EFFECT);
+    const pixel = (x: number, y: number): number[] => [...letter.slice(4 * (9 * y + x), 4 * (9 * y + x) + 4)];
+    // Its upper left point has all six places up and to its left empty: lit by 6/9 towards white, then to the power 2.2.
+    expect(pixel(3, 3)[3]).toBe(1);
+    expect(pixel(3, 3)[0]).toBeCloseTo(1, 5);
+    // Its lower right point has four of the six covered: the foot colour lit by 2/9.
+    const foot = 0.85 + (1 - 0.85) * (2 / 9);
+    expect(pixel(5, 5)[0]).toBeCloseTo(Math.pow(foot, 2.2), 5);
+    expect(pixel(5, 5)[2]).toBeCloseTo(1, 5);
+    // Outside the letter there is only its base and border: partly solid, and dark.
+    expect(pixel(2, 4)[3]).toBeGreaterThan(0);
+    expect(pixel(2, 4)[3]).toBeLessThan(1);
+    expect(pixel(0, 0)[3]).toBeLessThan(0.1);
   });
 });
 

@@ -1,4 +1,5 @@
-import { BORDER, SCORE_FILL, SCORE_NEGATIVE_FILL, TITLE_BORDER, ULTRA_FILL } from './faces';
+import { ULTRA_EFFECT, titleText } from './effectText';
+import { BORDER, SCORE_FILL, SCORE_NEGATIVE_FILL } from './faces';
 import { Container, Graphics, Text, TilingSprite, type Sprite, type FillInput } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
@@ -120,10 +121,7 @@ export class FinalReport extends Container {
     const total = sim.planes.length;
 
     this.steps.push(() => {
-      const title = new Text({
-        text: strings.t(tier === 'FAIL' ? 'SCORE.FAILED_SCORE' : `SCORE.${tier}_SCORE`),
-        style: { fontFamily: fontFamily(TITLE_FONT), fontSize: 20, fill: ULTRA_FILL, stroke: TITLE_BORDER },
-      });
+      const title = titleText(strings.t(tier === 'FAIL' ? 'SCORE.FAILED_SCORE' : `SCORE.${tier}_SCORE`), TITLE_FONT, 20, 0.8, ULTRA_EFFECT);
       title.anchor.set(0.5);
       title.position.set(0, -97);
       this.panel.addChild(title);

@@ -22,7 +22,11 @@ export const ULTRA_FILL: FillInput = downwards([[0, 0xffffff], [0.5, 0xd3eaff], 
 /** `GiantFontEffect` (0xbbbd0), of `FONTS.GIANT_FONT`: white over (1, 0.682, 0), raised to 2.2 likewise. */
 export const GIANT_FILL: FillInput = downwards([[0, 0xffffff], [0.5, 0xffb237], [1, 0xff6e00]]);
 
-/** The border of the plain effects: black, a pixel and a half out. `WhiteSilverEffect` (0xbb7a8) is this alone, over white. */
+/**
+ * The border of the plain effects (0x91dc8 with 1.5): a black copy of the letter, blurred, under
+ * it. The engine's blur makes opacity more solid at each pass (runs of it give 1 − (1 − a)⁴), so
+ * next to an edge the border is all but solid one pixel out and about 0.43 two out: an outline
+ * a pixel and a half wide stands in for it here. `WhiteSilverEffect` (0xbb7a8) is this alone,
+ * over white.
+ */
 export const BORDER: StrokeInput = { color: 0x000000, width: 3, join: 'round' };
-/** The title effects' border is two pixels. */
-export const TITLE_BORDER: StrokeInput = { color: 0x000000, width: 4, join: 'round' };

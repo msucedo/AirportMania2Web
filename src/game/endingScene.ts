@@ -1,9 +1,9 @@
-import { GIANT_FILL, TITLE_BORDER } from './view/faces';
-import { type Application, Container, type FederatedPointerEvent, Rectangle, type Sprite, Text, type Ticker } from 'pixi.js';
+import { GIANT_EFFECT, TITLE_ROOM, titleText } from './view/effectText';
+import { type Application, Container, type FederatedPointerEvent, Rectangle, type Sprite, type Ticker } from 'pixi.js';
 import type { GameData } from '../data/load';
 import type { Strings } from '../data/strings';
 import type { AudioPlayer } from '../engine/audio';
-import { fontFamily, loadFonts } from '../engine/fonts';
+import { loadFonts } from '../engine/fonts';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../engine/screen';
 import type { TextureStore } from '../engine/textures';
 import type { RollTouch } from './credits';
@@ -39,7 +39,7 @@ export class EndingScene {
   private readonly ground: { item: GroundItem; sprite: Sprite }[] = [];
   private readonly clouds: { x: number; z: number; sprite: Sprite }[] = [];
   private readonly floaters: { sprite: Sprite; propeller: Sprite | null; clock: number; index: number }[] = [];
-  private readonly letters: Text[] = [];
+  private readonly letters: Sprite[] = [];
   private readonly front = new Container();
   private readonly back: Sprite;
   private textClock = -1;
@@ -94,21 +94,21 @@ export class EndingScene {
     });
 
     // 0x35382: the letters, side by side and centred on (240, 160). `FINAL_VICTORY.GIANT_FONT` is
-    // Blue Stone at 22 and 0.8 of its width; its effect's colours are not read.
+    // Blue Stone at 22 and 0.8 of its width, with its effect.
     const text = options.strings.t('FINAL_VICTORY.CONGRATULATIONS');
-    const style = { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 22, fill: GIANT_FILL, stroke: TITLE_BORDER };
+    // Each letter's picture keeps room round it for its border, which is not part of its width.
+    const wide = (node: Sprite): number => node.width - 2 * TITLE_ROOM;
     let width = 0;
     for (const letter of text) {
-      const node = new Text({ text: letter, style });
+      const node = titleText(letter, 'FONTS.BLUE_STONE', 22, 0.8, GIANT_EFFECT);
       node.anchor.set(0.5);
-      node.scale.x = 0.8;
       this.letters.push(node);
-      width += node.width + 2;
+      width += wide(node) + 2;
     }
     let x = 240 - Math.floor(width / 2);
     for (const node of this.letters) {
-      node.position.set(x + node.width / 2, 160);
-      x += node.width + 2;
+      node.position.set(x + wide(node) / 2, 160);
+      x += wide(node) + 2;
       node.visible = false;
       this.front.addChild(node);
     }
@@ -220,7 +220,7 @@ export class EndingScene {
       const pose = letterPose(this.textClock, index, this.letters.length);
       letter.visible = pose !== null && pose.alpha > 0;
       if (!pose) return;
-      letter.scale.set(0.8 * pose.scale, pose.scale);
+      letter.scale.set(pose.scale);
       letter.alpha = pose.alpha;
     });
   }

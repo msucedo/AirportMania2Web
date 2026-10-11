@@ -542,10 +542,23 @@ Draw routine `0x40ed4`:
     copy filled (0.76, 0.83, 1) (`0x997ec`, `0x98b78` 0.75, nine samples by `0x99248`); border
     2; then every colour is raised to the power 2.2 through a table (`0x97d70` with 1/2.2).
   - `GiantFontEffect` (`0xbbbd0`): the same with A (1, 0.682, 0).
-- Web version (`src/game/view/faces.ts`): the gradients as fills, the power applied to the two
-  title effects' colours, and the border as a black outline of that width. The embossing of the
-  two title effects is not done, and a text of several lines takes one gradient over all of it
-  where the original has one in each letter.
+- The blur (`0x98b78`), checked by running it on one solid point (`tools/re/draw_trace.py
+  0x96ce4 --r1 7 --r2 7 --r3 0x20 --quiet --then "0x992f0:3,3,ptr:1f,1f,1f,1f" "0x98b78:1f"
+  --bytes 0x10:196`; a picture is width, height, row length, 32 and its bytes at `+0x10`): each
+  whole unit of the radius is one pass of a 3×3 average, and what is left over mixes one more
+  pass in by that much; colours are averaged plainly, but opacity is then made more solid,
+  `1 − (1 − a)⁴`. That is why the borders are nearly solid a pixel out. `0x997ec` multiplies
+  every point by a colour and `0x9891c` lays one picture over another.
+- The two title effects in full (`0xbb93c`): a copy of the letter takes the gradient; each
+  of its points is then lit towards white by `a·Σ(1 − a′)/9` over the six points at (−3, −1),
+  (−2, −2), (−1, −3), (−2, −1), (−1, −1), (−1, −2); the letter itself is filled with the base
+  colour ((0.76, 0.83, 1) for Ultra, (1, 0.76, 0.83) for Giant) and blurred 0.75; the copy is
+  laid over it; the border 2 goes under; and the power 2.2 is applied.
+- Web version: the title fonts are drawn letter by letter through those same steps
+  (`src/game/view/effectText.ts`), at three of our pixels to one of the engine's. The other
+  fonts stay texts of the browser's with the gradient as a fill (one over a whole text, where
+  the original has one in each letter) and the border as a black outline a pixel and a half
+  wide (`src/game/view/faces.ts`).
 - Floating texts: points use `FONTS.SCORE` (`0x5d2c`), negative points `FONTS.SCORE_NEGATIVE`
   (`0x5de0`), punctuality and bonus texts `FONTS.MAIN`, 50 px above the plane (`0x6110`).
 ## Level announcement (panel `0x514cc`, draw `0x51be8`)

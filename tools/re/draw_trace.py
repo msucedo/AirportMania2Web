@@ -87,6 +87,17 @@ class Run:
         self.error = None
         self.peek = args.peek
         for step, function in enumerate([args.function, *args.then]):
+            # A further routine may carry its own arguments: 0x992f0:4,4,ptr:1f,1f,1f,1f
+            function, _, own = function.partition(':')
+            own = re.split(r',(?=(?:ptr:|img:|obj|self:|ident|[-0-9]))', own) if own else []
+            # (a ptr: value keeps its commas, so arguments are split only before a new one)
+            merged = []
+            for part in own:
+                if merged and merged[-1].startswith('ptr:') and not re.match(r'(ptr:|img:|obj$|self:|ident$)', part) and len(merged) >= 3:
+                    merged[-1] += ',' + part
+                else:
+                    merged.append(part)
+            own = merged
             if step:
                 # A further routine on the same object, after --poke has set fields of it.
                 for field in args.poke:
@@ -95,12 +106,16 @@ class Run:
                 uc.reg_write(UC_ARM_REG_SP, STACK + STACK_SIZE - 0x1000)
                 uc.reg_write(UC_ARM_REG_LR, (TRAP + 0x800) | 1)
                 uc.reg_write(UC_ARM_REG_R0, self.object)
-                print(f'-- then {function}')
+                for register, value in zip((UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3), own):
+                    uc.reg_write(register, self.word(value))
+                if not args.quiet:
+                    print(f'-- then {function}')
             try:
                 uc.emu_start(int(function, 16) | 1, TRAP + 0x800, count=20_000_000)
             except Exception as error:  # noqa: BLE001 - report where the run stopped
                 self.error = self.error or f'{error} at {uc.reg_read(UC_ARM_REG_PC):#x}'
-            print(f'returned {uc.reg_read(UC_ARM_REG_R0):#x}' if not self.error else f'# stopped: {self.error}')
+            if not args.quiet or self.error:
+                print(f'returned {uc.reg_read(UC_ARM_REG_R0):#x}' if not self.error else f'# stopped: {self.error}')
         for spec in args.vector:
             # offset:f or offset:i - the vector (begin, end pointers) at that offset of the object.
             offset, kind = spec.split(':')
@@ -108,6 +123,11 @@ class Run:
             count = (end - begin) // 4 if HEAP <= begin <= end < HEAP + HEAP_SIZE else 0
             values = struct.unpack(f'<{count}{"f" if kind == "f" else "i"}', uc.mem_read(begin, 4 * count)) if count else ()
             print(f'vector +{offset} ({count}):', ' '.join(f'{v:.6g}' if kind == 'f' else (f'{v & 0xffffffff:08x}' if kind == 'x' else str(v)) for v in values))
+        for spec in args.bytes:
+            # offset:count - that many bytes from where the pointer at that offset of the object leads.
+            offset, count = spec.split(':')
+            at = struct.unpack('<I', uc.mem_read(self.object + int(offset, 16), 4))[0]
+            print(f'bytes +{offset}:', ' '.join(str(b) for b in uc.mem_read(at, int(count))))
         if args.dump:
             words = struct.unpack(f'<{args.dump}I', uc.mem_read(self.object, 4 * args.dump))
             print('object:', ' '.join(f'+{4 * i:#x}={w:#x}' + (f'({i2f(w):g})' if 0x30000000 < w & 0x7fffffff < 0x50000000 else '') for i, w in enumerate(words)))
@@ -241,6 +261,8 @@ if __name__ == '__main__':
     parser.add_argument('--app', nargs='*', default=[])
     parser.add_argument('--stub', nargs='*', default=[])
     parser.add_argument('--dump', type=int, default=0)
+    parser.add_argument('--bytes', nargs='*', default=[], help='offset:count, bytes to print from the pointer at that offset of the object')
+    parser.add_argument('--quiet', action='store_true')
     parser.add_argument('--returns', nargs='*', default=[], help='address=value: engine functions answered with that value (ident: an identity transform)')
     parser.add_argument('--then', nargs='*', default=[], help='further routines to run on the same object')
     parser.add_argument('--poke', nargs='*', default=[], help='fields set before each further routine')

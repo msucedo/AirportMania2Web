@@ -1,4 +1,5 @@
-import { BORDER, MAIN_FILL, SCORE_FILL, TITLE_BORDER, ULTRA_FILL } from './faces';
+import { ULTRA_EFFECT, titleText } from './effectText';
+import { BORDER, MAIN_FILL, SCORE_FILL } from './faces';
 import { Container, Graphics, Text } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
@@ -59,10 +60,7 @@ export class LevelDialog extends Container {
     panel.addChild(centre);
     this.addChild(overlay);
 
-    const title = new Text({
-      text: strings.t('MAP.LEVEL_STAGE_NUMBER', level.stage, level.level),
-      style: { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 20, fill: ULTRA_FILL, stroke: TITLE_BORDER },
-    });
+    const title = titleText(strings.t('MAP.LEVEL_STAGE_NUMBER', level.stage, level.level), 'FONTS.BLUE_STONE', 20, 0.8, ULTRA_EFFECT);
     title.anchor.set(0.5);
     title.position.set(0, (20 - size.height) / 2);
     centre.addChild(title);
