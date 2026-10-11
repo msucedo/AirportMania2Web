@@ -117,8 +117,8 @@ export function stageAwardPlaces(count: number): { x: number; y: number }[] {
  * What the map shows for a stage (dialog `0x63c60`): its name and description and, once it is
  * cleared, the prize on the right half: the bonus for clearing it, the stars earned times the
  * stage's rate, a rule and the total. Labels start at x 5 (the stars' count at 30, after a small
- * star at 15) and amounts end at x 200, and the stage's awards in a row on the left half. The description's box is the frame's whole width; the 10 px
- * kept clear on each side here are ours.
+ * star at 15) and amounts end at x 200, and the stage's awards in a row on the left half. The description's
+ * box is the frame's whole width (its draw `0x2d0a0` starts at the box's corner).
  */
 export class StageDialog extends Container {
   constructor(
@@ -142,9 +142,9 @@ export class StageDialog extends Container {
     if (name.width > 400) name.scale.set(400 / name.width);
     const description = new Text({
       text: strings.t(`STAGES.${stage.number}.DESCRIPTION`),
-      style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER, wordWrap: true, wordWrapWidth: 400, lineHeight: 13 },
+      style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER, wordWrap: true, wordWrapWidth: 420, lineHeight: 13 },
     });
-    description.position.set(-200, layout.description.top);
+    description.position.set(-210, layout.description.top);
     centre.addChild(description);
 
     if (stage.prize) {
