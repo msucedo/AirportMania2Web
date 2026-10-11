@@ -1,3 +1,5 @@
+import { Label } from './effectText';
+import { BORDER } from './faces';
 import { Container, type FederatedPointerEvent, NineSliceSprite, Rectangle, type Sprite, Text } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
@@ -13,7 +15,7 @@ import { centred, textBox, white } from './tutorialViews';
 // (0x7fe40). Sizes and positions are the original's, from each dialog's centre; how the list
 // and the text field behave inside is ours where noted. See docs/re-notes.md.
 
-export const USERS_SURFACES = ['GUI.DIALOGS.EDITBOX', 'GUI.DIALOGS.COMBOBOX.BACK', 'GUI.DIALOGS.COMBOBOX.ARROW', 'GUI.DIALOGS.COMBOBOX.TEXT_REMARK'];
+export const USERS_SURFACES = ['GUI.DIALOGS.EDITBOX', 'GUI.DIALOGS.COMBOBOX.BACK', 'GUI.DIALOGS.COMBOBOX.ARROW', 'GUI.DIALOGS.COMBOBOX.REMARK_UP', 'GUI.DIALOGS.COMBOBOX.REMARK_DOWN', 'GUI.DIALOGS.COMBOBOX.TEXT_REMARK'];
 export const USERS_FONTS = ['FONTS.TEEN_BD'];
 export const USERS_SOUNDS = ['SOUNDS.USER_CONFIRM_DELETE'];
 
@@ -27,7 +29,8 @@ interface Common {
   users: Users;
 }
 
-const label = (value: string): Text => new Text({ text: value, style: { fontFamily: white().family, fontSize: white().size, fill: white().fill } });
+// `FONTS.WHITE`, which has its border (`WhiteSilverEffect`).
+const label = (value: string): Label => new Label({ text: value, style: { fontFamily: white().family, fontSize: white().size, fill: white().fill, stroke: BORDER } });
 
 /** The row a list shows first so the picked one is in view (0x2e678). */
 export function firstRowShown(first: number, picked: number, rows: number): number {
@@ -42,13 +45,16 @@ export const caretAlpha = (time: number): number => Math.max(0, Math.min(1, 4 * 
 /**
  * The list box (0x2f0e8 over 0x2ead0; update 0x2e6ec, draw 0x2e478): `rows` rows of 36 px,
  * `width` wide, in a frame 24 px wider with a 32 px cap above and below. The picked row lies on
- * a yellow band 12 px wider than the rows. The caps' arrows pick the row before and the row
- * after, the rows shown following; an arrow that leads nowhere is drawn at 0.7.
+ * a yellow band 12 px wider than the rows. Let go on a cap's arrow, a touch picks the row before
+ * or the row after, the rows shown following; the cap lights up while it is held (0x9dd4, 8 a
+ * second) and an arrow that leads nowhere is drawn at 0.7. Let go on a row, all but its outer
+ * 8 px at the list's ends, a touch picks it (0x2e9e6).
  */
 class ListBox extends Container {
   private first = 0;
   private readonly rows = new Container();
   private readonly arrows: Sprite[] = [];
+  private readonly caps: { remark: NineSliceSprite; held: boolean; value: number }[] = [];
 
   constructor(
     private readonly textures: TextureStore,
@@ -60,11 +66,31 @@ class ListBox extends Container {
   ) {
     super();
     const height = count * ROW;
-    const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.COMBOBOX.BACK'), leftWidth: 12, rightWidth: 12, topHeight: CAP, bottomHeight: CAP });
+    const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.COMBOBOX.BACK'), leftWidth: 12, rightWidth: 14, topHeight: CAP, bottomHeight: CAP });
     frame.setSize(width_ + 24, height + 2 * CAP);
     frame.position.set(-width_ / 2 - 12, -height / 2 - CAP);
     this.addChild(frame, this.rows);
+    // 0x2e9c0: the rows take a touch across their width, but for 8 px at the top and the bottom.
+    const body = new Container();
+    body.hitArea = new Rectangle(-width_ / 2, -height / 2 + 8, width_, height - 16);
+    body.eventMode = 'static';
+    body.on('pointerdown', (event: FederatedPointerEvent) => event.stopPropagation());
+    body.on('pointerup', (event: FederatedPointerEvent) => {
+      const index = this.first + Math.floor((this.toLocal(event.global).y + height / 2) / ROW);
+      if (index < this.first || index >= this.names().length || index >= this.first + count) return;
+      this.onSelect(index);
+      this.draw();
+    });
+    this.addChild(body);
     const cap = (edge: number, by: number, flipped: boolean): void => {
+      // 0x2ec1e, 0x2ec70: the cap's highlight, shown while its arrow is held.
+      const remark = new NineSliceSprite({ texture: textures.texture(`GUI.DIALOGS.COMBOBOX.REMARK_${flipped ? 'DOWN' : 'UP'}`), leftWidth: 12, rightWidth: 14, topHeight: 0, bottomHeight: 0 });
+      remark.setSize(width_ + 24, CAP);
+      remark.position.set(-width_ / 2 - 12, flipped ? edge : edge - CAP);
+      remark.alpha = 0;
+      remark.eventMode = 'none';
+      const state = { remark, held: false, value: 0 };
+      this.caps.push(state);
       // The arrow fills the 30 px beyond the rows; the lower one is the upper one turned over.
       const arrow = textures.sprite('GUI.DIALOGS.COMBOBOX.ARROW');
       arrow.anchor.set(0.5, 1);
@@ -75,18 +101,40 @@ class ListBox extends Container {
       const zone = new Container();
       zone.hitArea = new Rectangle(-width_ / 2, flipped ? edge : edge - 30, width_, 30);
       zone.eventMode = 'static';
+      const usable = (): boolean => {
+        const next = this.selected() + by;
+        return next >= 0 && next < this.names().length;
+      };
       zone.on('pointerdown', (event: FederatedPointerEvent) => {
         event.stopPropagation();
-        const next = this.selected() + by;
-        if (next < 0 || next >= this.names().length) return;
-        this.onSelect(next);
+        state.held = usable();
+      });
+      const release = (): void => void (state.held = false);
+      zone.on('pointerout', release);
+      zone.on('pointerupoutside', release);
+      // 0x2e81e, 0x2e8fe: the choice moves as the touch is let go.
+      zone.on('pointerup', () => {
+        const held = state.held;
+        state.held = false;
+        if (!held || !usable()) return;
+        this.onSelect(this.selected() + by);
         this.draw();
       });
-      this.addChild(zone, arrow);
+      this.addChild(remark, zone, arrow);
     };
     cap(-height / 2, -1, false);
     cap(height / 2, 1, true);
     this.draw();
+    let last = performance.now();
+    this.onRender = () => {
+      const now = performance.now();
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      for (const state of this.caps) {
+        state.value = Math.max(0, Math.min(1, state.value + (state.held ? 8 : -8) * dt));
+        state.remark.alpha = state.value;
+      }
+    };
   }
 
   private draw(): void {
@@ -177,8 +225,8 @@ export class UsersDialog extends Container {
  */
 export class NameDialog extends Container {
   private readonly input: HTMLInputElement;
-  private readonly shown: Text;
-  private readonly caret: Text;
+  private readonly shown: Label;
+  private readonly caret: Label;
   private note: Container | null = null;
   private readonly blink: ReturnType<typeof setInterval>;
 

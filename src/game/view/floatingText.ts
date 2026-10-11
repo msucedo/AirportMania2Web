@@ -45,11 +45,11 @@ export function floatingPush(existing: readonly { x: number; y: number; offset: 
 }
 
 // `FONTS.SCORE`, `FONTS.SCORE_NEGATIVE` and `FONTS.MAIN`, rendered with their effects by `Label`.
-// Their sizes here and the message's letter spacing are ours.
+// They are drawn at the fonts' own size, stretched only (0x65a18).
 const STYLES = {
-  score: { fontFamily: fontFamily(SCORE_FONT), fontSize: 16, fill: SCORE_FILL, stroke: BORDER },
-  penalty: { fontFamily: fontFamily(SCORE_FONT), fontSize: 16, fill: SCORE_NEGATIVE_FILL, stroke: BORDER },
-  message: { fontFamily: fontFamily(MAIN_FONT), fontSize: 15, fill: MAIN_FILL, stroke: BORDER, letterSpacing: 1 },
+  score: { fontFamily: fontFamily(SCORE_FONT), fontSize: 14, fill: SCORE_FILL, stroke: BORDER },
+  penalty: { fontFamily: fontFamily(SCORE_FONT), fontSize: 14, fill: SCORE_NEGATIVE_FILL, stroke: BORDER },
+  message: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER },
 } satisfies Record<string, TextStyleOptions>;
 
 export type FloatingStyle = keyof typeof STYLES;
