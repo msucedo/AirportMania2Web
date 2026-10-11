@@ -2520,6 +2520,14 @@ and clock `+0x50`, its transform kept at `+0x18` and handed to every widget.
   0x58=self:0x58 0x5c=self:0x58 --r1 0f --dump 40`), is, with `S = 0.75 + 1.25c − c²` and
   `U = 0.75 + 0.25c`, the matrix a `S·U`, c `±0.75(1 − c)·U` (plus opening, minus closing),
   d `c·S·U`, about (240, 160), at opacity `c`.
-- Web version: every dialog opens and closes so; one that is taken away stays on the screen
-  for its closing. Whether the darkening behind comes and goes with it is not read: here it is
-  there from the start and goes with the closing.
+- Opening (`0x2b724`) also plays `SOUNDS.DIALOG_ROLL` and switches on the app's cover
+  (`app+0x140`, a screen of its own: enter `0x230f8`, update `0x23134`, draw `0x23140`);
+  closing (`0x2b790`) switches it off. The cover is `GUI.BLACK_COVER` stretched over the
+  screen (a black picture more solid towards its corners: 56 of 255 in the middle, 185 at a
+  corner) at an opacity that runs to 1 or back to 0 at 5 a second (`0xa068`). Nothing else is
+  drawn behind a dialog, and its frame (`0x2c550`) is `GUI.DIALOGS.BACK.BOX` alone, whose
+  filling is itself half clear.
+- Rules: across (`0x2c26c`) and down (`0x2c3c0`, turned 90°) are `GUI.DIALOGS.SEPARATOR` drawn
+  out to their length with its ends kept (`0xe4a28`).
+- Web version: all of that; one that is taken away stays on the screen for its closing. How
+  much of the separator is an end is taken as 6 px, and of the frame's picture as 24 px.

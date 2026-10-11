@@ -1,10 +1,10 @@
 import { BORDER } from './faces';
-import { Container, Matrix, Graphics, NineSliceSprite, Rectangle, Text } from 'pixi.js';
+import { Container, Matrix, NineSliceSprite, Rectangle, Text } from 'pixi.js';
 import type { AudioPlayer } from '../../engine/audio';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../engine/screen';
 import type { TextureStore } from '../../engine/textures';
 
-export const DIALOG_SURFACES = ['GUI.DIALOGS.BACK.BOX', 'GUI.DIALOGS.BUTTON', 'GUI.DIALOGS.BUTTON_OVER'];
+export const DIALOG_SURFACES = ['GUI.BLACK_COVER', 'GUI.DIALOGS.SEPARATOR', 'GUI.DIALOGS.BACK.BOX', 'GUI.DIALOGS.BUTTON', 'GUI.DIALOGS.BUTTON_OVER'];
 
 /**
  * A dialog over a dimmed screen, drawn with the original frame. Returns the whole overlay and the
@@ -22,9 +22,19 @@ export function dialogOpening(clock: number): { a: number; c: number; d: number;
   return { a: swell * grow, c: 0.75 * (1 - c) * grow, d: c * swell * grow, alpha: c };
 }
 
+/** Plays the sound a dialog opens with; the page sets it once it has its sound. */
+export const dialogSound: { play(id: string): void } = { play: () => {} };
+
 export function dialogFrame(textures: TextureStore, width: number, height: number): { overlay: Container; panel: Container; blocker: Container } {
   const overlay = new Container();
-  const shade = new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill({ color: 0x000000, alpha: 0.6 });
+  // 0x2b77e: opening a dialog switches on the app's cover (0x23140), `GUI.BLACK_COVER` stretched
+  // over the screen, which comes in at 5 a second (0xa068); closing it switches it off again.
+  const shade = textures.sprite('GUI.BLACK_COVER');
+  shade.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+  shade.alpha = 0;
+  let cover = 0;
+  // 0x2b73c: and it plays its sound.
+  dialogSound.play('SOUNDS.DIALOG_ROLL');
   // Keeps touches from reaching what is underneath. It is a node of its own with an explicit
   // area, like the buttons: drawn shapes do not take presses reliably here.
   const blocker = new Container();
@@ -51,12 +61,12 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
   const opening = (): void => {
     for (let node: Container | null = overlay.parent; node; node = node.parent) root = node;
     const now = performance.now();
-    clock += 3 * Math.min(0.1, (now - last) / 1000);
+    const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
-    if (clock >= 1) {
-      clock = 1;
-      overlay.onRender = null;
-    }
+    clock = Math.min(1, clock + 3 * dt);
+    cover = Math.min(1, cover + 5 * dt);
+    shade.alpha = cover;
+    if (clock >= 1 && cover >= 1) overlay.onRender = null;
     show();
   };
   overlay.onRender = opening;
@@ -76,22 +86,22 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
     last = performance.now();
     overlay.onRender = () => {
       const now = performance.now();
-      clock -= 3 * Math.min(0.1, (now - last) / 1000);
+      const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
+      clock -= 3 * dt;
+      cover = Math.max(0, cover - 5 * dt);
+      shade.alpha = cover;
       if (clock <= 0) {
         overlay.onRender = null;
         setTimeout(() => destroy(options));
         return;
       }
       show();
-      // The darkening goes with it; whether the original's does is not read.
-      shade.alpha = clock;
     };
   };
   const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BACK.BOX'), leftWidth: 24, rightWidth: 24, topHeight: 24, bottomHeight: 24 });
   frame.setSize(width, height);
-  // The frame's own filling is translucent; a solid backing keeps the texts readable.
-  panel.addChild(new Graphics().roundRect(4, 4, width - 8, height - 8, 20).fill({ color: 0x3b1d4d, alpha: 0.92 }), frame);
+  panel.addChild(frame);
   overlay.addChild(shade, blocker, stand);
   return { overlay, panel, blocker };
 }
@@ -137,4 +147,20 @@ export function dialogButton(
   text.position.set(x, y);
   if (text.width > width - 16) text.scale.set((width - 16) / text.width);
   panel.addChild(face, text, zone);
+}
+
+/**
+ * A rule across a dialog (0x2c26c) or down it (0x2c3c0): `GUI.DIALOGS.SEPARATOR` drawn out to
+ * `length`, centred on (x, y), turned a quarter for the upright one. Its ends are kept as they
+ * are and its middle stretched (0xe4a28); how much of the picture is an end is taken as 6 px.
+ */
+export function dialogRule(textures: TextureStore, parent: Container, x: number, y: number, length: number, upright = false): void {
+  const texture = textures.texture('GUI.DIALOGS.SEPARATOR');
+  const rule = new NineSliceSprite({ texture, leftWidth: 6, rightWidth: 6, topHeight: 0, bottomHeight: 0 });
+  rule.setSize(length, texture.height);
+  rule.pivot.set(length / 2, texture.height / 2);
+  rule.position.set(x, y);
+  if (upright) rule.angle = 90;
+  rule.eventMode = 'none';
+  parent.addChild(rule);
 }

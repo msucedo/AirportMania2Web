@@ -1,3 +1,4 @@
+import { dialogSound } from './game/view/dialog';
 import { LoadingScreen, inRuns } from './game/loadingScreen';
 import { Opening } from './game/opening';
 import { loadGameData } from './data/load';
@@ -93,6 +94,8 @@ async function main(): Promise<void> {
     const player = new AudioPlayer(data.resources);
     player.muted = params.has('mute');
     player.setVolumes(settings.sound, settings.music);
+    player.preload(['SOUNDS.DIALOG_ROLL']);
+    dialogSound.play = (id) => player.play(id);
     return player;
   };
   // Only the stages that can be played take part in the rules, so the last one opens nothing.

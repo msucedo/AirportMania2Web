@@ -6,7 +6,7 @@ import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import type { Progress } from '../progress';
 import { onSale, type ImprovementOffer } from '../stages/layout';
-import { DIALOG_SURFACES, dialogButton, dialogFrame } from './dialog';
+import { DIALOG_SURFACES, dialogButton, dialogFrame, dialogRule } from './dialog';
 import { MAIN_FONT, SCORE_FONT } from './floatingText';
 
 const ROW_FONT = 'FONTS.TEEN_BD';
@@ -57,9 +57,10 @@ export class ImprovementsDialog extends Container {
     const heading = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TEXT_SHORT'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
     heading.anchor.set(0.5, 0.85);
     heading.position.set(55, -116);
-    const rules = new Graphics();
-    rules.rect(55 - 162.5, -115.5, 325, 1).rect(55 - 162.5, 64.5, 325, 1).fill({ color: 0xffffff, alpha: 0.5 });
-    this.panel.addChild(heading, rules, this.detail);
+    this.panel.addChild(heading);
+    dialogRule(textures, this.panel, 55, -115, 325);
+    dialogRule(textures, this.panel, 55, 65, 325);
+    this.panel.addChild(this.detail);
 
     // The list scrolls by dragging when it does not fit.
     const clip = new Graphics().rect(LIST.x - 44, LIST.top, 88, LIST.bottom - LIST.top).fill(0xffffff);

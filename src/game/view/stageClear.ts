@@ -1,11 +1,11 @@
 import { ULTRA_EFFECT, titleText } from './effectText';
 import { BORDER, SCORE_FILL } from './faces';
-import { Container, Graphics, Text, type FillInput } from 'pixi.js';
+import { Container, Text, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
-import { dialogButton, dialogFrame } from './dialog';
+import { dialogButton, dialogFrame, dialogRule } from './dialog';
 import { SCORE_FONT } from './floatingText';
 
 const BOX = { width: 400, height: 250 };
@@ -37,7 +37,8 @@ export class StageClear extends Container {
     heading.anchor.set(0.5, 0.85);
     heading.position.set(0, -78);
     centre.addChild(heading);
-    centre.addChild(new Graphics().rect(-175, -65.5, 350, 1).rect(-175, 15.5, 350, 1).fill({ color: 0xffffff, alpha: 0.5 }));
+    dialogRule(textures, centre, 0, -65, 350);
+    dialogRule(textures, centre, 0, 16, 350);
     text(strings.t('FINAL_REPORT_DIALOG.AREA_CLEAR_BONUS'), -175, -30, white, 11, 0);
     text(String(reward.bonus), 175, -30, money, 14, 1, SCORE_FILL);
     text(strings.t('FINAL_REPORT_DIALOG.STARS_EARNED'), -175, -10, white, 11, 0);

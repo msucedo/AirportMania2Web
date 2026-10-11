@@ -1,13 +1,13 @@
 import { ULTRA_EFFECT, titleText } from './effectText';
 import { BORDER, SCORE_FILL, SCORE_NEGATIVE_FILL } from './faces';
-import { Container, Graphics, Text, TilingSprite, type Sprite, type FillInput } from 'pixi.js';
+import { Container, Text, TilingSprite, type Sprite, type FillInput } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import type { Simulation } from '../sim/simulation';
-import { dialogButton, dialogFrame } from './dialog';
+import { dialogButton, dialogFrame, dialogRule } from './dialog';
 import { SCORE_FONT } from './floatingText';
 
 export const FINAL_REPORT_SURFACES = [
@@ -105,9 +105,11 @@ export class FinalReport extends Container {
     this.backdrop.scale.set(4);
     this.backdrop.alpha = 0.18;
     this.panel.addChild(this.backdrop);
-    const lines = new Graphics();
-    lines.rect(-190, -40.5, 380, 1).rect(-190, 53.5, 380, 1).rect(41.5, -78, 1, 36).rect(41.5, -31, 1, 82).fill({ color: 0xffffff, alpha: 0.5 });
-    this.panel.addChild(lines);
+    // 0x3241c: rules across at y −40 and 54, 400 wide, and down at x 42, centred at y −60 and 10.
+    dialogRule(textures, this.panel, 0, -40, 400);
+    dialogRule(textures, this.panel, 0, 54, 400);
+    dialogRule(textures, this.panel, 42, -60, 36, true);
+    dialogRule(textures, this.panel, 42, 10, 82, true);
 
     const white = fontFamily(ROW_FONT);
     const row = (text: string, x: number, y: number, align: 0 | 2, family = white, size = 11, fill: FillInput = 0xffffff): Text => {

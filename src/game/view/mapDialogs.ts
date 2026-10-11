@@ -1,12 +1,12 @@
 import { ULTRA_EFFECT, titleText } from './effectText';
 import { BORDER, MAIN_FILL, SCORE_FILL } from './faces';
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Text } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
-import { dialogButton, dialogFrame, dialogText } from './dialog';
+import { dialogButton, dialogFrame, dialogRule, dialogText } from './dialog';
 import { MAIN_FONT, SCORE_FONT } from './floatingText';
 import { goalRows } from './levelIntro';
 
@@ -153,8 +153,8 @@ export class StageDialog extends Container {
       centre.addChild(star);
       dialogText(centre, `x ${stars}`, 30, layout.stars, 14, main, 0).style.fill = MAIN_FILL;
       amount(stars * perStar, layout.stars);
-      // 0x2c26c: a rule 210 wide centred at x 100; what it is drawn with is not read.
-      centre.addChild(new Graphics().rect(100 - 105, layout.rule, 210, 1).fill({ color: 0xffffff, alpha: 0.5 }));
+      // 0x2c26c: a rule 210 wide centred at x 100.
+      dialogRule(textures, centre, 100, layout.rule, 210);
       dialogText(centre, strings.t('MAP_INFO_DIALOG.TOTAL'), 5, layout.total, 14, main, 0).style.fill = MAIN_FILL;
       amount(stars * perStar + clearBonus, layout.total);
     }

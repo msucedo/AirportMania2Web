@@ -1,12 +1,12 @@
 import { ULTRA_EFFECT, titleText } from './effectText';
 import { MAIN_FILL } from './faces';
-import { Container, Graphics, Rectangle, type Sprite, Text, type FillInput } from 'pixi.js';
+import { Container, Rectangle, type Sprite, Text, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import type { Tutorial, TutorialGoal, TutorialHint } from '../sim/tutorial';
-import { dialogButton, dialogFrame } from './dialog';
+import { dialogButton, dialogFrame, dialogRule } from './dialog';
 import { MAIN_FONT, SCORE_FONT } from './floatingText';
 
 // What the tutorial shows: the hint dialog every hint of the game uses (0x4aedc), the dialogs a
@@ -90,12 +90,9 @@ export const title = (): Face => ({ family: fontFamily(MAIN_FONT), size: 14, fil
 const ultra = (): Face => ({ family: fontFamily('FONTS.BLUE_STONE'), size: 20, fill: 0xffffff, widthScale: 0.8, title: 'FONTS.BLUE_STONE' });
 export const white = (): Face => ({ family: fontFamily('FONTS.TEEN_BD'), size: 11, fill: 0xffffff, stroke: 0x000000 });
 
-/**
- * The rule the dialogs draw under their title (0x2c26c), `width` wide and centred at height `y`.
- * Where it is and how wide are read; what it is drawn with is not, so it is a thin light line.
- */
-function rule(parent: Container, y: number, width: number): void {
-  parent.addChild(new Graphics().rect(-width / 2, y, width, 1).fill({ color: 0xffffff, alpha: 0.5 }));
+/** The rule the dialogs draw under their title (0x2c26c), `width` wide and centred at height `y`. */
+function rule(textures: TextureStore, parent: Container, y: number, width: number): void {
+  dialogRule(textures, parent, 0, y, width);
 }
 
 /**
@@ -125,7 +122,7 @@ export class TutorialIntro extends Container {
     super();
     const { overlay, centre } = centred(textures, 400, 250);
     textBox(centre, strings.t(`TUTORIAL_DIALOG.LEVEL${day}.TITLE`), { x1: -187, y1: -110, x2: 187, y2: -80 }, title(), true);
-    rule(centre, -80, 381);
+    rule(textures, centre, -80, 381);
     textBox(centre, strings.t(`TUTORIAL_DIALOG.LEVEL${day}.TEXT`), { x1: -187, y1: -65, x2: 187, y2: 80 }, white(), false);
     dialogButton(textures, audio, centre, { x: -100, y: 105, width: 160, height: 30 }, strings.t('TUTORIAL_DIALOG.MAIN_MENU'), fontFamily(SCORE_FONT), onMainMenu);
     dialogButton(textures, audio, centre, { x: 100, y: 105, width: 160, height: 30 }, strings.t('TUTORIAL_DIALOG.CONTINUE'), fontFamily(SCORE_FONT), onContinue);
@@ -143,7 +140,7 @@ export class TutorialGoalsDialog extends Container {
     super();
     const { overlay, centre } = centred(textures, 400, 250);
     textBox(centre, strings.t('TUTORIAL_DIALOG.GOAL_TITLE', day), { x1: -187, y1: -110, x2: 187, y2: -80 }, title(), true);
-    rule(centre, -85, 345);
+    rule(textures, centre, -85, 345);
     textBox(centre, strings.t('TUTORIAL_DIALOG.TO_PASS'), { x1: -172, y1: -70, x2: 172, y2: -60 }, white(), false);
     textBox(centre, strings.t(`TUTORIAL_DIALOG.LEVEL${day}.GOAL`), { x1: -170, y1: -50, x2: 200, y2: 60 }, white(), false);
     dialogButton(textures, audio, centre, { x: 0, y: 105, width: 260, height: 30 }, strings.t('TUTORIAL_DIALOG.CONTINUE'), fontFamily(SCORE_FONT), onContinue);
@@ -170,7 +167,7 @@ export class TutorialReport extends Container {
     back.setSize(390, 240);
     centre.addChild(back);
     textBox(centre, strings.t(passed ? 'TUTORIAL_REPORT.SUCCESS' : 'TUTORIAL_REPORT.FAILED'), { x1: -150, y1: -110, x2: 150, y2: -80 }, ultra(), true);
-    rule(centre, -85, 380);
+    rule(textures, centre, -85, 380);
     textBox(centre, strings.t(`TUTORIAL_DIALOG.LEVEL${day}.${passed ? 'SUCCESS' : 'FAILED'}`), { x1: -185, y1: -70, x2: 185, y2: 60 }, white(), false);
     const family = fontFamily(SCORE_FONT);
     if (passed) dialogButton(textures, audio, centre, { x: 0, y: 105, width: 380, height: 30 }, strings.t('TUTORIAL_REPORT.CONTINUE'), family, actions.onContinue);
