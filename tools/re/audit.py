@@ -1,7 +1,10 @@
 """Sorts the game-logic functions of the binary the port does not cite into compiler filler and
 real code, and groups the real ones by the cited function nearest before them.
 
-Usage: tools/re/audit.py [--list] [--check addr,addr,...]
+Usage: tools/re/audit.py [--list] [--thin] [--check addr,addr,...]
+
+docs/unread.tsv, when there, says what each real function not cited is; the figures then show how
+much of the logic is accounted for. --thin lists the cited functions the notes say least about.
 """
 import bisect
 import glob
@@ -115,6 +118,9 @@ def main():
     cited_bytes = totals['cited'][1]
     real_bytes = totals.get('real', (0, 0))[1]
     print(f'  read of what is not filler: {100 * cited_bytes / (cited_bytes + real_bytes):.1f}%')
+    ledger(real, cited_bytes, real_bytes)
+    if '--thin' in sys.argv:
+        thin(known)
     if '--list' not in sys.argv:
         return
     # Runs of uncited real functions between two cited ones, largest first.
@@ -139,6 +145,50 @@ def main():
                     names.append(s)
         callers = sorted({c for f in run for _, c in ix['callers'].get(f, []) if c not in run})
         print(f'{run[0]:x}-{run[-1] + size[run[-1]]:x} {len(run):3d} fn {total:6d} b | strings: {"; ".join(names[:8])[:150]} | called from: {" ".join(f"{c:x}" for c in callers[:6])}')
+
+
+OPEN = ('sin clasificar', 'pendiente', 'vista', 'regla')
+
+
+def ledger(real, cited_bytes, real_bytes):
+    """What docs/unread.tsv says of the real functions not cited."""
+    try:
+        rows = [line.rstrip('\n').split('\t') for line in open('docs/unread.tsv')][1:]
+    except FileNotFoundError:
+        return
+    said = {int(row[0], 16): row[2] for row in rows}
+    totals = {}
+    for function in real:
+        category = said.get(function, 'sin clasificar')
+        count, total = totals.get(category, (0, 0))
+        totals[category] = (count + 1, total + size[function])
+    print('  the real functions not cited, by docs/unread.tsv:')
+    for category, (count, total) in sorted(totals.items(), key=lambda item: -item[1][1]):
+        print(f'    {category:15s} {count:5d} functions {total:7d} bytes')
+    left = sum(total for category, (_, total) in totals.items() if category in OPEN)
+    print(f'  accounted for (read, or set aside with a reason): {100 * (cited_bytes + real_bytes - left) / (cited_bytes + real_bytes):.1f}%')
+    stale = sorted(set(said) - set(real))
+    if stale:
+        print(f'  {len(stale)} lines of the ledger are of functions now cited or no longer real')
+
+
+def thin(known):
+    """Cited functions by how little of them the notes and the code point at."""
+    text = ''
+    for path in ['docs/re-notes.md'] + glob.glob('src/**/*.ts', recursive=True):
+        text += open(path, errors='replace').read()
+    points = {}
+    for match in re.finditer(r'0x([0-9a-f]{4,6})\b', text):
+        address = int(match.group(1), 16)
+        if functions[0] <= address < functions[-1]:
+            points.setdefault(functions[bisect.bisect_right(functions, address) - 1], set()).add(address)
+    rows = []
+    for function in known:
+        if LOGIC[0] <= function < LOGIC[1] and size[function] >= 600:
+            rows.append((size[function] / len(points.get(function, {function})), function))
+    print('  cited functions, bytes for each address named in them (the thinnest first):')
+    for per, function in sorted(rows, reverse=True)[:40]:
+        print(f'    {function:x} {size[function]:6d} bytes, {len(points.get(function, [])):3d} addresses named, {per:6.0f} bytes each')
 
 
 main()

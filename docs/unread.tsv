@@ -1,0 +1,734 @@
+address	bytes	category	note	evidence
+2c14	144	pendiente	options: Advanced dialog (0x2220) colour help; see pending list	floats=9 profile,users,stores=1 <- 2220* tables=0 OPTIONS_DIALOG.COLOR_HELP
+2f20	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2ef4* c000* 30c04 41548 44570 47b4c tables=0
+3260	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2ca4* tables=0
+338c	60	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 2aa0* 15d54 tables=0
+33c8	64	fontanería	by rule: names of types only	floats=0 stores=0 <- 338c a1c9c tables=0 AirbornePropeller
+35ac	68	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 STAGES.AIRBORNE.PROPELLER
+3810	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 35f0 8a4cc tables=0
+38f0	92	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 383c tables=0
+3b5c	116	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 38f0 8abc4 tables=0
+3d3c	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 3810 tables=0
+4044	76	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 3fa0* tables=0
+41bc	60	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 4118 tables=0
+43dc	60	fontanería	by rule: names of types only	floats=0 stores=1 <-  tables=1 AirbornePropeller; Airplane
+52f8	840	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+5640	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- f5f8 tables=0
+5d9c	68	fontanería	small maths helper of gates	floats=8 stores=0 <- 43238* 6d584* tables=0
+5ea8	128	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 5e6c* 6028* 609c* 6378* 6594* 6af0* tables=0
+9c8c	168	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 52f8 tables=0
+a344	92	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- a260 tables=0
+a3a0	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 9d60* tables=0
+a59c	96	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- a488 a624 a810 tables=0
+a868	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- a83c* tables=0
+a994	48	fontanería	by rule: names of types only	floats=0 stores=1 <-  tables=1 Airplane
+b8ac	1292	cubierta	parser of the plane descriptor table; the port reads the same table	floats=0 stores=60 <- 3f3b0 tables=0 Type; AirplaneDescriptor table corrupted; AirplaneDescriptor table corrupted; PLANE.DESCRI
+c01c	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- b8ac tables=0
+c8d8	844	fontanería	by rule: no numbers and no text	floats=0 stores=32 <- c1b4 cc24 tables=0
+cc24	100	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- c1b4 tables=0
+cc88	2288	fontanería	by rule: no numbers and no text	floats=0 stores=45 <- c1b4 c7d0 tables=0
+e440	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+e4aa	94	fontanería	fragment and graph node plumbing	floats=0 stores=7 <-  tables=0
+e5e8	144	fontanería	fragment and graph node plumbing	floats=0 stores=6 <- e5a8 16e64 28e28 tables=0 Graph_Node
+e678	544	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- e8cc 101b4* tables=0 .INTRO; .LOOP
+e898	52	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 101b4* tables=0
+e8cc	184	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 12540 tables=0
+e994	1296	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=76 <- e984 tables=0 Airport Object Created; GAME_TIP.COUNT
+ef44	1080	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- eea4 ef34 tables=0
+f37c	304	fontanería	by rule: no numbers and no text	floats=0 stores=24 <- ef44 f728 12540 12ac4 12ddc* tables=0
+f5d4	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 253e4 tables=0
+f6f8	48	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 6af0* tables=0
+f728	92	cubierta	level restart: clears, saves, random seed for the radar; the port reloads the page	floats=7 stores=2 <-  tables=1
+f784	60	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- f728 fe8c* tables=0
+f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats=0 profile,users,stores=53 <- f7c0* 11654* 37b68* 38b64 tables=0 http://www.southwindsgames.com/airport-mania-wild-trips/playlog/playlog.php; PlayerName; C
+10050	356	cubierta	stage lookup by number ("Invalid Stage Number")	floats=0 profile,users,stores=4 <- fe8c* 10044 tables=0 Invalid Stage Number
+105e8	156	regla	level start (0x105e8): arrivals 6 s later when a tip will show; total time at least last arrival + 5. BUILT	floats=11 profile,users,stores=3 <- 101b4* tables=0
+10920	44	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- e440 31a14* 3730c 375e8 378c8 4a410 tables=0
+12540	904	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 profile,stores=9 <- 128c8 12ac4 tables=0
+128c8	508	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 stores=19 <- 10684* tables=0 %s_%s
+12ac4	552	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 stores=21 <- 12cec tables=0 %s_%s
+12cec	240	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 profile,users,stores=1 <- 712c4* tables=0 save%d.dat
+13ebc	200	cubierta	by rule: only loads resources or makes objects	floats=2 new×1,stores=1 <- def50* e18c4* tables=0
+15208	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- fe8c* 10050 101b4* 10b58* 115a0* 12ddc* tables=0
+15434	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f5a8 42afc* 42ebc* tables=0
+15460	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f410 563fc 565f4* tables=0
+1548c	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f3d0 40680 40788* 40ed4* tables=0
+154b8	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f3f0 46a38 46c14* tables=0
+154e4	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 12540 tables=0
+15524	168	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 12540 tables=0
+155cc	664	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 12540 tables=0
+15bbc	136	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 12540 tables=0
+15c44	136	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 12540 tables=0
+15ccc	136	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 12540 83780 tables=0
+15d54	436	fontanería	text lookup, list merge by time	floats=0 stores=15 <- 12ddc* 13458* 1b7f0 1c6d8* tables=0 Cannot find text resource: %s
+15f30	60	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 13458* tables=0
+15fbc	80	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 10050 54554 545c0 552d0 553a8 tables=0
+1600c	44	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 15fbc tables=0
+161e0	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 16124 19374 tables=0
+1622c	76	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=5 <- 1094c* 1600c 16208 164e8 tables=0
+16278	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 1622c tables=0
+164e8	40	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 15524 161e0 53078* tables=0
+16510	72	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=7 <- 164e8 tables=0
+16c8c	200	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 16770 173c8 tables=0
+16e64	48	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 12ddc* 13458* 16770 16c8c 16d54 178f8 tables=0
+16e94	88	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 16e64 211f8 2de10 3f314 52470 80f08 tables=0
+1720c	172	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- 15b10 tables=0
+172b8	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 155cc tables=0
+178f8	176	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 173c8 tables=0
+17c2c	76	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=5 <- 17c08 tables=0
+17c78	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 17c2c tables=0
+17ee8	84	fontanería	text lookup, list merge by time	floats=4 stores=0 <- 15234* tables=0
+17f64	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 15208 tables=0
+1817c	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 154b8 tables=0
+182a8	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 15460 tables=0
+183d4	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 1548c tables=0
+18500	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 15434 tables=0
+188f8	276	cubierta	the carrier's islands, built	floats=5 stores=2 <- 14ea0* tables=0 STAGES.CARRIER.ISLANDS.3
+18a0c	276	cubierta	the carrier's islands, built	floats=5 stores=2 <- 14dd4* tables=0 STAGES.CARRIER.ISLANDS.2
+18b20	276	cubierta	the carrier's islands, built	floats=5 stores=2 <- 14d08* tables=0 STAGES.CARRIER.ISLANDS.1
+18c34	276	cubierta	the carrier's islands, built	floats=5 stores=2 <- 14c3c* tables=0 STAGES.CARRIER.ISLANDS.0
+195d0	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 25b94 25bd0 2e6ec* 2ead0* 2edb4 tables=0
+195fc	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 195d0 3bbb4 82678 tables=0
+19728	44	cubierta	anti-fog machine, built	floats=0 stores=0 <-  tables=1 Graph_Node; AntiFog
+19754	108	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=5 <- 199c8 19a8c tables=0 ANTI_FOG.BASE; ANTI_FOG.NOSE; ANTI_FOG.PROPELLER; SOUNDS.ANTI_FOG_SYSTEM_FAN
+197c0	172	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+19a8c	236	cubierta	anti-fog machine, built	floats=7 stores=9 <- 19a7c* tables=0
+19c48	372	cubierta	anti-fog machine, built	floats=52 draws,stores=0 <-  tables=1
+19e50	56	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 AntiFog; DustPuff; AntiSand
+19e88	208	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 19f58 1a048 1a10c* tables=0 BRUSH.%d
+19f58	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+1a6e4	128	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 SAND_PUFF
+1aa98	56	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 DustPuff; AntiSand
+1b0a0	164	cubierta	awards room items and dialog, built	floats=16 draws,stores=0 <-  tables=1
+1b388	36	fontanería	text lookup, list merge by time	floats=0 profile,users,stores=0 <- 1aaf4* 1b0a0 1e6f0* tables=0
+1b52c	80	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=8
+1b7f0	304	cubierta	awards room items and dialog, built	floats=0 stores=2 <-  tables=7 %s.NAME
+1b964	48	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=4
+1bbd4	244	cubierta	awards room items and dialog, built	floats=0 profile,users,stores=1 <-  tables=1
+1bee4	36	fontanería	by rule: small helper	floats=2 stores=0 <- 1d5f8* tables=0
+1c070	32	fontanería	by rule: small helper	floats=2 stores=0 <- 1d5f8* tables=0
+1d160	96	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- 1d04c 83360 83594 tables=0
+1d3d4	548	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 1d334 1d3c4 tables=0
+1f200	212	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 1e6f0* tables=0
+1fb4c	76	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=5 <- 1e6f0* 1fe08 1fe84 tables=0
+1fb98	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 1fb4c tables=0
+1fe08	56	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 1e6f0* tables=0
+1fe40	68	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=7 <- 1fe08 tables=0
+20080	64	cubierta	awards room items and dialog, built	floats=0 draws,stores=0 <- 1f2d4* 3a924 55cc0* 5ca60 740b8 tables=0
+200c0	144	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 1f200 20a50 tables=0
+20354	1776	no aplica	online leaderboard page of the awards room, achievements notice	floats=0 loads,new×1,stores=61 <- 1e1b4* tables=0 FONTS.MAIN; FONTS.TEEN; AWARDS_ROOM.GREEN_VELVET; AWARDS_ROOM.BAR; AWARDS_ROOM.MODE_REMARK
+20a50	32	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 20a44 tables=0
+20e6c	88	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 20a70 tables=0
+20ec4	88	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 20a70 tables=0
+210e4	112	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 210d8 tables=0
+21154	152	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 210e4 e5fac tables=0
+211f8	540	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 211ec tables=0
+21518	856	cubierta	balloons bonus registration/loading; built	floats=0 stores=25 <- 1d3d4 1e5cc* tables=0 BalloonsBonus::Balloon; BalloonsBonus
+21870	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+21c6c	164	cubierta	by rule: only loads resources or makes objects	floats=1 new×1,stores=2,formed@22636 <-  tables=0
+21dbc	140	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+22210	232	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 21dbc 222f8* tables=0 BALLOON.%d; BALLOON.THREAD
+22620	68	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 BalloonsBonus::Balloon; BalloonsBonus; Bat
+22664	208	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 2275c* 22a64 tables=0 STAGES.MONSTERS.BAT.%d
+22734	40	fontanería	text lookup, list merge by time	floats=4 stores=0 <- 14f6c* tables=0
+22a64	88	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+22cfc	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+22d40	144	cubierta	by rule: only loads resources or makes objects	floats=1 loads,stores=1 <-  tables=1
+22dd0	176	cubierta	by rule: only loads resources or makes objects	floats=33 loads,stores=1 <-  tables=1
+22e80	232	muerta	the level's bird: never made (see notes)	floats=26 draws,stores=0 <-  tables=1
+2300c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Bird
+23338	176	cubierta	by rule: only loads resources or makes objects	floats=18 loads,stores=5 <- 23274* 234e0 tables=0 STAGES.ISLAND.BUOY; STAGES.ISLAND.BUOY_MASK
+234e0	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+236a0	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Buoys; ChristmasTree
+236cc	204	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=10 <- 23a84 tables=0 STAGES.NORTH_POLE.RED_SHINE; STAGES.NORTH_POLE.GREEN_SHINE; STAGES.NORTH_POLE.BLUE_SHINE; 
+23798	668	sin datos	Christmas tree and its lights: no images	floats=66 draws,stores=1 <-  tables=1
+23a34	80	cubierta	by rule: only loads resources or makes objects	floats=3 loads,sound,stores=1 <-  tables=1 SOUNDS.MELODY_TREE
+23a84	56	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+23c00	172	sin datos	Christmas tree and its lights: no images	floats=23 stores=7 <-  tables=1 ChristmasTree; ClickeableHorizonObject
+23cac	180	sin datos	Christmas tree and its lights: no images	floats=27 draws,stores=0 <-  tables=1
+23d60	128	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
+23ec0	224	sin datos	Christmas tree and its lights: no images	floats=9 stores=2 <-  tables=1
+23fa0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ClickeableHorizonObject
+23fc0	80	fontanería	by rule: no numbers and no text	floats=0 loads,stores=4 <- 242d8 243c4* 24534 24620* tables=0
+2409c	88	fontanería	by rule: no numbers and no text	floats=0 sound,stores=4 <- 244a8* 24704* tables=1
+2425c	112	fontanería	by rule: names of types only	floats=0 stores=0 <- 242cc 24528 tables=1 CoffeeAndCake
+242d8	220	cubierta	Coffee and Cake / In-Flight Movies tabs, built	floats=0 stores=2 <- 247cc tables=0 GUI.INGAMEGUI.COFFEE_AND_CAKE_ON; SOUNDS.CAKE_AND_COFFEE_READY; GUI.INGAMEGUI.COFFEE_AND_C
+24534	220	cubierta	Coffee and Cake / In-Flight Movies tabs, built	floats=0 stores=2 <- 24860 tables=0 GUI.INGAMEGUI.IN_FLIGHT_MOVIES_ON; SOUNDS.IN_FLIGHT_MOVIES_READY; GUI.INGAMEGUI.IN_FLIGHT_
+2472c	160	sin datos	ClickeableMessage: not used by the data	floats=13 stores=5 <-  tables=1
+24ae0	68	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 CoffeeAndCake; InFlightMovies; ClickeableMessage
+24b24	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 250bc tables=0 FONTS.TEEN; BACK_SPRITES.SPEECH_BUBBLE
+24ee8	60	sin datos	ClickeableMessage: not used by the data	floats=3 stores=4 <-  tables=1
+24f24	72	sin datos	ClickeableMessage: not used by the data	floats=8 stores=3 <-  tables=1
+24f6c	336	sin datos	ClickeableMessage: not used by the data	floats=14 draws,stores=0 <-  tables=1
+250bc	148	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+25304	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ClickeableMessage
+254a8	28	fontanería	type names	floats=0 stores=0 <- 21dbc 23d60 2425c 250bc 25eb8 25ef8 tables=1 ClickSplash
+254d4	272	cubierta	by rule: only loads resources or makes objects	floats=10 loads,stores=7 <- 254c4 tables=0 BALLOON.SPLASH
+255e4	240	sin datos	ClickeableMessage: not used by the data	floats=37 draws,stores=0 <-  tables=1
+256d4	84	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 BALLOON.SPLASH; ClickeableSoundZone
+25728	92	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+2582c	60	sin datos	ClickeableMessage: not used by the data	floats=3 stores=1 <-  tables=1
+25868	248	cubierta	by rule: only loads resources or makes objects	floats=33 loads,sound,stores=2 <-  tables=1
+25b5c	56	fontanería	type names	floats=0 stores=0 <-  tables=1 ClickSplash; ClickeableSoundZone
+25bd0	244	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=20 touch,stores=5 <- 4bcd0 5ca14 tables=0 Bonucer
+25e5c	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 21a48* 49518* 59140* bca34* tables=1
+25eb8	64	fontanería	by rule: names of types only	floats=0 stores=0 <- 21870 49108 58db0 bc6b0 tables=1 CoinBonus
+25ef8	100	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+25f5c	216	cubierta	coin bonus and combo explosion, built	floats=0 draws,loads,stores=3 <- 263bc tables=0 COIN_BONUS
+26450	56	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Bonucer; CoinBonus
+26488	100	pendiente	palette selection dialog of the options; see pending list	floats=0 profile,users,stores=3 <- 26b48 tables=0
+265ac	800	pendiente	palette selection dialog of the options; see pending list	floats=0 profile,users,new×7,stores=6 <-  tables=1 BACK; FONTS.WHITE; PALETTE_SELECTION_DIALOG.TEXT
+268e4	312	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=4 <- 265ac tables=0 GUI.COLOR_HELP.COLOR; GUI.COLOR_HELP.FRONT
+26abc	140	cubierta	coin bonus and combo explosion, built	floats=5 draws,stores=0 <-  tables=1
+26b58	112	cubierta	coin bonus and combo explosion, built	floats=14 stores=0 <-  tables=1 ComboExplosion
+271b0	64	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.BONUS_REMARK
+27294	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ComboExplosion
+27374	512	cubierta	by rule: only loads resources or makes objects	floats=0 new×4,stores=1 <-  tables=1 FONTS.WHITE; CONTINUE_GAME_DIALOG.TEXT
+27580	96	cubierta	continue-game question buttons	floats=2 stores=1 <- 27374 tables=0
+277ec	64	pendiente	palette selection dialog of the options; see pending list	floats=0 profile,users,stores=0 <-  tables=1
+2782c	96	cubierta	continue-game question buttons	floats=2 stores=1 <- 27374 tables=0 YES
+27a98	44	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+27ac4	92	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 27bc8* tables=0
+27b20	124	fontanería	by rule: no numbers and no text	floats=0 stores=6 <- 27bc8* tables=0
+28df8	48	cubierta	stars, sun, moon, deicer: built	floats=0 draws,stores=0 <-  tables=1
+290c0	44	fontanería	by rule: small helper	floats=1 stores=0 <-  tables=1
+291d0	220	cubierta	stars, sun, moon, deicer: built	floats=0 stores=2 <-  tables=1 SingleStar
+294b4	96	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=2 AMBIENT.STAR; StarField
+297a4	108	cubierta	stars, sun, moon, deicer: built	floats=10 stores=2 <-  tables=1
+29810	76	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 StarField::Star
+2985c	268	cubierta	by rule: only loads resources or makes objects	floats=7 loads,stores=9 <- 296f0* tables=0 AMBIENT.STAR
+29a4c	108	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 AMBIENT.STAR; Sun
+29ab8	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 29afc* 29d34 tables=0 AMBIENT.SUN; AMBIENT.SUNRAY
+29d34	80	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Moon
+29f78	236	cubierta	by rule: only loads resources or makes objects	floats=13 new×1,stores=5,formed@2a91e <-  tables=0
+2a8f0	140	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 SingleStar; StarField; StarField::Star; Sun; Moon; Deicer
+2a97c	88	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <- 2a9d4 2aca0 tables=0 DEICER; AIR; SOUNDS.DE_ICER_WORKING
+2aa88	172	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+2aca0	224	cubierta	stars, sun, moon, deicer: built	floats=5 stores=10 <- 2ac90* tables=0
+2b14c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Deicer
+2b16c	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 2b6f4 tables=0
+2b708	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 2a94 e440 1b094 268d8 27574 28f34 tables=8
+2bb20	188	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=0 draws,stores=20 <- 328d4* tables=0
+2bbdc	240	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=2 draws,touch,stores=11 <- 2bf94 2c09c 2c188 2c28c 2c3e0* 2c550* tables=0
+2bd38	576	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=36 draws,stores=19 <- 2c97c 2cb50 2d674 2d9ec 2de10 4acfc tables=9
+2bf94	196	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=4 <- 2bf78 tables=0
+2c09c	208	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=6 draws,loads,stores=4 <- 2c080 tables=0
+2c188	208	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=6 draws,loads,stores=3 <- 2c16c tables=0
+2c28c	272	cubierta	by rule: only loads resources or makes objects	floats=16 loads,stores=2 <- 2c26c* tables=0 GUI.DIALOGS.SEPARATOR
+2c39c	36	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=0 draws,stores=0 <-  tables=1
+2c8ac	208	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=5 <- 2c6a4* tables=0
+2c97c	172	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=33 stores=1 <-  tables=1
+2ca28	68	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=8 stores=0 <-  tables=1
+2ca6c	228	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=9 draws,stores=0 <-  tables=40
+2cb50	264	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=34 touch,stores=4 <- 2f36c 81e58* tables=38
+2ceb4	68	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=1 <- 4ccac 7f508 tables=0
+2cef8	92	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=0 draws,stores=0 <-  tables=1
+2cf8c	248	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=11 <- 2cf54* tables=0
+2d084	28	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <- 4c218* tables=0
+2d17c	472	cubierta	by rule: only loads resources or makes objects	floats=25 loads,stores=12 <- 2d14c* tables=0
+2d354	248	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=3 stores=2 <- 2d17c 4c218* tables=0
+2d5c4	176	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=14 draws,stores=0 <-  tables=3
+2d674	320	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=36 touch,stores=7 <-  tables=3
+2d7b4	400	cubierta	by rule: only loads resources or makes objects	floats=15 loads,stores=7 <- 2f3c4* 2f450* tables=0 GUI.DIALOGS.BAR; GUI.DIALOGS.NIPPLE; GUI.DIALOGS.NIPPLE_OVER
+2d944	168	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=11 draws,stores=0 <- 26abc 7edbc tables=6
+2d9ec	236	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=21 touch,stores=5 <-  tables=8
+2dad8	288	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=9 <- 268e4 2f504* 2f58c* 2f60c 2f688 2f704 tables=0 GUI.DIALOGS.CHECKBOX_BACK; GUI.DIALOGS.CHECKBOX_OVER; GUI.DIALOGS.CHECKBOX_ON
+2de10	956	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=57 touch,stores=18 <-  tables=1
+2e1cc	28	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+2f098	80	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=3 draws,stores=0 <-  tables=1
+2f36c	64	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=1 stores=0 <-  tables=1
+2f408	36	fontanería	by rule: small helper	floats=2 stores=3 <-  tables=1
+2f42c	36	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=0 <-  tables=1
+2f494	40	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=3 <-  tables=1
+2f60c	124	pendiente	options: handlers of the Advanced switches (show tips, bubble clicking, auto-orientate)	floats=6 stores=5 <- 2220* tables=0
+2f688	124	pendiente	options: handlers of the Advanced switches (show tips, bubble clicking, auto-orientate)	floats=6 stores=5 <- 2220* tables=0
+2f704	64	pendiente	options: handlers of the Advanced switches (show tips, bubble clicking, auto-orientate)	floats=6 stores=1 <- 2220* tables=0
+2f744	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2b6f4 2b708 tables=0
+2f770	472	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=84 stores=9 <- 2b7b0* 2bb20 2bbdc 2bd38 4d688* 4d92c* tables=0
+2f948	104	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 2de10 2e3d0* 80124* tables=0
+2f9b0	160	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 2de10 tables=0
+30c04	132	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2f744 tables=0
+30d80	404	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=27 stores=11 <- 2f9b0 tables=0
+310b0	328	no aplica	online leaderboard page of the awards room, achievements notice	floats=0 loads,stores=4 <- 3aadc tables=0 FONTS.WHITE; AWARDS_ROOM.3; GSN.ACHIEVEMENT_UNLOCKED
+311f8	48	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=1 <-  tables=1
+31228	260	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=25 draws,stores=0 <-  tables=1
+317d0	276	cubierta	award notice: manager update, particle, draw; built	floats=1 stores=1 <-  tables=1
+31ac8	128	cubierta	award notice: manager update, particle, draw; built	floats=0 draws,loads,sound,stores=1 <- 31648* tables=0
+31ca8	252	cubierta	award notice: manager update, particle, draw; built	floats=25 draws,stores=0 <- 31a14* tables=0
+32140	48	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 50600 712c4* tables=0
+32170	476	cubierta	by rule: only loads resources or makes objects	floats=26 new×3,stores=1 <- 32140 55b3c* tables=0 FONTS.WHITE; CLOSE
+327d4	256	cubierta	by rule: only loads resources or makes objects	floats=8 new×1,stores=1 <- 328d4* tables=0 GUI.FINAL_REPORT.STAR
+342a4	152	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 34170* 7f774* 821b8* 9f494 9fb28 tables=0
+345e8	340	fontanería	by rule: no numbers and no text	floats=0 loads,stores=14 <- 345d8 tables=0
+34aac	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+34d84	288	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 34ce4 34cf4 tables=0
+3502c	80	cubierta	ending, built	floats=5 draws,stores=0 <-  tables=1
+3507c	244	cubierta	ending, built	floats=19 touch,stores=5 <-  tables=1
+35c40	164	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 3581c tables=0
+36170	76	cubierta	ending, built	floats=4 draws,stores=0 <-  tables=1
+36b4c	108	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=4 <- 369e8 tables=0
+3730c	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+375e8	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+378c8	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+378e4	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 376c4* tables=0 FINISH_GAME_DIALOG.MAIN_MENU
+37bc0	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 376c4* tables=0 FINISH_GAME_DIALOG.MAP
+37e60	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 376c4* tables=0 FINISH_GAME_DIALOG.RESTART_LEVEL
+38100	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 373e8* tables=0
+383a0	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 373e8* tables=0 YES
+38624	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+38640	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 3710c* tables=0
+388e0	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 3710c* tables=0 YES
+38b64	88	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+395f4	60	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 STAGES.TUTORIAL.FLAG
+39774	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Flag; FlyingSanta
+397a0	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 397f4* 39b18 tables=0 STAGES.NORTH_POLE.SANTA; STAGES.NORTH_POLE.REINDEER
+397d4	32	fontanería	by rule: small helper	floats=2 stores=0 <- 13f84* tables=0
+39b18	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+39ca8	60	fontanería	by rule: names of types only	floats=0 stores=1 <-  tables=1 FlyingSanta; FlyingStrip
+3a078	112	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=2
+3a278	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 FlyingStrip; Fog
+3a2a4	112	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 FOG
+3a804	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Fog
+3a8f4	48	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <-  tables=1 FONTS.MAIN
+3a924	268	no aplica	frame counter, Game Center achievement names, build configuration	floats=6 stores=2 <-  tables=1 FPS = %.03f
+3aadc	352	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 3ac3c tables=0
+3ac3c	672	no aplica	frame counter, Game Center achievement names, build configuration	floats=0 profile,stores=1 <- 318e4* 3b0e8 tables=0 AM2S_AWARD_%02dG; AM2S_AWARD_%02dS; AM2S_AWARD_%02dB; AM2S_AWARD_%02d
+3aedc	372	no aplica	frame counter, Game Center achievement names, build configuration	floats=0 profile,stores=1 <- 34170* 3b0e8 tables=0 AM2S_STAGE%02d
+3b050	152	no aplica	frame counter, Game Center achievement names, build configuration	floats=0 profile,stores=0 <- 34170* 3b0e8 tables=0 AM2S_CAREER
+3b0e8	168	no aplica	frame counter, Game Center achievement names, build configuration	floats=0 profile,stores=1 <- 3b190* 3f06c 3f384 tables=0
+3b1d4	56	no aplica	frame counter, Game Center achievement names, build configuration	floats=0 stores=2 <- 3f084 tables=0 AM2S_CAREER
+3b234	612	fontanería	by rule: no numbers and no text	floats=0 stores=16 <- 5d2c* 5de0* 25de0* 3b20c* 4c218* tables=0
+3b4a8	788	fontanería	by rule: no numbers and no text	floats=0 stores=26 <- 3b498 tables=0
+3b868	832	fontanería	by rule: no numbers and no text	floats=0 stores=20 <- 3b7bc 3b84c 3bba8 tables=0
+3bbb4	32	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 2f20 tables=0
+3bbd4	1636	no aplica	frame counter, Game Center achievement names, build configuration	floats=0 stores=60 <- 3cb90* tables=0 build.cfg; Cannot locate the build info; Build; UpsellingScreen; BuyNowInMainMenu; BetaVer
+3c238	1256	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=6 stores=1 <- 3eba0 3ef98 tables=0 NULL; Default; Default; Config; Language; ShowTips; BubbleClicking; Flashing; Bpp; FullScr
+3c720	1136	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=11 <- 3cb90* tables=0 NULL; Default; Language; ShowTips; BubbleClicking; Flashing; Bpp; FullScreen; VSync; AutoO
+3e71c	764	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=27 <- 3cb90* 3eba0 tables=0 bv.bin; Time has expired for this build; Time expired for this build.
+3ea18	392	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=2 <- 3cb90* 3e71c 3eba0 tables=0 bv.bin
+3eba0	420	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=5 <-  tables=1 system.cfg
+3ed44	488	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=39 stores=9 <-  tables=1
+3ef2c	108	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+3ef98	212	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=7 <-  tables=1 system.cfg
+3f090	184	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 3cb90* tables=0
+3f2a4	72	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 FONTS.ULTRA
+3f314	112	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 3cb90* 805ac* tables=0
+3f384	32	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+3f450	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 3f430 6cbf0* 6cf14* tables=0
+3f47c	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 3f450 tables=0
+3fa14	132	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 3bbb4 tables=0
+3fb3c	76	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 3fa98 a1868 a1874 tables=0
+3fc28	280	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=16 <- 3b4a8 tables=0 reflexive
+3fd40	180	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=12 <- 3b4a8 tables=0 ENGLISH
+3ff20	124	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 3fe7c tables=0
+4016c	56	cubierta	by rule: only loads resources or makes objects	floats=0 new×1,stores=1 <- 3ff9c 40008 a207c tables=0 GameTip
+40680	168	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=5 <- 40728 40788* tables=0 INDICATORS.FUELING_MARK; INDICATORS.FUELING_MARK_TICK; SOUNDS.FUELING
+40728	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+41128	232	cubierta	by rule: only loads resources or makes objects	floats=7 new×1,stores=5,formed@41382 <-  tables=0
+4136c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 GasStation
+4138c	444	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=0 <- 41564 tables=0 Speed; RemarkSurfaceResource; BackSurfaceResource; SurfaceSpotResource; NodePosition; Rect
+41548	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 183d4 tables=0
+41564	1328	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=50 <- 10b58* 3f3d0 tables=0 Type; Count; GasStation; GAS_STATION.DESCRIPTOR_TABLE; GasStationDescriptorTable; GasStati
+41cdc	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 41564 tables=0
+42464	556	fontanería	by rule: no numbers and no text	floats=0 stores=9 <- 41f60 tables=0
+42690	136	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 41f60 tables=0
+42718	252	fontanería	by rule: no numbers and no text	floats=0 stores=8 <- 41f60 tables=0
+42e08	152	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+43f94	276	cubierta	gate and runway: descriptor found by type as they are made	floats=8 stores=4 <-  tables=1
+440a8	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Gate
+440c8	1192	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=2 <- 4458c tables=0 Loading; Unloading; Speed; RemarkSurfaceResource; NodePosition; PlaneOrientation; DespZ; S
+44570	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 18500 tables=0
+4458c	1116	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=42 <- 10b58* 3f5a8 tables=0 Type; Count; Gate; GateDescriptor table corrupted; GateDescriptor table corrupted; GATES.D
+44c30	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 4458c tables=0
+454a4	260	fontanería	by rule: no numbers and no text	floats=0 stores=15 <- 44dc0 tables=0
+455a8	484	fontanería	by rule: no numbers and no text	floats=0 stores=19 <- 44dc0 tables=0
+4578c	508	fontanería	by rule: no numbers and no text	floats=0 stores=20 <- 44dc0 453a0 tables=0
+45af0	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+460e4	284	vista	what the level's draw draws from its +0xb0 when its flag is set; not identified	floats=23 stores=0 <- 12430* tables=0
+464dc	512	fontanería	by rule: no numbers and no text	floats=0 stores=6 <- 45bd4* tables=0
+46788	184	cubierta	hangar helpers; built	floats=8 stores=5 <- 46230* tables=0
+4695c	84	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=3 <- 45d58* 466dc* tables=0
+469b0	84	cubierta	hangar helpers; built	floats=4 stores=0 <- 464dc tables=0
+46a04	52	cubierta	by rule: only loads resources or makes objects	floats=0 new×1,stores=3 <- 45bd4* tables=0 Hangar
+46a38	160	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=5 <- 46ad8 46c14* tables=0 HANGARS.PROGRESS; HANGARS.PROGRESS_TICK; SOUNDS.REPAIRING_START; SOUNDS.REPAIRING_LOOP
+46ad8	300	fontanería	by rule: no numbers and no text	floats=0 stores=2 <-  tables=1
+47888	228	cubierta	by rule: only loads resources or makes objects	floats=7 new×1,stores=5,formed@47982 <-  tables=0
+4796c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Hangar
+4798c	448	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=2 <- 47b68 tables=0 Speed; RemarkSurfaceResource; BackSurfaceResource; NodePosition; DespZ; FrontSurfaceResour
+47b4c	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 1817c tables=0
+47b68	1328	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=50 <- 10b58* 3f3f0 tables=0 Type; Count; Hangar; HANGAR.DESCRIPTOR_TABLE; HangarDescriptorTable; HangarDescriptorTable
+482e0	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 47b68 tables=0
+48a68	556	fontanería	by rule: no numbers and no text	floats=0 stores=9 <- 48564 tables=0
+48c94	136	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 48564 tables=0
+48d1c	256	fontanería	by rule: no numbers and no text	floats=0 stores=8 <- 48564 tables=0
+48e1c	748	cubierta	helicopter bonus; built	floats=0 stores=9 <- 48564 tables=0 HelicopterBonus
+49108	208	cubierta	helicopter bonus; built	floats=6 stores=0 <-  tables=1
+491d8	252	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <- 49108 4996c* tables=0 HELICOPTER.%d; SOUNDS.HELICOPTER_LOOP
+49374	420	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 492d4 49364 tables=0
+49c04	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 HelicopterBonus
+4a410	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+4ac1c	200	cubierta	hint dialog and horizon objects; built	floats=4 stores=3 <- 4abf4* tables=0
+4acfc	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+4b180	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+4b1ac	156	cubierta	hint dialog and horizon objects; built	floats=0 stores=2 <-  tables=1 HorizonObject
+4b484	112	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=5
+4b67c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 HorizonObject; Ice
+4b6a8	100	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 RUNWAY.FROZEN
+4bb64	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Ice
+4bcd0	44	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=5 stores=1 <-  tables=2
+4bcfc	292	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=24 draws,stores=0 <-  tables=2
+4c1d8	64	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 11654* tables=0
+4ca38	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+4cc68	68	cubierta	shop: buttons, list reset and draw; read this session	floats=0 stores=1 <- 4c218* tables=0 IMPROVEMENTS_DIALOG.BUY; IMPROVEMENTS_DIALOG.SELL
+4ccac	96	cubierta	shop: buttons, list reset and draw; read this session	floats=2 stores=1 <- 4c3c8* tables=0 IMPROVEMENTS_DIALOG.FINISH
+4cf18	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+4d14c	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+4d520	120	cubierta	shop: buttons, list reset and draw; read this session	floats=5 stores=5 <-  tables=1
+4d598	240	cubierta	shop: buttons, list reset and draw; read this session	floats=20 stores=0 <-  tables=1
+4f4c0	116	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+50160	116	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 StoneHengeIsland; TikiIsland; TropicalIsland; VulcanoIsland; IslandWater
+501d4	60	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <- 5022c tables=0 STAGES.ISLAND.WAVES; MESHES.WATER_MESH
+5034c	112	pendiente	language dialog of the original (the port has a choice of its own)	floats=7 draws,stores=1 <-  tables=1
+505e0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 IslandWater
+50600	124	pendiente	language dialog of the original (the port has a choice of its own)	floats=0 stores=0 <- 50bec 510bc tables=0 LANGUAGE_SELECTION_DIALOG.CHANGES_NEED_RESTART
+5073c	580	cubierta	by rule: only loads resources or makes objects	floats=0 new×5,stores=2 <-  tables=1 FONTS.WHITE; LANGUAGE_SELECTION_DIALOG.TITLE; CANCEL
+50980	96	pendiente	language dialog of the original (the port has a choice of its own)	floats=2 stores=1 <- 5073c tables=0 LANGUAGE_SELECTION_DIALOG.CHANGE_LANGUAGE
+50c00	316	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=2 <- 5073c tables=0 GUI.DIALOGS.COMBOBOX.TEXT_REMARK
+50ecc	496	cubierta	by rule: only loads resources or makes objects	floats=0 loads,new×1,stores=7 <-  tables=1 FLAGS.%s
+510c8	68	pendiente	language dialog of the original (the port has a choice of its own)	floats=3 draws,stores=0 <-  tables=1
+52270	96	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- 52160 tables=0
+523ce	162	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=6 <-  tables=0
+52560	2460	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=92 <- 524a4 53038 tables=0 Name; Number; Number; False; True; LEVELS_DB; LevelsDB; AreasCount; Area; LevelsCount; Ext
+53038	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 10b58* tables=0
+53ce4	520	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 53078* tables=0
+53eec	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 52560 tables=0
+53f28	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 52560 tables=0
+54554	108	fontanería	by rule: no numbers and no text	floats=0 stores=6 <- 54010 tables=0
+545c0	176	fontanería	by rule: no numbers and no text	floats=0 stores=9 <- 54010 tables=0
+54670	488	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 54010 5504c tables=0
+54fbc	144	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 548f4 tables=0
+5504c	444	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 54fbc 55480 tables=0
+552d0	216	fontanería	by rule: no numbers and no text	floats=0 stores=9 <- 5504c tables=0
+553a8	216	fontanería	by rule: no numbers and no text	floats=0 stores=9 <- 5504c tables=0
+55480	240	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 548f4 tables=0
+55570	84	cubierta	loading screen; built	floats=4 stores=0 <- 53ce4 tables=0
+5568c	412	cubierta	loading screen; built	floats=0 stores=18 <- 5567c tables=0 LOADING_SCREEN.FASTEN_YOUR_SEAT_BELTS; LOADING_SCREEN.LOADING
+55b10	44	fontanería	by rule: names of types only	floats=0 stores=2 <-  tables=1 LOADING
+55ec8	456	sin datos	long range radar and radar: their pictures are commented out of the resources	floats=34 loads,stores=8 <- 5629c tables=0 GUI.INGAMEGUI.LONG_RANGE_RADAR.IMAGE; GUI.INGAMEGUI.LONG_RANGE_RADAR.TICK; GUI.INGAMEGUI.L
+56090	524	sin datos	long range radar and radar: their pictures are commented out of the resources	floats=61 draws,stores=0 <-  tables=1
+563d0	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 LongRangeRadar; Luggage
+563fc	408	cubierta	by rule: only loads resources or makes objects	floats=2 loads,stores=13 <- 56594 565f4* tables=0 LUGGAGES.PARCEL; LUGGAGES.PARCEL_MARK
+56594	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+571d4	100	cubierta	luggage; built	floats=7 stores=3 <- 563fc ae75c tables=0
+573b4	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Luggage
+573d4	1020	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=3 <- 577ec tables=0 Resource; Speed; RemarkSurfaceResource; BackSurfaceResource; NodePosition; DespZ; FrontSur
+577d0	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 182a8 tables=0
+577ec	1112	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=42 <- 10b58* 3f410 tables=0 Type; Count; Luggage; LUGGAGE.DESCRIPTOR_TABLE; LuggageDescriptorTable; LuggageDescriptorT
+57e8c	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 577ec tables=0
+586e4	348	fontanería	by rule: no numbers and no text	floats=0 stores=20 <- 5801c tables=0
+58840	512	fontanería	by rule: no numbers and no text	floats=0 stores=21 <- 5801c tables=0
+58a40	508	fontanería	by rule: no numbers and no text	floats=0 stores=25 <- 5801c 585e0 tables=0
+58c3c	372	sin datos	lunar buggy bonus: its pictures are commented out of the resources	floats=0 stores=1 <- 577ec 57ec8 57f80 5801c 585e0 tables=0 LunarBuggyBonus
+58db0	200	cubierta	luggage; built	floats=6 stores=0 <-  tables=1
+58e78	132	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=6 <- 58db0 tables=0 STAGES.MOON.BUGGY.CHASSIS; STAGES.MOON.BUGGY.WHEEL_LARGE; STAGES.MOON.BUGGY.WHEEL_SMALL; S
+58f9c	420	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 58efc 58f8c tables=0
+592cc	128	sin datos	lunar buggy bonus: its pictures are commented out of the resources	floats=12 stores=4 <-  tables=1
+5934c	508	sin datos	lunar buggy bonus: its pictures are commented out of the resources	floats=42 draws,stores=1 <-  tables=1
+59548	184	cubierta	by rule: only loads resources or makes objects	floats=3 new×1,stores=2,formed@59616 <-  tables=0
+59600	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 LunarBuggyBonus
+5a830	140	no aplica	main menu's promotions and links out	floats=3 draws,stores=0 <-  tables=1
+5a8bc	692	no aplica	main menu's promotions and links out	floats=89 draws,touch,stores=8 <-  tables=1 http://reflexive.lemonteam.com/
+5add4	124	no aplica	main menu's promotions and links out	floats=12 draws,stores=0 <-  tables=1
+5ae50	680	no aplica	main menu's promotions and links out	floats=77 draws,touch,stores=10 <-  tables=1 http://www.facebook.com/pages/Airport-Mania/82800324271
+5b314	156	no aplica	main menu's promotions and links out	floats=7 draws,stores=0 <-  tables=1
+5b3b0	656	no aplica	main menu's promotions and links out	floats=91 draws,touch,stores=8 <-  tables=1 http://www.airportmania.com
+5b714	232	cubierta	main menu pieces and entries; built	floats=0 draws,loads,stores=7 <- 597b0* tables=0 MAIN_MENU.NUMBER_TWO
+5bac0	232	cubierta	main menu pieces and entries; built	floats=0 draws,loads,stores=7 <- 597b0* tables=0 MAIN_MENU.FRANCHISE
+5be88	232	cubierta	main menu pieces and entries; built	floats=0 draws,loads,stores=6 <- 597b0* tables=0 MAIN_MENU.TITLE
+5c6d4	44	fontanería	by rule: small helper	floats=1 stores=0 <-  tables=1
+5c74c	84	cubierta	main menu pieces and entries; built	floats=0 stores=1 <- 5c030* tables=0 MAIN_MENU.CREDITS
+5ca14	76	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=8 stores=2 <-  tables=5
+5ca60	192	vista	a bouncing button look (Bonucer) used by the shop and the menu entries; not read	floats=20 draws,stores=0 <-  tables=5
+5cc2c	84	cubierta	main menu pieces and entries; built	floats=0 stores=1 <- 5c030* tables=0 MAIN_MENU.OPTIONS
+5cd8c	84	cubierta	main menu pieces and entries; built	floats=0 stores=1 <- 5c030* tables=0 MAIN_MENU.USERS
+5ceec	84	cubierta	main menu pieces and entries; built	floats=0 stores=1 <- 5c030* tables=0 MAIN_MENU.PLAY
+5d5b8	200	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 stores=2 <- 5d680* 60218* tables=0 MAP.STAGES.%d
+5d990	344	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=11 <- 6052c* tables=0 FONTS.TEEN; MAP.HERALDIC_RIBBON; STAGES.%d.TITLE
+5dae8	120	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=8 draws,stores=0 <-  tables=1
+5ddf4	52	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 profile,users,stores=2 <- 5dda4* 5fb44* tables=0
+5de28	200	vista	Map::MapBat: bats on the map; no map bat picture is named, to be checked	floats=20 profile,users,stores=8 <-  tables=1
+5def0	424	vista	Map::MapBat: bats on the map; no map bat picture is named, to be checked	floats=54 draws,stores=0 <-  tables=1 Map::MapBat
+5e4b4	88	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Map::MapSnow
+5e50c	100	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
+5eb18	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 5eb4c* 5edc8 tables=0 MAP.SATELLITE; MAP.SATELLITE_BRIGHT
+5edc8	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+5f248	360	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=19 <- 5f420* 5f4c4 5f5dc 5f684* tables=0 FONTS.WHITE
+5f3b0	112	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=4 draws,stores=0 <-  tables=5
+5f4a0	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+5f4c4	136	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 stores=1 <- 60e50* tables=0 MAP.PLAY; MAP.HUD.BUTTONS.PLAY_ON
+5f590	76	cubierta	by rule: only loads resources or makes objects	floats=0 loads,sound,stores=0 <- 5f54c* 65530 tables=0 SOUNDS.MAP_PLAY
+5f5dc	132	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 stores=1 <- 60e50* tables=0 MAP.AWARDS_ROOM; MAP.HUD.BUTTONS.AWARDS_ON
+5f660	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+5f708	52	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 profile,users,stores=1 <-  tables=1
+5f74c	576	cubierta	by rule: only loads resources or makes objects	floats=2 loads,stores=35 <- 5f73c tables=0 MAP.LEVELS
+614f4	148	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 5e50c tables=0
+61950	224	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=1 <-  tables=1
+61bb4	236	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=1 <-  tables=1
+625a8	160	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=12 <- 6225c tables=0
+62648	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 5e6e4* 614f4 tables=0
+62670	68	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 62648 tables=0
+626b4	76	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=5 <- 5e6e4* 62648 62a00 tables=0
+62700	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 626b4 tables=0
+62970	68	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=7 <- 62648 tables=0
+629b4	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 614f4 tables=0
+62efc	80	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
+63300	84	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- 63210 tables=0
+6364c	52	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 draws,stores=0 <-  tables=1
+63be8	80	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Map::MapBat; Map::MapSnow; Map::MapSatellite
+64700	84	fontanería	by rule: no numbers and no text	floats=0 stores=12 <- 646f0 tables=0
+652c4	96	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=2 stores=1 <- 64824* tables=0 MAP.PLAY
+65324	244	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=1 stores=2 <-  tables=1
+65530	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+65edc	172	cubierta	moon sky, sky, sea loaders; built	floats=0 stores=1 <- 655e4 65adc tables=0 MoonSky
+66adc	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 MoonSky
+67104	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+67bb8	108	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+680f8	88	vista	not identified (class near 0x68014)	floats=6 draws,stores=0 <-  tables=1
+68388	280	vista	not identified (class near 0x68014)	floats=7 stores=4 <-  tables=1
+684a0	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+68700	180	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+68e60	76	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 68700 68f08* tables=0 PAINTING_STOPSPOT.COLOR; PAINTING_STOPSPOT.COLOR_SHADING; PAINTING_STOPSPOT.READY
+68eac	92	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 684a0 690a0* tables=0 PAINTING_STOPSPOT.RIGHT_OFF_ISLAND; PAINTING_STOPSPOT.RIGHT_OFF; PAINTING_STOPSPOT.RIGHT; 
+69170	92	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 PaintingSign; PaintingPalette; PaintingStopSpot; LightFan
+695ec	84	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.LIGHT_FAN; BonusStar
+69b88	160	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.BONUS_STAR; Spark
+69d9c	72	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.SPARK
+6a1b0	80	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 LightFan; BonusStar; Spark
+6a328	532	muerta	perfect scores message: nothing reads where it is kept (see audit)	floats=35 draws,touch,stores=3 <-  tables=1
+6a53c	100	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <-  tables=1 FONTS.MAIN; FONTS.ULTRA
+6a5a0	52	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+6a5d4	56	muerta	perfect scores message: nothing reads where it is kept (see audit)	floats=0 draws,stores=0 <-  tables=1
+6a940	96	muerta	perfect scores message: nothing reads where it is kept (see audit)	floats=2 stores=1 <- 6a6cc* tables=0
+6aca4	168	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 40728 42e08 46ad8 56594 6cdd0 78c68 tables=1
+6b0cc	320	cubierta	flash of a place taking an order; built	floats=38 stores=0 <- 6af20* 6b20c* tables=0
+6b7ec	100	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+6b850	344	cubierta	order flags; built	floats=20 stores=12 <- 6ba58* tables=0
+6b9a8	124	cubierta	order flags; built	floats=4 draws,stores=0 <-  tables=1 QueueFlags
+6bfb4	68	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 QueueFlags::Flag; QueueFlags; Radar
+6c020	264	sin datos	long range radar and radar: their pictures are commented out of the resources	floats=0 loads,stores=9 <- 6c29c tables=0 GUI.INGAMEGUI.RADAR.IMAGE; GUI.INGAMEGUI.RADAR.TICK
+6c128	156	sin datos	long range radar and radar: their pictures are commented out of the resources	floats=4 stores=9 <-  tables=1
+6c1c4	216	sin datos	long range radar and radar: their pictures are commented out of the resources	floats=10 draws,stores=0 <-  tables=1
+6c3d0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Radar
+6cdd0	296	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+6e534	292	cubierta	gate and runway: descriptor found by type as they are made	floats=10 stores=6 <-  tables=1
+6e658	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Runway
+6e6b8	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 3f47c tables=0
+6e6d4	1112	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=6 <- 3f430 tables=0 Type; Count; Runway; RUNWAY.DESCRIPTOR_TABLE; RunwayDescriptorTable; RunwayDescriptorTable
+6ed74	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 6e6d4 tables=0
+6f310	88	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 6eef0 tables=0
+6f368	308	cubierta	sand on runways; built	floats=0 stores=5 <- 6eef0 tables=0 Sand
+6f49c	208	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 6f56c 6f5cc* tables=0 RUNWAY.SAND.%d
+6f56c	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+6fafc	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Sand; ScalableStaticZImage
+6fb28	60	cubierta	sand on runways; built	floats=2 stores=5 <- 46c14* 78cb8* 79194* 84a8c* tables=0
+6fb64	68	cubierta	sand on runways; built	floats=0 draws,stores=0 <-  tables=1
+6fba8	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+6ffa4	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScalableStaticZImage; ScaryCloud
+6ffd0	184	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 70098* 702dc tables=0 STAGES.MONSTERS.SCARY_CLOUD_%d
+702dc	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+70464	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScaryCloud; ScaryFog
+70490	184	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 70580* 70740 tables=0 STAGES.MONSTERS.FOG_%d
+70548	56	fontanería	small constructors of scenery called by built ones	floats=8 stores=0 <- 149d4* tables=0
+70740	112	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+708f4	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScaryFog
+70924	428	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=16 <- 70914 tables=0 LOADING_SCREEN.LOADING
+70b70	372	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 70ad0 70b60 tables=0
+713f8	224	vista	ScoreMessage: a score message in the large font; not read	floats=23 stores=6 <-  tables=1
+714d8	1144	vista	ScoreMessage: a score message in the large font; not read	floats=118 draws,stores=1 <-  tables=1 ScoreMessage
+71c40	84	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 FONTS.ULTRA
+71dfc	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScoreMessage; ScrollingCloud
+71e28	40	fontanería	small constructors of scenery called by built ones	floats=4 stores=0 <- 14858* tables=0
+71f20	184	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 71e50* 71fd8 tables=0 STAGES.AIRBORNE.CLOUDS.%d
+71fd8	96	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+722cc	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScrollingCloud; ScrollingDistantObject
+722f8	52	fontanería	small constructors of scenery called by built ones	floats=6 stores=0 <- 14b5c* tables=0
+72510	124	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
+72714	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScrollingDistantObject; Sea
+72934	92	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+72990	40	fontanería	small constructors of scenery called by built ones	floats=4 stores=0 <- 13c3c* 70ce4* tables=0
+73100	160	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=12 <- 72db4 tables=0
+731a0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Sea
+73258	312	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=2 <- 737e0 tables=0 SerializableLine
+7368c	192	cubierta	moon sky, sky, sea loaders; built	floats=6 stores=0 <-  tables=1
+737e0	348	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 7368c tables=0
+73b9c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 SerializableLine; ShowAreaLevel
+73bc8	376	no aplica	developer's overlay (ShowAreaLevel: %d-%d, %3d %3d)	floats=0 loads,profile,users,stores=10 <- 73de8 tables=0 FONTS.WHITE; %d-%d
+73d50	152	no aplica	developer's overlay (ShowAreaLevel: %d-%d, %3d %3d)	floats=8 draws,stores=0 <-  tables=1
+73de8	224	no aplica	developer's overlay (ShowAreaLevel: %d-%d, %3d %3d)	floats=11 new×1,stores=4,formed@73fb2 <-  tables=0
+73f9c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ShowAreaLevel
+74088	48	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <-  tables=1 FONTS.MAIN
+740b8	276	no aplica	developer's overlay (ShowAreaLevel: %d-%d, %3d %3d)	floats=3 touch,stores=1 <-  tables=1 %3d %3d
+741dc	156	cubierta	moon sky, sky, sea loaders; built	floats=0 stores=1 <-  tables=1 Sky
+74c48	152	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+74f08	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Sky; SkyLights
+754ec	92	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 SkyLights; SmokeTail
+75aa4	120	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.SMOKE
+75db8	200	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 76304 tables=0 EFFECTS.SMOKE_BLACK
+75e80	88	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+764d8	92	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 SmokeTail; Smoke; BlackSmoke; Snow
+76534	120	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
+765ac	44	fontanería	small constructors of scenery called by built ones	floats=5 stores=0 <- 13d0c* tables=0
+76bdc	148	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 76534 tables=0
+76e20	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 76748* 76bdc tables=0
+76e48	68	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 76e20 tables=0
+76e8c	76	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=5 <- 76748* 76e20 771d8 tables=0
+76ed8	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 76e8c tables=0
+77148	68	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=7 <- 76e20 tables=0
+7718c	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 76bdc tables=0
+771fc	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Snow
+77478	436	no aplica	splash picture of the build	floats=0 stores=3 <-  tables=1 splash.jpg; splash.png
+7762c	52	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+77660	208	cubierta	painting stop spot spray; built	floats=21 touch,stores=6 <-  tables=1
+77730	184	cubierta	painting stop spot spray; built	floats=14 draws,stores=0 <-  tables=1 Spray
+777e8	104	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+77850	76	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 7789c 7796c* tables=0 SPRAY_TOP; SPRAY_COLOR; SPRAY_RAY
+77f4c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Spray
+78594	668	cubierta	by rule: only loads resources or makes objects	floats=19 sound,new×2,stores=9 <-  tables=1 GUI.FINAL_REPORT.STAR_SMALL
+78830	96	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=2 stores=1 <- 78594 tables=0 FINAL_REPORT_DIALOG.CONTINUE
+78c68	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 67bb8 84a28 tables=1
+797f4	72	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=0 draws,stores=0 <-  tables=1
+79a80	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 StopSpot
+79aa0	64	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=0 stores=1 <-  tables=1 SWG_INTRO
+7a3c4	452	cubierta	by rule: only loads resources or makes objects	floats=29 loads,new×1,stores=11 <- 79fec tables=0
+7a880	68	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=3 stores=1 <-  tables=1 RealTutorial
+7a8c4	104	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <- 7a9d8 7c084 tables=0 FONTS.TEEN; INDICATORS.NO; INDICATORS.YES; GUI.GOAL_CHECKBOX
+7ac28	240	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=4 stores=1 <- 7cdc4* tables=0 BasicSequenceTutorial; CombosTutorial; ExtrasTutorial
+7b0fc	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 7b534 7b784 7ba50 tables=1
+7b784	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+7c084	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 7bf24 tables=0
+7c0d0	120	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 7bf24 tables=0
+7c68c	116	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 7c148 tables=0
+7c700	240	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 7c148 7cff8 tables=0
+7cb08	344	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=7 <- 7ad18* 7b068 tables=0 TUTORIAL_DIALOG.LEVEL3.GOAL1; TUTORIAL_DIALOG.LEVEL3.GOAL2; TUTORIAL_DIALOG.LEVEL3.GOAL3
+7cc60	356	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=15 <- 7aeac 7cb08 7d31c 7d464 tables=0 GUI.TUTORIAL_BACK_TOP; GUI.TUTORIAL_BACK_RIGHT; GUI.TUTORIAL_BACK_CORNER; GUI.TUTORIAL_BAC
+7cedc	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 7cdc4* tables=0
+7d31c	328	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=8 <- 7ad18* 7afd4 tables=0 TUTORIAL_DIALOG.LEVEL2.GOAL1; TUTORIAL_DIALOG.LEVEL2.GOAL2
+7d464	356	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <- 7ad18* 7af40 tables=0 TUTORIAL_DIALOG.LEVEL1.GOAL1; TUTORIAL_DIALOG.LEVEL1.GOAL2; TUTORIAL_DIALOG.LEVEL1.GOAL3; 
+7d5c8	104	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 RealTutorial; BasicSequenceTutorial; CombosTutorial; ExtrasTutorial
+7d9e4	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+7daa0	96	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=2 stores=1 <- 7d650* tables=0 TUTORIAL_DIALOG.CONTINUE
+7dd28	96	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=2 stores=1 <- 7d650* tables=0 TUTORIAL_REPORT.MAIN_MENU
+7df94	44	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+7e3c0	44	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+7ec24	248	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=3 stores=3 <- 7ea9c* tables=0
+7edbc	120	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=9 draws,stores=0 <-  tables=1
+7ee44	92	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=6 stores=0 <-  tables=1
+7f508	96	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=2 stores=1 <- 7efb4* tables=0 TUTORIAL_REPORT.CONTINUE
+7f830	96	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=2 stores=1 <- 7efb4* tables=0 TUTORIAL_REPORT.MAIN_MENU
+7fa9c	44	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+7fac8	96	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=2 stores=1 <- 7efb4* tables=0 TUTORIAL_REPORT.TRY_AGAIN
+7fd34	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+80f08	152	fontanería	by rule: no numbers and no text	floats=0 stores=13 <- 80124* 805ac* tables=0
+822dc	276	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 839f0 tables=0
+82678	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 3260 tables=0
+82a70	744	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=28 <- 3cb90* tables=0 %s_%s
+82ec4	132	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 82830* 82a70 tables=0
+832c0	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 83200 tables=0
+83310	80	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 830a4 tables=0
+834c4	168	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 8349c tables=0
+83780	116	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 82d58 tables=0
+838bc	152	fontanería	by rule: no numbers and no text	floats=0 stores=11 <- 837f4 tables=0
+839f0	348	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 82ec4 tables=0
+83d54	68	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <- 29e9c 84084 tables=1 StaticImage
+84084	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+841cc	68	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <- 6fba8 84424 tables=1 StaticZImage
+8430c	280	cubierta	two-colour image, wash and go parts; built	floats=2 draws,stores=4 <- 842fc* tables=0
+84424	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+84994	116	cubierta	two-colour image, wash and go parts; built	floats=0 stores=0 <-  tables=1 StaticImage; StaticZImage; WaterSplash; CleanShinyStar; ShowerWater; WashingRoller; WashAn
+84a28	84	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+8568c	164	cubierta	by rule: only loads resources or makes objects	floats=1 new×1,stores=2,formed@8674a <-  tables=0
+85868	72	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+85a4c	68	cubierta	two-colour image, wash and go parts; built	floats=10 stores=1 <-  tables=1
+85a90	96	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 AMBIENT.STAR
+85c7c	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+85e44	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+86094	224	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 85e44 865fc* tables=0 WASH_AND_GO.ROLLER_%d
+86174	224	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 85c7c 86524* tables=0 WASH_AND_GO.WATER_%d
+86254	204	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 85868 86320* tables=0 WASH_AND_GO.SPLASH_%d
+866d4	140	cubierta	two-colour image, wash and go parts; built	floats=0 stores=0 <-  tables=1 WaterSplash; CleanShinyStar; ShowerWater; WashingRoller; WashAndGo; WaterRingPlane
+86844	108	cubierta	two-colour image, wash and go parts; built	floats=7 stores=5 <- 6af0* tables=0
+869c8	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+86a78	160	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 869c8 tables=0
+86cf8	76	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=5 <- 868b0* 86cd4 86fb4 tables=0
+86d44	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 86cf8 tables=0
+86fb4	52	fontanería	by rule: no numbers and no text	floats=0 stores=8 <- 86844 86a78 tables=0
+86fe8	68	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=7 <- 86fb4 tables=0
+8702c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 WaterRingPlane; WaterSilhouette
+87058	304	sin datos	silhouettes under the island's water: no such images	floats=0 loads,stores=5 <- 87380 tables=0 STAGES.ISLAND.WATER_SILHOUETTE.SILHOUETTE; STAGES.ISLAND.WATER_SILHOUETTE.OBJECT_%d; STAGE
+87188	188	sin datos	silhouettes under the island's water: no such images	floats=26 stores=9 <-  tables=1
+87244	316	sin datos	silhouettes under the island's water: no such images	floats=34 draws,stores=0 <-  tables=1
+87380	104	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+8752c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 WaterSilhouette; YesNoMessage
+87558	104	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 INDICATORS.NO; INDICATORS.YES
+875d0	328	cubierta	by rule: only loads resources or makes objects	floats=16 loads,stores=12 <- 875c0 tables=0 INDICATORS.NO; INDICATORS.YES
+87718	264	sin datos	silhouettes under the island's water: no such images	floats=35 draws,stores=0 <-  tables=1
+87964	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 YesNoMessage
+87b4c	140	sin datos	silhouettes under the island's water: no such images	floats=9 draws,stores=0 <-  tables=1
+87be8	156	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 River
+87c84	452	sin datos	silhouettes under the island's water: no such images	floats=68 loads,stores=4 <- 87e48 tables=0 AMBIENT.WAVE_REFLECT
+87e48	84	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+87e9c	516	sin datos	silhouettes under the island's water: no such images	floats=39 draws,loads,new×1,stores=5 <-  tables=1
+88174	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 River
+88194	40	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- bcff0 tables=0
+881bc	204	fontanería	by rule: no numbers and no text	floats=0 stores=12 <- bdf10 bf468 bf984 c0bc4 c0ed0 c5a14 tables=0
+882a4	568	fontanería	by rule: no numbers and no text	floats=0 stores=9 <- c04fc c056c c8758 c88c4 c8970 tables=0
+884dc	112	fontanería	by rule: no numbers and no text	floats=0 stores=6 <- c8ad0 c8ddc tables=0
+8854c	224	fontanería	by rule: no numbers and no text	floats=0 stores=8 <- 884dc 8862c 88668 c89cc c8ddc tables=0
+8862c	60	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 888b8 tables=0
+88668	88	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 888b8 tables=0
+886f8	136	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- c8ad0 c911c tables=0
+88780	312	fontanería	by rule: no numbers and no text	floats=0 stores=17 <- c911c tables=0
+888b8	764	fontanería	by rule: no numbers and no text	floats=0 stores=40 <- c8ddc c925c c9940 c9c80 ca2a8 ca4dc tables=0
+88bdc	256	fontanería	by rule: no numbers and no text	floats=0 stores=13 <- c8ddc c925c c9940 c9c80 ca2a8 ca4dc tables=0
+88cdc	156	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- c925c c9940 tables=0
+88d78	180	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 52f8 25ef8 71c40 84084 84424 90198 tables=0
+891a4	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+89238	56	no aplica	reading and writing saved objects, compression	floats=2 stores=0 <-  tables=1
+89298	108	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+89304	300	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 8a760 tables=0
+8952c	264	no aplica	reading and writing saved objects, compression	floats=0 stores=2 <- 89470 89634 tables=0 Compression error
+89634	88	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 8968c 896b0 896d0 896f4 89708 8972c tables=0
+896b0	32	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+896d0	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+89708	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+8972c	32	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+8974c	52	no aplica	reading and writing saved objects, compression	floats=2 stores=0 <-  tables=1
+89780	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+8979c	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+89800	300	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 8a7f0 tables=0
+89a74	428	no aplica	reading and writing saved objects, compression	floats=0 stores=18 <-  tables=3 Unknown serializable polymorphic
+89d90	44	fontanería	by rule: small helper	floats=2 stores=2 <-  tables=1
+89dbc	84	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 8a634 tables=0
+89e10	200	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 8a640 tables=0
+89ed8	504	no aplica	reading and writing saved objects, compression	floats=0 stores=6 <- 8a108 8a130 8a150 8a170 8a190 8a1b0 tables=0 Error while uncompressing; Size missmatch when reading serializable file; Crc32 missmatch 
+8a130	32	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+8a150	32	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+8a170	32	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+8a190	32	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+8a1c4	32	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+8a1f8	32	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
+8a218	40	fontanería	by rule: small helper	floats=2 stores=2 <-  tables=1
+8a240	372	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=8 <- 12ac4 82a70 8a6c4 tables=0
+8a3b4	236	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 8a6d0 tables=0
+8a594	160	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 8a240 tables=0
+8a640	132	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+8a6d0	132	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+8a760	132	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
+8a924	112	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=5 <- 89a74 tables=0
+8abc4	60	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 8a4cc tables=0
+8ad2c	60	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 8ac88 tables=0
+8b09c	124	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=5 <- 88fd8 tables=0
+8b480	124	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 8b3dc tables=0
+8b810	60	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 8b76c tables=0
+8ba1c	172	fontanería	by rule: no numbers and no text	floats=0 stores=8 <- 89e10 8a3b4 tables=0
+8be84	804	no aplica	reading and writing saved objects, compression	floats=155 stores=33 <- a9dac tables=0
