@@ -34,6 +34,9 @@ HEAP, HEAP_SIZE = 0x40000000, 0x1000000
 TRAP = 0x70000000
 # Code that belongs to the stage scripts and their local helpers, and so is run for real.
 NATIVE = (0xcde40, 0xe4704)  # from the tutorial's script to the end of Mars's
+# AM2_RE_NATIVE=lo,hi runs another range for real instead: 0xccc8c,0xcda08 is the world map's script.
+if os.environ.get('AM2_RE_NATIVE'):
+    NATIVE = tuple(int(x, 16) for x in os.environ['AM2_RE_NATIVE'].split(','))
 # Engine code that is also run for real: the level's random generator (a Mersenne Twister the
 # script seeds with stage * 100 + level), whose numbers decide when the bonus events start.
 ALSO_NATIVE = ((0xa2724, 0xa2888),)

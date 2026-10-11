@@ -90,7 +90,8 @@ export class SnowView extends Container {
 
   constructor(
     private readonly textures: TextureStore,
-    private readonly item: { resource: string; top: number; bottom: number; drift: number; fall: number; interval: number },
+    /** With `left` and `right` it is the world map's fall (class 0x5e570), kept between two sides. */
+    private readonly item: { resource: string; top: number; bottom: number; drift: number; fall: number; interval: number; left?: number; right?: number },
   ) {
     super();
   }
@@ -106,7 +107,9 @@ export class SnowView extends Container {
         flake.spinPush = Math.random() * 120 - 60;
       }
       this.move(flake, dt, fall);
-      if (flake.y >= bottom) {
+      // 0x5e7da: the map's flakes are also gone once outside its sides.
+      const outside = this.item.left !== undefined && this.item.right !== undefined && !(flake.x > this.item.left && flake.x < this.item.right);
+      if (flake.y >= bottom || outside) {
         flake.sprite.destroy();
         this.flakes.splice(i, 1);
         continue;
@@ -119,7 +122,7 @@ export class SnowView extends Container {
       const sprite = this.textures.sprite(this.item.resource);
       sprite.scale.set(0.75 + Math.random() * 0.25);
       // Its wind is picked on its first step (the gust clock starts below zero).
-      const flake: Flake = { sprite, x: Math.random() * 520 - 20, y: top, vx: (Math.random() * 2 - 1) * drift, ax: 0, angle: Math.random() * 360, spin: Math.random() * 120 - 60, spinPush: 0, gust: -1 };
+      const flake: Flake = { sprite, x: this.spawnX(), y: top, vx: (Math.random() * 2 - 1) * drift, ax: 0, angle: Math.random() * 360, spin: Math.random() * 120 - 60, spinPush: 0, gust: -1 };
       // It has already been falling for as long as it was due.
       this.move(flake, -this.next, fall);
       this.place(flake, top, bottom);
@@ -127,6 +130,15 @@ export class SnowView extends Container {
       this.flakes.push(flake);
       this.next += (0.5 + Math.random() * 0.5) * interval;
     }
+  }
+
+  /**
+   * Where a flake comes in. The map's (0x5e8c0) is picked over the two sides added together, less
+   * the left one, so most come in outside them and go on their first step.
+   */
+  private spawnX(): number {
+    const { left, right } = this.item;
+    return left !== undefined && right !== undefined ? Math.random() * (right + left) - left : Math.random() * 520 - 20;
   }
 
   /** 0x9f18 and 0x76810: position and turn move by their speed at the middle of the step. */

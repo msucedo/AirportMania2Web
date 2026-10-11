@@ -1,3 +1,4 @@
+import { birdPose, cloudBob, satellitePose } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
 import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
 import { barSpark, barStar, hangarSpark, sparkPose, tierBurst, tierTextPose } from '../src/game/view/goalEffects';
@@ -703,6 +704,26 @@ describe('scenery', () => {
     expect(spark).toMatchObject({ x: 10, y: 30, life: 0 });
     expect(spark.vx).toBeCloseTo(3, 5);
     expect(spark.vy).toBeCloseTo(18, 5);
+  });
+
+  it('moves the world map: clouds bob, birds circle, the satellite swings by', () => {
+    expect(cloudBob(0, 0.25, 2)).toBeCloseTo(2, 5);
+    expect(cloudBob(5, 0.25, 2)).toBeCloseTo(-2, 5);
+    expect(cloudBob(12.5, 0, 3.5)).toBeCloseTo(3.5, 5);
+    const bird = birdPose(0, 0);
+    expect(bird.x).toBeCloseTo(0, 5);
+    expect(bird.y).toBeCloseTo(1 + Math.cos(0.13) + Math.cos(0.15) + 30, 5);
+    expect(bird.frame).toBe(0);
+    expect(birdPose(1.3, 0).frame).toBe(0);
+    expect(birdPose(1.2, 0).frame).toBe(10);
+    expect(satellitePose(0.75)).toBeNull();
+    expect(satellitePose(2)).toBeNull();
+    const mid = satellitePose(0.375)!;
+    expect(mid.scale).toBeCloseTo(1, 5);
+    expect(mid.x).toBeCloseTo(-380 * Math.sin(0.375 * Math.PI), 4);
+    expect(mid.y).toBeCloseTo(350 * Math.cos(0.375 * Math.PI), 4);
+    expect(mid.angle).toBeCloseTo(-9.375, 5);
+    expect(satellitePose(0)).toMatchObject({ y: 350, scale: 0.5, bright: 0 });
   });
 });
 

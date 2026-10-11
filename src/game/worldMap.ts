@@ -11,6 +11,9 @@ import { DIALOG_SURFACES } from './view/dialog';
 import { MAIN_FONT, SCORE_FONT } from './view/floatingText';
 import { LevelDialog, MAP_DIALOG_FONTS, StageDialog } from './view/mapDialogs';
 import { findGoals } from '../data/levels';
+import { MAP_DECOR_SURFACES, MAP_STARS, MapBird, MapCloud, MapSatellite, type Decoration } from './view/mapDecor';
+import { AuroraView, StarView } from './view/scenery/night';
+import { SnowView } from './view/scenery/northPole';
 
 /** Stage icons and the ribbon under each, in map pixels, from the map script (0xccc8c). */
 const STAGE_ICONS: readonly { stage: number; icon: Point; ribbon: Point }[] = [
@@ -77,6 +80,8 @@ export class WorldMap {
   private dialog: Container | null = null;
   private selected: { stage: number; level: number } | null = null;
   private time = 0;
+  /** What moves on the map, each stepped every frame. */
+  private readonly decor: { update(dt: number): void }[] = [];
 
   private constructor(
     private readonly textures: TextureStore,
@@ -91,19 +96,60 @@ export class WorldMap {
     this.cursor = textures.sprite('MAP.LEVEL_SELECTED');
     this.cursor.visible = false;
 
-    for (const { stage, icon, ribbon } of STAGE_ICONS) {
+    const icon = (stage: number): void => {
       const picture = textures.sprite(`MAP.STAGES.${stage}`);
-      picture.position.copyFrom(icon);
+      picture.position.copyFrom(STAGE_ICONS[stage - 1]!.icon);
       picture.eventMode = 'static';
       picture.cursor = 'pointer';
       picture.on('pointertap', () => this.askStage(stage));
+      this.map.addChild(picture);
+    };
+    const ribbon = (stage: number): void => {
+      const at = STAGE_ICONS[stage - 1]!.ribbon;
       const band = textures.sprite('MAP.HERALDIC_RIBBON');
-      band.position.copyFrom(ribbon);
+      band.position.copyFrom(at);
       const title = new Text({ text: strings.t(`STAGES.${stage}.TITLE`), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 20, fill: 0x5a4a2a } });
       title.anchor.set(0.5);
-      title.position.set(ribbon.x, ribbon.y - 3);
-      this.map.addChild(picture, band, title);
+      title.position.set(at.x, at.y - 3);
+      this.map.addChild(band, title);
+    };
+    const put = (item: Decoration | (Container & { update(dt: number): void })): void => {
+      const view = 'view' in item ? item.view : item;
+      view.eventMode = 'none';
+      this.map.addChild(view);
+      this.decor.push(item);
+    };
+    // In the order the script makes them, which is the order they are drawn in. Still missing,
+    // each where it belongs: the sea's glints first of all, the wind after stage 5, the carrier's
+    // waves after stage 7, the shooting stars before the stars and the sign last.
+    icon(1);
+    ribbon(1);
+    icon(2);
+    const front = textures.sprite('MAP.ISLAND_FRONT');
+    front.position.set(214, 75);
+    front.eventMode = 'none';
+    this.map.addChild(front);
+    ribbon(2);
+    icon(3);
+    ribbon(3);
+    for (const at of [{ x: 526, y: 255 }, { x: 510, y: 255 }, { x: 526, y: 272 }]) put(new MapBird(textures, at));
+    icon(4);
+    ribbon(4);
+    for (const resource of ['SNOW_FLAKES.3', 'SNOW_FLAKES.4']) put(new SnowView(textures, { resource, left: 542, top: 0, right: 746, bottom: 143, drift: 10, fall: 25, interval: 0.05 }));
+    put(new MapCloud(textures, 'MAP.CLOUDS.SMALL', { x: 994, y: 34 }, 0.1, 1));
+    put(new MapCloud(textures, 'MAP.CLOUDS.MEDIUM', { x: 1015, y: 73 }, 0.2, 2));
+    put(new MapCloud(textures, 'MAP.CLOUDS.BIG', { x: 938, y: 72 }, 0.3, 3.5));
+    icon(5);
+    ribbon(5);
+    icon(6);
+    ribbon(6);
+    put(new AuroraView(textures, 'STAGES.ANTARCTIC.AURORA_BOREALIS', { x: 1146, y: -63, scaleX: 0.4, scaleY: 0.85, angle: 25 }));
+    for (const stage of [7, 8, 9, 10]) {
+      icon(stage);
+      ribbon(stage);
     }
+    for (const [x, y, size] of MAP_STARS) put(new StarView(textures, { x, y }, size));
+    put(new MapSatellite(textures, { x: 1813, y: 80 }));
     this.map.addChild(this.cursor);
 
     let next: { stage: number; level: number } | null = null;
@@ -238,10 +284,11 @@ export class WorldMap {
   update(seconds: number): void {
     this.time += seconds;
     this.cursor.scale.set(1 + 0.08 * Math.sin(this.time * 5));
+    for (const item of this.decor) item.update(seconds);
   }
 
   static async create(app: Application, data: GameData, textures: TextureStore, audio: AudioPlayer, options: WorldMapOptions): Promise<WorldMap> {
-    const surfaces = [...DIALOG_SURFACES, 'GUI.INGAMEGUI.SCORE_GOAL_BACK', 'GUI.FINAL_REPORT.STAR_SMALL', 'MAP.BACK', 'MAP.LEVEL_SELECTED', 'MAP.HERALDIC_RIBBON', 'MAP.HUD.BACK', 'MAP.HUD.REFLEXION'];
+    const surfaces = [...DIALOG_SURFACES, 'GUI.INGAMEGUI.SCORE_GOAL_BACK', 'GUI.FINAL_REPORT.STAR_SMALL', 'MAP.BACK', 'MAP.LEVEL_SELECTED', 'MAP.HERALDIC_RIBBON', 'MAP.HUD.BACK', 'MAP.HUD.REFLEXION', ...MAP_DECOR_SURFACES];
     for (let i = 0; i <= 6; i++) surfaces.push(`MAP.LEVELS.${i}`);
     for (const { stage } of STAGE_ICONS) surfaces.push(`MAP.STAGES.${stage}`);
     for (const button of BUTTONS) surfaces.push(`MAP.HUD.BUTTONS.${button.id}_ON`);

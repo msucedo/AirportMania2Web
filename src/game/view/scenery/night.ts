@@ -69,7 +69,8 @@ export class AuroraView extends Container {
   private readonly strip: MeshSimple;
   private time = 0;
 
-  constructor(textures: TextureStore, resource: string) {
+  /** `pose` is where the strip is put instead of the level's (the world map's, 0x637b8). */
+  constructor(textures: TextureStore, resource: string, pose?: { x: number; y: number; scaleX: number; scaleY: number; angle: number }) {
     super();
     const uvs = new Float32Array(AURORA_PAIRS * 4);
     const indices = new Uint32Array((AURORA_PAIRS - 1) * 6);
@@ -83,8 +84,14 @@ export class AuroraView extends Container {
     }
     this.strip = new MeshSimple({ texture: textures.texture(resource), vertices: auroraPoints(0), uvs, indices });
     this.strip.blendMode = 'add';
-    this.strip.scale.set(0.5);
-    this.strip.position.set(10, -2);
+    if (pose) {
+      this.strip.scale.set(pose.scaleX, pose.scaleY);
+      this.strip.angle = pose.angle;
+      this.strip.position.set(pose.x, pose.y);
+    } else {
+      this.strip.scale.set(0.5);
+      this.strip.position.set(10, -2);
+    }
     this.addChild(this.strip);
   }
 

@@ -22,6 +22,7 @@ declare global {
   interface Window {
     /** Exposed for manual poking and automated checks. */
     game?: LevelScene;
+    map?: WorldMap;
     progress?: Progress;
   }
 }
@@ -128,7 +129,7 @@ async function main(): Promise<void> {
     // A stage without a level is the map centred on it.
     const audio = makeAudio();
     const focus = Number.parseInt(params.get('map') || params.get('stage') || '', 10);
-    await WorldMap.create(app, data, textures, audio, {
+    window.map = await WorldMap.create(app, data, textures, audio, {
       strings: await data.strings(chosen),
       progress,
       playable,

@@ -2298,3 +2298,49 @@ It is a testing back door; the owner of this port chose to leave it out (2026-10
 `Bird` (`0x22c2c`, images `BIRD.%d`) is a class made by name through the object registry
 (`0x22c00` in the table at `0x1765b4`). No data file names it and no code makes it directly, so
 no level ever has one. The map's birds (`0x5e098`) are another class.
+
+## World map: what the script makes, in order — confirmed
+
+From a run of the script in the emulator
+(`AM2_RE_NATIVE=0xccc8c,0xcda08 tools/re/stage_layout.py 0xccc8c --raw --floats`). Objects are
+drawn in the order made, each moved by the map's scroll (`app+0x154`, `+4`/`+8`).
+`tools/re/vtable.py <ctor start> <end>` prints a class's vtable: slot 4 draws, slot 6 updates.
+
+1. `MAP.BACK` (`0x60a68` → sprite class `0x63988`, draw `0x63af8`).
+2. Sea glints `0x60d84(count?, rect, a | b, c)`: (0, 702 367 844 433, 0.07 | 0.6, 0),
+   (2, 11 22 130 142, 0.1 | 0.65, 0), (3, 1259 382 1530 452, 0.07 | 0.65, 40); class `0x5ee18`,
+   `AMBIENT.WAVE_REFLECT`. **Not built yet.**
+3. Stage 1 icon and ribbon; stage 2 icon; `MAP.ISLAND_FRONT` at (214, 75); ribbon 2; stage 3
+   icon and ribbon.
+4. Three birds `0x60fd0` at (526, 255), (510, 255), (526, 272). Class `0x5e168`: rate 10–14 a
+   second, phase 0–1, clock from 0–2000 wrapping at 22000 (update `0x5e2ac`). Draw `0x5e34c`:
+   with `D = 0.06π·clock + phase`, at `(50·sin D, 30·cos D + cos(2π·clock + phase) +
+   cos(11π·clock + 0.13) + cos(20π·clock + 0.15))`, frame `trunc(9·clock) mod 11` of `BIRD.%d`.
+5. Stage 4 icon and ribbon; two snowfalls `0x61078(rect 542 0 746 143, image, 10 | 25, 0.05)`
+   with `SNOW_FLAKES.3` and `.4`. Class `0x5e570` (update `0x5e6e4`, draw `0x5ea34`) is the
+   level's snow with sides: drift 10, fall 25, interval 0.05; a flake comes in at
+   `rand·(right + left) − left` (`0x5e8c0`) and is dropped once outside the sides or under the
+   bottom, so most never show.
+6. Clouds `0x61210(image, place, phase | swing)`: `MAP.CLOUDS.SMALL` (994, 34) 0.1 | 1, `MEDIUM`
+   (1015, 73) 0.2 | 2, `BIG` (938, 72) 0.3 | 3.5. Class `0x63354`, draw `0x634dc`: y is moved by
+   `swing·sin(2π·(frac(0.1·T) + phase))`, T the app's clock (`app+0x1ec`).
+7. Stage 5 icon (`0x60408`, with a propeller, **not built**) and ribbon; four winds
+   `0x60bec('MAP.WIND', p0, p1 | p2, delay, 2)`: (1014 164, 914 96, 860 52, 1.8),
+   (991 189, 914 130, 841 67, 0.95), (980 220, 901 155, 824 106, 1.4),
+   (916 218, 839 164, 778 137, 0.4). Class `0x39dcc`. **Not built yet.**
+8. Stage 6 icon and ribbon; the aurora (`0x60b44` → `0x637b8`, the level's class drawn with a
+   transform, `0x63918`): scale (0.4, 0.85), turned 25°, at (1146, −63).
+9. Stage 7 icon and ribbon; the carrier's waves `0x612d0` at (1368, 331), class `0x62a24`,
+   `MAP.CARRIER_WAVES`. **Not built yet.** Stages 8, 9, 10.
+10. Two shooting stars `0x60bec('AMBIENT.SHOOTING_STAR', …)`: (1445 12, 1423 97, 1390 212, 0, 30)
+    and (1487 12, 1436 97, 1394 212, 15, 30). **Not built yet.**
+11. Thirteen stars `0x60cc4(place, size)` (the level's class `0x292bc`): (1202 30) 8, (1336 93) 7,
+    (1399 30) 10, (1485 38) 9, (1415 135) 14, (1448 229) 8, (1605 356) 12, (1678 379) 8,
+    (1932 30) 18, (1844 74) 7, (1980 115) 10, (1902 208) 13, (1875 147) 13.
+12. The satellite `0x61140((1813, 80), 4, 0.75 | 0.02, 2)`, class `0x5eb4c`: its clock starts at
+    2, runs 0.02 a second and wraps at 4 (`0x5ec24`); drawn while under 0.75 (`0x5ec60`) turned
+    `15·clock − 15`°, scaled `0.5 + 0.5·sin(π·clock/0.75)`, at
+    `(−380·sin(π·clock), 350·cos(π·clock))` from its place; `MAP.SATELLITE_BRIGHT` over it at
+    opacity `clamp(2·sin(250·clock) − 1)`.
+13. Level markers (`0x606bc`), then the sign `0x6033c('MAP.SIGN_COMING_SOON', 10, 1630, 417)`.
+    **Not built yet.**
