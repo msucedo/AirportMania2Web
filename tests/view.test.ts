@@ -1,3 +1,4 @@
+import { floatingAlpha, floatingPush, floatingStretch } from '../src/game/view/floatingText';
 import { puffPeriod, smokeAlpha, smokes } from '../src/game/view/smokeTail';
 import { PlaneState } from '../src/game/sim/rules';
 import { deicerPose } from '../src/game/view/iceView';
@@ -546,6 +547,27 @@ describe('scenery', () => {
     expect(smokeAlpha(0.25)).toBe(0.5);
     expect(smokeAlpha(0.5)).toBe(1);
     expect(smokeAlpha(0.99)).toBe(1);
+  });
+
+  it('wobbles a floating text as it appears and lets it go over its last second', () => {
+    expect(floatingStretch(0)).toEqual({ x: 1, y: 1 });
+    const early = floatingStretch(1 / 6);
+    expect(early.x).toBeCloseTo(1 + 0.075, 5);
+    expect(early.y).toBeCloseTo(1 + 0.15 * Math.sin(0.75 * Math.PI), 5);
+    expect(floatingStretch(0.7)).toEqual({ x: 1, y: 1 });
+    expect(floatingAlpha(0.2, 1.4)).toBe(1);
+    expect(floatingAlpha(0.9, 1.4)).toBeCloseTo(0.5, 5);
+  });
+
+  it('pushes up the texts in the way of a new one', () => {
+    const at = { x: 100, y: 50 };
+    // The newest has risen 4 of the 18 px the new one needs: it and the one under it go up 14.
+    expect(floatingPush([{ x: 100, y: 50, offset: 30 }, { x: 102, y: 50, offset: 4 }], at, 18)).toEqual([14, 14]);
+    // A text elsewhere stops the pushing.
+    expect(floatingPush([{ x: 100, y: 50, offset: 30 }, { x: 200, y: 50, offset: 4 }], at, 18)).toEqual([0, 0]);
+    // Nothing to push once the newest is clear.
+    expect(floatingPush([{ x: 100, y: 50, offset: 20 }], at, 18)).toEqual([0]);
+    expect(floatingPush([], at, 18)).toEqual([]);
   });
 });
 
