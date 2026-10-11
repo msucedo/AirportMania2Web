@@ -21,7 +21,7 @@ import { dirtAlpha, rollerPose, splashPose, starPose, washElapsed, waterPose } f
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace, nagFlash } from '../src/game/planeView';
-import { markerImage } from '../src/game/worldMap';
+import { coast, dragSpeed, markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
 import { comboArrows, usingArrow } from '../src/game/view/runwayView';
@@ -913,3 +913,21 @@ describe('scenery', () => {
   });
 });
 
+describe('the map\'s scroll', () => {
+  it('takes its speed from the drag, within limits', () => {
+    expect(dragSpeed(0, 5, 1 / 60)).toBeCloseTo(120);
+    expect(dragSpeed(120, 5, 1 / 60)).toBeCloseTo(192);
+    expect(dragSpeed(0, 100, 1 / 60)).toBe(480);
+    expect(dragSpeed(0, -100, 1 / 60)).toBe(-480);
+    expect(dragSpeed(10, 0, 1 / 60)).toBe(0);
+  });
+
+  it('runs on, slows to a tenth a second and stops at the ends', () => {
+    expect(coast(-50, 100, 1, -540)).toEqual({ x: 0, speed: 0 });
+    const free = coast(-300, 200, 0.5, -540);
+    expect(free.x).toBeCloseTo(-200);
+    expect(free.speed).toBeCloseTo(200 * Math.sqrt(0.1));
+    expect(coast(-300.4, 20, 0.5, -540)).toEqual({ x: -290, speed: 0 });
+    expect(coast(-530, -100, 1, -540)).toEqual({ x: -540, speed: 0 });
+  });
+});

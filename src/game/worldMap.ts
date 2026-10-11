@@ -68,11 +68,32 @@ export interface WorldMapOptions {
   onAwards: () => void;
 }
 
+/** The speed a drag has, in px a second (0x5ff22): it follows the touch's by 0.4 a frame, within ±480, and under 10 is none. */
+export function dragSpeed(speed: number, moved: number, dt: number): number {
+  const next = Math.max(-480, Math.min(480, 0.6 * speed + (0.4 * moved) / dt));
+  return Math.abs(next) < 10 ? 0 : next;
+}
+
+/**
+ * The map running on by itself (0x60050): it stops dead at either end (`low` and 0), its speed
+ * falls to a tenth every second, and under 10 px a second it stops on a whole pixel.
+ */
+export function coast(x: number, speed: number, dt: number, low: number): { x: number; speed: number } {
+  x += speed * dt;
+  if (x < low) [x, speed] = [low, 0];
+  if (x > 0) [x, speed] = [0, 0];
+  if (dt > 0 && Math.abs(speed) > 5) {
+    speed *= 0.1 ** dt;
+    if (Math.abs(speed) < 10) [x, speed] = [Math.floor(x + 0.5), 0];
+  }
+  return { x, speed };
+}
+
 /**
  * The world map: the original image with the stage icons, ribbons and level markers where the
  * map script and the level position table put them, and the bar with its four buttons. A level
  * is started from the dialog its marker opens, or with Play for the current one; a stage's icon
- * opens its description. Dragging scrolls the map. The
+ * opens its description. Dragging scrolls the map, which runs on when let go. The
  * original's drifting clouds, ships, wind and satellites are not drawn, and the tutorial and awards buttons do nothing yet.
  */
 export class WorldMap {
@@ -290,26 +311,53 @@ export class WorldMap {
     this.open(new StageDialog(this.textures, this.audio, strings, { number: stage, prize, awards: stageAwardPictures(this.textures, this.awardPlaces, progress.awards, stage) }, () => this.close()));
   }
 
+  /** The touch holding the map, and the speed it runs on at when let go. */
+  private held: { pointer: number; last: number; speed: number } | null = null;
+  private speed = 0;
+
   private scrollTo(x: number): void {
     this.map.x = Math.max(SCREEN_WIDTH - MAP_WIDTH, Math.min(0, x));
   }
 
   private enableDragging(): void {
-    let grabbed: { pointer: number; mapX: number } | null = null;
     this.map.eventMode = 'static';
     this.map.hitArea = new Rectangle(0, 0, 2040, 510);
-    this.map.on('pointerdown', (event: FederatedPointerEvent) => (grabbed = { pointer: event.global.x, mapX: this.map.x }));
-    this.map.on('globalpointermove', (event: FederatedPointerEvent) => {
-      if (grabbed) this.scrollTo(grabbed.mapX + event.global.x - grabbed.pointer);
+    // 0x6002c: a touch on the map takes hold of it and stops it.
+    this.map.on('pointerdown', (event: FederatedPointerEvent) => {
+      this.held = { pointer: event.global.x, last: event.global.x, speed: 0 };
+      this.speed = 0;
     });
-    const release = (): void => void (grabbed = null);
+    this.map.on('globalpointermove', (event: FederatedPointerEvent) => {
+      if (this.held) this.held.pointer = event.global.x;
+    });
+    // 0x5ffd4: let go, it runs on at the speed the drag had.
+    const release = (): void => {
+      if (this.held) this.speed = this.held.speed;
+      this.held = null;
+    };
     this.map.on('pointerup', release);
     this.map.on('pointerupoutside', release);
+  }
+
+  /** The map follows the touch that holds it and runs on when let go (0x5fe86, 0x60050). */
+  private scroll(dt: number): void {
+    let x = this.map.x;
+    if (this.held) {
+      const moved = this.held.pointer - this.held.last;
+      this.held.last = this.held.pointer;
+      x += moved;
+      if (Math.abs(moved) < 1) x = Math.floor(x + 0.5);
+      if (dt > 0) this.held.speed = dragSpeed(this.held.speed, moved, dt);
+    }
+    const next = coast(x, this.speed, dt, SCREEN_WIDTH - MAP_WIDTH);
+    this.map.x = next.x;
+    this.speed = next.speed;
   }
 
   /** The selection mark breathes so the chosen level stands out. */
   update(seconds: number): void {
     this.time += seconds;
+    this.scroll(seconds);
     this.cursor.scale.set(1 + 0.08 * Math.sin(this.time * 5));
     for (const item of this.decor) item.update(seconds);
   }

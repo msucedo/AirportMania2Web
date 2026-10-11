@@ -957,7 +957,16 @@ update).
   18 lower `TOTAL` from x 5 and the sum ending at 200. The stage's awards (those given once
   a stage that it has, `0x63cf0`) are drawn by the dialog's draw (`0x64528`) in a row from
   (−110, 35): `step = max(40, 70 − 7n)` apart, the first at `floor(−step·(n − 1)/2)`.
-- Web version: dragging scrolls the map; both dialogs follow the positions above.
+- Scrolling (map update `0x5fd6c`): a touch on the map itself (no icon under it, no dialog)
+  takes hold (`0x6002c`): the place touched is kept and both speeds are cleared. While held
+  (`0x5fe86`) the map moves by what the touch moved (rounded to a whole pixel when that is
+  under 1), and the drag's speed becomes `0.6·speed + 0.4·moved/dt`, kept within ±480 across
+  and ±320 down, and cleared under 10. Let go (`0x5ffd4`), that speed becomes the map's own.
+  Every frame (`0x60050`) the map moves by its speed; at an end (`−(size − 480)` and 0 across,
+  `−(size − 290)` and 0 down) it stops there with no speed; over 5 px a second the speed is
+  multiplied by `0.1^dt`, and once under 10 it is cleared and the place rounded.
+- Web version: the same, across (the map is not taller than the screen); both dialogs follow
+  the positions above.
 
 ## End of the level — confirmed
 
@@ -2463,8 +2472,8 @@ width apart with u 0 and 1, and v `clamp(2t − d)`, `d` being how far along the
 is (0 to 1). Only rows from the last with v at 1 to the first with v at 0 are drawn. The rows
 were read off runs of the draw (`tools/re/draw_trace.py 0x39dcc --r1 ptr:0 --r2 ptr:1014f,164f
 --r3 ptr:914f,96f --stack ptr:860f,52f 0f 2f --stub 0xa4f30 0xa2e4c --then 0x39f8c --poke
-0x24=0.45f 0x4=img:8x170`), and are kept as data in the web version. That draw is given no
-scroll of its own; the web version moves the streaks with the map like everything else.
+0x24=0.45f 0x4=img:8x170`), and are kept as data in the web version. The map makes its own
+kind of them (`0x60bec`), whose draw (`0x63784`) moves them by the map's scroll first.
 
 ## The opening screens — confirmed
 
