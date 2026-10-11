@@ -21,7 +21,7 @@ import { GAME_MENU_SURFACES, GameMenu } from './view/gameMenu';
 import { RunwayView, runwaySurfaceIds } from './view/runwayView';
 import { SERVICE_SLOTS, SERVICE_TAB_SURFACES, ServiceTab, serviceGrip } from './view/serviceTab';
 import { SKY_SURFACES, SkyView } from './view/sky';
-import { BuoyLine, ringInterval, WATER_SURFACES, WaterRings } from './view/waterEffects';
+import { BuoyLine, ShoreWaves, WATER_SURFACES, WaterRings, ringInterval } from './view/waterEffects';
 import { createScenery, scenerySurfaceIds, type SceneryView } from './view/scenery';
 import { backdropOf, isScenery } from './stages/layout';
 import { PASSENGER_ICONS, PlaneView, planeSurfaceIds, type BalloonCorner, type Passenger } from './planeView';
@@ -181,6 +181,7 @@ export class LevelScene {
     private readonly strings: Strings,
     private readonly options: LevelOptions,
     sim: Simulation,
+    private readonly shore: { points: number[]; across: number[]; indices: number[] } | null = null,
   ) {
     this.sim = sim;
     this.hud = new Hud(textures, sim.goals);
@@ -286,7 +287,7 @@ export class LevelScene {
       loadFonts(data.resources, [HUD_FONT, SCORE_FONT, MAIN_FONT, ...FINAL_REPORT_FONTS, ...IMPROVEMENTS_FONTS, ...LEVEL_INTRO_FONTS, ...HELP_FONTS, ...(options.stage === 0 ? TUTORIAL_FONTS : [])]),
     ]);
 
-    const scene = new LevelScene(textures, audio, strings, options, sim);
+    const scene = new LevelScene(textures, audio, strings, options, sim, layout.water ? await data.waterMesh() : null);
     scene.awardPlaces = awardPlaces;
     app.stage.addChild(scene.root);
     const levelMusic = (): void => audio.playMusic(`${area.music}.LOOP`, `${area.music}.INTRO`);
@@ -677,6 +678,8 @@ export class LevelScene {
     if (layout.water) {
       this.rings = new WaterRings(this.textures);
       this.ground.addChild(this.rings);
+      // 0x138ac: the shore's waves are made right after the rings.
+      if (this.shore) this.ground.addChild(new ShoreWaves(this.textures, this.shore));
     }
 
     for (const runway of this.sim.runways) {

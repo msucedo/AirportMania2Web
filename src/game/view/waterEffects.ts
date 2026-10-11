@@ -1,7 +1,7 @@
-import { Container, Sprite } from 'pixi.js';
+import { Container, MeshSimple, Sprite } from 'pixi.js';
 import type { TextureStore } from '../../engine/textures';
 
-export const WATER_SURFACES = ['AMBIENT.WAVE_REFLECT', 'STAGES.ISLAND.WATER_RING', 'STAGES.ISLAND.BUOY', 'STAGES.ISLAND.BUOY_MASK'];
+export const WATER_SURFACES = ['AMBIENT.WAVE_REFLECT', 'STAGES.ISLAND.WATER_RING', 'STAGES.ISLAND.BUOY', 'STAGES.ISLAND.BUOY_MASK', 'STAGES.ISLAND.WAVES'];
 
 export interface SparkleArea {
   x1: number;
@@ -126,5 +126,25 @@ export class BuoyLine extends Container {
     for (const buoy of this.buoys) {
       buoy.sprite.y = this.baseY - 0.5 * (Math.sin(this.time * buoy.fast + buoy.x) + Math.sin(this.time * buoy.slow + buoy.x) + 2);
     }
+  }
+}
+
+/** How far along its picture the shore's band is taken `time` seconds on (0x5035c): once round every four seconds. */
+export const shoreSlide = (time: number): number => 0.25 * time - Math.floor(0.25 * time);
+
+/**
+ * The waves along the island's shore (`IslandWater`, made by 0x138ac → 0x5021c; draw 0x5034c):
+ * the band of `MESHES.WATER_MESH`, in screen coordinates, textured with `STAGES.ISLAND.WAVES`.
+ * Every point takes the same place along the picture, which moves with the app's clock, and its
+ * own place across it: the band shows one column of the picture at a time.
+ */
+export class ShoreWaves extends Container {
+  constructor(textures: TextureStore, mesh: { points: number[]; across: number[]; indices: number[] }) {
+    super();
+    const uvs = (along: number): Float32Array => new Float32Array(mesh.across.flatMap((v) => [along, v]));
+    const band = new MeshSimple({ texture: textures.texture('STAGES.ISLAND.WAVES'), vertices: new Float32Array(mesh.points), uvs: uvs(0), indices: new Uint32Array(mesh.indices) });
+    band.onRender = () => (band.geometry.uvs = uvs(shoreSlide(performance.now() / 1000)));
+    this.addChild(band);
+    this.eventMode = 'none';
   }
 }

@@ -777,7 +777,11 @@ sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructo
   created and (x − 166, y + 6) after it. Nine buoys 41 px apart; each rises by
   `(sin(t · a + x) + sin(t · b + x) + 2) / 2` with a in 4.5–8.3 and b in 1.5–4.3, and
   `STAGES.ISLAND.BUOY_MASK` is drawn at its resting place over it (`0x233e8`).
-- `0x138ac` → `0x5021c`, created right after the rings, has not been identified.
+- Shore waves, `0x138ac` → `0x5021c` (`IslandWater`), created right after the rings: the mesh
+  `MESHES.WATER_MESH` (83 points in screen coordinates, a band along the shore, with its
+  triangles) textured with `STAGES.ISLAND.WAVES`. Its draw (`0x5034c`) gives every point the
+  same place along the picture, `frac(0.25·t)` of the app's clock, keeping its own place
+  across it. Web version: the same, on the page's clock.
 
 ## Runway drawing — confirmed (`0x6dd44`)
 

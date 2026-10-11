@@ -41,7 +41,7 @@ import { backdropOf, isScenery } from '../src/game/stages/layout';
 import { NORTH_POLE } from '../src/game/stages/northPole';
 import { flagLean, horizonPose, horizonX } from '../src/game/view/scenery/simple';
 import { spaceDrift, spaceStars, spaceTwinkle, starGenerator } from '../src/game/view/scenery/space';
-import { glintSlide } from '../src/game/view/waterEffects';
+import { glintSlide, shoreSlide } from '../src/game/view/waterEffects';
 
 describe('plane drawing rules', () => {
   it('picks the perspective and mirroring from the heading', () => {
@@ -995,5 +995,13 @@ describe('a gate\'s label', () => {
     expect(gateLabelStrength(1, 1)).toBe(1);
     expect(gateLabelStrength(0.75, 1)).toBeCloseTo(0.5);
     expect(gateLabelStrength(1, 0.8)).toBeCloseTo(0.2);
+  });
+});
+
+describe('the island\'s shore waves', () => {
+  it('go round their picture every four seconds', () => {
+    expect(shoreSlide(0)).toBe(0);
+    expect(shoreSlide(1)).toBeCloseTo(0.25);
+    expect(shoreSlide(5)).toBeCloseTo(0.25);
   });
 });
