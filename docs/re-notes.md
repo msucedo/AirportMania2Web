@@ -844,12 +844,30 @@ Vtable `0x17a8e8`, kind 5.
   by (0.7, 0.7, 0.9); `IMPROVEMENTS.BOUGHT` over it when owned; and, marked "try me",
   `IMPROVEMENTS_DIALOG.TRY_ME` in `FONTS.MAIN` at 0.8, right-aligned at (+40, +10), fading
   near the list's ends. The description's box is (−105, −80)–(220, 40), from its left and top.
-- The list (`0x4d388`) is made at (−170, 0), 75 wide, 4.5 rows high, its rows 50 px apart
-  (`0x4d638`). Its update (`0x4d688`) drags it with the touch inside ±55 by ±115 of its middle,
-  lets it run on and settle (a factor of 0.03 a second), and picks the item touched.
-- Not read in full: that update's limits and where the rows rest, and how fast `item+8` rises
-  and falls. In the web version the rows are put evenly about the list's middle, the list is
-  dragged without running on, and the highlight is simply on the chosen item.
+- The list (`0x4d388`) is the engine's list box (`0x2ead0`, pictures `GUI.DIALOGS.COMBOBOX.*`)
+  made at (−170, 0), 75 wide, 4.5 rows of 50 px high (225). Its box (`0x2ebd4`) is the `BACK`
+  picture drawn 99 by 289 about that middle, keeping its left 12 px, what is past 24 px of its
+  right, and its top and bottom 32 px. In each 32 px end there is a highlight (`REMARK_UP`,
+  `REMARK_DOWN`, the same width) and the `ARROW` picture, 30 px square, centred against the
+  rows' edge, the lower one upside down; an arrow is drawn whole when the choice can move that
+  way and at 0.7 when not (`0x2e4f4`).
+- Its life (`0x2ee44`, called by the shop's `0x4d688`): each row's highlight (`item+8`) follows
+  whether it is the chosen one at 5 a second (`0xa068`); each end's highlight follows whether a
+  touch is held on its arrow (within the list's width, 30 px beyond the rows) at 8 a second
+  (`0x9dd4`); let go there, the choice moves one row.
+- Scrolling, in rows (`+0x3bc`, starting at −1): row `i`'s pictures are centred
+  `50·(i − scroll) − 135` from the middle (`0x4de04`), drawn only between −115 and 115 and in
+  three bands, the outer 10 px ones for fading (`0x4dd80`). A touch within 55 px across and
+  115 px up or down picks the row `floor((y + 115)/50 + 1 + scroll)` and takes hold: the scroll
+  follows the touch (`0x4d72c`). Let alone it goes to its rest (`0x4d742`): where it is, but no
+  more than `chosen − 1`, no less than `chosen − 4.1`, and within −1 and `count − 5.1`, rounded
+  to a pixel; what is left falls to 0.03 of itself every second. It is always kept within −4.75
+  and `count − 1.25`.
+- A pick (`0x4d92c`) refreshes the dialog (`0x4c218`, which plays
+  `SOUNDS.ITEM_SELECTION_CHANGE` unless the dialog's `+0x7c` is set); picking the same row again
+  within the engine's double-touch time (0.4 s, `0xaf332`) buys or sells it (`0x4bee0`).
+- Web version: all of it. Ours: the edge bands fade evenly (their vertex colours are not read),
+  and the sound plays on every pick but not when the dialog opens (`+0x7c` is not read).
 - The dialog object is made once at start-up (`0x4be20`, kept at `app+0x1b4`) and shown by
   `Level::start` (`0xfe8c`) with `MUSICS.SHOPPING` before every level except the tutorial and
   level 1 of stage 1; leaving it starts the level. The web version does the same and reloads the

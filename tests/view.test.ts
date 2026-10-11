@@ -21,6 +21,7 @@ import { dirtAlpha, rollerPose, splashPose, starPose, washElapsed, waterPose } f
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace, nagFlash } from '../src/game/planeView';
+import { listLimit, listRest, listRowAt, listRowY, listSettle } from '../src/game/view/improvementsDialog';
 import { coast, dragSpeed, markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
@@ -929,5 +930,35 @@ describe('the map\'s scroll', () => {
     expect(free.speed).toBeCloseTo(200 * Math.sqrt(0.1));
     expect(coast(-300.4, 20, 0.5, -540)).toEqual({ x: -290, speed: 0 });
     expect(coast(-530, -100, 1, -540)).toEqual({ x: -540, speed: 0 });
+  });
+});
+
+describe('the shop\'s list', () => {
+  it('rests with its first row at the top and its last at the bottom', () => {
+    expect(listRest(-3, 0, 8)).toBe(-1);
+    expect(listRowY(0, -1)).toBe(-85);
+    expect(listRest(6, 7, 8)).toBeCloseTo(2.9);
+    expect(listRowY(7, 2.9)).toBeCloseTo(70);
+  });
+
+  it('keeps the chosen row in view', () => {
+    expect(listRest(-1, 5, 8)).toBeCloseTo(0.9);
+    expect(listRest(2.9, 1, 8)).toBe(0);
+    expect(listRest(1.5, 3, 8)).toBe(1.5);
+  });
+
+  it('settles, and can be dragged only so far', () => {
+    expect(listSettle(1, 0, 1)).toBeCloseTo(0.03);
+    expect(listSettle(0.004, 0, 1)).toBe(0);
+    expect(listLimit(-9, 8)).toBe(-4.75);
+    expect(listLimit(9, 8)).toBe(6.75);
+  });
+
+  it('finds the row under a touch', () => {
+    expect(listRowAt(-115, -1, 8)).toBe(0);
+    expect(listRowAt(-66, -1, 8)).toBe(0);
+    expect(listRowAt(-64, -1, 8)).toBe(1);
+    expect(listRowAt(110, 2.9, 8)).toBe(7);
+    expect(listRowAt(-115, -3, 8)).toBe(0);
   });
 });
