@@ -1,4 +1,4 @@
-import { Container, NineSliceSprite, Rectangle, type FederatedPointerEvent, type Sprite } from 'pixi.js';
+import { Container, NineSliceSprite, Rectangle, Text, type FederatedPointerEvent, type Sprite } from 'pixi.js';
 import { LANGUAGES, type Language, type Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -19,11 +19,13 @@ export const GAME_MENU_SURFACES = [
 ];
 
 export type MenuExit = 'resume' | 'restart' | 'map' | 'mainMenu';
-type Page = 'menu' | 'options' | 'finish' | 'language';
+type Page = 'menu' | 'options' | 'finish' | 'language' | 'askRestart' | 'askMap';
 
 const WIDTH = 340;
 /** Frame heights: the options page, the in-game menu (0x66c00) and the finish dialog (0x3773c). */
-const HEIGHT: Record<Page, number> = { options: 220, menu: 240, finish: 260, language: 220 };
+const HEIGHT: Record<Page, number> = { options: 220, menu: 240, finish: 260, language: 220, askRestart: 200, askMap: 200 };
+/** The two questions (0x373e8, 0x3710c) are 400 wide. */
+const ASK_WIDTH = 400;
 const SLIDER = { x: 85, width: 150 };
 
 export interface GameMenuOptions {
@@ -68,9 +70,10 @@ export class GameMenu extends Container {
     // Destroyed once the touch that changed the page has been dispatched.
     setTimeout(() => old.forEach((child) => child.destroy({ children: true })));
     const height = HEIGHT[page];
-    const { overlay, panel } = dialogFrame(this.textures, WIDTH, height);
+    const width = page === 'askRestart' || page === 'askMap' ? ASK_WIDTH : WIDTH;
+    const { overlay, panel } = dialogFrame(this.textures, width, height);
     const centre = new Container();
-    centre.position.set(WIDTH / 2, height / 2);
+    centre.position.set(width / 2, height / 2);
     panel.addChild(centre);
     this.addChild(overlay);
     const { strings, inGame } = this.options;
@@ -87,10 +90,24 @@ export class GameMenu extends Container {
       button(bottom - 70, strings.t('IN_GAME_MENU_DIALOG.FINISH_GAME'), () => this.show('finish'));
       button(bottom, strings.t('RESUME'), () => this.options.onExit('resume'));
     } else if (page === 'finish') {
-      button(-100, strings.t('FINISH_GAME_DIALOG.RESTART_LEVEL'), () => this.options.onExit('restart'), 310);
-      button(-40, strings.t('FINISH_GAME_DIALOG.MAP'), () => this.options.onExit('map'), 310);
+      // 0x380e4, 0x37e44: restarting and going to the map are asked about first; the main menu is not.
+      button(-100, strings.t('FINISH_GAME_DIALOG.RESTART_LEVEL'), () => this.show('askRestart'), 310);
+      button(-40, strings.t('FINISH_GAME_DIALOG.MAP'), () => this.show('askMap'), 310);
       button(20, strings.t('FINISH_GAME_DIALOG.MAIN_MENU'), () => this.options.onExit('mainMenu'), 310);
       button(110, strings.t('RESUME'), () => this.options.onExit('resume'), 310);
+    } else if (page === 'askRestart' || page === 'askMap') {
+      // The question in (−200, −100)–(200, 40), Yes at (−105, 80) and No at (105, 80), 170 wide.
+      // No goes back to the finish dialog (0x38384, 0x388c4).
+      const restart = page === 'askRestart';
+      const question = new Text({
+        text: strings.t(restart ? 'RESTART_LEVEL_DIALOG.TEXT' : 'GO_TO_MAP_LEVEL_DIALOG.TEXT'),
+        style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, align: 'center', wordWrap: true, wordWrapWidth: 400 },
+      });
+      question.anchor.set(0.5);
+      question.position.set(0, -30);
+      centre.addChild(question);
+      dialogButton(this.textures, this.audio, centre, { x: -105, y: 80, width: 170, height: 30 }, strings.t('YES'), family, () => this.options.onExit(restart ? 'restart' : 'map'));
+      dialogButton(this.textures, this.audio, centre, { x: 105, y: 80, width: 170, height: 30 }, strings.t('NO'), family, () => this.show('finish'));
     } else if (page === 'options') {
       const top = -height / 2 + 10;
       this.volume(centre, top + 15, strings.t('OPTIONS_DIALOG.SOUND_FX'), 'sound');

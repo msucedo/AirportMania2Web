@@ -2100,6 +2100,20 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   the way back's place (20, 305), where a floater's scale is applied, the giant font's colours,
   that the text is at height 160. The loading screen between is not built.
 
+## Leaving a level from its menu — confirmed
+
+- The finish dialog's buttons: Main Menu (`0x37b68`) saves and goes at once; Go to Map
+  (`0x37e44`) opens the question at `app+0x1b8` and Restart Level (`0x380e4`) the one at
+  `app+0x1a8`.
+- The questions (`0x3710c`, `0x373e8`): 400×200, `GO_TO_MAP_LEVEL_DIALOG.TEXT` or
+  `RESTART_LEVEL_DIALOG.TEXT` in `FONTS.WHITE` in (−200, −100)–(200, 40), `YES` at (−105, 80)
+  and a second button at (105, 80), 170 wide. Yes restarts (`0xf7c0`) or goes to the map; the
+  second button closes the question and opens the finish dialog again (`app+0x17c`).
+- The message `PERFECT_SCORES_UNLOCKED_MESSAGE` (`0x6a6cc`: 400×250, the tips shower saying it,
+  `OK` 360 wide at (0, 110)) is made at start and kept at `app+0x180`, which no game code reads:
+  it is never shown.
+- Web version: the second button's label is taken to be `NO`.
+
 ## What has not been read
 
 See `docs/audit.md`: the share of the game logic read so far and the runs of code not yet
