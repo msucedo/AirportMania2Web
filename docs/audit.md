@@ -120,7 +120,8 @@ level helpers called from many places), `0x64d38`–`0x65f88` (2 844), `0x17c2c`
    message turned out never to be shown (nothing reads where it is kept).
 4. ~~**In-level tips** (`GameTip`, `0x40314`)~~: built. Coffee and Cake and In-Flight Movies
    were the service tabs, already built; the message class beside them is not used by the data.
-5. **Effects**: not built yet. Read so far:
+5. **Effects**: the flash of a place taking an order is built (`0x6aea0`, see the notes). The
+   rest is not built yet. Read so far:
    - The combo's explosion (`0x26bd8`), made at the plane's place, three behind it, by the gate
      on arrival (`0x4340a`, with the gate's combo) and by the runway (`0x6d6ac`, `0x6d814`, with
      its count, 4 at most): `EFFECTS.BONUS_REMARK`, a fan of light (`0x691dc`) and, from a

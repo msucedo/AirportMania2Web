@@ -1,3 +1,4 @@
+import { hsv, remarkRings, rgb, stopSpotRemark } from '../src/game/view/placeRemark';
 import { floatingAlpha, floatingPush, floatingStretch } from '../src/game/view/floatingText';
 import { puffPeriod, smokeAlpha, smokes } from '../src/game/view/smokeTail';
 import { PlaneState } from '../src/game/sim/rules';
@@ -568,6 +569,29 @@ describe('scenery', () => {
     // Nothing to push once the newest is clear.
     expect(floatingPush([{ x: 100, y: 50, offset: 20 }], at, 18)).toEqual([0]);
     expect(floatingPush([], at, 18)).toEqual([]);
+  });
+
+  it('flashes a place in hues around the plane colour, spreading as it fades', () => {
+    expect(hsv(0xff0000)).toEqual({ h: 0, s: 1, v: 1 });
+    expect(hsv(0x808080).s).toBe(0);
+    expect(rgb(120, 1, 1)).toBe(0x00ff00);
+    expect(rgb(hsv(0x70a9ff).h, hsv(0x70a9ff).s, hsv(0x70a9ff).v)).toBe(0x70a9ff);
+    const fresh = remarkRings(1, 150, 100, 0x00ff00);
+    expect(fresh).toHaveLength(6);
+    expect(fresh.every((ring) => ring.scaleX === 1 && ring.scaleY === 1)).toBe(true);
+    // 95, 105 ... 145 degrees: the plane's own hue falls between the third and the fourth.
+    expect(fresh[0]!.tint).toBe(rgb(95, 1, 1));
+    expect(fresh[5]!.tint).toBe(rgb(145, 1, 1));
+    const half = remarkRings(0.5, 150, 100, 0x00ff00);
+    expect(half[0]).toMatchObject({ scaleX: 1, scaleY: 1 });
+    expect(half[4]!.scaleX).toBeCloseTo(1.2, 5);
+    expect(half[4]!.scaleY).toBeCloseTo(1.2, 5);
+    // A hue under zero wraps round.
+    expect(remarkRings(1, 10, 10, 0xff0000)[0]!.tint).toBe(rgb(335, 1, 1));
+    expect(stopSpotRemark('STOPSPOT', false)).toBe('STOPSPOT_REMARK');
+    expect(stopSpotRemark('STOPSPOT_VIP', true)).toBe('STOPSPOT_REMARK');
+    expect(stopSpotRemark('STOPSPOT_ISLAND_BACK', false)).toBe('STOPSPOT_ISLAND_REMARK');
+    expect(stopSpotRemark('STOPSPOT_ISLAND_VIP_BACK', true)).toBe('STOPSPOT_ISLAND_VIP_REMARK');
   });
 });
 

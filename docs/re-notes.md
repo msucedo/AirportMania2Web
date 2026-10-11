@@ -2129,6 +2129,30 @@ verifies that each can be passed and that funds, stars and the opening of stage 
 - Web version: the touch must be on the tip, and the level's list is not touched. No tip is
   shown when the opening is skipped with `?nointro`.
 
+## Place flash — confirmed
+
+When an order is accepted (`0x1129a`) the place flashes in the plane's colour (`0x6aea0`: level
+set to 1, colour kept).
+
+- The level falls at 3 a second (`0x6aee0`).
+- Draw (`0x6af20`, slot 18 of every place; slot 5 is `0x6b20c`): the place's remark image six
+  times over, all at the level as opacity. Copy `i` is `15·i·(1 − level)` px wider and
+  `10·i·(1 − level)` px taller, and its hue is the plane colour's + `10·i − 25`°, with the same
+  saturation and value (`0x6b620` to hue, saturation and value, `0x1fed8` back).
+- The image is loaded by `0x6abc8` into `place+0x24`, by slot 19 of each class. Runway:
+  `RUNWAY.REMARK`. Gate, gas station, hangar and luggage conveyor: their descriptor's. Stop spot
+  (`0x78b74`), by its kind at `+0x64` and a flag at `+0x68`: kinds 0 and 1 (plain and VIP)
+  `STOPSPOT_REMARK`, or `STOPSPOT_UP_REMARK` with the flag; kind 2 `STOPSPOT_ISLAND_REMARK`;
+  kind 3 `STOPSPOT_ISLAND_VIP_REMARK`. No stage script sets the flag (run with every improvement
+  in `tools/re/stage_layout.py`), so the "up" images are never used.
+- The painting stop spot's slot 19 is empty (`0x67bb4`) and the wash and go's loads only its own
+  image (`0x84a08`): neither has a remark image, so neither flashes.
+- Where each draws it: the runway last (`0x6e1e2`), the gate over its letter (`0x439ac`), the
+  hangar over its back half (`0x476c6`), the gas station and the luggage conveyor over their
+  backs (`0x40f62`, `0x56fc2`).
+- Web version: the stop spot's is drawn over its image on the ground; where the original's draw
+  puts it has not been read. `tools/re/dataref.py` finds the code that forms a data address.
+
 ## What has not been read
 
 See `docs/audit.md`: the share of the game logic read so far and the runs of code not yet

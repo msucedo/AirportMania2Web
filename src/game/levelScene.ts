@@ -31,6 +31,7 @@ import { hintFor, hintImages } from './sim/hints';
 import { AWARD, awardSound, awardText } from './awards';
 import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView';
 import { SMOKE_SURFACES, SmokeTails } from './view/smokeTail';
+import { PlaceRemark, stopSpotRemark } from './view/placeRemark';
 import { noticePose, noticeStart, noticeStep, type NoticeState } from './view/awardNotice';
 import { PlaneInfoDialog, planeTrophy } from './view/planeInfoDialog';
 import { TIPS_SHOWER_SURFACES, gameTipStep, tipsShower } from './view/tipsShower';
@@ -45,7 +46,7 @@ import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
 import { PlaneState, RULES } from './sim/rules';
-import { Simulation, type Gate, type Hangar, type Plane, type SimEvent, type StopSpot } from './sim/simulation';
+import { Simulation, type Gate, type Hangar, type Place, type Plane, type SimEvent, type StopSpot } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
 const tintOf = (color: PlaneColor | null): number => paletteColor(color).main;
@@ -77,6 +78,21 @@ export interface LevelOptions {
   showNodes?: boolean;
 }
 
+/**
+ * The image each place flashes with when a plane is ordered to it. A painting spot and a wash
+ * and go load none (0x67bb4, 0x84a08), so they do not flash.
+ */
+function remarkImages(sim: Simulation, layout: StageLayout): Map<Place, string> {
+  const images = new Map<Place, string>();
+  for (const runway of sim.runways) images.set(runway, 'RUNWAY.REMARK');
+  for (const place of [...sim.gates, ...sim.gasStations, ...sim.hangars, ...sim.luggages]) images.set(place, place.descriptor.surfaces.remark);
+  for (const spot of sim.stopSpots) {
+    if (spot.wash || spot.painting) continue;
+    images.set(spot, stopSpotRemark((spot.vip ? layout.stopSpotSurfaces.vip : layout.stopSpotSurfaces.normal)[0]!, spot.vip));
+  }
+  return images;
+}
+
 export class LevelScene {
   readonly root = new Container();
   readonly sim: Simulation;
@@ -97,6 +113,7 @@ export class LevelScene {
   private readonly hangarPanels: { hangar: Hangar; panel: Container; ticks: Sprite[] }[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating = new FloatingTexts();
+  private readonly remarks = new Map<Place, PlaceRemark>();
   private readonly hud: Hud;
   private accumulator = 0;
   private endShown = false;
@@ -201,6 +218,7 @@ export class LevelScene {
       for (const id of gateSurfaceIds(gate, gate.letter.charCodeAt(0) - 65)) ids.add(id);
     });
     for (const station of sim.gasStations) for (const id of gasStationSurfaceIds(station)) ids.add(id);
+    for (const id of remarkImages(sim, layout).values()) ids.add(id);
     for (const luggage of sim.luggages) for (const id of luggageSurfaceIds(luggage)) ids.add(id);
     if (sim.hazardSchedule.some((h) => h.kind === 'ice')) for (const id of ICE_SURFACES) ids.add(id);
     if (sim.hazardSchedule.some((h) => h.kind === 'sand')) for (const id of SAND_SURFACES) ids.add(id);
@@ -618,6 +636,8 @@ export class LevelScene {
       this.buoys.push(...buoys);
       if (buoys[0]) this.ground.addChild(buoys[0]);
       this.ground.addChild(view);
+      // 0x6e1e2: the last thing the runway draws.
+      this.addRemark(runway, view, runway.position);
       if (buoys[1]) this.ground.addChild(buoys[1]);
     }
     for (const spot of this.sim.stopSpots) {
@@ -627,6 +647,7 @@ export class LevelScene {
         sprite.position.copyFrom(spot.position);
         this.ground.addChild(sprite);
       }
+      this.addRemark(spot, this.ground, spot.position);
       if (spot.wash) this.washViews.push(new WashView(this.textures, spot, this.planeLayer));
       if (spot.painting) {
         const sign = new PaintingSign(this.textures, spot, layout.water);
@@ -650,6 +671,8 @@ export class LevelScene {
       // plus the descriptor's DespZ (0x43094): a plane docked at it stands lower and is drawn over.
       view.zIndex = gate.position.y + gate.descriptor.depthOffset;
       this.planeLayer.addChild(view);
+      // 0x439ac: over the gate's letter.
+      this.addRemark(gate, view, null, 3);
       this.gateViews.push({ gate, view });
     }
     for (const hangar of this.sim.hangars) {
@@ -675,6 +698,9 @@ export class LevelScene {
       front.zIndex = depth;
       panel.zIndex = depth;
       this.planeLayer.addChild(back, front, panel);
+      // 0x476c6: over the back half.
+      const remark = this.addRemark(hangar, this.planeLayer, hangar.position);
+      if (remark) remark.zIndex = back.zIndex;
       this.hangarPanels.push({ hangar, panel, ticks });
     }
     for (const station of this.sim.gasStations) {
@@ -682,6 +708,8 @@ export class LevelScene {
       // 0x4091a: sorted at its node's height plus its offset.
       view.zIndex = station.position.y + station.descriptor.node.y + station.descriptor.depthOffset;
       this.planeLayer.addChild(view);
+      // 0x40f62: over its back.
+      this.addRemark(station, view, null, 2);
       this.stationViews.push(view);
     }
     for (const luggage of this.sim.luggages) {
@@ -689,6 +717,8 @@ export class LevelScene {
       // 0x567a4: sorted at its height plus its offset.
       view.zIndex = luggage.position.y + luggage.descriptor.depthOffset;
       this.planeLayer.addChild(view);
+      // 0x56fc2: over its back.
+      this.addRemark(luggage, view, null, 2);
       this.luggageViews.push(view);
     }
     for (const decoration of layout.decorations) {
@@ -736,6 +766,18 @@ export class LevelScene {
     }
   }
 
+  /** Gives `place` its flash, drawn in `parent` at `at` (or the parent's origin), at child `index` or last. */
+  private addRemark(place: Place, parent: Container, at: { x: number; y: number } | null, index?: number): PlaceRemark | null {
+    const image = remarkImages(this.sim, this.options.layout).get(place);
+    if (!image || !this.textures.has(image)) return null;
+    const remark = new PlaceRemark(this.textures, image);
+    if (at) remark.position.copyFrom(at);
+    if (index === undefined) parent.addChild(remark);
+    else parent.addChildAt(remark, index);
+    this.remarks.set(place, remark);
+    return remark;
+  }
+
   /** Sounds the original plays at the same points (ids confirmed in the binary where noted in docs). */
   private playEvent(event: SimEvent): void {
     switch (event.type) {
@@ -747,6 +789,8 @@ export class LevelScene {
         break;
       case 'order':
         this.audio.play('SOUNDS.PLACE_CLICK');
+        // 0x1129a: the place flashes in the plane's colour.
+        this.remarks.get(event.place)?.flash((event.plane.passenger === 'PRESIDENT' ? PRESIDENT_COLOR : paletteColor(event.plane.color)).main);
         break;
       case 'hint': {
         // 0x10890. A stage without the picture has nothing to show it with.
@@ -983,6 +1027,7 @@ export class LevelScene {
     this.planeLayer.sortableChildren = true;
 
     this.floating.update(seconds);
+    for (const remark of this.remarks.values()) remark.update(seconds);
 
     const remaining = this.sim.totalTime > 0 ? Math.max(0, this.sim.totalTime - this.sim.time) / this.sim.totalTime : 0;
     this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds);
