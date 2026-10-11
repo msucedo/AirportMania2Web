@@ -88,16 +88,22 @@ export class CreditsRoll {
   speed = 40;
   /** Half a second of appearing, during which touches are not looked at. */
   appearing = true;
-  private fade = 0;
+  private fade: number;
   private dragging = false;
   private lastY = 0;
   private dragSpeed = 0;
 
-  constructor(readonly total: number) {}
+  /** `delay`: seconds before it starts to appear (0x28a18's third argument); nothing moves until then. */
+  constructor(
+    readonly total: number,
+    delay = 0,
+  ) {
+    this.fade = -delay;
+  }
 
   /** Opacity of the whole roll: it rises to a half while appearing and is full after. */
   get alpha(): number {
-    return this.appearing ? this.fade : 1;
+    return this.appearing ? Math.max(0, this.fade) : 1;
   }
 
   update(dt: number, touch: RollTouch | null): void {

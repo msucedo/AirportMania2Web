@@ -5,6 +5,7 @@ import { loadFonts } from './engine/fonts';
 import { createScreen } from './engine/screen';
 import { TextureStore, type EnlargedImages } from './engine/textures';
 import { AwardsRoom } from './game/awardsRoom';
+import { EndingScene } from './game/endingScene';
 import { LevelScene } from './game/levelScene';
 import { MainMenu } from './game/mainMenu';
 import { loadSettings, saveSettings } from './game/settings';
@@ -35,6 +36,7 @@ function navigate(stage: number | null, level: number | null, map?: number | '')
   params.delete('map');
   params.delete('go');
   params.delete('awards');
+  params.delete('ending');
   if (stage === null) {
     params.delete('stage');
     params.delete('level');
@@ -58,6 +60,14 @@ async function enlargedImages(): Promise<EnlargedImages | null> {
   } catch {
     return null;
   }
+}
+
+/** Opens one of the screens named by a bare parameter (`?awards`, `?ending`). */
+function goTo(screen: 'awards' | 'ending'): void {
+  const next = new URLSearchParams(location.search);
+  for (const name of ['reset', 'stage', 'level', 'map', 'go', 'awards', 'ending']) next.delete(name);
+  next.set(screen, '');
+  location.href = `${location.pathname}?${next.toString()}`;
 }
 
 async function main(): Promise<void> {
@@ -102,7 +112,10 @@ async function main(): Promise<void> {
   const level = Number.isInteger(requested) && requested >= 1 && requested <= levels ? requested : null;
 
   const playable = new Map([...STAGES.keys()].map((s) => [s, data.areas.get(s)!.levelsCount]));
-  if (params.has('awards')) {
+  if (params.has('ending')) {
+    // The ending, reached from the last stage's clear screen; it goes back to the main menu.
+    await EndingScene.create(app, data, textures, makeAudio(), { strings: await data.strings(chosen), onReturn: () => navigate(null, null) });
+  } else if (params.has('awards')) {
     // The awards room, reached from the map and going back to it.
     await AwardsRoom.create(app, data, textures, makeAudio(), {
       strings: await data.strings(chosen),
@@ -193,6 +206,7 @@ async function main(): Promise<void> {
       progress,
       // Leaving a level goes back to the map; restarting loads it again.
       onNavigate: (next) => (next === null ? navigate(null, null, stage) : navigate(stage, next)),
+      ...(stage === Math.max(...STAGES.keys()) ? { onEnding: () => goTo('ending') } : {}),
       onMainMenu: () => navigate(null, null),
       settings,
       rules: rules.get(stage)!,

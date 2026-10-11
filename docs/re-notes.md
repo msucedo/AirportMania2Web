@@ -2064,6 +2064,42 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   in the awards room when it is had (`0x1bed6`); a trophy not had opens the award dialog.
 - Web version: in a level it is not opened if another dialog is up.
 
+## The ending — confirmed in part
+
+- Leaving the clear screen of a stage (`0x78a9c`): below the last stage (`app+0x248`) the next
+  one is opened and the map shown; on the last, the loading screen is asked for mode 0
+  (`0x70ce4`), whose end shows the scene kept at `app+0x184` (`0x71390`).
+- Scene (`0x3473c`), in order: `FINAL_VICTORY.SKY` stretched over the screen; clouds
+  (`0x36bb8`); ground (`0x361bc`); the little plane (`0x35ffc`) and three more floating
+  pictures (`0x35ce4`); the congratulations (`0x35194`); the way back (`0x34ea4`). Music
+  `MUSICS.FINAL_VICTORY.INTRO` then `LOOP`. Update `0x34ad8` hands every one the frame's time.
+- Floating picture `0x35ce4(resource, place, delay, scale)`: its clock starts at −delay. Little
+  plane (189, 87), 8, 0.5, with `LITTLE_PLANE_PROPELLER` turned `5000·t` degrees; military plane
+  (96, 182), 7, 0.75; transborder (360, 120), 6, 0.85; main character (240, 204), 5, 1. Draw
+  (`0x35e6c`): under 2, with u = 2 − t, moved (`60u²·scale`, `−160u⁴·scale`) and turned
+  `25u²`; always turned `7·sin(0.3t)` and moved (`11·sin(0.47t)·scale`, `10·cos(0.53t)·scale`),
+  then to its place.
+- Ground: four rings of thirty pairs, the pair i at depth `i/4 + from`: buildings (five
+  pictures) from 40, canyon (four) from 30, mountains (six) from 20, palm trees (three) from 10.
+  A pair is picture `i mod n` 120 px right and picture `(i + 3) mod n`, mirrored, 120 px left
+  (`0x36970`). Depths rise one a second and go round at 50. Drawn (`0x367f4`) from the last made
+  to the first, under depth 10: foot at (`240 + side/(z + 0.5)`, `320 + 42z`), scale
+  `1/(z + 0.5)`.
+- Clouds: fifty, picture `rand mod 4`, depth `0.4·i`, across `48·i − 1200` dealt at random;
+  depths rise one a second and go round at 20. Drawn (`0x36e86`) farthest first, under depth 10:
+  foot at (`240 + x·k`, `42z`), scale `k = 2/max(0.1, z)`.
+- Congratulations: `FINAL_VICTORY.CONGRATULATIONS` in `FINAL_VICTORY.GIANT_FONT` (Blue Stone at
+  22, 0.8 wide, kerning 2), its letters side by side centred on x 240; its clock starts at −1
+  and it is drawn between 1 and 9. Letter i of n has `t = clock − 1 − 0.7·i/n` and a swell
+  (`0x357a4`) of `2t` under 0.5, `2(4 − t)` over 3.5, else `1 + 0.25·sin(2π(t − 0.5))`; scale
+  `0.5 + 0.5·swell`, opacity `clamp(2·swell)`.
+- After a wait (`+0xc`) the credits roll is made at (240, 160), speed 40, delay 20 (`0x34b46`);
+  when it has run to its end the way back is shown, which leads to `app+0x150`.
+- Web version: opened with `?ending`, reached from the last stage's clear screen, and it goes
+  back to the main menu. Taken, not read: the first wait (10 s; `0x3433c` has 10, 2.5 and −9),
+  the way back's place (20, 305), where a floater's scale is applied, the giant font's colours,
+  that the text is at height 160. The loading screen between is not built.
+
 ## What has not been read
 
 See `docs/audit.md`: the share of the game logic read so far and the runs of code not yet

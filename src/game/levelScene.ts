@@ -59,6 +59,8 @@ export interface LevelOptions {
   progress: Progress;
   /** Navigation: a level number, or null for the stage screen. */
   onNavigate: (level: number | null) => void;
+  /** Set for the last stage: where leaving its clear screen leads, the ending (0x78b02). */
+  onEnding?: () => void;
   onMainMenu: () => void;
   settings: Settings;
   /** The stage's rules for stars and rewards. */
@@ -1062,7 +1064,7 @@ export class LevelScene {
     report.onContinue = () => {
       if (!cleared) return onNavigate(null);
       const rules = this.options.rules;
-      const summary = new StageClear(this.textures, this.audio, this.strings, { bonus: rules.clearBonus, stars: progress.stageStars(stage), funds: progress.stageReward(stage) }, () => onNavigate(null));
+      const summary = new StageClear(this.textures, this.audio, this.strings, { bonus: rules.clearBonus, stars: progress.stageStars(stage), funds: progress.stageReward(stage) }, () => (this.options.onEnding ? this.options.onEnding() : onNavigate(null)));
       this.root.addChild(summary);
       setTimeout(() => report.destroy({ children: true }));
       this.report = null;
