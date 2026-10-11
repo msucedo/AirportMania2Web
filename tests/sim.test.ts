@@ -1111,14 +1111,21 @@ describe('simulation, stage 3 (monsters)', () => {
     expect(events.some((e) => e.type === 'washStarted')).toBe(false);
   });
 
+  it('puts every arrival back when a tip opens the level, and lasts until 5 s after the last', () => {
+    const plain = monsters(4);
+    const late = new Simulation({ ...plain['config' as never] as object, arrivalDelay: 6 } as never);
+    expect(late.totalTime).toBe(plain.totalTime + 6);
+  });
+
   it('schedules as many fogs as the level has, one in each slice of its time', () => {
     expect([1, 2, 3, 4, 5, 6, 7, 8].map((level) => monsters(level).hazardSchedule.length)).toEqual([0, 0, 1, 2, 2, 4, 2, 2]);
-    // Level 4 lasts 220 s: two slices of 95 s, and this dice picks the middle of each.
+    // Level 4 is given 220 s, but its last plane comes at 216 s, so it lasts 221 (0x10658): two
+    // slices of 95.5 s, and this dice picks the middle of each.
     const sim = steady(4);
-    expect(sim.totalTime).toBe(220);
+    expect(sim.totalTime).toBe(221);
     expect(sim.hazardSchedule).toEqual([
-      { time: 47.5, runway: 1, kind: 'fog' },
-      { time: 142.5, runway: 1, kind: 'fog' },
+      { time: 47.75, runway: 1, kind: 'fog' },
+      { time: 143.25, runway: 1, kind: 'fog' },
     ]);
   });
 
@@ -1129,7 +1136,7 @@ describe('simulation, stage 3 (monsters)', () => {
     run(sim, 47, events);
     expect(runway.fog).toBeNull();
     runUntil(sim, () => runway.fog !== null, 2, events);
-    expect(sim.time).toBeCloseTo(47.5, 1);
+    expect(sim.time).toBeCloseTo(47.75, 1);
     const appeared = sim.time;
     // A plane cannot be sent there, but the other runway still takes it.
     const plane = sim.planes.find((p) => !p.gone && !p.landed && p.state === PlaneState.FLYING)!;
@@ -1167,9 +1174,9 @@ describe('simulation, stage 3 (monsters)', () => {
     plane.energy = 100;
     sim.addOrder(plane, runway);
     runUntil(sim, () => plane.landed, 40);
-    run(sim, 47.5 + RULES.hazards.patience + 1 - sim.time);
+    run(sim, 47.75 + RULES.hazards.patience + 1 - sim.time);
     expect(runway.fog).toBeNull();
-    expect(sim.hazardSchedule).toEqual([{ time: 142.5, runway: 1, kind: 'fog' }]);
+    expect(sim.hazardSchedule).toEqual([{ time: 143.25, runway: 1, kind: 'fog' }]);
   });
 
   it('has its bonus events on levels 2, 6 and 8', () => {

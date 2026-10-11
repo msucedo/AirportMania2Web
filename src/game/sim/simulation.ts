@@ -334,6 +334,8 @@ export type SimEvent =
   | { type: 'levelEnd'; score: number };
 
 export interface SimulationConfig {
+  /** Seconds every arrival is put back (0x10636): 6 when a tip is to be shown as the level starts. */
+  arrivalDelay?: number;
   /** The player's difficulty (profile `+0x48`): it scales the level's clock and the planes' energy drain. 1 when left out. */
   difficulty?: number;
   layout: StageLayout;
@@ -582,7 +584,10 @@ export class Simulation {
 
     this.graph.autoLink();
 
-    this.pending = [...config.schedule.planes].sort((a, b) => a.time - b.time);
+    const late = config.arrivalDelay ?? 0;
+    this.pending = [...config.schedule.planes].map((spawn) => (late ? { ...spawn, time: spawn.time + late } : spawn)).sort((a, b) => a.time - b.time);
+    // 0x10658: the level lasts at least until 5 s after its last arrival.
+    this.totalTime = Math.max(config.schedule.totalTime, (this.pending.at(-1)?.time ?? 0) + 5);
     this.random = config.random ?? Math.random;
     this.bonus = layout.bonuses?.[config.level ?? 1] ?? null;
     if (this.bonus) {
@@ -612,9 +617,8 @@ export class Simulation {
     return this.config.goals;
   }
 
-  get totalTime(): number {
-    return this.config.schedule.totalTime;
-  }
+  /** The level's time (`TotalTime`), or what its last arrival needs. */
+  readonly totalTime: number;
 
   /** Events raised since the last call, for the view and audio. */
   drainEvents(): SimEvent[] {

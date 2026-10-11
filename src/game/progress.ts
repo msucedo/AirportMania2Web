@@ -293,6 +293,11 @@ export class Progress {
     return true;
   }
 
+  /** Whether a level starting now would show a tip (0x10630). */
+  tipDue(count: number): boolean {
+    return (this.data.tips ?? 0) < count;
+  }
+
   /** The tip the next level starts with, or null once all `count` have been shown (0xf514). Showing it counts it. */
   nextTip(count: number): number | null {
     const shown = this.data.tips ?? 0;
