@@ -579,7 +579,8 @@ Draw routine `0x40ed4`:
   plane constructor. Arrivals are judged when unloading starts (`0x6378`), departures at
   take-off (`0x6110`).
 - Web version: text baselines, the star's pop, the backdrop's size and turning, and the fonts'
-  colour effects are approximations; the score is written at once instead of counting up.
+  colour effects are approximations. The score is written at once, as in the original
+  (`0x33a8c`: one label made with the level's score; nothing counts up).
 
 ## Stage backdrop
 
@@ -2469,3 +2470,17 @@ Another of the app's screens (vtable `0x17ad10`; enter `0x55a38`, update `0x55b3
 - Web version: shown after the opening screens, while the menu's images and fonts load in
   thirteen steps, and before the ending. Loading here takes a moment, so it is mostly the two
   seconds of its own. The message of `app+0x244` is not read.
+
+## How a dialog opens and closes — confirmed
+
+The dialog base's update (`0x2b7b0`), state `+0x54` (0 opening, 1 open, 2 closing, 3 closed)
+and clock `+0x50`, its transform kept at `+0x18` and handed to every widget.
+
+- Opening, the clock runs to 1 at 3 a second; closing, back from 1 at 3 a second. The
+  transform, read off runs of it (`tools/re/draw_trace.py 0x2b7b0 0x54=0 0x50=0.25f
+  0x58=self:0x58 0x5c=self:0x58 --r1 0f --dump 40`), is, with `S = 0.75 + 1.25c − c²` and
+  `U = 0.75 + 0.25c`, the matrix a `S·U`, c `±0.75(1 − c)·U` (plus opening, minus closing),
+  d `c·S·U`, about (240, 160), at opacity `c`.
+- Web version: every dialog opens so. They still close at once, since each closes by being
+  taken away where it was made. Whether the darkening behind comes in with it is not read; it
+  is there from the start.

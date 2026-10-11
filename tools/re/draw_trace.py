@@ -70,6 +70,7 @@ class Run:
         uc.reg_write(UC_ARM_REG_FPEXC, 0x40000000)
         self.app = self.make(args.app, 0x800)
         self.returns = {int(k, 16): self.word(v) for k, v in self.returns_spec.items()}
+        self.object = self.heap  # so that a field may point back into the object: self:0x58
         self.object = self.make(args.fields, 0x800)
         uc.hook_add(UC_HOOK_CODE, self.on_code)
         uc.hook_add(UC_HOOK_MEM_UNMAPPED, self.on_unmapped)
@@ -134,6 +135,8 @@ class Run:
             at = self.alloc(0x40)
             self.uc.mem_write(at, struct.pack('<I4f9f', 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1))
             return at
+        if text.startswith('self:'):
+            return self.object + int(text[5:], 16)
         if text == 'obj':
             return self.alloc(0x400)
         return f2i(float(text[:-1])) if text.endswith('f') else int(text, 0) & 0xffffffff

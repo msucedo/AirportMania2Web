@@ -1,3 +1,4 @@
+import { dialogOpening } from '../src/game/view/dialog';
 import { introAwardPlaces, introPose, introStep, type IntroState } from '../src/game/view/levelIntro';
 import { menuShiftStep, numberPop, passingPlanePose, skySpeed, slidePose, slideStep, type SlideState } from '../src/game/mainMenu';
 import { beltPose, inRuns } from '../src/game/loadingScreen';
@@ -860,6 +861,17 @@ describe('scenery', () => {
     expect(near).toMatchObject({ y: -250, scale: 1.5, depth: 2, x: 80 });
     expect(passingPlanePose(0, false, 0)).toMatchObject({ y: 222, depth: 10 });
     expect(passingPlanePose(0, false, 0).scale).toBeCloseTo(0.3, 6);
+  });
+
+  it('opens a dialog as runs of the original do', () => {
+    expect(dialogOpening(0)).toEqual({ a: 0.5625, c: 0.5625, d: 0, alpha: 0 });
+    expect(dialogOpening(0.25)).toEqual({ a: 0.8125, c: 0.45703125, d: 0.203125, alpha: 0.25 });
+    expect(dialogOpening(0.5)).toEqual({ a: 0.984375, c: 0.328125, d: 0.4921875, alpha: 0.5 });
+    const late = dialogOpening(0.75);
+    expect(late.a).toBeCloseTo(1.05469, 5);
+    expect(late.c).toBeCloseTo(0.175781, 5);
+    expect(late.d).toBeCloseTo(0.791016, 5);
+    expect(dialogOpening(1)).toEqual({ a: 1, c: 0, d: 1, alpha: 1 });
   });
 });
 

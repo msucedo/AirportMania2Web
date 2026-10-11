@@ -1,4 +1,4 @@
-import { Container, Graphics, NineSliceSprite, Rectangle, Text } from 'pixi.js';
+import { Container, Matrix, Graphics, NineSliceSprite, Rectangle, Text } from 'pixi.js';
 import type { AudioPlayer } from '../../engine/audio';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../engine/screen';
 import type { TextureStore } from '../../engine/textures';
@@ -9,6 +9,18 @@ export const DIALOG_SURFACES = ['GUI.DIALOGS.BACK.BOX', 'GUI.DIALOGS.BUTTON', 'G
  * A dialog over a dimmed screen, drawn with the original frame. Returns the whole overlay and the
  * panel to fill, whose origin is the frame's corner.
  */
+/**
+ * How a dialog stands while it opens, its clock running from 0 to 1 at 3 a second (0x2b7da, read
+ * off runs of it): it grows a little past its width and back, unfolds from flat, and leans to
+ * the right less and less. Closing (0x2b980) it does the same backwards leaning the other way.
+ */
+export function dialogOpening(clock: number): { a: number; c: number; d: number; alpha: number } {
+  const c = Math.max(0, Math.min(1, clock));
+  const swell = 0.75 + 1.25 * c - c * c;
+  const grow = 0.75 + 0.25 * c;
+  return { a: swell * grow, c: 0.75 * (1 - c) * grow, d: c * swell * grow, alpha: c };
+}
+
 export function dialogFrame(textures: TextureStore, width: number, height: number): { overlay: Container; panel: Container; blocker: Container } {
   const overlay = new Container();
   const shade = new Graphics().rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT).fill({ color: 0x000000, alpha: 0.6 });
@@ -18,13 +30,34 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
   blocker.hitArea = new Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   blocker.eventMode = 'static';
   blocker.on('pointerdown', (event) => event.stopPropagation());
+  // 0x2b7da: a dialog opens about the screen's centre over a third of a second.
+  const stand = new Container();
   const panel = new Container();
-  panel.position.set((SCREEN_WIDTH - width) / 2, (SCREEN_HEIGHT - height) / 2);
+  panel.position.set(-width / 2, -height / 2);
+  stand.addChild(panel);
+  let clock = 0;
+  let last = performance.now();
+  const show = (): void => {
+    const pose = dialogOpening(clock);
+    stand.setFromMatrix(new Matrix(pose.a, 0, pose.c, pose.d, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2));
+    stand.alpha = pose.alpha;
+  };
+  show();
+  overlay.onRender = () => {
+    const now = performance.now();
+    clock += 3 * Math.min(0.1, (now - last) / 1000);
+    last = now;
+    if (clock >= 1) {
+      clock = 1;
+      overlay.onRender = null;
+    }
+    show();
+  };
   const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BACK.BOX'), leftWidth: 24, rightWidth: 24, topHeight: 24, bottomHeight: 24 });
   frame.setSize(width, height);
   // The frame's own filling is translucent; a solid backing keeps the texts readable.
   panel.addChild(new Graphics().roundRect(4, 4, width - 8, height - 8, 20).fill({ color: 0x3b1d4d, alpha: 0.92 }), frame);
-  overlay.addChild(shade, blocker, panel);
+  overlay.addChild(shade, blocker, stand);
   return { overlay, panel, blocker };
 }
 
