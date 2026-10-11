@@ -1,8 +1,99 @@
 # What of the binary has not been read
 
-An audit of the game-logic part of the binary (`0x2000`–`0x8c000`), made with
-`tools/re/audit.py` on 2026-10-10. It answers how much of that code the port has read, and
-lists what it has not.
+An audit of the game-logic part of the binary (`0x2000`–`0x8c000`). It answers how much of that
+code the port has read, what every unread function is, and what is still to be done. First made
+with `tools/re/audit.py` on 2026-10-10; this account is of 2026-10-11.
+
+## Where it stands (2026-10-11)
+
+| | functions | bytes |
+|---|---|---|
+| Cited by the notes or the code | 656 | 254 178 |
+| Compiler filler and container templates | 1 242 | 167 090 |
+| Real, not cited | 733 | 144 052 |
+
+Of the logic that is not filler, **63.8 %** is cited. Every one of the 733 real functions not
+cited now has a line in `docs/unread.tsv` saying what it is and on what evidence:
+
+| Category | functions | bytes | what it means |
+|---|---|---|---|
+| `cubierta` | 238 | 58 330 | the port does the same another way: parsers of tables it reads itself, constructors and loaders of things it builds, dialog widgets |
+| `fontanería` | 403 | 51 490 | lists, strings, type names, teardown: no numbers and no text of its own |
+| `no aplica` | 42 | 21 524 | saving to disk, the build's settings, the online leaderboard and achievements, links out, developer overlays, the play log sent to the studio |
+| `sin datos` | 25 | 6 976 | code for things whose pictures this build does not have (commented out of its resources): the two radars, the lunar buggy, the Christmas tree, the water silhouettes, a touchable message |
+| `pendiente` | 13 | 3 188 | behaviour the port lacks; see the list below |
+| `vista` | 7 | 1 472 | draws something the port builds from other evidence; its own code not read |
+| `muerta` | 4 | 916 | never reached: the level's bird, the perfect scores message |
+| `regla` | 1 | 156 | a rule of play; read and built this day |
+
+Counting what is read and what is set aside with a reason, **98.8 %** of the logic that is not
+filler is accounted for (`tools/re/audit.py` prints the figure). The rest is the pending list.
+
+### How the ledger was made, and how far to trust it
+
+- `tools/re/ledger.py` gathers, for each function: who calls it (conditional branches too),
+  whether a table of functions holds it, whether the code forms its address (how factories are
+  registered), what of the engine it calls (drawing, loading, sound, touch, the profile, the
+  awards), how many floating-point instructions and stores it has, and its text.
+- 240 functions were decided by hand from that and from their neighbours, opening the ones
+  that touch the state of play; the decisions are in `tools/re/ledger/decisions.py`.
+- 493 were decided by rule (`by rule` in their note): no numbers and no text, or nothing but
+  loading and making objects. The rule only counts floating-point numbers, so the largest of
+  them (nine functions of 600 to 2 300 bytes) were opened to see that no rule in whole numbers
+  hides there: they copy strings, tear lists down, compress and format numbers. The small
+  ones were not opened one by one.
+- `tools/re/unused.py` is the other check, and the sharper one: it lists what the game's code
+  names (pictures, sounds, texts), that the data has and the port's own code never names. It
+  looks at cited functions too. It is what found the sounds and screens below.
+- `tools/re/audit.py --thin` lists the cited functions the notes say least about. Most are
+  builders read through their arguments; the click handler (`0x10b58`), the plane's
+  constructor (`0x45e4`) and the HUD's (`0x4e25c`) are the ones worth reading again in full.
+
+## Found and built on 2026-10-11
+
+- The player's difficulty (`profile+0x48`): it follows each level's result and scales the
+  level's clock and the planes' energy drain. It was inside a cited function.
+- Level start (`0x105e8`): arrivals 6 s later when a tip opens the level; the level lasts at
+  least until 5 s after its last arrival.
+- Rerouting (`0x10c2c`): a second touch on a place clears the plane's orders first.
+- Sounds: the emergency arrival, the map's Play (which starts the level reached at once),
+  the loading belt's click.
+
+## Pending: behaviour the port lacks
+
+In the order they would be seen. None is a rule of play except the second.
+
+1. **The scene-loading screen** (`SceneLoading`, `0x70ce4`; update `0x713f8`, draw `0x714d8`):
+   shown while a stage's pictures load, before every level, and before the ending. It names
+   `AMBIENT.SUN`, `SUNRAY`, `MOON`, `MAIN_MENU.CLOUD1`/`2`, `STAGES.CARRIER.OCEAN_TOP`/`BOTTOM`
+   and `GUI.FINAL_REPORT.TICK_YELLOW`. The port shows nothing before a level, and before the
+   ending it shows the belt screen, which is the start-up's.
+2. **Advanced options** (`0x2220`): three switches. *Show tips* (clears the byte at
+   `0x1781e0`: no tips and no 6 s wait), *tap on bubbles* (`BUBBLE_CLICKING`, a way of giving
+   orders: not read) and *auto-orientate* (the device's, not applicable). The port opens a
+   language choice of its own there.
+3. **Colour help** (`0x2c14`, `0x265ac`, `0x268e4`): the options' palette dialog
+   (`PALETTE_SELECTION_DIALOG`, `GUI.COLOR_HELP`), for telling the planes' colours apart.
+4. **The gate's label on hover** (`0x43d2a`, `GATES.ON_OVER_LABEL`, `GATES.LETTERS.LABEL.%d`):
+   for gate types with `LabelOver`, while the pointer is over the gate.
+5. **The pause screen** (`0x6a210`, `PAUSE.PAUSED`, `PAUSE.TEXT`): most likely when the app is
+   interrupted.
+6. **Small looks not read**: the bouncing of the shop's and the menu's buttons (`Bonucer`,
+   `0x25bd0`), the check box's pressed picture (`GUI.DIALOGS.CHECKBOX_OVER`),
+   `EFFECTS.BONUS_REMARK` (`0x271b0`), the money sign of the HUD
+   (`GUI.INGAMEGUI.MONEY_SIGNS`), the island's water mesh (`MESHES.WATER_MESH`,
+   `STAGES.ISLAND.WAVES`, `0x501d4`), the level marker's own draw (`0x5def0`).
+7. **The original's language dialog** (`0x5073c`): this build takes the language from the
+   device; the port's own choice stands in for it.
+
+Not pending, for the record: `SOUNDS.REPAIRING_LOOP` is loaded and never played;
+`EFFECTS.FIREWORKS.EXPLOSIONS.%d` is loaded and never drawn; the UFO (`0xbc784`) is in the
+engine's part and has no caller in the logic; the continue-game question and the error for a
+save that cannot be loaded belong to saving a level in play, which the port does not do.
+
+---
+
+The account of 2026-10-10 follows as it was written, for the runs it names.
 
 ## How it is counted
 

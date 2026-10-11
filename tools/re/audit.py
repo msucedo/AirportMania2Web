@@ -39,7 +39,8 @@ def body(function):
 def cited():
     text = ''
     for path in ['docs/re-notes.md'] + glob.glob('src/**/*.ts', recursive=True) + glob.glob('tools/**/*.py', recursive=True):
-        if path.endswith('audit.py'):
+        # Not the audit's own files: naming a function to set it aside is not reading it.
+        if path.endswith('audit.py') or '/ledger/' in path:
             continue
         text += open(path, errors='replace').read()
     found = set()

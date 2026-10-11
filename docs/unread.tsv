@@ -344,7 +344,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 455a8	484	fontanería	by rule: no numbers and no text	floats=0 stores=19 <- 44dc0 tables=0
 4578c	508	fontanería	by rule: no numbers and no text	floats=0 stores=20 <- 44dc0 453a0 tables=0
 45af0	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-460e4	284	vista	what the level's draw draws from its +0xb0 when its flag is set; not identified	floats=23 stores=0 <- 12430* tables=0
+460e4	284	no aplica	the taxi graph drawn over the level when a flag of the level is set: a developer's overlay	floats=23 stores=0 <- 12430* tables=0
 464dc	512	fontanería	by rule: no numbers and no text	floats=0 stores=6 <- 45bd4* tables=0
 46788	184	cubierta	hangar helpers; built	floats=8 stores=5 <- 46230* tables=0
 4695c	84	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=3 <- 45d58* 466dc* tables=0
@@ -456,8 +456,8 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 5d990	344	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=11 <- 6052c* tables=0 FONTS.TEEN; MAP.HERALDIC_RIBBON; STAGES.%d.TITLE
 5dae8	120	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=8 draws,stores=0 <-  tables=1
 5ddf4	52	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 profile,users,stores=2 <- 5dda4* 5fb44* tables=0
-5de28	200	vista	Map::MapBat: bats on the map; no map bat picture is named, to be checked	floats=20 profile,users,stores=8 <-  tables=1
-5def0	424	vista	Map::MapBat: bats on the map; no map bat picture is named, to be checked	floats=54 draws,stores=0 <-  tables=1 Map::MapBat
+5de28	200	vista	level marker of the map: its own update and draw; the port builds it from the script	floats=20 profile,users,stores=8 <-  tables=1
+5def0	424	vista	level marker of the map: its own update and draw; the port builds it from the script	floats=54 draws,stores=0 <-  tables=1 Map::MapBat
 5e4b4	88	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Map::MapSnow
 5e50c	100	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
 5eb18	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 5eb4c* 5edc8 tables=0 MAP.SATELLITE; MAP.SATELLITE_BRIGHT
@@ -493,8 +493,8 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 66adc	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 MoonSky
 67104	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 67bb8	108	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-680f8	88	vista	not identified (class near 0x68014)	floats=6 draws,stores=0 <-  tables=1
-68388	280	vista	not identified (class near 0x68014)	floats=7 stores=4 <-  tables=1
+680f8	88	cubierta	painting stop spot; built	floats=6 draws,stores=0 <-  tables=1
+68388	280	cubierta	painting stop spot; built	floats=7 stores=4 <-  tables=1
 684a0	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 68700	180	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 68e60	76	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 68700 68f08* tables=0 PAINTING_STOPSPOT.COLOR; PAINTING_STOPSPOT.COLOR_SHADING; PAINTING_STOPSPOT.READY
@@ -543,8 +543,8 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 708f4	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScaryFog
 70924	428	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=16 <- 70914 tables=0 LOADING_SCREEN.LOADING
 70b70	372	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 70ad0 70b60 tables=0
-713f8	224	vista	ScoreMessage: a score message in the large font; not read	floats=23 stores=6 <-  tables=1
-714d8	1144	vista	ScoreMessage: a score message in the large font; not read	floats=118 draws,stores=1 <-  tables=1 ScoreMessage
+713f8	224	pendiente	SceneLoading (0x70ce4): the screen shown while a stage or the ending loads; its update and draw	floats=23 stores=6 <-  tables=1
+714d8	1144	pendiente	SceneLoading (0x70ce4): the screen shown while a stage or the ending loads; its update and draw	floats=118 draws,stores=1 <-  tables=1 ScoreMessage
 71c40	84	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 FONTS.ULTRA
 71dfc	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScoreMessage; ScrollingCloud
 71e28	40	fontanería	small constructors of scenery called by built ones	floats=4 stores=0 <- 14858* tables=0
