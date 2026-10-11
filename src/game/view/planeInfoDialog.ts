@@ -1,3 +1,4 @@
+import { SCORE_FILL } from './faces';
 import { Container, Text } from 'pixi.js';
 import type { PlaneDescriptor } from '../../data/planes';
 import type { Strings } from '../../data/strings';
@@ -51,7 +52,7 @@ export class PlaneInfoDialog extends Container {
       label.position.set(-83, row.y);
       centre.addChild(label);
       if (row.value === null) continue;
-      const style = row.money ? { fontFamily: fontFamily(SCORE_FONT), fontSize: 14, fill: 0xffe45c } : { fontFamily: face.family, fontSize: face.size, fill: face.fill };
+      const style = row.money ? { fontFamily: fontFamily(SCORE_FONT), fontSize: 14, fill: SCORE_FILL } : { fontFamily: face.family, fontSize: face.size, fill: face.fill };
       const value = new Text({ text: row.text ? strings.t(row.value) : row.value, style });
       value.anchor.set(1, 0.5);
       value.position.set(191, row.y);

@@ -1,3 +1,4 @@
+import { BORDER, MAIN_FILL, SCORE_FILL, TITLE_BORDER, ULTRA_FILL } from './faces';
 import { Container, Rectangle, Text } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
@@ -14,14 +15,14 @@ const TIERS = ['GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'] as const;
 const BEST_TINT = 0x4d4d4d;
 
 /** One score row (0x51b18): the plate, the name 125 px left of its centre and the amount 115 px right. */
-export function goalRow(textures: TextureStore, name: string, amount: string, tint: number, dark = true): Container {
+export function goalRow(textures: TextureStore, name: string, amount: string, tint: number): Container {
   const row = new Container();
   const plate = textures.sprite('GUI.INGAMEGUI.SCORE_GOAL_BACK');
   plate.tint = tint;
-  const label = new Text({ text: name, style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: dark ? 0x30243a : 0xffffff } });
+  const label = new Text({ text: name, style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER } });
   label.anchor.set(0, 0.5);
   label.position.set(-125, -2);
-  const value = new Text({ text: amount, style: { fontFamily: fontFamily(SCORE_FONT), fontSize: 14, fill: dark ? 0x2d6a1f : 0xffe45c } });
+  const value = new Text({ text: amount, style: { fontFamily: fontFamily(SCORE_FONT), fontSize: 14, fill: SCORE_FILL, stroke: BORDER } });
   value.anchor.set(1, 0.5);
   value.position.set(115, 0);
   row.addChild(plate, label, value);
@@ -38,7 +39,7 @@ export function goalRows(textures: TextureStore, strings: Strings, goals: LevelG
     rows.addChild(row);
   });
   if (best > 0) {
-    const row = goalRow(textures, strings.t('SCORE.BEST_SCORE'), String(best), BEST_TINT, false);
+    const row = goalRow(textures, strings.t('SCORE.BEST_SCORE'), String(best), BEST_TINT);
     row.y = TIERS.length * 26 + bestGap;
     rows.addChild(row);
   }
@@ -154,13 +155,13 @@ export class LevelIntro extends Container {
     const top = (level.best > 0 ? -100 : -80) - 20;
     const title = new Text({
       text: `${strings.t(`STAGES.${level.stage}.TITLE`)} - ${strings.t('LEVEL_NUMBER', level.number)}`,
-      style: { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 20, fill: 0xffd75a, stroke: { color: 0x5a2a00, width: 3 } },
+      style: { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 20, fill: ULTRA_FILL, stroke: TITLE_BORDER },
     });
     title.anchor.set(0.5);
     title.position.set(0, top);
     const name = new Text({
       text: strings.t(`STAGES.${level.stage}.NAME`),
-      style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 }, align: 'center', wordWrap: true, wordWrapWidth: 420 },
+      style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER, align: 'center', wordWrap: true, wordWrapWidth: 420 },
     });
     name.anchor.set(0.5);
     name.position.set(0, top + 45);

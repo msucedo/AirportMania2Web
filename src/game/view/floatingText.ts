@@ -1,3 +1,4 @@
+import { BORDER, MAIN_FILL, SCORE_FILL, SCORE_NEGATIVE_FILL } from './faces';
 import { Container, Text, type TextStyleOptions } from 'pixi.js';
 import { fontFamily } from '../../engine/fonts';
 
@@ -44,9 +45,9 @@ export function floatingPush(existing: readonly { x: number; y: number; offset: 
 // The originals are pre-rendered with "MoneyEffect" and "GoldOrangeEffect" gradients, which have not
 // been read from the binary; these fills and outlines approximate them.
 const STYLES = {
-  score: { fontFamily: fontFamily(SCORE_FONT), fontSize: 16, fill: 0xffe45c, stroke: { color: 0x3a2a00, width: 3 } },
-  penalty: { fontFamily: fontFamily(SCORE_FONT), fontSize: 16, fill: 0xff6b5c, stroke: { color: 0x3a0000, width: 3 } },
-  message: { fontFamily: fontFamily(MAIN_FONT), fontSize: 15, fill: 0xffb52e, stroke: { color: 0x4a2200, width: 3 }, letterSpacing: 1 },
+  score: { fontFamily: fontFamily(SCORE_FONT), fontSize: 16, fill: SCORE_FILL, stroke: BORDER },
+  penalty: { fontFamily: fontFamily(SCORE_FONT), fontSize: 16, fill: SCORE_NEGATIVE_FILL, stroke: BORDER },
+  message: { fontFamily: fontFamily(MAIN_FONT), fontSize: 15, fill: MAIN_FILL, stroke: BORDER, letterSpacing: 1 },
 } satisfies Record<string, TextStyleOptions>;
 
 export type FloatingStyle = keyof typeof STYLES;

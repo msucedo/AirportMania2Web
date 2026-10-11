@@ -1,4 +1,5 @@
-import { Container, Graphics, Text, TilingSprite, type Sprite } from 'pixi.js';
+import { BORDER, SCORE_FILL, SCORE_NEGATIVE_FILL, TITLE_BORDER, ULTRA_FILL } from './faces';
+import { Container, Graphics, Text, TilingSprite, type Sprite, type FillInput } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
@@ -108,8 +109,8 @@ export class FinalReport extends Container {
     this.panel.addChild(lines);
 
     const white = fontFamily(ROW_FONT);
-    const row = (text: string, x: number, y: number, align: 0 | 2, family = white, size = 11, fill = 0xffffff): Text => {
-      const node = new Text({ text, style: { fontFamily: family, fontSize: size, fill, stroke: { color: 0x2a1030, width: 2 } } });
+    const row = (text: string, x: number, y: number, align: 0 | 2, family = white, size = 11, fill: FillInput = 0xffffff): Text => {
+      const node = new Text({ text, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
       // Rows are placed by their baseline: each sits just above the rule drawn under it.
       node.anchor.set(align === 2 ? 1 : 0, 0.85);
       node.position.set(x, y);
@@ -121,7 +122,7 @@ export class FinalReport extends Container {
     this.steps.push(() => {
       const title = new Text({
         text: strings.t(tier === 'FAIL' ? 'SCORE.FAILED_SCORE' : `SCORE.${tier}_SCORE`),
-        style: { fontFamily: fontFamily(TITLE_FONT), fontSize: 20, fill: 0xffd75a, stroke: { color: 0x5a2a00, width: 3 } },
+        style: { fontFamily: fontFamily(TITLE_FONT), fontSize: 20, fill: ULTRA_FILL, stroke: TITLE_BORDER },
       });
       title.anchor.set(0.5);
       title.position.set(0, -97);
@@ -162,7 +163,7 @@ export class FinalReport extends Container {
     }
     this.steps.push(() => {
       row(strings.t('FINAL_REPORT_DIALOG.LEVEL_SCORE'), -190, 82, 0);
-      row(String(sim.score), 190, 82, 2, fontFamily(SCORE_FONT), 14, sim.score < 0 ? 0xff6b5c : 0xffe45c);
+      row(String(sim.score), 190, 82, 2, fontFamily(SCORE_FONT), 14, sim.score < 0 ? SCORE_NEGATIVE_FILL : SCORE_FILL);
     });
     // The button comes a full unit after the score.
     this.steps.push(() => this.clock >= 1);

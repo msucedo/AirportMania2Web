@@ -1,3 +1,4 @@
+import { BORDER, MAIN_FILL } from './view/faces';
 import { Container, Graphics, Text, type Application, type Sprite, type TextStyleOptions } from 'pixi.js';
 import type { GameData } from '../data/load';
 import type { Strings } from '../data/strings';
@@ -49,8 +50,8 @@ export class LoadingScreen {
     this.root.addChild(
       textures.sprite('LOADING_SCREEN.BACK'),
       // `FONTS.MAIN` and `FONTS.WHITE`, as the dialogs draw them.
-      label('LOADING_SCREEN.FASTEN_YOUR_SEAT_BELTS', 210, { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 } }),
-      label('LOADING_SCREEN.LOADING', 238, { fontFamily: fontFamily(WHITE_FONT), fontSize: 11, fill: 0xffffff }),
+      label('LOADING_SCREEN.FASTEN_YOUR_SEAT_BELTS', 210, { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER }),
+      label('LOADING_SCREEN.LOADING', 238, { fontFamily: fontFamily(WHITE_FONT), fontSize: 11, fill: 0xffffff, stroke: BORDER }),
       this.strap,
       ...this.pins,
       this.white,

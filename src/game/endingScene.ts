@@ -1,3 +1,4 @@
+import { GIANT_FILL, TITLE_BORDER } from './view/faces';
 import { type Application, Container, type FederatedPointerEvent, Rectangle, type Sprite, Text, type Ticker } from 'pixi.js';
 import type { GameData } from '../data/load';
 import type { Strings } from '../data/strings';
@@ -95,7 +96,7 @@ export class EndingScene {
     // 0x35382: the letters, side by side and centred on (240, 160). `FINAL_VICTORY.GIANT_FONT` is
     // Blue Stone at 22 and 0.8 of its width; its effect's colours are not read.
     const text = options.strings.t('FINAL_VICTORY.CONGRATULATIONS');
-    const style = { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 22, fill: 0xffd75a, stroke: { color: 0x5a2a00, width: 3 } };
+    const style = { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 22, fill: GIANT_FILL, stroke: TITLE_BORDER };
     let width = 0;
     for (const letter of text) {
       const node = new Text({ text: letter, style });

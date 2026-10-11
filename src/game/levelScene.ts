@@ -1,3 +1,4 @@
+import { BORDER, MAIN_FILL } from './view/faces';
 import type { AwardPlace } from '../data/awards';
 import { levelAwardPictures, levelAwardSurfaces } from './awardsRoom';
 import { Container, Graphics, Text, type Application, type Sprite, type FederatedPointerEvent } from 'pixi.js';
@@ -552,7 +553,7 @@ export class LevelScene {
     const value = this.options.progress.awards[id]?.value ?? 0;
     const text = new Text({
       text: this.strings.t(`${awardText(id)}.EARN`, value),
-      style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 }, align: 'center', wordWrap: true, wordWrapWidth: 240 / 0.8 },
+      style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER, align: 'center', wordWrap: true, wordWrapWidth: 240 / 0.8 },
     });
     text.anchor.set(0.5);
     text.position.set(240, 160);

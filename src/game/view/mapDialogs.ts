@@ -1,3 +1,4 @@
+import { BORDER, MAIN_FILL, SCORE_FILL, TITLE_BORDER, ULTRA_FILL } from './faces';
 import { Container, Graphics, Text } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
@@ -60,7 +61,7 @@ export class LevelDialog extends Container {
 
     const title = new Text({
       text: strings.t('MAP.LEVEL_STAGE_NUMBER', level.stage, level.level),
-      style: { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 20, fill: 0xffd75a, stroke: { color: 0x5a2a00, width: 3 } },
+      style: { fontFamily: fontFamily('FONTS.BLUE_STONE'), fontSize: 20, fill: ULTRA_FILL, stroke: TITLE_BORDER },
     });
     title.anchor.set(0.5);
     title.position.set(0, (20 - size.height) / 2);
@@ -133,11 +134,11 @@ export class StageDialog extends Container {
     this.addChild(overlay);
 
     const name = dialogText(centre, strings.t(`STAGES.${stage.number}.NAME`), 0, layout.name, 14, fontFamily(MAIN_FONT), 0.5);
-    name.style.fill = 0xffc23a;
+    name.style.fill = MAIN_FILL;
     if (name.width > 400) name.scale.set(400 / name.width);
     const description = new Text({
       text: strings.t(`STAGES.${stage.number}.DESCRIPTION`),
-      style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, wordWrap: true, wordWrapWidth: 400, lineHeight: 13 },
+      style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER, wordWrap: true, wordWrapWidth: 400, lineHeight: 13 },
     });
     description.position.set(-200, layout.description.top);
     centre.addChild(description);
@@ -146,17 +147,17 @@ export class StageDialog extends Container {
       const money = fontFamily(SCORE_FONT);
       const main = fontFamily(MAIN_FONT);
       const { stars, perStar, clearBonus } = stage.prize;
-      const amount = (value: number, y: number): void => void (dialogText(centre, String(value), 200, y, 14, money, 1).style.fill = 0xffe45c);
-      dialogText(centre, strings.t('MAP_INFO_DIALOG.STAGE_CLEARED'), 5, layout.cleared, 14, main, 0).style.fill = 0xffc23a;
+      const amount = (value: number, y: number): void => void (dialogText(centre, String(value), 200, y, 14, money, 1).style.fill = SCORE_FILL);
+      dialogText(centre, strings.t('MAP_INFO_DIALOG.STAGE_CLEARED'), 5, layout.cleared, 14, main, 0).style.fill = MAIN_FILL;
       amount(clearBonus, layout.cleared);
       const star = textures.sprite('GUI.FINAL_REPORT.STAR_SMALL');
       star.position.set(15, layout.stars);
       centre.addChild(star);
-      dialogText(centre, `x ${stars}`, 30, layout.stars, 14, main, 0).style.fill = 0xffc23a;
+      dialogText(centre, `x ${stars}`, 30, layout.stars, 14, main, 0).style.fill = MAIN_FILL;
       amount(stars * perStar, layout.stars);
       // 0x2c26c: a rule 210 wide centred at x 100; what it is drawn with is not read.
       centre.addChild(new Graphics().rect(100 - 105, layout.rule, 210, 1).fill({ color: 0xffffff, alpha: 0.5 }));
-      dialogText(centre, strings.t('MAP_INFO_DIALOG.TOTAL'), 5, layout.total, 14, main, 0).style.fill = 0xffc23a;
+      dialogText(centre, strings.t('MAP_INFO_DIALOG.TOTAL'), 5, layout.total, 14, main, 0).style.fill = MAIN_FILL;
       amount(stars * perStar + clearBonus, layout.total);
     }
     dialogButton(textures, audio, centre, { x: 0, y: layout.close, width: 380, height: 36 }, strings.t('CLOSE'), fontFamily(SCORE_FONT), onClose);

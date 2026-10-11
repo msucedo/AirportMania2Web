@@ -1,4 +1,5 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { BORDER, SCORE_FILL, ULTRA_FILL } from './faces';
+import { Container, Graphics, Text, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -23,26 +24,26 @@ export class StageClear extends Container {
     panel.addChild(centre);
     this.addChild(overlay);
 
-    const text = (value: string, x: number, y: number, family: string, size: number, anchorX: number, fill = 0xffffff): void => {
-      const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: { color: 0x2a1030, width: 2 } } });
+    const text = (value: string, x: number, y: number, family: string, size: number, anchorX: number, fill: FillInput = 0xffffff): void => {
+      const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
       node.anchor.set(anchorX, 0.85);
       node.position.set(x, y);
       centre.addChild(node);
     };
     const white = fontFamily('FONTS.TEEN_BD');
     const money = fontFamily(SCORE_FONT);
-    text(strings.t('FINAL_REPORT_DIALOG.STAGE_CLEAR'), 0, -78, fontFamily('FONTS.BLUE_STONE'), 20, 0.5, 0xffd75a);
+    text(strings.t('FINAL_REPORT_DIALOG.STAGE_CLEAR'), 0, -78, fontFamily('FONTS.BLUE_STONE'), 20, 0.5, ULTRA_FILL);
     centre.addChild(new Graphics().rect(-175, -65.5, 350, 1).rect(-175, 15.5, 350, 1).fill({ color: 0xffffff, alpha: 0.5 }));
     text(strings.t('FINAL_REPORT_DIALOG.AREA_CLEAR_BONUS'), -175, -30, white, 11, 0);
-    text(String(reward.bonus), 175, -30, money, 14, 1, 0xffe45c);
+    text(String(reward.bonus), 175, -30, money, 14, 1, SCORE_FILL);
     text(strings.t('FINAL_REPORT_DIALOG.STARS_EARNED'), -175, -10, white, 11, 0);
     const star = textures.sprite('GUI.FINAL_REPORT.STAR_SMALL');
     star.position.set(150, -18);
     star.scale.set(0.7);
     centre.addChild(star);
-    text(String(reward.stars), 136, -10, money, 14, 1, 0xffe45c);
+    text(String(reward.stars), 136, -10, money, 14, 1, SCORE_FILL);
     text(strings.t('FINAL_REPORT_DIALOG.FUNDS'), -175, 60, white, 11, 0);
-    text(String(reward.funds), 175, 60, money, 14, 1, 0xffe45c);
+    text(String(reward.funds), 175, 60, money, 14, 1, SCORE_FILL);
     dialogButton(textures, audio, centre, { x: 0, y: 110, width: 200, height: 34 }, strings.t('FINAL_REPORT_DIALOG.CONTINUE'), money, onContinue);
   }
 }

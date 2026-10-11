@@ -1,4 +1,5 @@
-import { Container, Graphics, Rectangle, type Sprite, Text } from 'pixi.js';
+import { MAIN_FILL, ULTRA_FILL } from './faces';
+import { Container, Graphics, Rectangle, type Sprite, Text, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -53,7 +54,7 @@ export function textBox(parent: Container, value: string, box: Box, style: Face,
       fontFamily: style.family,
       fontSize: style.size,
       fill: style.fill,
-      ...(style.stroke === undefined ? {} : { stroke: { color: style.stroke, width: 3 } }),
+      ...(style.stroke === undefined ? {} : { stroke: { color: style.stroke, width: style.strokeWidth ?? 3, join: 'round' as const } }),
       align: centredIn ? 'center' : 'left',
       wordWrap: true,
       wordWrapWidth: (box.x2 - box.x1) / (style.widthScale ?? 1),
@@ -75,10 +76,10 @@ export function textBox(parent: Container, value: string, box: Box, style: Face,
 // The dialogs name cached fonts, each a face at a fixed size with an effect: `FONTS.MAIN` is
 // Brady Bunch at 14 in gold, `FONTS.ULTRA` Blue Stone at 20 and 0.8 of its width, `FONTS.WHITE`
 // Teen Bold at 11 and `FONTS.TEEN` Teen Bold at 10 and 0.9 of its width with no effect.
-export type Face = { family: string; size: number; fill: number; stroke?: number; widthScale?: number };
-export const title = (): Face => ({ family: fontFamily(MAIN_FONT), size: 14, fill: 0xffc23a, stroke: 0x5a2a00 });
-const ultra = (): Face => ({ family: fontFamily('FONTS.BLUE_STONE'), size: 20, fill: 0xffd75a, stroke: 0x5a2a00, widthScale: 0.8 });
-export const white = (): Face => ({ family: fontFamily('FONTS.TEEN_BD'), size: 11, fill: 0xffffff });
+export type Face = { family: string; size: number; fill: FillInput; stroke?: number; strokeWidth?: number; widthScale?: number };
+export const title = (): Face => ({ family: fontFamily(MAIN_FONT), size: 14, fill: MAIN_FILL, stroke: 0x000000 });
+const ultra = (): Face => ({ family: fontFamily('FONTS.BLUE_STONE'), size: 20, fill: ULTRA_FILL, stroke: 0x000000, strokeWidth: 4, widthScale: 0.8 });
+export const white = (): Face => ({ family: fontFamily('FONTS.TEEN_BD'), size: 11, fill: 0xffffff, stroke: 0x000000 });
 
 /**
  * The rule the dialogs draw under their title (0x2c26c), `width` wide and centred at height `y`.

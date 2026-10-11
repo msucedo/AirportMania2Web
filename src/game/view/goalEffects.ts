@@ -1,3 +1,4 @@
+import { TITLE_BORDER, ULTRA_FILL } from './faces';
 import { Container, Text, type Sprite } from 'pixi.js';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
@@ -83,7 +84,7 @@ export class GoalEffects extends Container {
   /** The bar reached `tier`, whose name is `name`. */
   reach(tier: number, name: string): void {
     // `FONTS.ULTRA` is this face at 20 and 0.8 of its width with a colour effect that has not been read.
-    const text = new Text({ text: name, style: { fontFamily: fontFamily(GOAL_EFFECT_FONT), fontSize: 20, fill: 0xffd75a, stroke: { color: 0x5a2a00, width: 3 } } });
+    const text = new Text({ text: name, style: { fontFamily: fontFamily(GOAL_EFFECT_FONT), fontSize: 20, fill: ULTRA_FILL, stroke: TITLE_BORDER } });
     text.anchor.set(0.5, 0);
     this.addChild(text);
     this.texts.push({ text, age: 0 });

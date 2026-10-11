@@ -1,4 +1,5 @@
-import { Container, Graphics, Rectangle, Text, type FederatedPointerEvent, type Sprite } from 'pixi.js';
+import { BORDER, MAIN_FILL, SCORE_FILL } from './faces';
+import { Container, Graphics, Rectangle, Text, type FederatedPointerEvent, type Sprite, type FillInput } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -53,7 +54,7 @@ export class ImprovementsDialog extends Container {
     this.addChild(overlay);
     this.chosen = this.offers[0]!;
 
-    const heading = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TEXT_SHORT'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 } } });
+    const heading = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TEXT_SHORT'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
     heading.anchor.set(0.5, 0.85);
     heading.position.set(55, -116);
     const rules = new Graphics();
@@ -149,7 +150,7 @@ export class ImprovementsDialog extends Container {
         this.rows.addChild(bought);
       } else if (this.tryMe(offer)) {
         // 0x4dc8a: "try me" in `FONTS.MAIN` at 0.8, ending 40 px right of the icon and 10 px under its middle.
-        const mark = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TRY_ME'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: 0xffc23a, stroke: { color: 0x5a2a00, width: 3 } } });
+        const mark = new Text({ text: strings.t('IMPROVEMENTS_DIALOG.TRY_ME'), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
         mark.anchor.set(1, 0.5);
         mark.scale.set(0.8);
         mark.position.set(icon.x + 40, icon.y + 10);
@@ -159,18 +160,18 @@ export class ImprovementsDialog extends Container {
 
     for (const child of this.detail.removeChildren()) child.destroy({ children: true });
     const offer = this.chosen;
-    const text = (value: string, x: number, y: number, family: string, size: number, anchorX: number, fill = 0xffffff): Text => {
-      const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: { color: 0x2a1030, width: 2 } } });
+    const text = (value: string, x: number, y: number, family: string, size: number, anchorX: number, fill: FillInput = 0xffffff): Text => {
+      const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
       node.anchor.set(anchorX, 0.85);
       node.position.set(x, y);
       this.detail.addChild(node);
       return node;
     };
-    const title = text(strings.t(offer.titleId), 60, -86, fontFamily(MAIN_FONT), 14, 0.5, 0xffe9a8);
+    const title = text(strings.t(offer.titleId), 60, -86, fontFamily(MAIN_FONT), 14, 0.5, MAIN_FILL);
     if (title.width > 310) title.scale.set(310 / title.width);
     const description = new Text({
       text: strings.t(offer.descriptionId),
-      style: { fontFamily: fontFamily(ROW_FONT), fontSize: 10, fill: 0xffffff, wordWrap: true, wordWrapWidth: 325, lineHeight: 13 },
+      style: { fontFamily: fontFamily(ROW_FONT), fontSize: 11, fill: 0xffffff, stroke: BORDER, wordWrap: true, wordWrapWidth: 325, lineHeight: 13 },
     });
     // 0x4c59e: in the box (−105, −80)–(220, 40), from its left and its top.
     description.position.set(-105, -80);
@@ -179,10 +180,10 @@ export class ImprovementsDialog extends Container {
     this.detail.addChild(description);
 
     const money = fontFamily(SCORE_FONT);
-    text(strings.t('IMPROVEMENTS_DIALOG.COST'), -110, 63, fontFamily(MAIN_FONT), 13, 0, 0xffc23a);
-    text(String(offer.price), 210, 63, money, 14, 1, 0xffe45c);
-    text(strings.t('IMPROVEMENTS_DIALOG.AVAILABLE'), -110, 95, fontFamily(MAIN_FONT), 13, 0, 0xffc23a);
-    text(String(this.progress.funds(this.stage, this.level)), 210, 95, money, 14, 1, 0xffe45c);
+    text(strings.t('IMPROVEMENTS_DIALOG.COST'), -110, 63, fontFamily(MAIN_FONT), 13, 0, MAIN_FILL);
+    text(String(offer.price), 210, 63, money, 14, 1, SCORE_FILL);
+    text(strings.t('IMPROVEMENTS_DIALOG.AVAILABLE'), -110, 95, fontFamily(MAIN_FONT), 13, 0, MAIN_FILL);
+    text(String(this.progress.funds(this.stage, this.level)), 210, 95, money, 14, 1, SCORE_FILL);
 
     const owned = this.owned(offer);
     dialogButton(textures, this.audio, this.detail, { x: -20, y: 120, width: 125, height: 30 }, strings.t(owned ? 'IMPROVEMENTS_DIALOG.SELL' : 'IMPROVEMENTS_DIALOG.BUY'), money, () => this.trade(offer), null);

@@ -1,3 +1,4 @@
+import { BORDER } from './faces';
 import { Container, NineSliceSprite, Rectangle, Text, type FederatedPointerEvent, type Sprite } from 'pixi.js';
 import { LANGUAGES, type Language, type Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
@@ -101,7 +102,7 @@ export class GameMenu extends Container {
       const restart = page === 'askRestart';
       const question = new Text({
         text: strings.t(restart ? 'RESTART_LEVEL_DIALOG.TEXT' : 'GO_TO_MAP_LEVEL_DIALOG.TEXT'),
-        style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, align: 'center', wordWrap: true, wordWrapWidth: 400 },
+        style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER, align: 'center', wordWrap: true, wordWrapWidth: 400 },
       });
       question.anchor.set(0.5);
       question.position.set(0, -30);

@@ -526,8 +526,26 @@ Draw routine `0x40ed4`:
   `&br;` is a line break and `%d` / `%s` are filled printf-style.
 - Cached fonts (from `resources.xml`): `FONTS.SCORE` is Kenyan Coffee Bold 14 with
   `MoneyEffect`; `FONTS.MAIN` is Brady Bunch 14 with `GoldOrangeEffect`; `FONTS.WHITE` is Teen
-  Bold 11 with `WhiteSilverEffect`. The effects are gradient renderings whose colours have not
-  been read; the web version uses flat fills with an outline.
+  Bold 11 with `WhiteSilverEffect`; `FONTS.ULTRA` is Blue Stone 20 at 0.8 of its width with
+  `UltraFontEffect`; `FONTS.GIANT_FONT` Blue Stone 22 with `GiantFontEffect`; `FONTS.TEEN` and
+  `FONTS.GUI_SCORE` have `NoneEffect`.
+- Effects (confirmed) are registered by name in `0xbc03c`, each an object whose third routine
+  works on a letter's picture with two primitives: `0x91cec(picture, A, B)` fills it with a
+  gradient running from A in its first row to B in its last (`0x995cc`), and
+  `0x91dc8(picture, r)` puts a black copy, blurred by `r`, under it. Which row is the top is not
+  read; A is taken as the bottom, which gives light over dark as the art has it.
+  - `MoneyEffect` (`0xbbfa4`): A (0.5216, 0.7882, 0.0353), B (1, 0.9725, 0); border 1.5.
+  - `MoneyNegativeEffect` (`0xbbefc`): A (0.7882, 0.3529, 0.0353), B (1, 0.098, 0); border 1.5.
+  - `GoldOrangeEffect` (`0xbb808`): A (1, 0.75, 0.5), B (1, 1, 0.9); border 1.5.
+  - `WhiteSilverEffect` (`0xbb7a8`): the border 1.5 alone.
+  - `UltraFontEffect` (`0xbb89c`): A (0.85, 0.93, 1), B white; an embossing made from a blurred
+    copy filled (0.76, 0.83, 1) (`0x997ec`, `0x98b78` 0.75, nine samples by `0x99248`); border
+    2; then every colour is raised to the power 2.2 through a table (`0x97d70` with 1/2.2).
+  - `GiantFontEffect` (`0xbbbd0`): the same with A (1, 0.682, 0).
+- Web version (`src/game/view/faces.ts`): the gradients as fills, the power applied to the two
+  title effects' colours, and the border as a black outline of that width. The embossing of the
+  two title effects is not done, and a text of several lines takes one gradient over all of it
+  where the original has one in each letter.
 - Floating texts: points use `FONTS.SCORE` (`0x5d2c`), negative points `FONTS.SCORE_NEGATIVE`
   (`0x5de0`), punctuality and bonus texts `FONTS.MAIN`, 50 px above the plane (`0x6110`).
 ## Level announcement (panel `0x514cc`, draw `0x51be8`)

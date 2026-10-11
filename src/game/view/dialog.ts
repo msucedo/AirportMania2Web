@@ -1,3 +1,4 @@
+import { BORDER } from './faces';
 import { Container, Matrix, Graphics, NineSliceSprite, Rectangle, Text } from 'pixi.js';
 import type { AudioPlayer } from '../../engine/audio';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../engine/screen';
@@ -96,7 +97,7 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
 }
 
 export function dialogText(panel: Container, value: string, x: number, y: number, size: number, family: string, anchorX = 0): Text {
-  const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill: 0xffffff, stroke: { color: 0x2a1030, width: 3 } } });
+  const node = new Text({ text: value, style: { fontFamily: family, fontSize: size, fill: 0xffffff, stroke: BORDER } });
   node.anchor.set(anchorX, 0.5);
   node.position.set(x, y);
   panel.addChild(node);
