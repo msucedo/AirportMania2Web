@@ -1,3 +1,4 @@
+import { publisherFades, publisherGlint, publisherOver, publisherSweeps, studioWindV } from '../src/game/opening';
 import { levelAwardPlaces, levelDialogHeight, stageDialogLayout } from '../src/game/view/mapDialogs';
 import { MAP_GLINTS, MAP_STREAKS, streakPose, airborneIconPose, birdPose, cloudBob, glintShow, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
@@ -761,6 +762,37 @@ describe('scenery', () => {
     expect(levelAwardPlaces(6)).toHaveLength(6);
     expect(stageDialogLayout(false)).toMatchObject({ height: 220, name: -75, description: { top: -40, bottom: 60 }, close: 90 });
     expect(stageDialogLayout(true)).toMatchObject({ height: 260, name: -95, description: { top: -80, bottom: 40 }, cleared: 6, stars: 34, rule: 52, total: 70, close: 110 });
+  });
+
+  it('runs the opening screens as the original draws them', () => {
+    expect(publisherFades(0.5)).toEqual({ published: 0, seal: 0, logo: 0 });
+    expect(publisherFades(2)).toEqual({ published: 0.5, seal: 0.25, logo: 0 });
+    expect(publisherFades(4)).toEqual({ published: 0.75, seal: 1, logo: 1 });
+    expect(publisherFades(6.25).logo).toBeCloseTo(0.125, 5);
+    expect(publisherSweeps(3)).toEqual([]);
+    // Against runs of the draw at 3.3 s and 3.8 s.
+    const early = publisherSweeps(3.3);
+    expect(early).toHaveLength(4);
+    expect(early[0]).toMatchObject({ reach: 126, flat: 0.232 });
+    expect(early[0]!.turn).toBeCloseTo(-14, 4);
+    expect(early[0]!.alpha).toBeCloseTo(1, 4);
+    expect(early[1]!.turn).toBeCloseTo(-195, 4);
+    expect(early[2]!.turn).toBeCloseTo(-120 / 7, 4);
+    expect(early[2]!.alpha).toBeCloseTo(0.714285, 4);
+    expect(publisherSweeps(3.8)).toHaveLength(2);
+    expect(publisherGlint(3.6)).toBeNull();
+    const glint = publisherGlint(3.8)!;
+    expect(glint.x).toBeCloseTo(206.384, 2);
+    expect(glint.y).toBeCloseTo(89.3262, 2);
+    expect(glint.glow).toBeCloseTo(0.5, 4);
+    expect(glint.star).toBe(0.5);
+    expect(publisherGlint(4.1)!.star).toBe(0.3);
+    expect(publisherGlint(3.75)!.star).toBeCloseTo(0.45399, 4);
+    expect(publisherGlint(4.45)).toMatchObject({ x: 96, y: 136 });
+    expect(publisherOver(0.5, true)).toBe(false);
+    expect(publisherOver(0.8, true)).toBe(true);
+    expect(publisherOver(6.6, false)).toBe(true);
+    expect(studioWindV(0.3, 0.2)).toBeCloseTo(0.6, 6);
   });
 });
 

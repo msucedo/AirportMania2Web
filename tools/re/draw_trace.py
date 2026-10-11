@@ -51,6 +51,8 @@ class Run:
             if m:
                 self.stubs[int(m.group(1), 16)] = m.group(2)
         self.skip = {int(a, 16) for a in args.stub}
+        self.returns_spec = dict(r.split('=') for r in args.returns)
+        self.returns = {}
         self.heap = HEAP + 0x1000
         self.images, self.random = {}, 0
         uc = self.uc = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
@@ -67,6 +69,7 @@ class Run:
         uc.reg_write(UC_ARM_REG_C1_C0_2, uc.reg_read(UC_ARM_REG_C1_C0_2) | (0xf << 20))
         uc.reg_write(UC_ARM_REG_FPEXC, 0x40000000)
         self.app = self.make(args.app, 0x800)
+        self.returns = {int(k, 16): self.word(v) for k, v in self.returns_spec.items()}
         self.object = self.make(args.fields, 0x800)
         uc.hook_add(UC_HOOK_CODE, self.on_code)
         uc.hook_add(UC_HOOK_MEM_UNMAPPED, self.on_unmapped)
@@ -126,6 +129,11 @@ class Run:
             at = self.alloc(4 * len(values))
             self.uc.mem_write(at, struct.pack(f'<{len(values)}I', *values))
             return at
+        if text == 'ident':
+            # An identity transform: white, opaque, the unit matrix.
+            at = self.alloc(0x40)
+            self.uc.mem_write(at, struct.pack('<I4f9f', 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1))
+            return at
         if text == 'obj':
             return self.alloc(0x400)
         return f2i(float(text[:-1])) if text.endswith('f') else int(text, 0) & 0xffffffff
@@ -150,7 +158,7 @@ class Run:
     def on_code(self, uc, address, size, data):
         name = self.stubs.get(address)
         virtual = TRAP <= address < TRAP + 0x800
-        if not (name or virtual or address == APP or address in self.skip):
+        if not (name or virtual or address == APP or address in self.skip or address in self.returns):
             return
         lr = uc.reg_read(UC_ARM_REG_LR)
         regs = [uc.reg_read(r) for r in (UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3)]
@@ -171,6 +179,8 @@ class Run:
                 print(f'draw {self.images.get(regs[0], hex(regs[0]))} {self.transform(regs[1])}')
             else:
                 print(f'virtual call from {lr & ~1:#x} on {regs[0]:#x}: {regs[1]:#x} {regs[2]:#x} {regs[3]:#x}')
+        elif address in self.returns:
+            result[0] = self.returns[address]
         elif address in self.skip:
             print(f'call {address:#x} from {lr & ~1:#x}: {regs[0]:#x} ' + ' '.join(f'{v:#x}({i2f(v):g})' for v in regs[1:]))
             for v in regs:
@@ -228,6 +238,7 @@ if __name__ == '__main__':
     parser.add_argument('--app', nargs='*', default=[])
     parser.add_argument('--stub', nargs='*', default=[])
     parser.add_argument('--dump', type=int, default=0)
+    parser.add_argument('--returns', nargs='*', default=[], help='address=value: engine functions answered with that value (ident: an identity transform)')
     parser.add_argument('--then', nargs='*', default=[], help='further routines to run on the same object')
     parser.add_argument('--poke', nargs='*', default=[], help='fields set before each further routine')
     parser.add_argument('--peek', type=int, default=0, help='floats to print at each heap pointer a stubbed call is given')

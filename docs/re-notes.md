@@ -2392,3 +2392,35 @@ were read off runs of the draw (`tools/re/draw_trace.py 0x39dcc --r1 ptr:0 --r2 
 --r3 ptr:914f,96f --stack ptr:860f,52f 0f 2f --stub 0xa4f30 0xa2e4c --then 0x39f8c --poke
 0x24=0.45f 0x4=img:8x170`), and are kept as data in the web version. That draw is given no
 scroll of its own; the web version moves the streaks with the map like everything else.
+
+## The opening screens — confirmed
+
+Two of the app's screens (vtables `0x17b4b0` and `0x17b990`: update, draw, enter, leave).
+
+- Publisher (`REFLEXIVE_INTRO`; enter `0x6c3f0`, update `0x6c4d0`, draw `0x6c5c0`). Its sound
+  starts on entering. The clock runs until 6.5 s, or a touch after 0.7 s; then the sound is let
+  go over half a second and the screen goes white over one second and gives way to the studio's.
+  Draw, on black: `PUBLISHED` at (240, 70), `SEAL` at (240, 136) and `LOGO` at (240, 220), at
+  opacity `clamp(0.5·min(c − a, b − c))` with (a, b) = (1, 5.5), (1.5, 6), (2, 6.5).
+  `RECTANGLE_BRIGHT` four times, each moved left, turned, flattened top to bottom and put on
+  the seal: while 3.2 < c < 3.7, with `u = 2(c − 3.2)`, 126 px turned `−70u` and `−75u − 180`,
+  flattened 0.232; while 3.2 < c < 3.9, with `w = (c − 3.2)/0.7`, 140 px turned `−120w` and
+  144 px turned `−135w − 180`, flattened 0.332; opacity `clamp(5·min(u, 1 − u))` (or w). While
+  3.7 < c < 4.7, with `q = c − 3.7` and `θ = min(1.5q, 1)·π/2`: `BRIGHT` at
+  `(240 − 144·sin θ, 136 − 48·cos θ)` at opacity `clamp(5·min(q, 1 − q))`, and `STAR` there
+  turned `3000q`° at opacity 0.3 where `sin(3πq)` is under 0.3, else that sine, 0.5 at most.
+  The numbers were checked against runs of the draw (`tools/re/draw_trace.py 0x6c5c0 0x4=1
+  0xc=3.8f …`).
+- Studio (`SWG_INTRO`; enter `0x79ae0`, update `0x79c60`, draw `0x79d74`). Its sound plays on
+  entering. It comes out of white over one second, waits 1.7 s or for a touch, and goes back to
+  white over one second. `BACKGROUND` is stretched over the screen and `LOGO` is at (240, 160).
+  From the end of the first second a clock runs from 0 at 0.75 a second; while under 1,
+  `WIND` (14 px wide) is run along a path from (−60, 310) round to (468, −10), 1022 px long
+  (`0x8ff3c`, `0x8ff60` ×3, `0x8ffe0`), with v `clamp(4·clock − 3d)` at a row `d` of the way
+  along. The path's 1117 rows were read off a run (`tools/re/draw_trace.py 0x79ae0 --stub
+  0xa4f30 0xa5bdc 0xa559c 0x8caa4 --returns 0xb3f64=ident --app 0x2c=obj --then 0x79d74 --poke
+  0x4=2 0xc=0.3f 0x2c=14f 0x9c=1.2f 0xa0=-1.8f …`).
+- Web version: every eighth row of the wind's path is kept. The screens are shown before the
+  menu once for each visit to the page (kept in the browser's session), since the menu here is
+  a page come back to from the map; `?logos` shows them again and `?nologos` never. A browser
+  plays no sound before the first touch, so the first screen is usually silent.

@@ -78,10 +78,10 @@ export class AudioPlayer {
 
   /**
    * Starts a sound that repeats until stopped, such as an engine. The handle moves it between
-   * the speakers (-1 left to 1 right) and stops it, fading over `fade` seconds. Returns null when
-   * sound is off.
+   * the speakers (-1 left to 1 right) and stops it, fading over `fade` seconds. With `repeat` off
+   * it plays once but can still be stopped. Returns null when sound is off.
    */
-  loop(id: string, volume = 1): { pan(value: number): void; stop(fade?: number): void } | null {
+  loop(id: string, volume = 1, repeat = true): { pan(value: number): void; stop(fade?: number): void } | null {
     const { context, effects } = this;
     if (!context || !effects || this.muted) return null;
     const gain = context.createGain();
@@ -94,7 +94,7 @@ export class AudioPlayer {
       if (!buffer || stopped) return;
       source = context.createBufferSource();
       source.buffer = buffer;
-      source.loop = true;
+      source.loop = repeat;
       source.connect(panner);
       source.start();
     });

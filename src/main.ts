@@ -1,3 +1,4 @@
+import { Opening } from './game/opening';
 import { loadGameData } from './data/load';
 import { isLanguage } from './data/strings';
 import { AudioPlayer } from './engine/audio';
@@ -23,6 +24,7 @@ declare global {
     /** Exposed for manual poking and automated checks. */
     game?: LevelScene;
     map?: WorldMap;
+    opening?: Opening;
     progress?: Progress;
   }
 }
@@ -148,6 +150,29 @@ async function main(): Promise<void> {
     const audio = makeAudio();
     const strings = await data.strings(chosen);
     await Promise.all([textures.load([...GAME_MENU_SURFACES, ...CREDITS_SURFACES, ...USERS_SURFACES, ...TUTORIAL_QUESTION_SURFACES]), loadFonts(data.resources, [...CREDITS_FONTS, ...USERS_FONTS])]);
+    // The two opening screens come first, once for each visit: the menu is a page of its own
+    // here and is come back to from the map, where the original does not show them again.
+    const seen = ((): boolean => {
+      try {
+        return sessionStorage.getItem('am2web.opened') === '1';
+      } catch {
+        return true;
+      }
+    })();
+    if (params.has('logos') || !(seen || params.has('nologos'))) {
+      await new Promise<void>((done) => {
+        void Opening.create(app, textures, audio, done).then((opening) => {
+          document.body.dataset.ready = 'true';
+          window.opening = opening;
+        });
+      });
+      window.opening?.root.destroy({ children: true });
+      try {
+        sessionStorage.setItem('am2web.opened', '1');
+      } catch {
+        // Storage is off: they are shown every time.
+      }
+    }
     await MainMenu.create(app, data, textures, audio, {
       strings,
       enabled: ['PLAY', 'USERS', 'OPTIONS', 'CREDITS'],
