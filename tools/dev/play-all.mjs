@@ -77,15 +77,32 @@ try {
           const pool = usable.length > 0 ? usable : places;
           return pool.find((place) => free(place, plane)) ?? pool[plane.id % Math.max(1, pool.length)];
         };
+        // A runway another plane stands on, having landed there and not left yet.
+        const held = (runway, plane) => sim.planes.some((q) => q !== plane && !q.gone && q.landed && q.place === runway);
         for (let i = 0; i < 60 * 900 && !sim.ended; i++) {
           for (const p of sim.planes) {
-            if (p.gone || p.queue.length > 0) continue;
+            if (p.gone) continue;
             if (!p.landed) {
-              if (p.state === 0) sim.addOrder(p, pick(sim.runways, p));
+              if (p.state !== 0) continue;
+              if (p.queue.length === 0) sim.addOrder(p, pick(sim.runways, p));
+              else if (p.queue.length === 1 && p.queue[0].kind === 'runway' && held(p.queue[0], p)) {
+                // Still in the air and told to land where someone stands: a player would send it
+                // to a runway that has come free rather than let it run out of patience.
+                const other = sim.runways.find((runway) => runway !== p.queue[0] && clear(runway) && free(runway, p));
+                if (other) {
+                  sim.cancelQueue(p);
+                  sim.addOrder(p, other);
+                }
+              }
               continue;
             }
-            if (p.state !== 2) continue;
-            const wanted = p.need === 1 || p.need === 6 ? pick(sim.gates, p) : p.need === 3 ? pick(sim.gasStations, p) : p.need === 2 ? pick(sim.hangars, p) : p.need === 5 ? pick(sim.luggages, p) : p.need === 7 ? pick(sim.runways, p) : undefined;
+            if (p.queue.length > 0 || p.state !== 2) continue;
+            let wanted = p.need === 1 || p.need === 6 ? pick(sim.gates, p) : p.need === 3 ? pick(sim.gasStations, p) : p.need === 2 ? pick(sim.hangars, p) : p.need === 5 ? pick(sim.luggages, p) : p.need === 7 ? pick(sim.runways, p) : undefined;
+            // Waiting on a runway for a place that is taken blocks landings: park it meanwhile, as a player would.
+            if (wanted && p.place && p.place.kind === 'runway' && p.need !== 7 && !free(wanted, p)) {
+              const spot = sim.stopSpots.find((stop) => !stop.wash && !stop.painting && free(stop, p));
+              if (spot) wanted = spot;
+            }
             if (wanted) sim.addOrder(p, wanted);
           }
           sim.update(1 / 60);
