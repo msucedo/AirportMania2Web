@@ -2416,7 +2416,8 @@ It is a testing back door; the owner of this port chose to leave it out (2026-10
   rocket's speed plus −10…10 each way, life 2…2.5 s. It ends when its sparks are gone.
 - Spark (`EFFECTS.FIREWORKS.SPARK`, additive; update `0x393e0`, draw `0x393ac`): gravity 60,
   speed multiplied by `0.3^dt` each step, opacity its life left.
-- Web version: drawn under the notice's text (the order is not read).
+- The manager's draw (`0x31a54`) draws its list first and then the notice, so the sparks are
+  under the notice. Web version: the same.
 
 ## The level's bird — confirmed unused
 
