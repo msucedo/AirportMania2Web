@@ -2487,6 +2487,6 @@ and clock `+0x50`, its transform kept at `+0x18` and handed to every widget.
   0x58=self:0x58 0x5c=self:0x58 --r1 0f --dump 40`), is, with `S = 0.75 + 1.25c − c²` and
   `U = 0.75 + 0.25c`, the matrix a `S·U`, c `±0.75(1 − c)·U` (plus opening, minus closing),
   d `c·S·U`, about (240, 160), at opacity `c`.
-- Web version: every dialog opens so. They still close at once, since each closes by being
-  taken away where it was made. Whether the darkening behind comes in with it is not read; it
-  is there from the start.
+- Web version: every dialog opens and closes so; one that is taken away stays on the screen
+  for its closing. Whether the darkening behind comes and goes with it is not read: here it is
+  there from the start and goes with the closing.

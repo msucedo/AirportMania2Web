@@ -37,13 +37,18 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
   stand.addChild(panel);
   let clock = 0;
   let last = performance.now();
+  let closing = false;
   const show = (): void => {
     const pose = dialogOpening(clock);
-    stand.setFromMatrix(new Matrix(pose.a, 0, pose.c, pose.d, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2));
+    // 0x2b9f8: it leans the other way as it closes.
+    stand.setFromMatrix(new Matrix(pose.a, 0, closing ? -pose.c : pose.c, pose.d, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2));
     stand.alpha = pose.alpha;
   };
   show();
-  overlay.onRender = () => {
+  /** What the dialog hangs from at the top, to stay on it while it closes. */
+  let root: Container | null = null;
+  const opening = (): void => {
+    for (let node: Container | null = overlay.parent; node; node = node.parent) root = node;
     const now = performance.now();
     clock += 3 * Math.min(0.1, (now - last) / 1000);
     last = now;
@@ -52,6 +57,35 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
       overlay.onRender = null;
     }
     show();
+  };
+  overlay.onRender = opening;
+  // 0x2b980: taken away, it first closes over a third of a second, the way it opened backwards.
+  // Whoever made it has already let go of it, so it stays on the screen by itself meanwhile.
+  const destroy = overlay.destroy.bind(overlay);
+  overlay.destroy = (options) => {
+    if (closing || !root || root.destroyed) {
+      overlay.onRender = null;
+      destroy(options);
+      return;
+    }
+    closing = true;
+    overlay.eventMode = 'none';
+    overlay.interactiveChildren = false;
+    root.addChild(overlay);
+    last = performance.now();
+    overlay.onRender = () => {
+      const now = performance.now();
+      clock -= 3 * Math.min(0.1, (now - last) / 1000);
+      last = now;
+      if (clock <= 0) {
+        overlay.onRender = null;
+        setTimeout(() => destroy(options));
+        return;
+      }
+      show();
+      // The darkening goes with it; whether the original's does is not read.
+      shade.alpha = clock;
+    };
   };
   const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BACK.BOX'), leftWidth: 24, rightWidth: 24, topHeight: 24, bottomHeight: 24 });
   frame.setSize(width, height);
