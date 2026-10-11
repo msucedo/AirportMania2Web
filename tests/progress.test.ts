@@ -1,3 +1,4 @@
+import { gameTipStep } from '../src/game/view/tipsShower';
 import { describe, expect, it } from 'vitest';
 import { Progress, type StageRules } from '../src/game/progress';
 import { ARCHES, IMPROVEMENT } from '../src/game/stages/arches';
@@ -190,6 +191,15 @@ describe('settings', () => {
     expect(played.fresh).toBe(true);
     played.complete(1, 1, 9000, 2);
     expect(played.fresh).toBe(false);
+  });
+
+  it('shows the next of the tips at each level start until all have been shown', () => {
+    const progress = Progress.load(RULES);
+    expect([progress.nextTip(3), progress.nextTip(3), progress.nextTip(3), progress.nextTip(3)]).toEqual([0, 1, 2, null]);
+    // It stays eight seconds; a touch after the first second takes four off.
+    expect(gameTipStep(8, 0.5, true)).toBe(7.5);
+    expect(gameTipStep(6.5, 0.5, true)).toBe(2);
+    expect(gameTipStep(6.5, 0.5, false)).toBe(6);
   });
 });
 

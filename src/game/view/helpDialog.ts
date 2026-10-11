@@ -1,4 +1,4 @@
-import { Container, NineSliceSprite, Text } from 'pixi.js';
+import { Container } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -6,6 +6,7 @@ import type { TextureStore } from '../../engine/textures';
 import { HELP_PAGES, helpPictures, nextTip } from '../help';
 import { dialogButton } from './dialog';
 import { SCORE_FONT } from './floatingText';
+import { tipsShower } from './tipsShower';
 import { centred, textBox, white } from './tutorialViews';
 
 // The help dialog (0x49c80): a 400×250 frame. Pages 1 to 7 have a picture at (−150, −70) with
@@ -18,8 +19,6 @@ import { centred, textBox, white } from './tutorialViews';
 export const HELP_SURFACES = ['GUI.DIALOGS.ARROW', 'GUI.TIPS_SHOWER.SURFACE', 'GUI.TIPS_SHOWER.SPEECH_BUBBLE'];
 export const HELP_FONTS = ['FONTS.TEEN_BD'];
 
-/** The tips shower is 400 wide; its tips are 120 narrower, and their text 68 narrower still. */
-const TIP_WIDTH = 400 - 120;
 
 export class HelpDialog extends Container {
   private page = 1;
@@ -80,32 +79,10 @@ export class HelpDialog extends Container {
     this.addChild(overlay);
   }
 
-  /**
-   * The shower sits at (0, 5): the character 140 px left of it and the tip 60 px right. The tip
-   * is a bubble 280 wide and 23 taller than its text, its top 11 above the text's, with the
-   * text 34 px in from its left edge.
-   */
+  /** The shower sits at (0, 5) and is 400 wide. */
   private tipsShower(): Container {
-    const shower = new Container();
+    const shower = tipsShower(this.textures, this.strings, `GAME_TIP.${this.tip}`, 400);
     shower.position.set(0, 5);
-    const character = this.textures.sprite('GUI.TIPS_SHOWER.SURFACE');
-    character.position.set(-(TIP_WIDTH / 2), 0);
-
-    // `FONTS.TEEN` (Teen Bold at 10, 0.9 of its width) drawn at 0.8 of its size.
-    const text = new Text({
-      text: this.strings.t(`GAME_TIP.${this.tip}`),
-      style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 10, fill: 0x000000, wordWrap: true, wordWrapWidth: (TIP_WIDTH - 68) / (0.8 * 0.9) },
-    });
-    text.scale.set(0.8 * 0.9, 0.8);
-    text.anchor.set(0, 0.5);
-    text.position.set(60 - TIP_WIDTH / 2 + 34, 0);
-
-    // The bubble's picture is cut 34 px in from its left and 23 from its top, the tail staying
-    // in the bottom left corner.
-    const bubble = new NineSliceSprite({ texture: this.textures.texture('GUI.TIPS_SHOWER.SPEECH_BUBBLE'), leftWidth: 34, rightWidth: 17, topHeight: 23, bottomHeight: 22 });
-    bubble.setSize(TIP_WIDTH, Math.round(text.height) + 23);
-    bubble.position.set(60 - TIP_WIDTH / 2, Math.floor(-text.height / 2 - 11));
-    shower.addChild(character, bubble, text);
     return shower;
   }
 }

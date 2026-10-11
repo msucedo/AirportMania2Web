@@ -118,7 +118,8 @@ level helpers called from many places), `0x64d38`–`0x65f88` (2 844), `0x17c2c`
 2. ~~**The ending** (`0x3473c`)~~: built.
 3. ~~**The questions before leaving or restarting a level**~~: built. The perfect scores
    message turned out never to be shown (nothing reads where it is kept).
-4. **In-level tips** (`GameTip`, `0x40314`) and what Coffee and Cake and In-Flight Movies show.
+4. ~~**In-level tips** (`GameTip`, `0x40314`)~~: built. Coffee and Cake and In-Flight Movies
+   were the service tabs, already built; the message class beside them is not used by the data.
 5. **Effects**: fireworks and the notice's particles, the combo's explosion, the bonus star,
    the fan of light, black smoke, birds and bats.
 6. **The map's life**, the loading screen and the opening logos.

@@ -1,0 +1,44 @@
+import { Container, NineSliceSprite, Text } from 'pixi.js';
+import type { Strings } from '../../data/strings';
+import { fontFamily } from '../../engine/fonts';
+import type { TextureStore } from '../../engine/textures';
+
+// The tips shower (0x79e98, draw 0x7a0e0; tip 0x7a188, draw 0x7a72c): a character with a speech
+// bubble holding a text. `width` is the shower's; the tip is 120 narrower and its text 68
+// narrower still. The character stands half a tip left of the shower's place and the tip 60 px
+// right of it.
+
+export const TIPS_SHOWER_SURFACES = ['GUI.TIPS_SHOWER.SURFACE', 'GUI.TIPS_SHOWER.SPEECH_BUBBLE'];
+
+export function tipsShower(textures: TextureStore, strings: Strings, text: string, width: number): Container {
+  const tip = width - 120;
+  const shower = new Container();
+  const character = textures.sprite('GUI.TIPS_SHOWER.SURFACE');
+  character.position.set(-(tip / 2), 0);
+
+  // `FONTS.TEEN` (Teen Bold at 10, 0.9 of its width) drawn at 0.8 of its size.
+  const words = new Text({
+    text: strings.t(text),
+    style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 10, fill: 0x000000, wordWrap: true, wordWrapWidth: (tip - 68) / (0.8 * 0.9) },
+  });
+  words.scale.set(0.8 * 0.9, 0.8);
+  words.anchor.set(0, 0.5);
+  words.position.set(60 - tip / 2 + 34, 0);
+
+  // The bubble's picture is cut 34 px in from its left and 23 from its top, the tail staying in
+  // the bottom left corner.
+  const bubble = new NineSliceSprite({ texture: textures.texture('GUI.TIPS_SHOWER.SPEECH_BUBBLE'), leftWidth: 34, rightWidth: 17, topHeight: 23, bottomHeight: 22 });
+  bubble.setSize(tip, Math.round(words.height) + 23);
+  bubble.position.set(60 - tip / 2, Math.floor(-words.height / 2 - 11));
+  shower.addChild(character, bubble, words);
+  return shower;
+}
+
+/**
+ * The tip a level starts with (0x40314, update 0x40408): it stays 8 seconds; a touch after the
+ * first one takes 4 off.
+ */
+export function gameTipStep(clock: number, dt: number, touched: boolean): number {
+  const left = clock - dt;
+  return touched && left < 7 ? left - 4 : left;
+}

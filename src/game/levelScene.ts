@@ -33,6 +33,7 @@ import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView
 import { SMOKE_SURFACES, SmokeTails } from './view/smokeTail';
 import { noticePose, noticeStart, noticeStep, type NoticeState } from './view/awardNotice';
 import { PlaneInfoDialog, planeTrophy } from './view/planeInfoDialog';
+import { TIPS_SHOWER_SURFACES, gameTipStep, tipsShower } from './view/tipsShower';
 import { helpSurfaces } from './help';
 import { HELP_FONTS, HELP_SURFACES, HelpDialog } from './view/helpDialog';
 import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
@@ -133,6 +134,7 @@ export class LevelScene {
   readonly awardsEarned: number[] = [];
   private readonly notices: number[] = [];
   private notice: { text: Text; id: number; state: NoticeState; touched: boolean } | null = null;
+  private gameTip: { view: Container; clock: number; touched: boolean } | null = null;
 
   private constructor(
     private readonly textures: TextureStore,
@@ -329,6 +331,7 @@ export class LevelScene {
       this.dialog = null;
       this.paused = false;
       setTimeout(() => intro.destroy({ children: true }));
+      this.showGameTip();
     });
     this.dialog = intro;
     this.root.addChild(intro);
@@ -440,6 +443,32 @@ export class LevelScene {
     this.root.addChild(menu);
   }
 
+  /**
+   * 0x519e2 → 0xf4ac: as the level starts, the next of the game's tips not yet shown, said by
+   * the tips shower (420 wide) at (240, 260).
+   */
+  private showGameTip(): void {
+    const index = this.options.progress.nextTip(Number.parseInt(this.strings.t('GAME_TIP.COUNT'), 10) || 0);
+    if (index === null || !this.textures.has(TIPS_SHOWER_SURFACES[0]!)) return;
+    const view = tipsShower(this.textures, this.strings, `GAME_TIP.${index}`, 420);
+    view.position.set(240, 260);
+    view.eventMode = 'static';
+    const tip = { view, clock: 8, touched: false };
+    view.on('pointerdown', () => (tip.touched = true));
+    this.root.addChild(view);
+    this.gameTip = tip;
+  }
+
+  private updateGameTip(seconds: number): void {
+    const tip = this.gameTip;
+    if (!tip) return;
+    tip.clock = gameTipStep(tip.clock, seconds, tip.touched);
+    tip.touched = false;
+    if (tip.clock >= 0) return;
+    tip.view.destroy({ children: true });
+    this.gameTip = null;
+  }
+
   /** Awards just earned: kept for the level, to be announced. */
   private earn(ids: readonly number[]): void {
     this.awardsEarned.push(...ids);
@@ -528,6 +557,7 @@ export class LevelScene {
     for (const event of this.sim.drainEvents()) this.onEvent(event);
     this.showHint();
     this.updateNotices(seconds);
+    this.updateGameTip(this.paused ? 0 : seconds);
     this.goalsPanel?.update(seconds);
     this.draw(seconds);
   }

@@ -35,6 +35,8 @@ export interface ProgressData {
   counts?: { repairs: number; washes: number };
   /** Set once the game has been begun, with the tutorial or past it (profile `+0x14`). */
   started?: boolean;
+  /** How many of the game's tips have been shown at the start of a level (profile `+0x30`). */
+  tips?: number;
 }
 
 /** Stars a level is worth: none for the goal up to four for a perfect score (0x78442). */
@@ -259,6 +261,15 @@ export class Progress {
     record.funds += price;
     this.save();
     return true;
+  }
+
+  /** The tip the next level starts with, or null once all `count` have been shown (0xf514). Showing it counts it. */
+  nextTip(count: number): number | null {
+    const shown = this.data.tips ?? 0;
+    if (shown >= count) return null;
+    this.data.tips = shown + 1;
+    this.save();
+    return shown;
   }
 
   /** Nothing played yet: the game then asks about the tutorial before going to the map (0x5d060). */

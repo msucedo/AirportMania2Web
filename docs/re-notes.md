@@ -2114,6 +2114,21 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   it is never shown.
 - Web version: the second button's label is taken to be `NO`.
 
+## Tips as a level starts — confirmed
+
+- As the day's opening is closed (`0x519e2` → `0xf4ac`): if the profile's count of tips shown
+  (`+0x30`) is under the number of tips (`+0xc0` of the texts), a `GameTip` is made with that
+  number and the count goes up one.
+- `GameTip` (`0x40314`): a tips shower 420 wide showing `GAME_TIP.<n>`, drawn at (240, 260)
+  (`0x404cc`), with a clock of 8 s. Update (`0x40408`): the clock runs down and the tip goes at
+  zero; under 7, a touch takes 4 s off it and takes as much off the clocks of a list of the
+  level's (`0x14834`, `level+0x80`).
+- `CoffeeAndCake` and `InFlightMovies` (`0x243c4`, `0x24620`) are the service tabs, built.
+  `ClickeableMessage` (`0x24b58`, a speech bubble with `<key>.<n>`) is only made by name, and
+  nothing in this build's data names it.
+- Web version: the touch must be on the tip, and the level's list is not touched. No tip is
+  shown when the opening is skipped with `?nointro`.
+
 ## What has not been read
 
 See `docs/audit.md`: the share of the game logic read so far and the runs of code not yet
