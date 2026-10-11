@@ -76,6 +76,10 @@ class Run:
         for register, value in ((UC_ARM_REG_R1, args.r1), (UC_ARM_REG_R2, args.r2), (UC_ARM_REG_R3, args.r3)):
             if value is not None:
                 uc.reg_write(register, self.word(value))
+        if args.stack:
+            # The arguments past the fourth, where the routine expects them.
+            sp = uc.reg_read(UC_ARM_REG_SP)
+            uc.mem_write(sp, struct.pack(f'<{len(args.stack)}I', *(self.word(v) for v in args.stack)))
         self.error = None
         try:
             uc.emu_start(int(args.function, 16) | 1, TRAP + 0x800, count=20_000_000)
@@ -86,7 +90,7 @@ class Run:
             # offset:f or offset:i - the vector (begin, end pointers) at that offset of the object.
             offset, kind = spec.split(':')
             begin, end = struct.unpack('<II', uc.mem_read(self.object + int(offset, 16), 8))
-            count = (end - begin) // 4
+            count = (end - begin) // 4 if HEAP <= begin <= end < HEAP + HEAP_SIZE else 0
             values = struct.unpack(f'<{count}{"f" if kind == "f" else "i"}', uc.mem_read(begin, 4 * count)) if count else ()
             print(f'vector +{offset} ({count}):', ' '.join(f'{v:.6g}' if kind == 'f' else (f'{v & 0xffffffff:08x}' if kind == 'x' else str(v)) for v in values))
         if args.dump:
@@ -104,6 +108,12 @@ class Run:
             at = self.alloc(0x100)
             self.uc.mem_write(at + 4, struct.pack('<II', width, height))
             self.images[at] = text[4:]
+            return at
+        if text.startswith('ptr:'):
+            # ptr:1f,2f,3 - a pointer to those words.
+            values = [self.word(v) for v in text[4:].split(',')]
+            at = self.alloc(4 * len(values))
+            self.uc.mem_write(at, struct.pack(f'<{len(values)}I', *values))
             return at
         if text == 'obj':
             return self.alloc(0x400)
@@ -192,5 +202,6 @@ if __name__ == '__main__':
     parser.add_argument('--app', nargs='*', default=[])
     parser.add_argument('--stub', nargs='*', default=[])
     parser.add_argument('--dump', type=int, default=0)
+    parser.add_argument('--stack', nargs='*', default=[], help='arguments after the fourth')
     parser.add_argument('--vector', nargs='*', default=[], help='offset:f or offset:i, vectors of the object to print afterwards')
     Run(parser.parse_args())

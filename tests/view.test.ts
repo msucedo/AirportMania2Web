@@ -1,4 +1,4 @@
-import { airborneIconPose, birdPose, cloudBob, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
+import { MAP_GLINTS, airborneIconPose, birdPose, cloudBob, glintShow, satellitePose, wakeRow, wakeV } from '../src/game/view/mapDecor';
 import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
 import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
 import { barSpark, barStar, hangarSpark, sparkPose, tierBurst, tierTextPose } from '../src/game/view/goalEffects';
@@ -738,6 +738,9 @@ describe('scenery', () => {
     expect(wakeRow(31).alpha).toBe(0);
     expect(wakeV(0, 0)).toBeCloseTo(1 / 3, 6);
     expect(wakeV(2.5, 31)).toBeCloseTo(1 / 6 + 2 / 3, 6);
+    expect(MAP_GLINTS.map((patch) => patch.glints.length)).toEqual([8, 17, 16]);
+    expect(glintShow(0.5, 0)).toBeCloseTo(0.7, 5);
+    expect(glintShow(1.5, 0)).toBeCloseTo(-1.3, 5);
   });
 });
 

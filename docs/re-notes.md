@@ -2309,7 +2309,13 @@ drawn in the order made, each moved by the map's scroll (`app+0x154`, `+4`/`+8`)
 1. `MAP.BACK` (`0x60a68` → sprite class `0x63988`, draw `0x63af8`).
 2. Sea glints `0x60d84(count?, rect, a | b, c)`: (0, 702 367 844 433, 0.07 | 0.6, 0),
    (2, 11 22 130 142, 0.1 | 0.65, 0), (3, 1259 382 1530 452, 0.07 | 0.65, 40); class `0x5ee18`,
-   `AMBIENT.WAVE_REFLECT`. **Not built yet.**
+   `AMBIENT.WAVE_REFLECT`. The constructor makes `area·density/80` glints (8, 17 and 16) with a
+   generator of its own that always starts the same, so they were read off a run of it
+   (`tools/re/draw_trace.py 0x5ee18 --r1 0 --r2 ptr:702f,367f,844f,433f --r3 0.07f --stack 0.6f
+   0f ptr:0,0 --stub 0xa4f30 0xa2e4c --vector 0x28:f`): x, y, phase, size each. Draw `0x5f0bc`:
+   `v = sin(2π(frac(0.5·T) + phase)) − 0.3`; while over 0 the glint is turned by the patch's
+   last number (0, 0, 40°), scaled `v·size` and drawn at opacity `0.7·v`. A drift (the pair the
+   last argument points to) would slide it, but all three patches are given none.
 3. Stage 1 icon and ribbon; stage 2 icon; `MAP.ISLAND_FRONT` at (214, 75); ribbon 2; stage 3
    icon and ribbon.
 4. Three birds `0x60fd0` at (526, 255), (510, 255), (526, 272). Class `0x5e168`: rate 10–14 a

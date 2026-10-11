@@ -14,6 +14,7 @@ export const MAP_DECOR_SURFACES = [
   'MAP.SATELLITE_BRIGHT',
   'MAP.AIRBORNE_PROPELLER',
   'MAP.CARRIER_WAVES',
+  'AMBIENT.WAVE_REFLECT',
   'SNOW_FLAKES.3',
   'SNOW_FLAKES.4',
   'AMBIENT.STAR',
@@ -217,6 +218,101 @@ export class MapCarrierWaves implements Decoration {
     this.strips.forEach((strip, row) => {
       const [near, far] = [wakeV(this.time, row), wakeV(this.time, row + 1)];
       strip.geometry.uvs = new Float32Array([1, near, 0, near, 0, near, 1, near, 1, far, 0, far, 0, far, 1, far]);
+    });
+  }
+}
+
+/**
+ * The sea's glints on the map (0x60d84 → class 0x5ee18), as its constructor leaves them: it picks
+ * them with a generator of its own that always starts the same, so they are the same every
+ * time. Each is x, y, phase and size; a patch's glints are all turned alike.
+ */
+export const MAP_GLINTS: readonly { turn: number; glints: readonly (readonly [number, number, number, number])[] }[] = [
+  {
+    turn: 0,
+    glints: [
+      [824.385, 374.043, 0.845902, 0.214937],
+      [719.073, 403.531, 0.166993, 0.216321],
+      [706.558, 373.075, 0.402404, 0.198179],
+      [818.995, 385.245, 0.945747, 0.212365],
+      [772.403, 373.892, 0.217559, 0.188989],
+      [725.922, 427.436, 0.635239, 0.186279],
+      [780.743, 379.766, 0.126696, 0.208777],
+      [702.691, 379.228, 0.188907, 0.204519],
+    ],
+  },
+  {
+    turn: 0,
+    glints: [
+      [113.562, 34.8046, 0.845903, 0.232848],
+      [25.0753, 88.4203, 0.166994, 0.234221],
+      [14.8126, 32.8195, 0.402405, 0.214567],
+      [123.921, 53.0553, 0.961379, 0.231204],
+      [53.7257, 34.7633, 0.213629, 0.20512],
+      [27.1182, 132.126, 0.650873, 0.200022],
+      [115.692, 75.3276, 0.00121497, 0.217923],
+      [26.3149, 58.802, 0.328454, 0.205372],
+      [118.098, 111.308, 0.637766, 0.218326],
+      [61.8666, 128.006, 0.818001, 0.217256],
+      [111.099, 36.4087, 0.890084, 0.224962],
+      [72.1522, 77.0335, 0.0129934, 0.196256],
+      [122.109, 100.335, 0.685437, 0.207438],
+      [64.0347, 48.8109, 0.530904, 0.25555],
+      [47.4853, 129.632, 0.0410831, 0.245532],
+      [91.9384, 100.345, 0.42735, 0.212416],
+      [36.1038, 84.9816, 0.141877, 0.227302],
+    ],
+  },
+  {
+    turn: 40,
+    glints: [
+      [1492.57, 389.469, 0.845903, 0.232848],
+      [1290.79, 420.745, 0.166994, 0.234157],
+      [1267.67, 388.382, 0.402404, 0.21463],
+      [1499.22, 399.503, 0.953562, 0.230759],
+      [1336.72, 389.651, 0.21168, 0.204929],
+      [1299.67, 446.17, 0.643064, 0.200905],
+      [1486.99, 404.392, 0.0639629, 0.213797],
+      [1309.9, 416.543, 0.900655, 0.197249],
+      [1378.72, 428.949, 0.0891185, 0.226128],
+      [1479.53, 447.324, 0.777043, 0.216183],
+      [1400.72, 407.97, 0.764914, 0.22128],
+      [1456.49, 396.268, 0.0937654, 0.215493],
+      [1493.1, 418.146, 0.460799, 0.220883],
+      [1453.02, 431.506, 0.570932, 0.215427],
+      [1366.67, 431.763, 0.659413, 0.227151],
+      [1391.05, 392.359, 0.456066, 0.237312],
+    ],
+  },
+];
+
+/** A glint `time` seconds on (0x5f0bc): on a two second beat, seen while this is over 0; its size is this times its own and its opacity 0.7 of this. */
+export const glintShow = (time: number, phase: number): number => Math.sin(2 * Math.PI * (fraction(0.5 * time) + phase)) - 0.3;
+
+export class MapGlints implements Decoration {
+  readonly view = new Container();
+  private readonly sprites: Sprite[];
+  private time = 0;
+
+  constructor(textures: TextureStore, private readonly patch: (typeof MAP_GLINTS)[number]) {
+    this.sprites = patch.glints.map(([x, y]) => {
+      const sprite = textures.sprite('AMBIENT.WAVE_REFLECT');
+      sprite.position.set(x, y);
+      sprite.angle = patch.turn;
+      return sprite;
+    });
+    if (this.sprites.length > 0) this.view.addChild(...this.sprites);
+    this.update(0);
+  }
+
+  update(dt: number): void {
+    this.time += dt;
+    this.sprites.forEach((sprite, i) => {
+      const [, , phase, size] = this.patch.glints[i]!;
+      const show = glintShow(this.time, phase);
+      sprite.visible = show > 0;
+      sprite.scale.set(show * size);
+      sprite.alpha = 0.7 * show;
     });
   }
 }
