@@ -1,4 +1,6 @@
-import { BORDER } from './faces';
+import { MAIN_FONT } from './floatingText';
+import { fontFamily } from '../../engine/fonts';
+import { BORDER, MAIN_FILL } from './faces';
 import { Container, Matrix, NineSliceSprite, Rectangle, Text } from 'pixi.js';
 import type { AudioPlayer } from '../../engine/audio';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../engine/screen';
@@ -99,8 +101,11 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
       show();
     };
   };
-  const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BACK.BOX'), leftWidth: 24, rightWidth: 24, topHeight: 24, bottomHeight: 24 });
-  frame.setSize(width, height);
+  // 0x2c55e: the frame's picture goes 21 px beyond the dialog's size on every side, its 20 px
+  // ends kept and its middle stretched (0xe4704 with 20 and 42 of its 62).
+  const frame = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BACK.BOX'), leftWidth: 20, rightWidth: 20, topHeight: 20, bottomHeight: 20 });
+  frame.setSize(width + 42, height + 42);
+  frame.position.set(-21, -21);
   panel.addChild(frame);
   overlay.addChild(shade, blocker, stand);
   return { overlay, panel, blocker };
@@ -126,13 +131,16 @@ export function dialogButton(
   /** Sound to play on a press; null when the action plays its own. */
   sound: string | null = 'SOUNDS.CLICK',
 ): void {
-  const { x, y, width, height = 40 } = at;
-  const face = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BUTTON'), leftWidth: 18, rightWidth: 18, topHeight: 18, bottomHeight: 18 });
-  face.setSize(width, height);
-  face.position.set(x - width / 2, y - height / 2);
+  const { x, y, width } = at;
+  // 0x2ccea: the button's picture, 46 px square, is drawn at its own height with its two halves
+  // as ends and stretched between them to the width and 28 px more, centred on the button.
+  const across = width + 28;
+  const face = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BUTTON'), leftWidth: 23, rightWidth: 23, topHeight: 0, bottomHeight: 0 });
+  face.setSize(across, 46);
+  face.position.set(x - across / 2, y - 23);
   // The touch area is its own node: the stretched sprite does not take presses reliably.
   const zone = new Container();
-  zone.hitArea = new Rectangle(x - width / 2, y - height / 2, width, height);
+  zone.hitArea = new Rectangle(x - across / 2, y - 23, across, 46);
   zone.eventMode = 'static';
   zone.cursor = 'pointer';
   zone.on('pointerover', () => (face.texture = textures.texture('GUI.DIALOGS.BUTTON_OVER')));
@@ -142,7 +150,9 @@ export function dialogButton(
     if (sound) audio.play(sound);
     onPress();
   });
-  const text = new Text({ text: label, style: { fontFamily: family, fontSize: 14, fill: 0xffffff } });
+  // 0x2cda0: the label is in `FONTS.MAIN`, whatever the caller's face.
+  void family;
+  const text = new Text({ text: label, style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER } });
   text.anchor.set(0.5);
   text.position.set(x, y);
   if (text.width > width - 16) text.scale.set((width - 16) / text.width);
