@@ -2531,7 +2531,7 @@ Two of the app's screens (vtables `0x17b4b0` and `0x17b990`: update, draw, enter
   along. The path's 1117 rows were read off a run (`tools/re/draw_trace.py 0x79ae0 --stub
   0xa4f30 0xa5bdc 0xa559c 0x8caa4 --returns 0xb3f64=ident --app 0x2c=obj --then 0x79d74 --poke
   0x4=2 0xc=0.3f 0x2c=14f 0x9c=1.2f 0xa0=-1.8f …`).
-- Web version: every eighth row of the wind's path is kept. The screens are shown before the
+- Web version: the wind's path keeps all those rows. The screens are shown before the
   menu once for each visit to the page (kept in the browser's session), since the menu here is
   a page come back to from the map; `?logos` shows them again and `?nologos` never. A browser
   plays no sound before the first touch, so the first screen is usually silent.
