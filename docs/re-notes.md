@@ -532,8 +532,10 @@ Draw routine `0x40ed4`:
 - Effects (confirmed) are registered by name in `0xbc03c`, each an object whose third routine
   works on a letter's picture with two primitives: `0x91cec(picture, A, B)` fills it with a
   gradient running from A in its first row to B in its last (`0x995cc`), and
-  `0x91dc8(picture, r)` puts a black copy, blurred by `r`, under it. Which row is the top is not
-  read; A is taken as the bottom, which gives light over dark as the art has it.
+  `0x91dc8(picture, r)` puts a black copy, blurred by `r`, under it. The first row is the
+  letter's foot: the hint picture `HINTS.HIGHER_SCORES` shows a title in `FONTS.ULTRA` white
+  over blue, and blue is A there. So the six points that light a letter in the title effects,
+  which are in the rows before it, are below it: the light is on its lower left.
   - `MoneyEffect` (`0xbbfa4`): A (0.5216, 0.7882, 0.0353), B (1, 0.9725, 0); border 1.5.
   - `MoneyNegativeEffect` (`0xbbefc`): A (0.7882, 0.3529, 0.0353), B (1, 0.098, 0); border 1.5.
   - `GoldOrangeEffect` (`0xbb808`): A (1, 0.75, 0.5), B (1, 1, 0.9); border 1.5.

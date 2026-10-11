@@ -2,7 +2,8 @@ import { FillGradient, type FillInput, type StrokeInput } from 'pixi.js';
 
 // The colour effects of the game's cached fonts, as the engine renders them into each letter
 // (effects registered by 0xbc03c): a gradient between two colours down the letter (0x91cec) and
-// a soft black border (0x91dc8). See docs/re-notes.md.
+// a black border (0x91dc8). The gradient's first colour is the foot's: the game's own picture of
+// a title (`HINTS.HIGHER_SCORES`) shows white over blue. See docs/re-notes.md.
 
 const downwards = (stops: readonly [number, number | string][]): FillGradient =>
   new FillGradient({ type: 'linear', start: { x: 0, y: 0 }, end: { x: 0, y: 1 }, textureSpace: 'local', colorStops: stops.map(([offset, color]) => ({ offset, color })) });

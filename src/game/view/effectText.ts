@@ -2,7 +2,7 @@ import { Sprite, Texture } from 'pixi.js';
 import { fontFamily } from '../../engine/fonts';
 
 // The two title fonts, drawn the way the engine renders their letters (`UltraFontEffect` 0xbb89c
-// and `GiantFontEffect` 0xbbbd0): a gradient down each letter, a light rim on its upper left, a
+// and `GiantFontEffect` 0xbbbd0): a gradient down each letter, a light rim on its lower left, a
 // soft tinted base under it, a black border, and every colour raised to the power 2.2. See
 // docs/re-notes.md.
 
@@ -19,8 +19,13 @@ export interface TitleEffect {
 export const ULTRA_EFFECT: TitleEffect = { foot: [0.85, 0.93, 1], head: [1, 1, 1], base: [0.76, 0.83, 1] };
 export const GIANT_EFFECT: TitleEffect = { foot: [1, 0.682353, 0], head: [1, 1, 1], base: [1, 0.76, 0.83] };
 
-/** The six places up and to the left whose emptiness lights a point (0xbb9b0). */
-const RIM: readonly (readonly [number, number])[] = [[-3, -1], [-2, -2], [-1, -3], [-2, -1], [-1, -1], [-1, -2]];
+/**
+ * The six places whose emptiness lights a point (0xbb9b0): to its left and, in the engine's
+ * pictures, in the rows before it. Those rows are the lower ones: the gradient's first colour
+ * is the foot's, as the game's own picture of this font shows (`HINTS.HIGHER_SCORES`). So the
+ * light falls on a letter's lower left.
+ */
+const RIM: readonly (readonly [number, number])[] = [[-3, 1], [-2, 2], [-1, 3], [-2, 1], [-1, 1], [-1, 2]];
 
 /**
  * The engine's blur (0x98b78), as it treats opacity: each whole unit of the radius is one pass of a 3×3 average, and
@@ -77,7 +82,7 @@ export function titleLetter(cover: Float32Array, width: number, height: number, 
     for (let x = 0; x < width; x++) {
       const a = cover[y * width + x]!;
       if (a <= 0) continue;
-      // 0xbb9b0: lit by how empty the six places up and to its left are.
+      // 0xbb9b0: lit by how empty those six places are.
       let empty = 0;
       for (const [dx, dy] of RIM) empty += 1 - at(x + dx * unit, y + dy * unit);
       const lit = (a * empty) / 9;

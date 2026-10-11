@@ -895,12 +895,13 @@ describe('scenery', () => {
     for (let y = 3; y < 6; y++) for (let x = 3; x < 6; x++) cover[9 * y + x] = 1;
     const letter = titleLetter(cover, 9, 9, ULTRA_EFFECT);
     const pixel = (x: number, y: number): number[] => [...letter.slice(4 * (9 * y + x), 4 * (9 * y + x) + 4)];
-    // Its upper left point has all six places up and to its left empty: lit by 6/9 towards white, then to the power 2.2.
-    expect(pixel(3, 3)[3]).toBe(1);
-    expect(pixel(3, 3)[0]).toBeCloseTo(1, 5);
-    // Its lower right point has four of the six covered: the foot colour lit by 2/9.
-    const foot = 0.85 + (1 - 0.85) * (2 / 9);
-    expect(pixel(5, 5)[0]).toBeCloseTo(Math.pow(foot, 2.2), 5);
+    // Its upper right point has four of the six places covered: the head colour, white, stays white.
+    expect(pixel(5, 3)[3]).toBe(1);
+    expect(pixel(5, 3)[0]).toBeCloseTo(1, 5);
+    // Its lower left point has all six empty: the foot colour lit by 6/9 towards white, then to the power 2.2.
+    const foot = 0.85 + (1 - 0.85) * (6 / 9);
+    expect(pixel(3, 5)[0]).toBeCloseTo(Math.pow(foot, 2.2), 5);
+    // Its lower right point has two of them covered, (3, 6) and the like being outside: also 6/9 here.
     expect(pixel(5, 5)[2]).toBeCloseTo(1, 5);
     // Outside the letter there is only its base and border: partly solid, and dark.
     expect(pixel(2, 4)[3]).toBeGreaterThan(0);
