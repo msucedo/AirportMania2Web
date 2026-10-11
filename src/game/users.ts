@@ -87,7 +87,7 @@ export class Users {
     return null;
   }
 
-  /** Adds a user, who becomes the one playing. The first takes over the progress made before there were users. */
+  /** Adds a user at the end of the list, who becomes the one playing (0x82694). The first takes over the progress made before there were users. */
   create(name: string): User {
     const user: User = { id: this.data.nextId++, name: Users.tidy(name) };
     const first = this.data.users.length === 0 && user.id === 1;
@@ -123,12 +123,14 @@ export class Users {
     this.save();
   }
 
-  /** Deletes the current user and their progress; the first of those left plays on. */
+  /** Deletes the current user and their progress. */
   remove(): void {
     const user = this.current;
     if (!user) return;
+    // 0x82780: the user after it plays on, or the last one if it was the last.
+    const index = this.data.users.indexOf(user);
     this.data.users = this.data.users.filter((other) => other !== user);
-    this.data.current = this.data.users[0]?.id ?? null;
+    this.data.current = (this.data.users[index] ?? this.data.users.at(-1))?.id ?? null;
     try {
       this.storage?.removeItem(progressKey(this.progressBase, user.id));
     } catch {

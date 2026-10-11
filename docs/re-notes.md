@@ -1885,12 +1885,14 @@ verifies that each can be passed and that funds, stars and the opening of stage 
 - Delete question (`0x7fe40`): 400×200, `DELETE_USER_DIALOG.TEXT` with the current name in
   (−190, −90)–(190, 40), `YES` (`0x81ea4`) at (−90, 65) and a closing button 100 wide at
   (90, 65); `SOUNDS.USER_CONFIRM_DELETE` plays as it opens.
+- A user added (`0x82694`) goes to the end of the list and becomes the current one; deleting
+  the current one (`0x82780`) makes the next in the list current, or the last if there is none
+  after.
 - `MAIN_MENU.HELLO_USER` and its sign are not referenced by the code.
 - Web version: users and each one's progress are kept in the browser (`am2web.users.v1`,
   `am2web.progress.v2.user<id>`); the first user takes over the progress made before there
   were users, and without a user the game plays on that. The name is asked when the menu
-  opens with no user. Not read, and so ours: how a row's text is aligned, the caret's shape and colour, the buttons' height (30), that a new
-  user becomes the current one, who is current after a deletion (the first left), and that the
+  opens with no user. Not read, and so ours: how a row's text is aligned, the caret's shape and colour, the buttons' height (30), and that the
   note's and the question's texts are centred in their boxes (their text call's second flag
   is 0 where the hint's is 1). The browser's keyboard stands in for the device's.
 
@@ -2022,3 +2024,20 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   swelling while touched. Taken, not read: the ribbon's width, that the value filled into a
   description is what the award counts, that a touch must be on the notice to send it away,
   and what the earned branch of the dialog computes at `0x1ae08`.
+
+## Starting a game — confirmed
+
+- The main menu's Play (`0x5d024`): with no user, the name dialog in mode 0; with the profile's
+  flag `+0x44` set, the dialog at `app+0x120`; with nothing reached yet (`profile+0x14` zero),
+  the tutorial question (`app+0x114`, also opened once the first name is accepted, `0x80390`);
+  otherwise the map (`app+0x14c`).
+- Tutorial question (`0x7e590`): 400×250; two choices (`0x7ea9c`) at (−170, −90), picked, and
+  (−170, 20), with `TUTORIAL_QUESTION_DIALOG.DO_TUTORIAL` and `SKIP_TUTORIAL` in `FONTS.WHITE`;
+  Play (`0x7e7d0`) 260 wide at (0, 110).
+- Its Play (`0x7ea3c`): the profile's level becomes 1; with the first choice the stage becomes
+  0 and the tutorial starts (`0x70ce4`); with the second the stage reached, the level reached
+  and the stage all become 1 and the map opens.
+- Web version: the name is asked at Play, as there. "Nothing reached yet" is kept as a mark
+  set when the question is answered, either way, or a level has been played. The inside of a
+  choice is not read (a check box with its text to its right), nor what `+0x44` and
+  `app+0x120` are.

@@ -157,8 +157,7 @@ export class WorldMap {
       zone.on('pointertap', () => {
         audio.play('SOUNDS.CLICK');
         if (button.id === 'RETURN') options.onMenu();
-        // The tutorial is stage 0. Whether the original asks first, as it does on a new game
-        // (TUTORIAL_QUESTION_DIALOG), has not been read: the first day starts at once.
+        // The tutorial is stage 0; its first day starts at once.
         else if (button.id === 'TUTORIAL') options.onPlay(0, 1);
         else if (button.id === 'AWARDS') options.onAwards();
         else if (button.id === 'PLAY' && this.selected) this.askLevel(this.selected.stage, this.selected.level);

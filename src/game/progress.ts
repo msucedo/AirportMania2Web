@@ -33,6 +33,8 @@ export interface ProgressData {
   awards?: AwardsData;
   /** Repairs and washes done over all games. */
   counts?: { repairs: number; washes: number };
+  /** Set once the game has been begun, with the tutorial or past it (profile `+0x14`). */
+  started?: boolean;
 }
 
 /** Stars a level is worth: none for the goal up to four for a perfect score (0x78442). */
@@ -257,6 +259,17 @@ export class Progress {
     record.funds += price;
     this.save();
     return true;
+  }
+
+  /** Nothing played yet: the game then asks about the tutorial before going to the map (0x5d060). */
+  get fresh(): boolean {
+    return this.data.started !== true && Object.keys(this.data.records).length === 0;
+  }
+
+  /** The answer to that question, either way, begins the game (0x7ea58). */
+  begin(): void {
+    this.data.started = true;
+    this.save();
   }
 
   reset(): void {

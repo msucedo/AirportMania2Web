@@ -1,4 +1,4 @@
-import { Container, Graphics, type Sprite, Text } from 'pixi.js';
+import { Container, Graphics, Rectangle, type Sprite, Text } from 'pixi.js';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
@@ -264,5 +264,60 @@ export class GoalsPanel extends Container {
       row.no.visible = mark === row.no;
       mark?.scale.set(0.45 * markPop(row.goal.clock));
     }
+  }
+}
+
+export const TUTORIAL_QUESTION_SURFACES = ['GUI.DIALOGS.CHECKBOX_BACK', 'GUI.DIALOGS.CHECKBOX_ON'];
+
+/**
+ * The question a new game starts with (0x7e590): a 400×250 frame with two choices, to attend
+ * the academy at (−170, −90) and to skip it at (−170, 20), the first picked, and Play, 260
+ * wide, at (0, 110). How a choice is drawn inside (0x7ea9c) has not been read: a check box with
+ * its text to the right.
+ */
+export class TutorialQuestionDialog extends Container {
+  private tutorial = true;
+
+  constructor(
+    private readonly textures: TextureStore,
+    private readonly audio: AudioPlayer,
+    private readonly strings: Strings,
+    private readonly onPlay: (tutorial: boolean) => void,
+  ) {
+    super();
+    this.show();
+  }
+
+  private show(): void {
+    const old = this.removeChildren();
+    setTimeout(() => old.forEach((child) => child.destroy({ children: true })));
+    const { overlay, centre } = centred(this.textures, 400, 250);
+    const choice = (y: number, text: string, picks: boolean): void => {
+      const box = this.textures.sprite('GUI.DIALOGS.CHECKBOX_BACK');
+      box.position.set(-170 + 20, y + 20);
+      centre.addChild(box);
+      if (this.tutorial === picks) {
+        const tick = this.textures.sprite('GUI.DIALOGS.CHECKBOX_ON');
+        tick.position.copyFrom(box.position);
+        centre.addChild(tick);
+      }
+      textBox(centre, this.strings.t(text), { x1: -120, y1: y, x2: 190, y2: y + 60 }, white(), false);
+      const zone = new Container();
+      zone.hitArea = new Rectangle(-190, y - 10, 380, 70);
+      zone.eventMode = 'static';
+      zone.cursor = 'pointer';
+      zone.on('pointerdown', (event) => {
+        event.stopPropagation();
+        if (this.tutorial === picks) return;
+        this.audio.play('SOUNDS.CLICK');
+        this.tutorial = picks;
+        this.show();
+      });
+      centre.addChild(zone);
+    };
+    choice(-90, 'TUTORIAL_QUESTION_DIALOG.DO_TUTORIAL', true);
+    choice(20, 'TUTORIAL_QUESTION_DIALOG.SKIP_TUTORIAL', false);
+    dialogButton(this.textures, this.audio, centre, { x: 0, y: 110, width: 260, height: 30 }, this.strings.t('TUTORIAL_QUESTION_DIALOG.PLAY'), fontFamily(SCORE_FONT), () => this.onPlay(this.tutorial));
+    this.addChild(overlay);
   }
 }

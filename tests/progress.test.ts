@@ -179,5 +179,17 @@ describe('settings', () => {
     progress.complete(1, 2, 9000, 5, 0);
     expect(progress.levelEnd(1, 2, facts)).toEqual([27]);
   });
+
+  it('is fresh until the game is begun or a level played', () => {
+    const progress = Progress.load(RULES);
+    expect(progress.fresh).toBe(true);
+    progress.begin();
+    expect(progress.fresh).toBe(false);
+    const played = Progress.load(RULES);
+    played.reset();
+    expect(played.fresh).toBe(true);
+    played.complete(1, 1, 9000, 2);
+    expect(played.fresh).toBe(false);
+  });
 });
 

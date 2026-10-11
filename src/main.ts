@@ -11,6 +11,7 @@ import { loadSettings, saveSettings } from './game/settings';
 import { CREDITS_FONTS, CREDITS_SURFACES, CreditsDialog } from './game/view/creditsDialog';
 import { GAME_MENU_SURFACES, GameMenu } from './game/view/gameMenu';
 import { NameDialog, USERS_FONTS, USERS_SURFACES, UsersDialog } from './game/view/usersDialogs';
+import { TUTORIAL_QUESTION_SURFACES, TutorialQuestionDialog } from './game/view/tutorialViews';
 import { WorldMap } from './game/worldMap';
 import { PROGRESS_KEY, Progress, type StageRules } from './game/progress';
 import { Users } from './game/users';
@@ -131,12 +132,32 @@ async function main(): Promise<void> {
   } else if (level === null) {
     const audio = makeAudio();
     const strings = await data.strings(chosen);
-    await Promise.all([textures.load([...GAME_MENU_SURFACES, ...CREDITS_SURFACES, ...USERS_SURFACES]), loadFonts(data.resources, [...CREDITS_FONTS, ...USERS_FONTS])]);
+    await Promise.all([textures.load([...GAME_MENU_SURFACES, ...CREDITS_SURFACES, ...USERS_SURFACES, ...TUTORIAL_QUESTION_SURFACES]), loadFonts(data.resources, [...CREDITS_FONTS, ...USERS_FONTS])]);
     await MainMenu.create(app, data, textures, audio, {
       strings,
       enabled: ['PLAY', 'USERS', 'OPTIONS', 'CREDITS'],
       onSelect: (entry) => {
-        if (entry === 'PLAY') return navigate(null, null, '');
+        if (entry === 'PLAY') {
+          // 0x5d024: with no user the name is asked first; a game not begun asks about the
+          // tutorial; otherwise the map opens. (`?nouser` skips the name, for automated checks.)
+          const go = (): void => {
+            const mine = Progress.load(rules, users.progressKey);
+            if (!mine.fresh) return navigate(null, null, '');
+            const question = new TutorialQuestionDialog(textures, audio, strings, (tutorial) => {
+              mine.begin();
+              if (tutorial) navigate(0, 1);
+              else navigate(null, null, '');
+            });
+            app.stage.addChild(question);
+          };
+          if (users.list.length > 0 || params.has('nouser')) return go();
+          app.stage.addChild(
+            new NameDialog({ textures, audio, strings, users }, 'first', () => {
+              if (users.current) go();
+            }),
+          );
+          return;
+        }
         if (entry === 'USERS') {
           const dialog = new UsersDialog({ textures, audio, strings, users }, () => setTimeout(() => dialog.destroy({ children: true })));
           app.stage.addChild(dialog);
@@ -161,8 +182,6 @@ async function main(): Promise<void> {
         app.stage.addChild(dialog);
       },
     });
-    // With no user yet the game asks for a name first (`?nouser` skips it, for automated checks).
-    if (users.list.length === 0 && !params.has('nouser')) app.stage.addChild(new NameDialog({ textures, audio, strings, users }, 'first', () => {}));
   } else {
     const audio = makeAudio();
     window.game = await LevelScene.create(app, data, textures, audio, {

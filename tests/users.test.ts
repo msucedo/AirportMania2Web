@@ -96,5 +96,15 @@ describe('users', () => {
     expect(caretAlpha((3 * Math.PI) / 16)).toBe(0);
     expect(caretAlpha((7 * Math.PI) / 48)).toBeCloseTo(0, 5);
   });
+
+  it('plays on as the user after the one deleted, or the last', () => {
+    const users = Users.load(memory(), 'progress');
+    for (const name of ['Ana', 'Luis', 'Eva']) users.create(name);
+    users.select(1);
+    users.remove();
+    expect(users.current?.name).toBe('Eva');
+    users.remove();
+    expect(users.current?.name).toBe('Ana');
+  });
 });
 
