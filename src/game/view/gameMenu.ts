@@ -1,7 +1,8 @@
 import { Label } from './effectText';
-import { BORDER } from './faces';
+import { BORDER, MAIN_FILL } from './faces';
 import { Container, NineSliceSprite, Rectangle, type FederatedPointerEvent, type Sprite } from 'pixi.js';
-import { LANGUAGES, type Language, type Strings } from '../../data/strings';
+import type { Strings } from '../../data/strings';
+import { paletteSamples, usePalette } from '../palette';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
@@ -16,18 +17,22 @@ export const GAME_MENU_SURFACES = [
   'GUI.DIALOGS.NIPPLE_OVER',
   'GUI.DIALOGS.CHECKBOX_BACK',
   'GUI.DIALOGS.CHECKBOX_ON',
-  'GUI.DIALOGS.ARROW',
-  ...LANGUAGES.map((language) => `FLAGS.${language.toUpperCase()}`),
+  'GUI.DIALOGS.CHECKBOX_OVER',
+  'GUI.COLOR_HELP.COLOR',
+  'GUI.COLOR_HELP.FRONT',
 ];
 
 export type MenuExit = 'resume' | 'restart' | 'map' | 'mainMenu';
-type Page = 'menu' | 'options' | 'finish' | 'language' | 'askRestart' | 'askMap';
+type Page = 'menu' | 'options' | 'gameOptions' | 'advanced' | 'palette' | 'finish' | 'askRestart' | 'askMap';
 
 const WIDTH = 340;
-/** Frame heights: the options page, the in-game menu (0x66c00) and the finish dialog (0x3773c). */
-const HEIGHT: Record<Page, number> = { options: 220, menu: 240, finish: 260, language: 220, askRestart: 200, askMap: 200 };
-/** The two questions (0x373e8, 0x3710c) are 400 wide. */
-const ASK_WIDTH = 400;
+/**
+ * Frame heights: the options page, the in-game menu (0x66c00), the finish dialog (0x3773c), the
+ * two kinds of the options' own dialog (0x2220) and the colour help (0x265ac).
+ */
+const HEIGHT: Record<Page, number> = { options: 220, gameOptions: 240, advanced: 220, palette: 250, menu: 240, finish: 260, askRestart: 200, askMap: 200 };
+/** The two questions (0x373e8, 0x3710c) and the colour help are 400 wide; the options' own dialog 360. */
+const WIDE: Partial<Record<Page, number>> = { askRestart: 400, askMap: 400, palette: 400, gameOptions: 360, advanced: 360 };
 const SLIDER = { x: 85, width: 150 };
 
 export interface GameMenuOptions {
@@ -48,13 +53,13 @@ export interface GameMenuOptions {
  * away: sound and music, each with a switch and a slider, then Advanced and Back. Positions are
  * from the centre of a 340 px wide frame.
  *
- * Help is not available. Advanced leads, instead of the original's device switches (`0x2220`),
- * to a choice of language, which the original takes from the device; it is offered outside a
- * level only, since a new language reloads the page. Slider width and button height are assumed.
+ * The options' own dialog (`0x2220`) comes two ways too. A level's Options (`0x678e8`) opens it
+ * with sound and music and the three switches (turn with the device, show tips, tap on
+ * bubbles); the options page's Advanced (`0x67b80`) opens it with the three switches and the
+ * colour help (`0x265ac`), where one of four colour tables is picked. Slider width is assumed.
  */
 export class GameMenu extends Container {
   private settings: Settings;
-  private readonly startLanguage: Language;
 
   constructor(
     private readonly textures: TextureStore,
@@ -63,7 +68,6 @@ export class GameMenu extends Container {
   ) {
     super();
     this.settings = { ...options.settings };
-    this.startLanguage = options.settings.language;
     this.show(options.inGame ? 'menu' : 'options');
   }
 
@@ -72,13 +76,13 @@ export class GameMenu extends Container {
     // Destroyed once the touch that changed the page has been dispatched.
     setTimeout(() => old.forEach((child) => child.destroy({ children: true })));
     const height = HEIGHT[page];
-    const width = page === 'askRestart' || page === 'askMap' ? ASK_WIDTH : WIDTH;
+    const width = WIDE[page] ?? WIDTH;
     const { overlay, panel } = dialogFrame(this.textures, width, height);
     const centre = new Container();
     centre.position.set(width / 2, height / 2);
     panel.addChild(centre);
     this.addChild(overlay);
-    const { strings, inGame } = this.options;
+    const { strings } = this.options;
     const family = fontFamily(SCORE_FONT);
     const bottom = height / 2 - 20;
     const button = (y: number, text: string, onPress: (() => void) | null, width = 280): void => {
@@ -87,7 +91,7 @@ export class GameMenu extends Container {
     };
 
     if (page === 'menu') {
-      button(bottom - 190, strings.t('OPTIONS_DIALOG.OPTIONS'), () => this.show('options'));
+      button(bottom - 190, strings.t('OPTIONS_DIALOG.OPTIONS'), () => this.show('gameOptions'));
       button(bottom - 130, strings.t('IN_GAME_MENU_DIALOG.HELP'), this.options.onHelp ?? null);
       button(bottom - 70, strings.t('IN_GAME_MENU_DIALOG.FINISH_GAME'), () => this.show('finish'));
       button(bottom, strings.t('RESUME'), () => this.options.onExit('resume'));
@@ -112,38 +116,109 @@ export class GameMenu extends Container {
       dialogButton(this.textures, this.audio, centre, { x: 105, y: 80, width: 170, height: 30 }, strings.t('NO'), family, () => this.show('finish'));
     } else if (page === 'options') {
       const top = -height / 2 + 10;
-      this.volume(centre, top + 15, strings.t('OPTIONS_DIALOG.SOUND_FX'), 'sound');
-      this.volume(centre, top + 65, strings.t('OPTIONS_DIALOG.MUSIC'), 'music');
-      button(bottom - 60, strings.t('OPTIONS_DIALOG.ADVANCED_OPTIONS'), inGame ? null : () => this.show('language'));
-      button(bottom, strings.t('BACK'), () => (inGame ? this.show('menu') : this.options.onExit('resume')));
+      this.volume(centre, top + 15, strings.t('OPTIONS_DIALOG.SOUND_FX'), 'sound', { box: -145, label: -115, slider: SLIDER.x });
+      this.volume(centre, top + 65, strings.t('OPTIONS_DIALOG.MUSIC'), 'music', { box: -145, label: -115, slider: SLIDER.x });
+      button(bottom - 60, strings.t('OPTIONS_DIALOG.ADVANCED_OPTIONS'), () => this.show('advanced'));
+      button(bottom, strings.t('BACK'), () => this.options.onExit('resume'));
+    } else if (page === 'gameOptions') {
+      // 0x2510: sound at y −105 and music at −65, switch at x −160, label from −130, slider on
+      // x 100; the three switches' labels from x −160 at y −25, 15 and 55; Back at y 100.
+      this.volume(centre, -105, strings.t('OPTIONS_DIALOG.SOUND_FX'), 'sound', { box: -160, label: -130, slider: 100 });
+      this.volume(centre, -65, strings.t('OPTIONS_DIALOG.MUSIC'), 'music', { box: -160, label: -130, slider: 100 });
+      this.switches(centre, -160, [-25, 15, 55]);
+      button(100, strings.t('BACK'), () => this.show('menu'), 310);
+    } else if (page === 'advanced') {
+      // 0x22ee: labels from x −155 at y −95, −55 and −15; the colour help at y 35; Back at y 90.
+      this.switches(centre, -155, [-95, -55, -15]);
+      button(35, strings.t('OPTIONS_DIALOG.COLOR_HELP'), () => this.show('palette'), 310);
+      button(90, strings.t('BACK'), () => this.show('options'), 310);
     } else {
-      dialogText(centre, strings.t('OPTIONS_DIALOG.LANGUAGE'), 0, -70, 16, fontFamily(MAIN_FONT), 0.5);
-      const flag = this.textures.sprite(`FLAGS.${this.settings.language.toUpperCase()}`);
-      flag.position.set(0, -20);
-      centre.addChild(flag);
-      for (const step of [-1, 1]) {
-        const arrow = this.textures.sprite('GUI.DIALOGS.ARROW');
-        arrow.position.set(step * 130, -20);
-        // The art points left.
-        arrow.scale.x = -step;
-        arrow.eventMode = 'static';
-        arrow.cursor = 'pointer';
-        arrow.hitArea = new Rectangle(-20, -20, 40, 40);
-        arrow.on('pointerdown', (event: FederatedPointerEvent) => {
-          event.stopPropagation();
-          this.audio.play('SOUNDS.CLICK');
-          const index = (LANGUAGES.indexOf(this.settings.language) + step + LANGUAGES.length) % LANGUAGES.length;
-          this.change({ language: LANGUAGES[index] as Language });
-          flag.texture = this.textures.texture(`FLAGS.${this.settings.language.toUpperCase()}`);
+      // 0x265ac: the text in (−180, −120)–(180, −90); four rows from x −170 at y −75, −30, 15
+      // and 60; Back at y 110, 380 wide.
+      const text = new Label({ text: strings.t('PALETTE_SELECTION_DIALOG.TEXT'), style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 11, fill: 0xffffff, stroke: BORDER } });
+      text.anchor.set(0.5);
+      text.position.set(0, -105);
+      if (text.width > 360) text.scale.set(360 / text.width);
+      centre.addChild(text);
+      const draws: (() => void)[] = [];
+      [-75, -30, 15, 60].forEach((y, index) => {
+        draws.push(
+          this.checkBox(centre, -170, y, () => this.settings.palette === index, () => {
+            // 0x26488: picking one puts its colours in use.
+            this.change({ palette: index });
+            usePalette(index);
+            for (const draw of draws) draw();
+          }),
+        );
+        // 0x26abc: its seven colours, 40 px apart from 60 px right of the box.
+        paletteSamples(index).forEach((colour, k) => {
+          const tinted = this.textures.sprite('GUI.COLOR_HELP.COLOR');
+          tinted.tint = colour;
+          const front = this.textures.sprite('GUI.COLOR_HELP.FRONT');
+          tinted.position.set(-170 + 60 + 40 * k, y);
+          front.position.copyFrom(tinted.position);
+          centre.addChild(tinted, front);
         });
-        centre.addChild(arrow);
-      }
-      button(bottom, strings.t('BACK'), () => {
-        // Texts are loaded once per page, so a new language needs the page again.
-        if (this.settings.language !== this.startLanguage) location.reload();
-        else this.show('options');
       });
+      button(110, strings.t('BACK'), () => this.show('advanced'), 380);
     }
+  }
+
+  /** The three switches of the options' own dialog (0x2f60c, 0x2f688, 0x2f704), each at x 145 on its label's line. */
+  private switches(centre: Container, labelX: number, rows: readonly [number, number, number]): void {
+    const { strings } = this.options;
+    const row = (y: number, text: string, key: 'autoOrientate' | 'showTips' | 'bubbleClicking'): void => {
+      dialogText(centre, text, labelX, y, 14, fontFamily(MAIN_FONT), 0).style.fill = MAIN_FILL;
+      this.checkBox(centre, 145, y, () => this.settings[key], () => this.change({ [key]: !this.settings[key] }));
+    };
+    row(rows[0], strings.t('OPTIONS_DIALOG.AUTO_ORIENTATE'), 'autoOrientate');
+    row(rows[1], strings.t('OPTIONS_DIALOG.SHOW_TIPS'), 'showTips');
+    row(rows[2], strings.t('OPTIONS_DIALOG.BUBBLE_CLICKING'), 'bubbleClicking');
+  }
+
+  /**
+   * A check box (0x2dad8; update 0x2d9ec, draw 0x2d944): its back, its pressed picture coming in
+   * at 8 a second while it is held, and its mark while it is on. It changes as it is let go.
+   * Returns what redraws it.
+   */
+  private checkBox(centre: Container, x: number, y: number, on: () => boolean, toggle: () => void): () => void {
+    const box = this.textures.sprite('GUI.DIALOGS.CHECKBOX_BACK');
+    const over = this.textures.sprite('GUI.DIALOGS.CHECKBOX_OVER');
+    const mark = this.textures.sprite('GUI.DIALOGS.CHECKBOX_ON');
+    for (const part of [box, over, mark]) part.position.set(x, y);
+    over.alpha = 0;
+    const draw = (): void => void (mark.visible = on());
+    let held = false;
+    let pressed = 0;
+    let last = performance.now();
+    box.onRender = () => {
+      const now = performance.now();
+      pressed = Math.max(0, Math.min(1, pressed + (held ? 8 : -8) * Math.min(0.1, (now - last) / 1000)));
+      last = now;
+      over.alpha = pressed;
+    };
+    // The touch area is its own node, like a button's: the picture does not take presses reliably.
+    const zone = new Container();
+    zone.hitArea = new Rectangle(x - 20, y - 20, 40, 40);
+    zone.eventMode = 'static';
+    zone.cursor = 'pointer';
+    zone.on('pointerdown', (event: FederatedPointerEvent) => {
+      event.stopPropagation();
+      held = true;
+    });
+    const release = (): void => void (held = false);
+    zone.on('pointerout', release);
+    zone.on('pointerupoutside', release);
+    zone.on('pointerup', () => {
+      if (!held) return;
+      held = false;
+      toggle();
+      draw();
+      this.audio.play('SOUNDS.CLICK');
+    });
+    centre.addChild(box, over, mark, zone);
+    draw();
+    return draw;
   }
 
   private change(part: Partial<Settings>): void {
@@ -152,36 +227,25 @@ export class GameMenu extends Container {
     this.options.onSettings(this.settings);
   }
 
-  /** One row of the options (0x66cf8–0x66e1a): switch at x −145, label at −115, slider centred on x 85. */
-  private volume(centre: Container, y: number, label: string, channel: 'sound' | 'music'): void {
-    dialogText(centre, label, -115, y + 5, 13, fontFamily(MAIN_FONT), 0);
-    const left = SLIDER.x - SLIDER.width / 2;
+  /** One row of sound or music (0x66cf8–0x66e1a, 0x2576): a switch, a label and a slider centred on its x. */
+  private volume(centre: Container, y: number, label: string, channel: 'sound' | 'music', at: { box: number; label: number; slider: number }): void {
+    dialogText(centre, label, at.label, y, 14, fontFamily(MAIN_FONT), 0).style.fill = MAIN_FILL;
+    const left = at.slider - SLIDER.width / 2;
     const bar = new NineSliceSprite({ texture: this.textures.texture('GUI.DIALOGS.BAR'), leftWidth: 8, rightWidth: 8, topHeight: 5, bottomHeight: 5 });
     bar.setSize(SLIDER.width + 12, 12);
     bar.position.set(left - 6, y - 6);
     const knob: Sprite = this.textures.sprite('GUI.DIALOGS.NIPPLE');
-    const box = this.textures.sprite('GUI.DIALOGS.CHECKBOX_BACK');
-    box.position.set(-145, y);
-    box.scale.set(0.6);
-    const tick = this.textures.sprite('GUI.DIALOGS.CHECKBOX_ON');
-    tick.position.set(-145, y);
-    tick.scale.set(0.6);
     // The switch turns the channel off and back to where the slider was.
     let remembered = this.settings[channel] > 0 ? this.settings[channel] : 1;
-    const draw = (): void => {
-      knob.position.set(left + SLIDER.width * this.settings[channel], y);
-      tick.visible = this.settings[channel] > 0;
-    };
-    box.eventMode = 'static';
-    box.cursor = 'pointer';
-    box.hitArea = new Rectangle(-24, -24, 48, 48);
-    box.on('pointerdown', (event: FederatedPointerEvent) => {
-      event.stopPropagation();
+    const redraw = this.checkBox(centre, at.box, y, () => this.settings[channel] > 0, () => {
       if (this.settings[channel] > 0) remembered = this.settings[channel];
       this.change({ [channel]: this.settings[channel] > 0 ? 0 : remembered });
       draw();
-      this.audio.play('SOUNDS.CLICK');
     });
+    const draw = (): void => {
+      knob.position.set(left + SLIDER.width * this.settings[channel], y);
+      redraw();
+    };
 
     const zone = new Container();
     zone.hitArea = new Rectangle(left - 14, y - 18, SLIDER.width + 28, 36);
@@ -194,6 +258,7 @@ export class GameMenu extends Container {
     };
     zone.on('pointerdown', (event: FederatedPointerEvent) => {
       event.stopPropagation();
+      console.log('box down');
       held = true;
       knob.texture = this.textures.texture('GUI.DIALOGS.NIPPLE_OVER');
       move(event);
@@ -209,7 +274,7 @@ export class GameMenu extends Container {
     };
     zone.on('pointerup', release);
     zone.on('pointerupoutside', release);
-    centre.addChild(box, tick, bar, knob, zone);
+    centre.addChild(bar, knob, zone);
     draw();
   }
 }

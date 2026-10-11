@@ -65,12 +65,9 @@ In the order they would be seen. None is a rule of play except the second.
 
 1. ~~**The scene-loading screen**~~ (`SceneLoading`, `0x70ce4`): built on 2026-10-11; see the
    notes.
-2. **Advanced options** (`0x2220`): three switches. *Show tips* (clears the byte at
-   `0x1781e0`: no tips and no 6 s wait), *tap on bubbles* (`BUBBLE_CLICKING`, a way of giving
-   orders: not read) and *auto-orientate* (the device's, not applicable). The port opens a
-   language choice of its own there.
-3. **Colour help** (`0x2c14`, `0x265ac`, `0x268e4`): the options' palette dialog
-   (`PALETTE_SELECTION_DIALOG`, `GUI.COLOR_HELP`), for telling the planes' colours apart.
+2. ~~**Advanced options**~~ (`0x2220`): built on 2026-10-11, both kinds, with show tips and tap
+   on bubbles; and the touch area of a plane as the original has it.
+3. ~~**Colour help**~~ (`0x265ac`): built on 2026-10-11, with the three other colour tables.
 4. **The gate's label on hover** (`0x43d2a`, `GATES.ON_OVER_LABEL`, `GATES.LETTERS.LABEL.%d`):
    for gate types with `LabelOver`, while the pointer is over the gate.
 5. **The pause screen** (`0x6a210`, `PAUSE.PAUSED`, `PAUSE.TEXT`): most likely when the app is

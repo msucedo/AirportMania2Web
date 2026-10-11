@@ -1,5 +1,4 @@
 address	bytes	category	note	evidence
-2c14	144	pendiente	options: Advanced dialog (0x2220) colour help; see pending list	floats=9 profile,users,stores=1 <- 2220* tables=0 OPTIONS_DIALOG.COLOR_HELP
 2f20	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2ef4* c000* 30c04 41548 44570 47b4c tables=0
 3260	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2ca4* tables=0
 338c	60	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 2aa0* 15d54 tables=0
@@ -175,16 +174,12 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 25ef8	100	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 25f5c	216	cubierta	coin bonus and combo explosion, built	floats=0 draws,loads,stores=3 <- 263bc tables=0 COIN_BONUS
 26450	56	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Bonucer; CoinBonus
-26488	100	pendiente	palette selection dialog of the options; see pending list	floats=0 profile,users,stores=3 <- 26b48 tables=0
-265ac	800	pendiente	palette selection dialog of the options; see pending list	floats=0 profile,users,new×7,stores=6 <-  tables=1 BACK; FONTS.WHITE; PALETTE_SELECTION_DIALOG.TEXT
-268e4	312	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=4 <- 265ac tables=0 GUI.COLOR_HELP.COLOR; GUI.COLOR_HELP.FRONT
-26abc	140	cubierta	coin bonus and combo explosion, built	floats=5 draws,stores=0 <-  tables=1
 26b58	112	cubierta	coin bonus and combo explosion, built	floats=14 stores=0 <-  tables=1 ComboExplosion
 271b0	64	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.BONUS_REMARK
 27294	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ComboExplosion
 27374	512	cubierta	by rule: only loads resources or makes objects	floats=0 new×4,stores=1 <-  tables=1 FONTS.WHITE; CONTINUE_GAME_DIALOG.TEXT
 27580	96	cubierta	continue-game question buttons	floats=2 stores=1 <- 27374 tables=0
-277ec	64	pendiente	palette selection dialog of the options; see pending list	floats=0 profile,users,stores=0 <-  tables=1
+277ec	64	cubierta	palette selection dialog of the options; built	floats=0 profile,users,stores=0 <-  tables=1
 2782c	96	cubierta	continue-game question buttons	floats=2 stores=1 <- 27374 tables=0 YES
 27ac4	92	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 27bc8* tables=0
 27b20	124	fontanería	by rule: no numbers and no text	floats=0 stores=6 <- 27bc8* tables=0
@@ -208,7 +203,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 2b708	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 2a94 e440 1b094 268d8 27574 28f34 tables=8
 2bb20	188	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=0 draws,stores=20 <- 328d4* tables=0
 2bbdc	240	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=2 draws,touch,stores=11 <- 2bf94 2c09c 2c188 2c28c 2c3e0* 2c550* tables=0
-2bd38	576	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=36 draws,stores=19 <- 2c97c 2cb50 2d674 2d9ec 2de10 4acfc tables=9
+2bd38	576	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=36 draws,stores=19 <- 2c97c 2cb50 2d674 2d9ec* 2de10 4acfc tables=9
 2bf94	196	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=4 <- 2bf78 tables=0
 2c09c	208	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=6 draws,loads,stores=4 <- 2c080 tables=0
 2c188	208	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=6 draws,loads,stores=3 <- 2c16c tables=0
@@ -228,9 +223,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 2d5c4	176	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=14 draws,stores=0 <-  tables=3
 2d674	320	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=36 touch,stores=7 <-  tables=3
 2d7b4	400	cubierta	by rule: only loads resources or makes objects	floats=15 loads,stores=7 <- 2f3c4* 2f450* tables=0 GUI.DIALOGS.BAR; GUI.DIALOGS.NIPPLE; GUI.DIALOGS.NIPPLE_OVER
-2d944	168	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=11 draws,stores=0 <- 26abc 7edbc tables=6
-2d9ec	236	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=21 touch,stores=5 <-  tables=8
-2dad8	288	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=9 <- 268e4 2f504* 2f58c* 2f60c 2f688 2f704 tables=0 GUI.DIALOGS.CHECKBOX_BACK; GUI.DIALOGS.CHECKBOX_OVER; GUI.DIALOGS.CHECKBOX_ON
 2de10	956	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=57 touch,stores=18 <-  tables=1
 2e1cc	28	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
 2f098	80	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=3 draws,stores=0 <-  tables=1
@@ -238,9 +230,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 2f408	36	fontanería	by rule: small helper	floats=2 stores=3 <-  tables=1
 2f42c	36	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=0 <-  tables=1
 2f494	40	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=3 <-  tables=1
-2f60c	124	pendiente	options: handlers of the Advanced switches (show tips, bubble clicking, auto-orientate)	floats=6 stores=5 <- 2220* tables=0
-2f688	124	pendiente	options: handlers of the Advanced switches (show tips, bubble clicking, auto-orientate)	floats=6 stores=5 <- 2220* tables=0
-2f704	64	pendiente	options: handlers of the Advanced switches (show tips, bubble clicking, auto-orientate)	floats=6 stores=1 <- 2220* tables=0
 2f744	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2b6f4 2b708 tables=0
 2f770	472	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=84 stores=9 <- 2b7b0* 2bb20 2bbdc 2bd38 4d688* 4d92c* tables=0
 2f948	104	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 2de10 2e3d0* 80124* tables=0

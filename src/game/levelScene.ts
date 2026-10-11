@@ -213,7 +213,7 @@ export class LevelScene {
     const schedule = findLevel(stage, options.level, extraPlane);
     // 0x105e8: a level that opens with one of the game's tips has its arrivals 6 s later.
     const texts = await data.strings(options.language);
-    const tipDue = options.stage !== 0 && options.progress.tipDue(Number.parseInt(texts.t('GAME_TIP.COUNT'), 10) || 0);
+    const tipDue = options.stage !== 0 && options.settings.showTips && options.progress.tipDue(Number.parseInt(texts.t('GAME_TIP.COUNT'), 10) || 0);
     const sim = new Simulation({
       arrivalDelay: tipDue ? 6 : 0,
       difficulty: options.progress.difficulty,
@@ -355,6 +355,17 @@ export class LevelScene {
     const again = this.lastTouch !== null && secondTouch(now - this.lastTouch.time, x - this.lastTouch.x, y - this.lastTouch.y);
     // A second touch is not counted towards a third (0x10cee).
     this.lastTouch = again ? null : { time: now, x, y };
+    // 0x10fb8: with the option on, a touch on a plane's speech balloon (27 px either side, 23 up
+    // or down) is a touch on the plane; of several, the plane in front.
+    if (this.options.settings.bubbleClicking && !this.sim.planeAt(x, y)) {
+      let asked: Plane | null = null;
+      for (const plane of this.sim.planes) {
+        const at = plane.gone ? null : (this.planeViews.get(plane.id)?.balloonAt() ?? null);
+        if (!at || Math.abs(at.x - x) > 27 || Math.abs(at.y - y) > 23) continue;
+        if (!asked || asked.y < plane.y) asked = plane;
+      }
+      if (asked) return this.sim.pressPlane(asked);
+    }
     this.sim.press(x, y, again);
   }
 
@@ -511,6 +522,8 @@ export class LevelScene {
    * the tips shower (420 wide) at (240, 260).
    */
   private showGameTip(): void {
+    // 0xf4c8: none with the option off.
+    if (!this.options.settings.showTips) return;
     const index = this.options.progress.nextTip(Number.parseInt(this.strings.t('GAME_TIP.COUNT'), 10) || 0);
     if (index === null || !this.textures.has(TIPS_SHOWER_SURFACES[0]!)) return;
     const view = tipsShower(this.textures, this.strings, `GAME_TIP.${index}`, 420);

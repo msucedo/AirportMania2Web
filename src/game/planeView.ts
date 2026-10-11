@@ -372,6 +372,11 @@ export class PlaneView extends Container {
     this.addChild(this.speech, this.nag, this.needIcon, ...this.puffs, this.thoughtIcon);
   }
 
+  /** Where its speech balloon is on the airport, while it is up enough to be touched (0x10fb8: past 0.6). */
+  balloonAt(): { x: number; y: number } | null {
+    return this.speechFade > 0.6 ? { x: this.x + this.speech.x, y: this.y + this.speech.y } : null;
+  }
+
   /**
    * The plane says what it needs (0x5bd4): the icon shows in its speech balloon for two seconds
    * while it talks.

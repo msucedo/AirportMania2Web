@@ -1781,3 +1781,17 @@ describe('a second touch', () => {
     expect(secondTouch(0.2, 30, 28)).toBe(true);
   });
 });
+
+describe('the plane under a touch', () => {
+  it('is the one whose body the touch is on, 30 px above its place', () => {
+    const sim = newSim(1);
+    runUntil(sim, () => sim.planes.length > 0, 60);
+    const plane = sim.planes[0]!;
+    const height = plane.y - plane.altitude;
+    expect(sim.planeAt(plane.x - 2, height - 30)).toBe(plane);
+    expect(sim.planeAt(plane.x - 2 + 34, height - 30)).toBe(plane);
+    expect(sim.planeAt(plane.x - 2 + 36, height - 30)).toBeNull();
+    expect(sim.planeAt(plane.x - 2, height - 30 + 28)).toBe(plane);
+    expect(sim.planeAt(plane.x - 2, height - 30 + 30)).toBeNull();
+  });
+});

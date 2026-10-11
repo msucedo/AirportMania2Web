@@ -151,10 +151,13 @@ describe('what is on sale', () => {
 describe('settings', () => {
   it('falls back to the defaults for missing or malformed values', async () => {
     const { parseSettings } = await import('../src/game/settings');
-    expect(parseSettings(null)).toEqual({ sound: 1, music: 1, language: 'spanish', enlarged: true });
-    expect(parseSettings('not json')).toEqual({ sound: 1, music: 1, language: 'spanish', enlarged: true });
-    expect(parseSettings('{"sound":0.25,"music":7,"language":"klingon"}')).toEqual({ sound: 0.25, music: 1, language: 'spanish', enlarged: true });
-    expect(parseSettings('{"music":0,"language":"german","enlarged":false}')).toEqual({ sound: 1, music: 0, language: 'german', enlarged: false });
+    const rest = { autoOrientate: true, showTips: true, bubbleClicking: true, palette: 0 };
+    expect(parseSettings(null)).toEqual({ sound: 1, music: 1, language: 'spanish', enlarged: true, ...rest });
+    expect(parseSettings('not json')).toEqual({ sound: 1, music: 1, language: 'spanish', enlarged: true, ...rest });
+    expect(parseSettings('{"sound":0.25,"music":7,"language":"klingon"}')).toEqual({ sound: 0.25, music: 1, language: 'spanish', enlarged: true, ...rest });
+    expect(parseSettings('{"music":0,"language":"german","enlarged":false}')).toEqual({ sound: 1, music: 0, language: 'german', enlarged: false, ...rest });
+    expect(parseSettings('{"showTips":false,"bubbleClicking":"no","palette":2}')).toMatchObject({ showTips: false, bubbleClicking: true, palette: 2 });
+    expect(parseSettings('{"palette":9}').palette).toBe(0);
   });
 
   it('counts repairs and washes over all games and posts their medal at the counts read', () => {

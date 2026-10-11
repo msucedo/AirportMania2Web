@@ -958,13 +958,41 @@ names. From it:
     `t + 65` likewise (`0x2f58c`, `0x2f450`); Advanced (`0x678f8`) at `b − 60` and `BACK` at `b`.
 - Finish game opens `0x376c4`, frame 340×260, buttons 310 wide: restart at y −100, map at −40,
   main menu at 20 and `RESUME` at 110.
-- Advanced opens `0x2220` (auto-orientate, show tips, tap on bubbles). There is no language
-  entry in this build: the language comes from the device.
+- The options' own dialog (`0x2220(dialog, kind)`), 360 wide, read by running its builder
+  (`tools/re/draw_trace.py 0x2220 --r1 0|1 --stub …`). There is no language entry in this
+  build: the language comes from the device.
+  - Kind 1, 240 high, opened by a level's Options (`0x678e8`): `SOUND_FX` from (−130, −105)
+    with its switch at x −160 and slider on x 100, `MUSIC` likewise at y −65; the three labels
+    from x −160 at y −25, 15 and 55, each with its switch at x 145; `BACK` 310 wide at y 100.
+  - Kind 0, 220 high, opened by the options page's Advanced (`0x67b80`): the three labels from
+    x −155 at y −95, −55 and −15 with their switches at x 145; the colour help's button
+    (`0x2c14`, `OPTIONS_DIALOG.COLOR_HELP`) 310 wide at y 35; `BACK` 310 wide at y 90.
+  - The switches, by their classes' tables: `AUTO_ORIENTATE` (`0x2f60c`, the device's),
+    `SHOW_TIPS` (`0x2f688`, the byte at `0x1781e0`) and `BUBBLE_CLICKING` (`0x2f704`, the byte
+    at `0x181310`). Both bytes are 1 in the binary.
+  - A check box (`0x2dad8`; update `0x2d9ec`, draw `0x2d944`): `GUI.DIALOGS.CHECKBOX_BACK`,
+    `CHECKBOX_OVER` at the strength of a value that follows its being held at 8 a second, and
+    `CHECKBOX_ON` while it is on, all at their own size (40 px); it changes as it is let go.
+- Colour help (`0x265ac`), 400×250: `PALETTE_SELECTION_DIALOG.TEXT` in `FONTS.WHITE` centred in
+  (−180, −120)–(180, −90); four rows (`0x268e4`) from x −170 at y −75, −30, 15 and 60, each a
+  check box followed by its table's seven plane colours, `GUI.COLOR_HELP.COLOR` in the colour
+  with `FRONT` over it, 40 px apart from 60 px right of the box (`0x26abc`); `BACK` 380 wide
+  at y 110. The pick is kept in the profile (`+0x50`). The four tables, from `0xcc6ac`, colours
+  0 to 8: the game's own (above); `00006c ff5c5a 008200 00d6de 008dff ffff00 0000ff`;
+  `00006c 30ff30 5cde00 8dff00 8dffff ff0000 0000ff`; `00d600 5cde00 820000 c789f3 8dff00
+  ff0000 00ff00`; the last three with the same colour for the shade, and all with `c8c8c8`
+  first and `646464` last.
+- Picking a plane (`0x10f4c`): the plane within 35 px of the point 2 px left of and 30 px above
+  its place, heights counting a fifth more; with tap on bubbles on, also one whose speech
+  balloon is past 0.6 of its showing and within 27 px across and 23 px up or down of the
+  touch; of several, the one in front.
 - `0x6a210` draws `PAUSE.PAUSED` and `PAUSE.TEXT` centred on the screen; it is not opened by a
   button (most likely when the app is interrupted).
-- Web version: Help is shown but does nothing; Advanced opens a language choice of our own,
-  outside a level only; slider width, button height and the switch's look are assumed; the pause
-  screen is not used. Settings are stored in the browser (`am2web.settings.v1`).
+- Web version: all of that. Turning with the device does nothing here, and its switch is
+  kept only so that the dialog is whole. The colour table picked is kept with the settings,
+  not the profile. The language choice of our own that Advanced used to open is gone: the
+  language is the one in the settings (`?lang=` tries another). Slider width is assumed; the
+  pause screen is not used. Settings are stored in the browser (`am2web.settings.v1`).
 
 ## World map (script `0xccc8c`)
 

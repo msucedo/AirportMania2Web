@@ -1,3 +1,4 @@
+import { usePalette } from './game/palette';
 import { SceneLoading } from './game/sceneLoading';
 import { dialogSound } from './game/view/dialog';
 import { LoadingScreen, inRuns } from './game/loadingScreen';
@@ -82,6 +83,8 @@ async function main(): Promise<void> {
   const data = await loadGameData();
   const app = await createScreen(host);
   let settings = loadSettings();
+  // 0x12ddc: the colour table the player chose is the one in use.
+  usePalette(settings.palette);
   // `?hd=0` and `?hd=1` switch the enlarged images off and on, and the choice is kept.
   if (params.has('hd')) {
     settings = { ...settings, enlarged: params.get('hd') !== '0' };

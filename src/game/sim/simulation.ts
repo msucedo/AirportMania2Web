@@ -671,21 +671,27 @@ export class Simulation {
     this.cancelQueue(selected);
   }
 
+  /**
+   * The plane under a touch (0x10f4c): within 35 px of the point 2 px left of and 30 px above
+   * where it is, heights counting a fifth more; of several, the one in front.
+   */
   planeAt(x: number, y: number): Plane | null {
     let best: Plane | null = null;
-    let bestDistance = Infinity;
     for (const plane of this.planes) {
       if (plane.gone) continue;
-      const dx = x - plane.x;
-      const dy = y - (plane.y - plane.altitude);
-      if (Math.abs(dx) > 34 || Math.abs(dy) > 28) continue;
-      const distance = dx * dx + dy * dy;
-      if (distance < bestDistance) {
-        best = plane;
-        bestDistance = distance;
-      }
+      const dx = plane.x - 2 - x;
+      const dy = 1.2 * (plane.y - plane.altitude - 30 - y);
+      if (Math.sqrt(dx * dx + dy * dy) >= 35) continue;
+      if (!best || best.y < plane.y) best = plane;
     }
     return best;
+  }
+
+  /** A touch that is taken as one on `plane`, whatever is under it (its balloon, 0x10fb8). */
+  pressPlane(plane: Plane): void {
+    if (this.ended) return;
+    if (UNSELECTABLE_STATES.has(plane.state)) this.emit({ type: 'forbidden' });
+    else this.select(plane);
   }
 
   select(plane: Plane): void {
