@@ -62,10 +62,14 @@ export function starPose(clock: number): { scale: number; alpha: number } | null
   return { scale: 2 * middle, alpha: clamp(10 * middle) };
 }
 
-/** A splash in the last second of its clock (0x85950): it grows from 0.7 to 1.3 as it fades. */
-export function splashPose(clock: number): { scale: number; alpha: number } | null {
+/**
+ * A splash in the last second of its clock (0x85950): it grows from 0.7 to 1.3 as it fades, and
+ * starts light blue (155, 244, 255), whitening as the clock runs down.
+ */
+export function splashPose(clock: number): { scale: number; alpha: number; tint: number } | null {
   if (clock <= 0 || clock >= 1) return null;
-  return { scale: 1.3 - 0.6 * clock, alpha: clock * clamp(6 * Math.min(clock, 1 - clock)) };
+  const channel = (full: number): number => Math.round(255 * (1 - clock + clock * full));
+  return { scale: 1.3 - 0.6 * clock, alpha: clock * clamp(6 * Math.min(clock, 1 - clock)), tint: (channel(155 / 255) << 16) | (channel(244 / 255) << 8) | 255 };
 }
 
 /** How solid the dirt is `elapsed` seconds into the wash (0x923a); it is gone for good once the plane is clean. */
@@ -161,6 +165,7 @@ export class WashView {
       splash.sprite.position.set(splash.x, splash.y);
       splash.sprite.scale.set(pose.scale);
       splash.sprite.alpha = pose.alpha;
+      splash.sprite.tint = pose.tint;
     }
     if (elapsed > 10) this.clear();
   }

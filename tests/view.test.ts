@@ -467,6 +467,10 @@ describe('scenery', () => {
     expect(splashPose(0.5)!.scale).toBeCloseTo(1, 5);
     expect(splashPose(0.5)!.alpha).toBeCloseTo(0.5, 5);
     expect(splashPose(0.1)!.alpha).toBeCloseTo(0.06, 5);
+    // Light blue as it starts, white as it ends.
+    expect(splashPose(0.999)!.tint >> 16).toBe(155);
+    expect(splashPose(0.5)!.tint).toBe((205 << 16) | (250 << 8) | 255);
+    expect(splashPose(0.001)!.tint).toBe(0xffffff);
   });
 
   it('fades the dirt while the plane is washed', () => {

@@ -272,6 +272,13 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   at x offsets ±(86, 131, 176, 189, 202, 157, 112) and y offsets ±(−14, −14, −14, 0, 14, 14, 14)
   (tables `0x13d974`, `0x13d990`, `0x13d9ac`); two more non-terminal nodes at (−13, −14) and
   (13, 14).
+- Stop spot constructor (`0x78dc6`): six pass-through nodes at (−30, −15), (−10, −15),
+  (10, −15), (−10, 15), (10, 15) and (30, 15) from its node; links from its node to each of
+  the last three, and between the fourth and fifth and the fifth and sixth.
+- Hangar constructor (`0x46e44`): the exit node at (10, 20) from its node, kept at `+0x88`, and
+  pass-through nodes at (−10, 30) and (50, 30); links node–exit, exit to each of the two, and
+  the two together; and two terminal nodes at (40, −15) and (−60, −15), linked: a barrier
+  behind it.
 - `0x45fd8`, `0x46430`, `0x466dc` are list save/load helpers, not graph construction.
 
 ## Colours and sounds
@@ -1140,12 +1147,11 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
   - And four pairs of `WaterSplash` (`0x86320`, `SPLASH_<i mod 3>`, depth y + 100), pair i with
     clocks `8 + 0.1·i` and `8.05 + 0.1·i`: from (∓10, −35 + rand·25), speed
     (∓(90 − rand·50), −90 + rand·50), falling at 150. A splash (`0x85950`) moves and shows in
-    its clock's last second: scale `1.3 − 0.6·c`, opacity `c·clamp(6·min(c, 1 − c))`, tinted
-    towards a colour as it starts.
+    its clock's last second: scale `1.3 − 0.6·c`, opacity `c·clamp(6·min(c, 1 − c))`, coloured
+    (`1 − c + 0.608c`, `1 − c + 0.957c`, 1).
 - The dirt during the wash (`0x923a`): opacity `clamp((8 − t)/4 − 1)` with t the seconds in
   state 9; it stops being drawn once the plane is clean, two seconds in.
-- Web version: the splash's tint is not applied; the pictures are placed by the point their
-  resource names.
+- Web version: the pictures are placed by the point their resource names.
 
 ## Runway fog — confirmed
 
@@ -1545,7 +1551,8 @@ animation.
     unloaded, serviced, fuelled, luggage, loaded.
   - stop spot, wash and go, painting stop spot (`0x797a8`, `0x85290`, `0x67dd8`): landed.
 - Web version: which value the game's `+0x14` holds has not been read, so three occasions pass
-  in silence. Hints 0, 5, 9 and 10 are raised elsewhere and are not shown yet.
+  in silence. Hints 0, 5, 9 and 10 are in the table but nothing raises them: `0x10890` is only
+  called with 1 to 8 (the helpers above) and, by the runway (`0x6da94`), with its hazard's.
 
 ### Dialogs and the goals panel
 
@@ -1762,7 +1769,6 @@ Rules:
 
 - The profile's factor at `+0x48` (it scales the level clock and the energy drain) is taken
   as 1.
-- The stop spots' own pass-through nodes are not modelled.
 - The loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
 - Plane state 10 (set from `0x56b78`) is unknown; it has not been seen to matter here.
 - The service tab acts when the finger goes down, not when it is lifted.

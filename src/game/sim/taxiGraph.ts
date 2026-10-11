@@ -118,8 +118,9 @@ export class TaxiGraph {
 
   /**
    * A hangar's node and the nodes its constructor adds (0x46e44): the exit node 10 px right and
-   * 20 px below, where a serviced plane waits, and two pass-through nodes beside it. The pairs
-   * linked are assumed.
+   * 20 px below, where a serviced plane waits, linked to it; two pass-through nodes beside the
+   * exit, linked to it and to each other; and a barrier behind, from 40 px right to 60 px left,
+   * 15 px above.
    */
   addHangar(node: Point): { hangar: TaxiNode; exit: TaxiNode } {
     const hangar = this.addNode(node, true);
@@ -130,19 +131,22 @@ export class TaxiGraph {
     this.link(exit, left);
     this.link(exit, right);
     this.link(left, right);
+    this.link(this.addNode({ x: node.x + 40, y: node.y - 15 }, true), this.addNode({ x: node.x - 60, y: node.y - 15 }, true));
     return { hangar, exit };
   }
 
   /**
-   * A stop spot's node and the pass-through nodes around it. The constructor (0x794bc) creates six
-   * nodes at these offsets and makes five links; which pairs it links has not been read, so each
-   * is linked to the spot here.
+   * A stop spot's node and the six pass-through nodes its constructor adds (0x78dc6): three
+   * 15 px above it, left free, and three 15 px below, each linked to the spot and to the one
+   * beside it.
    */
   addStopSpot(node: Point): TaxiNode {
     const spot = this.addNode(node, true);
-    for (const [dx, dy] of [[-30, -15], [-10, -15], [10, -15], [-10, 15], [10, 15], [30, 15]] as const) {
-      this.link(spot, this.addNode({ x: node.x + dx, y: node.y + dy }, false));
-    }
+    for (const dx of [-30, -10, 10]) this.addNode({ x: node.x + dx, y: node.y - 15 }, false);
+    const below = [-10, 10, 30].map((dx) => this.addNode({ x: node.x + dx, y: node.y + 15 }, false));
+    for (const other of below) this.link(spot, other);
+    this.link(below[0]!, below[1]!);
+    this.link(below[1]!, below[2]!);
     return spot;
   }
 
