@@ -33,6 +33,8 @@ import { WASH_SURFACES, WashView, dirtAlpha, washElapsed } from './view/washView
 import { SMOKE_SURFACES, SmokeTails } from './view/smokeTail';
 import { PlaceRemark, stopSpotRemark } from './view/placeRemark';
 import { COMBO_SURFACES, ComboExplosions } from './view/comboExplosion';
+import { BLACK_SMOKE_SURFACES, BlackSmoke } from './view/blackSmoke';
+import { FIREWORK_SURFACES, Fireworks } from './view/fireworks';
 import { GOAL_EFFECT_SURFACES, GoalEffects, TIER_NAMES, hangarSpark, hangarSparkWait } from './view/goalEffects';
 import { noticePose, noticeStart, noticeStep, type NoticeState } from './view/awardNotice';
 import { PlaneInfoDialog, planeTrophy } from './view/planeInfoDialog';
@@ -118,6 +120,8 @@ export class LevelScene {
   private readonly remarks = new Map<Place, PlaceRemark>();
   private readonly explosions: ComboExplosions;
   private readonly goalEffects: GoalEffects;
+  private readonly fireworks: Fireworks;
+  private blackSmoke: BlackSmoke | null = null;
   /** Seconds of each hangar's work to its next spark (`hangar+0x90`). */
   private readonly sparkWaits = new Map<Hangar, number>();
   private readonly hud: Hud;
@@ -182,7 +186,8 @@ export class LevelScene {
     this.bonusView = new BonusView(textures, sim);
     this.explosions = new ComboExplosions(textures, this.planeLayer, this.overlay);
     this.goalEffects = new GoalEffects(textures);
-    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud, this.goalEffects);
+    this.fireworks = new Fireworks(textures);
+    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud, this.goalEffects, this.fireworks);
     this.build();
   }
 
@@ -210,7 +215,7 @@ export class LevelScene {
       screenWidth: SCREEN_WIDTH,
     });
 
-    const ids = new Set<string>([...SMOKE_SURFACES, ...COMBO_SURFACES, ...GOAL_EFFECT_SURFACES, ...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
+    const ids = new Set<string>([...SMOKE_SURFACES, ...COMBO_SURFACES, ...GOAL_EFFECT_SURFACES, ...BLACK_SMOKE_SURFACES, ...FIREWORK_SURFACES, ...HUD_SURFACES, ...SERVICE_TAB_SURFACES, ...ORDER_FLAG_SURFACES, ...FINAL_REPORT_SURFACES, ...SKY_SURFACES, ...GAME_MENU_SURFACES, ...improvementsSurfaceIds(layout.improvements), ...LEVEL_INTRO_SURFACES, 'GUI.FINAL_REPORT.STAR_SMALL']);
     for (const entry of backdropOf(layout, options.level).layers) {
       if (isScenery(entry)) for (const id of scenerySurfaceIds(entry)) ids.add(id);
       else ids.add(entry.resource);
@@ -552,6 +557,8 @@ export class LevelScene {
     text.on('pointerdown', () => (notice.touched = true));
     this.root.addChild(text);
     this.notice = notice;
+    // 0x31648: its fireworks go up with it.
+    this.fireworks.launch(id);
   }
 
   /** The plane says what it needs, in the voice of its mood (0x5bd4). */
@@ -967,6 +974,8 @@ export class LevelScene {
     for (const wash of this.washViews) wash.update(elapsed);
     this.smokeTails ??= new SmokeTails(this.textures, this.planeLayer);
     this.smokeTails.update(elapsed, this.sim.planes);
+    this.blackSmoke ??= new BlackSmoke(this.textures, this.planeLayer);
+    this.blackSmoke.update(elapsed, this.sim.planes);
     for (const luggage of this.luggageViews) luggage.update();
     if (this.sim.helicopter) this.rotor?.pan((this.sim.helicopter.x - 240) / 240);
     this.updateWhistles(elapsed);
@@ -1061,6 +1070,7 @@ export class LevelScene {
     for (const remark of this.remarks.values()) remark.update(seconds);
     this.explosions.update(this.paused ? 0 : seconds);
     this.goalEffects.update(this.paused ? 0 : seconds);
+    this.fireworks.update(seconds);
 
     const remaining = this.sim.totalTime > 0 ? Math.max(0, this.sim.totalTime - this.sim.time) / this.sim.totalTime : 0;
     this.hud.update(this.sim.score, remaining, this.paused ? 0 : seconds, { tier: this.sim.tier, progress: this.sim.tierProgress });

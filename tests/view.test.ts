@@ -1,3 +1,5 @@
+import { blackPuff, blackPuffAlpha, blackPuffStep, blackSmokeWait } from '../src/game/view/blackSmoke';
+import { fireSparkStep, rocket, rocketStep, rocketsFor } from '../src/game/view/fireworks';
 import { barSpark, barStar, hangarSpark, sparkPose, tierBurst, tierTextPose } from '../src/game/view/goalEffects';
 import { goalBarReach } from '../src/game/view/hud';
 import { fanPose, fanRays, comboStar, comboStarPose, starThrows } from '../src/game/view/comboExplosion';
@@ -662,6 +664,45 @@ describe('scenery', () => {
     expect(goalBarReach(0, 0.5, goals)).toBeCloseTo(0.2 * Math.pow(0.5, 0.6));
     expect(goalBarReach(1, 0, goals)).toBeCloseTo(0.2);
     expect(goalBarReach(5, 0, goals)).toBe(1);
+  });
+
+  it('puffs black smoke from a plane that needs the hangar', () => {
+    const half = (): number => 0.5;
+    expect(blackSmokeWait(half)).toBeCloseTo(1.325, 5);
+    const puff = blackPuff({ x: 100, y: 200, vx: 30, vy: 0, facingRight: false }, half);
+    expect(puff).toEqual({ x: 100, y: 190, vx: -20, vy: -50, angle: 0, spin: 0, scale: 0.5, clock: 0 });
+    expect(blackPuff({ x: 0, y: 0, vx: 30, vy: 0, facingRight: true }, half).vx).toBe(80);
+    blackPuffStep(puff, 0.5);
+    expect(puff.x).toBeCloseTo(90, 5);
+    expect(puff.y).toBeCloseTo(165, 5);
+    expect(puff.vx).toBeCloseTo(-20 + 20 * Math.sqrt(0.2), 5);
+    expect(puff.scale).toBeCloseTo(0.9, 5);
+    expect(blackPuffAlpha(0.125)).toBe(0.5);
+    expect(blackPuffAlpha(0.4)).toBe(1);
+    expect(blackPuffAlpha(0.75)).toBe(0.5);
+  });
+
+  it('sends up rockets that trail sparks and burst into sixty', () => {
+    expect([1, 3, 14, 20, 21, 24, 30, 31, 33, 35, 36, 40].map(rocketsFor)).toEqual([1, 2, 5, 6, 2, 3, 5, 6, 3, 5, 6, 2]);
+    const half = (): number => 0.5;
+    const r = rocket(half);
+    expect(r).toMatchObject({ x: 240, y: 300, vx: 0, vy: -225, trail: 0.1 });
+    for (let t = 0; t < 1.99; t += 0.01) rocketStep(r, 0.01, half);
+    expect(r.burst).toBe(false);
+    // Height after two seconds against 100 px/s²: 300 − 450 + 200.
+    expect(r.y).toBeCloseTo(50, 0);
+    expect(r.sparks.length).toBeGreaterThan(20);
+    for (let t = 0; t < 0.05; t += 0.01) rocketStep(r, 0.01, half);
+    expect(r.burst).toBe(true);
+    expect(r.sparks.filter((spark) => spark.life > 1.5)).toHaveLength(60);
+    let alive = true;
+    for (let t = 0; t < 3 && alive; t += 0.01) alive = rocketStep(r, 0.01, half);
+    expect(alive).toBe(false);
+    const spark = { x: 0, y: 0, vx: 10, vy: 0, life: 1 };
+    fireSparkStep(spark, 1);
+    expect(spark).toMatchObject({ x: 10, y: 30, life: 0 });
+    expect(spark.vx).toBeCloseTo(3, 5);
+    expect(spark.vy).toBeCloseTo(18, 5);
   });
 });
 

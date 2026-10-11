@@ -2262,3 +2262,39 @@ It is a testing back door; the owner of this port chose to leave it out (2026-10
 - Web version: all of it, with these marked as ours: the effects are drawn over the HUD (the
   order of the level's list against the HUD is not read); the name's top is put at its place
   (the engine's vertical alignment for `0x94650` is not read); the hangar's first wait is 0.
+
+## Black smoke of a plane that needs the hangar — confirmed
+
+- Plane update (`0x6da8`): while the service flag `+0x26a` is clear, `plane+0x274` counts down;
+  under 0 it adds 1.2 to 1.45 s (`0x6de0`) and a puff (`0x75ed8`) is put among the airport's
+  sorted objects (`0xf5c8`) one behind the plane: at (x, y − 10), with the plane's speed
+  (`+0x2e0`, `+0x2e4`) plus 50 px/s the way it is mirrored (`+0x224`) and, in the puff's
+  constructor, 50 up.
+- Puff (`0x75ee8`, `EFFECTS.SMOKE_BLACK`): angle −15…15°, turning −15…15°/s, scale 0.5 growing
+  0.8 a second, one second of life. Update (`0x76058`): after moving, its speed is moved towards
+  (0, −50) by `0.2^dt` of the gap, nearly all of it at any usual frame rate. Draw (`0x7615c`):
+  opacity `4·clock` under a quarter of a second, `2 − 2·clock` after.
+- Web version: the plane's speed is taken from how far it moved in the frame; the first wait is
+  taken as 0 (where `+0x274` starts is not read).
+
+## Fireworks of an award's notice — confirmed
+
+- `0x31648`, as the notice starts: as many rockets (`0x38bbc`) as `0x1b798` gives for the award:
+  ids 1–20 `min(6, id/3 + 1)`; 24–29, 32, 33 three; 30, 34, 35 five; 31, 36 six; the rest two.
+  Each from (120…360, 300) at (−80…80, −200…−250) px/s, with one of four burst pictures by
+  `rand % 4`. They go on the notice manager's list (`+0x10`).
+- Rocket (`0x38bcc`; update `0x38d50`, draw `0x3916c`): gravity 100 px/s². Its draw only draws
+  its sparks, so neither it nor its burst picture (`EFFECTS.FIREWORKS.EXPLOSIONS.%d`, loaded)
+  is ever seen. For 2 s, every 0.015 s (first after 0.1 s) it leaves a spark at its place with
+  speed −3…3 each way and life `min(rocket's clock, 0.5…1)`, advanced by the overrun. Past 2 s
+  it bursts once: 60 sparks, spark `i` at angle `2π·i/60`, speed 0…100 px/s along it plus the
+  rocket's speed plus −10…10 each way, life 2…2.5 s. It ends when its sparks are gone.
+- Spark (`EFFECTS.FIREWORKS.SPARK`, additive; update `0x393e0`, draw `0x393ac`): gravity 60,
+  speed multiplied by `0.3^dt` each step, opacity its life left.
+- Web version: drawn under the notice's text (the order is not read).
+
+## The level's bird — confirmed unused
+
+`Bird` (`0x22c2c`, images `BIRD.%d`) is a class made by name through the object registry
+(`0x22c00` in the table at `0x1765b4`). No data file names it and no code makes it directly, so
+no level ever has one. The map's birds (`0x5e098`) are another class.

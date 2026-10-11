@@ -120,11 +120,11 @@ level helpers called from many places), `0x64d38`–`0x65f88` (2 844), `0x17c2c`
    message turned out never to be shown (nothing reads where it is kept).
 4. ~~**In-level tips** (`GameTip`, `0x40314`)~~: built. Coffee and Cake and In-Flight Movies
    were the service tabs, already built; the message class beside them is not used by the data.
-5. **Effects**: built so far: the flash of a place taking an order (`0x6aea0`), the combo's
-   explosion (`0x26bd8`: fan of light and stars), and the goal bar's tiers with their name,
-   sound, stars and sparks (`0x11d94`) and the hangar's sparks (`0x4747e`); see the notes. Not
-   built yet: black smoke by the plane (`0x75ed8`); fireworks by the award notice (`0x38bbc`);
-   birds by the level (`0x22c2c`). A draw routine is best read by running it:
+5. ~~**Effects**~~: built: the flash of a place taking an order (`0x6aea0`), the combo's
+   explosion (`0x26bd8`), the goal bar's tiers with their name, sound, stars and sparks
+   (`0x11d94`), the hangar's sparks (`0x4747e`), the black smoke of a plane that needs the hangar
+   (`0x75ed8`) and the fireworks of an award's notice (`0x31648`); see the notes. The level's
+   bird (`0x22c2c`) turned out never to be made. A draw routine is best read by running it:
    `tools/re/draw_trace.py`.
 6. **The map's life**, the loading screen and the opening logos.
 7. ~~**The unidentified runs**~~: looked through (`tools/re/runinfo.py <start> <end>` lists a
