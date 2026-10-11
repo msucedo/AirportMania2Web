@@ -81,7 +81,11 @@ Read from pseudocode and the callee disassembly.
   `Plane::addOrder` (`0x5ad8`). Success plays `SOUNDS.PLACE_CLICK`; failure `SOUNDS.FORBIDDEN_CLICK`.
 - In rerouting mode the plane's queue is cleared first (`0x609c`, `SOUNDS.REROUTING`).
   Rerouting is a second touch (`0x10c2c`): let go within the engine's double-touch time (0.4 s)
-  of the one before and within `((1 − t/0.4)·0.6 + 0.4)·60` px of it.
+  of the one before and within `((1 − t/0.4)·0.6 + 0.4)·60` px of it. The queue is emptied, the
+  plane says `IN_GAME.REROUTING` 50 px above it in `FONTS.MAIN` (`0x60c0`), the sound plays,
+  and the new order is then given as usual, without `SOUNDS.PLACE_CLICK` (`0x1129e`). With an
+  empty queue nothing is said (`0x60aa`). A second touch is not counted towards a third. Web
+  version: the same, told at the touch's start.
 - Pressing on nothing with a plane selected cancels its queue (`0x6028`, `SOUNDS.QUEUE_CANCEL`).
 - The selected plane is stored at controller `+0x118`.
 

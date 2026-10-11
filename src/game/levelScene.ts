@@ -54,7 +54,7 @@ import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
 import { PlaneState, RULES } from './sim/rules';
-import { Simulation, type Gate, type Hangar, type Place, type Plane, type SimEvent, type StopSpot } from './sim/simulation';
+import { Simulation, type Gate, type Hangar, type Place, type Plane, type SimEvent, type StopSpot, secondTouch } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
 const tintOf = (color: PlaneColor | null): number => paletteColor(color).main;
@@ -160,6 +160,8 @@ export class LevelScene {
   private report: FinalReport | null = null;
   /** The tutorial's day, in stage 0 (`level+0x128`), and its goals on screen. */
   private tutorial: Tutorial | null = null;
+  /** The last touch on the airport, for telling a second one. */
+  private lastTouch: { time: number; x: number; y: number } | null = null;
   private goalsPanel: GoalsPanel | null = null;
   /** Hints raised by the game itself and not yet shown. */
   private readonly hints: TutorialHint[] = [];
@@ -329,7 +331,7 @@ export class LevelScene {
     if (!this.paused && this.sim.tapBonus(x, y)) return;
     if (this.hud.contains(y)) return;
     if (first) {
-      this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.BONUS_X2', 'SOUNDS.CASH']);
+      this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.REROUTING', 'SOUNDS.PLANE_EMERGENCY_IN', 'SOUNDS.BONUS_X2', 'SOUNDS.CASH']);
       for (const plane of new Set(this.sim.planes.map((p) => p.descriptor))) this.audio.preload(Object.values(plane.sounds).filter((id) => !id.includes('%')));
     }
     const chooser = this.paused ? undefined : [...this.choosers.values()].find((c) => c.contains(x, y));
@@ -338,7 +340,13 @@ export class LevelScene {
       chooser.press(y);
       return;
     }
-    this.sim.press(x, y);
+    // 0x10c2c: a touch within 0.4 s of the one before, and near it, is a second touch; how near
+    // shrinks from 60 px to 24 px over that time.
+    const now = performance.now() / 1000;
+    const again = this.lastTouch !== null && secondTouch(now - this.lastTouch.time, x - this.lastTouch.x, y - this.lastTouch.y);
+    // A second touch is not counted towards a third (0x10cee).
+    this.lastTouch = again ? null : { time: now, x, y };
+    this.sim.press(x, y, again);
   }
 
   /**
@@ -795,6 +803,10 @@ export class LevelScene {
       case 'queueCancelled':
         this.float(this.strings.t('IN_GAME.QUEUE_CANCELED'), event.plane, 'message', -50);
         break;
+      case 'rerouted':
+        // 0x60c0: said over the plane, like a cancelled queue.
+        this.float(this.strings.t('IN_GAME.REROUTING'), event.plane, 'message', -50);
+        break;
       default:
         break;
     }
@@ -823,8 +835,12 @@ export class LevelScene {
       case 'select':
         this.audio.play('SOUNDS.SELECT_PLANE');
         break;
+      case 'rerouted':
+        this.audio.play('SOUNDS.REROUTING');
+        break;
       case 'order':
-        this.audio.play('SOUNDS.PLACE_CLICK');
+        // 0x1129e: a rerouting has its own sound instead.
+        if (!event.again) this.audio.play('SOUNDS.PLACE_CLICK');
         // 0x1129a: the place flashes in the plane's colour.
         this.remarks.get(event.place)?.flash((event.plane.passenger === 'PRESIDENT' ? PRESIDENT_COLOR : paletteColor(event.plane.color)).main);
         break;

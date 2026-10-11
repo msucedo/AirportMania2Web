@@ -7,7 +7,7 @@ import { parsePlaneTable } from '../src/data/planes';
 import type { XmlNode } from '../src/data/xml';
 import { Hint, hintFor, hintImages } from '../src/game/sim/hints';
 import { Need, PlaneState, RULES, punctuality, roundScore } from '../src/game/sim/rules';
-import { Simulation, type Plane, type SimEvent } from '../src/game/sim/simulation';
+import { Simulation, type Plane, type SimEvent, secondTouch } from '../src/game/sim/simulation';
 import { AFRICA } from '../src/game/stages/africa';
 import { AIRBORNE } from '../src/game/stages/airborne';
 import { STAGES } from '../src/game/stages';
@@ -1771,3 +1771,13 @@ describe('stage layouts', () => {
   });
 });
 
+describe('a second touch', () => {
+  it('is one close after and near the one before', () => {
+    expect(secondTouch(0, 59, 0)).toBe(true);
+    expect(secondTouch(0, 61, 0)).toBe(false);
+    expect(secondTouch(0.39, 24, 0)).toBe(true);
+    expect(secondTouch(0.39, 26, 0)).toBe(false);
+    expect(secondTouch(0.4, 0, 0)).toBe(false);
+    expect(secondTouch(0.2, 30, 28)).toBe(true);
+  });
+});

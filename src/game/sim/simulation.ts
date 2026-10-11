@@ -282,7 +282,8 @@ export interface Plane {
 export type SimEvent =
   | { type: 'spawn'; plane: Plane }
   | { type: 'select'; plane: Plane }
-  | { type: 'order'; plane: Plane; place: Place }
+  | { type: 'order'; plane: Plane; place: Place; again: boolean }
+  | { type: 'rerouted'; plane: Plane }
   | { type: 'forbidden'; plane?: Plane }
   | { type: 'hint'; plane: Plane; id: number }
   | { type: 'balloonPopped'; x: number; y: number }
@@ -332,6 +333,16 @@ export type SimEvent =
   /** A repair or a wash finished: the profile counts them over all games (0x66c8, 0x67c8). */
   | { type: 'counted'; what: 'repairs' | 'washes' }
   | { type: 'levelEnd'; score: number };
+
+/**
+ * Whether a touch `seconds` after the one before, and (dx, dy) from it, is a second touch
+ * (0x10c40): within the engine's 0.4 s and within a reach that shrinks from 60 px to 24 px.
+ */
+export function secondTouch(seconds: number, dx: number, dy: number): boolean {
+  if (seconds >= 0.4) return false;
+  const reach = ((1 - seconds / 0.4) * 0.6 + 0.4) * 60;
+  return dx * dx + dy * dy < reach * reach;
+}
 
 export interface SimulationConfig {
   /** Seconds every arrival is put back (0x10636): 6 when a tip is to be shown as the level starts. */
@@ -629,8 +640,12 @@ export class Simulation {
 
   // ------------------------------------------------------------------ input
 
-  /** Mirrors the original press handler: planes first, then places, then empty space. */
-  press(x: number, y: number): void {
+  /**
+   * Mirrors the original press handler: planes first, then places, then empty space. `again` is
+   * a second touch close after the one before (0x10cd8): on a place it clears what the plane had
+   * been told before giving it the new order (0x609c).
+   */
+  press(x: number, y: number, again = false): void {
     if (this.ended) return;
     const plane = this.planeAt(x, y);
     if (plane) {
@@ -645,7 +660,11 @@ export class Simulation {
     if (!selected) return;
     const place = this.places.find((p) => inside(p.click, x, y));
     if (place) {
-      if (this.addOrder(selected, place)) this.emit({ type: 'order', plane: selected, place });
+      if (again && selected.queue.length > 0) {
+        selected.queue.length = 0;
+        this.emit({ type: 'rerouted', plane: selected });
+      }
+      if (this.addOrder(selected, place)) this.emit({ type: 'order', plane: selected, place, again });
       else this.emit({ type: 'forbidden', plane: selected });
       return;
     }
