@@ -6,10 +6,11 @@ import { fontFamily } from '../../engine/fonts';
 export const SCORE_FONT = 'FONTS.KENYAN_COFFEE_BD';
 export const MAIN_FONT = 'FONTS.BRADY_BUNCH';
 
-// How long a text stays and how fast it rises are settings of the original's list (`+0xc`,
-// `+0x10`) whose values have not been found; these stand in for them.
-const LIFETIME = 1.4;
-const RISE = 18;
+// 0x5280: every list of floating texts is set up with these (0x655bc): a text stays 3 s and
+// rises 15 px a second, and one pushed more than 100 px up is aged half a second.
+const LIFETIME = 3;
+const RISE = 15;
+const LIMIT = 100;
 
 /**
  * A text's stretch `age` seconds after it appears (0x65998): for two thirds of a second it
@@ -62,7 +63,12 @@ export class FloatingTexts extends Container {
     // 0x657d4: the place is taken in whole pixels; a text is 2 px taller than its font.
     const at = { x: Math.floor(x), y: Math.floor(y) };
     const pushes = floatingPush(this.items, at, text.height + 2);
-    this.items.forEach((item, index) => (item.offset += pushes[index]!));
+    this.items.forEach((item, index) => {
+      if (pushes[index] === 0) return;
+      item.offset += pushes[index]!;
+      // 0x65862: past the list's limit it is brought nearer its end.
+      if (item.offset > LIMIT) item.age += 0.5;
+    });
     this.addChild(text);
     this.items.push({ text, ...at, offset: 0, age: 0 });
     this.place();

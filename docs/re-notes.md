@@ -2283,22 +2283,21 @@ depth (`plane+4` − 3): by the gate with its combo (`0x4340a`) and by the runwa
 See `docs/audit.md`: the share of the game logic read so far and the runs of code not yet
 opened, by what each seems to be (`tools/re/audit.py`).
 
-## Floating texts: wobble, stacking and fade — confirmed (settings not found)
+## Floating texts: wobble, stacking and fade — confirmed
 
-List class at `plane+0x358` and on the level; add `0x656a8`, update `0x658d0`, draw `0x65934`.
+List class at `plane+0x358` and on the level; set up by `0x655bc(list, 100, 3, 15)` at all three
+of its uses (`0x5290`, `0x585a`, `0x25d6e`): a limit, the lifetime in seconds and the rise in
+px a second. Add `0x656a8`, update `0x658d0`, draw `0x65934`.
 
 - Add: the place is floored to whole pixels; the text's height is its font's plus 2. If the
   newest text already up has risen less than that height, it and each one before it, while
-  within 5 px of the new one's place, are pushed up by the difference (and aged by half the
-  push divided by... the list's rise speed is not applied here: `+8` grows only when the pushed
-  offset passes the list's `+8` limit, by 0.5).
-- Update: age `+8` grows by dt and the offset `+0x20` by dt times the list's `+0x10`; a text is
-  dropped when the oldest's age passes the list's `+0xc`.
+  within 5 px of the new one's place, are pushed up by the difference; one pushed past the
+  limit is aged by half a second.
+- Update: age grows by dt and the offset by dt times the rise; a text is dropped when the
+  oldest's age passes the lifetime.
 - Draw: for the first two thirds of a second (`t = 1.5·age < 1`) it is stretched
   `1 + 0.1·(1 − t)·sin(2πt)` across and `1 + 0.2·(1 − t)·sin(3πt)` up; opacity is whole until
-  one second before the list's lifetime and then `lifetime − age`.
-- **Not found**: where the list's lifetime (`+0xc`) and rise speed (`+0x10`) are set; the web
-  version keeps 1.4 s and 18 px/s of its own.
+  one second before the lifetime and then `lifetime − age`.
 
 ## The tester's name — confirmed, deliberately not built
 
