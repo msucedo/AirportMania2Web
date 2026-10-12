@@ -2234,7 +2234,10 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   (490, 285); the awards; shines and sparkles (a sparkle is drawn while −40 < x < 520, its size
   breathing by a sine); then the curtains, which are stretched over the screen and drawn back
   as the room opens (`+0x50`, eased), the ribbon and the text at (240, 25) in colour
-  (0.275, 0.157, 0.047). A back button (`0x4bb84`) at (50, 40). Past the awards the wall goes
+  (0.275, 0.157, 0.047). A back button (`0x4bb84`; update `0x4bcd0`, draw `0x4bcfc`), 50 by 40
+  at (430, 20): a value rises from 0 at 2 a second and until it is 1 the picture is that
+  clear and `0.5 + 0.5v` large; held, it is a tenth larger by the button's press value; a
+  label, when it has one, goes 35 px under it in black. It is pressed as the touch is let go. Past the awards the wall goes
   on to a leaderboard (`0x1f2d4`).
 - An award on the wall (`0x1b588`): at its table position, 10% larger at most while touched
   (`+0x30`). Earned (`vtable+0x2c`): its picture; a medal (`0x1c67c`) its ribbon

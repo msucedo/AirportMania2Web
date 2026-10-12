@@ -107,6 +107,7 @@ export class AwardsRoom {
   private readonly numbers: Sprite[] = [];
   /** 0 shut to 1 open; it opens over a second and shuts as long before leaving. */
   private open = 0;
+  private back!: { sprite: Sprite; shown: number; held: boolean; press: number };
   private leaving = false;
   private page = 0;
   private scroll = 0;
@@ -158,8 +159,20 @@ export class AwardsRoom {
     backButton.eventMode = 'static';
     backButton.cursor = 'pointer';
     backButton.hitArea = new Rectangle(-25, -20, 50, 40);
+    // 0x4bcd0, 0x4bcfc: it comes over half a second, clearer and from half its size; held, it
+    // swells a tenth; let go on it, it is pressed.
+    this.back = { sprite: backButton, shown: 0, held: false, press: 0 };
+    backButton.alpha = 0;
     backButton.on('pointerdown', (event: FederatedPointerEvent) => {
       event.stopPropagation();
+      this.back.held = true;
+    });
+    const letGo = (): void => void (this.back.held = false);
+    backButton.on('pointerout', letGo);
+    backButton.on('pointerupoutside', letGo);
+    backButton.on('pointerup', () => {
+      if (!this.back.held) return;
+      this.back.held = false;
       if (this.leaving) return;
       audio.play('SOUNDS.CLICK');
       this.leaving = true;
@@ -214,6 +227,11 @@ export class AwardsRoom {
 
   private step(ticker: Ticker): void {
     const dt = Math.min(0.1, ticker.deltaMS / 1000);
+    const back = this.back;
+    back.shown = Math.min(1, back.shown + 2 * dt);
+    back.press = Math.max(0, Math.min(1, back.press + (back.held ? 5 : -5) * dt));
+    back.sprite.alpha = back.shown;
+    back.sprite.scale.set((0.5 + 0.5 * back.shown) * (1 + 0.1 * back.press));
     if (this.leaving) {
       this.open -= dt;
       if (this.open <= 0) {
