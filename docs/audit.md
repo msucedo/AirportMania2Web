@@ -229,9 +229,11 @@ Gone through against their notes and, where it was cheap, a fresh reading or a r
 - read again and matching: the flash of a place taking an order (`0x6af20`), the helicopter
   and its award (`0x49518`, `0x49708`), the shop list's bands (`0x4dd80`), the de-icer and the
   sand against their notes, the carrier's islands, when a plane lets its node go (`0x616a`);
-- not read again: the balloons and the coin, the stars, sun and moon, the spray can, the
-  ending's floaters, the loading screen. Their notes carry addresses and formulas from the
-  passes that built them.
+- read afterwards: the coin (`0x260d4`), which matches, and the balloon (`0x21ee8`,
+  `0x21fc0`), which swells under a finger and pops as it lifts, as the helicopter is tapped;
+  the port popped and tapped on the press. Built;
+- not read again: the stars, sun and moon, the spray can, the ending's floaters, the loading
+  screen. Their notes carry addresses and formulas from the passes that built them.
 
 Still open: what each award counts in its description and the awards room's ribbon width;
 the credits' line height; the engine's text.
