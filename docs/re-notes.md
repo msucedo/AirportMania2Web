@@ -1684,9 +1684,10 @@ one adds, removes or changes; `--level` shows what depends on the level.
   `0x72` 300000, `0x16` 120000, `0x17` 135000, `0x1e` 110000, `0x1f` 125000, `0x20` 145000,
   `0x21` 165000, `0x28` 100000, `0x29` 110000, `0x2a` 130000, `0x34` 200000, VIP runway `0x3c`
   220000, improved hangar `0x50` 250000, `0x74` 150000, `0x73` 150000, anti-fog `0x6f` 150000,
-  licence `0xce` 400000, `0x2b` 150000. As for stage 4, when each is on sale follows the
-  pattern confirmed for stages 1 to 3 and single-improvement runs; the run over every
-  combination has not been done.
+  licence `0xce` 400000, `0x2b` 150000. When each is on sale was run over every combination
+  of the fourteen improvements that matter (`stage_layout.py 0xd4f54 --stage 5 --offers`, 58
+  minutes, 2026-10-12): all twenty-two offers come out with the price, the level they are
+  recommended from, what they need and what hides them that the web version has.
 - Bonus events: balloons on level 2 (39.9 s, 1500) and level 8 (118.3 s, 2000), helicopter
   from the left on level 6 (134.3 s, coins of 1500).
 - Fog per level, from the levels database: 1 on level 3, 2 on levels 4, 5, 7 and 8, 4 on 6.
