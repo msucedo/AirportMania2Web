@@ -150,8 +150,10 @@ export class AwardsRoom {
     name.anchor.set(0.5);
     name.position.set(240, 25);
     const ribbon = new NineSliceSprite({ texture: textures.texture('AWARDS_ROOM.RIBBON'), leftWidth: 50, rightWidth: 50, topHeight: 0, bottomHeight: 0 });
-    ribbon.setSize(Math.max(186, name.width + 100), 35);
-    ribbon.position.set(240 - ribbon.width / 2, 25 - 35 / 2);
+    // 0x1e366–0x1e474: as wide as the name and 90 more, and no narrower than its picture; its
+    // 50 px ends kept; from y 5, centred across on 240.
+    ribbon.setSize(Math.max(ribbon.texture.width, name.width + 90), ribbon.texture.height);
+    ribbon.position.set(240 - ribbon.width / 2, 5);
 
     // 0x1e2b6: the way back, 50 by 40 at (430, 20).
     const backButton = textures.sprite('AWARDS_ROOM.BACK_BUTTON');

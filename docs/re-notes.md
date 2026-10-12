@@ -2482,9 +2482,9 @@ verifies that each can be passed and that funds, stars and the opening of stage 
 - An award under the finger (`+0x2c`, set through `0x1b574`) swells: its value follows at 5 a
   second (`0x1b57c`) and it is drawn at `1 + 0.1·value` about its place (`0x1b5c2`). Built.
 - Web version: the room is opened from the map's Awards button. Not built: the third page (an
-  online leaderboard, `0x1f2d4`) and the keys that turn pages. Taken, not read: the ribbon's width, that the value filled into a
-  description is what the award counts, 
-  and what the earned branch of the dialog computes at `0x1ae08`.
+  online leaderboard, `0x1f2d4`) and the keys that turn pages. The ribbon is as wide as the name plus 90 and no less than its picture, with 50 px
+  ends, from (240 − width/2, 5) (`0x1e366`–`0x1e474`); the value filled into an earned award's
+  description is the one kept with the award (`0x1ae38`: `+0x38`).
 
 ## Starting a game — confirmed
 
