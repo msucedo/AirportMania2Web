@@ -1433,7 +1433,9 @@ Some levels have a bonus event, created by the stage script (found by running th
   10…470 with one of three images, rises 100 px/s (`0x21fc0`) and goes at y −30; it takes
   touches within 30 px. It is drawn (`0x21ee8`) leaning `3·sin(0.05·y)` degrees, thread and
   all, the balloon itself turned back upright about a point 20 px above. Popped (`0x22044`):
-  `SOUNDS.BALLOON_POP` at pitch 0.98…1.02, a `BALLOON.SPLASH` and a coin 20 px below. A float the
+  `SOUNDS.BALLOON_POP` at pitch 0.98…1.02, a `BALLOON.SPLASH` and a coin 20 px below. The splash
+  (`0x254d4`): a clock from 1 falling at 2 a second (`0x255ac`); drawn (`0x255e4`) at scale
+  `0.5 + 0.5·(1 − c) + 0.1·c·sin(10πc)` and opacity `clamp(min(2c, 4·(1 − c)))`. Built. A float the
   builder also receives (10, 15 or 20) is stored and not used by the update or the draw.
 - Helicopter (`HelicopterBonus`, builder `0x139fc`, update `0x49518`): `SOUNDS.HELICOPTER_LOOP`
   at half volume, panned by `(x − 240)/240`. Its progress `t` advances by

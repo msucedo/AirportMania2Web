@@ -28,6 +28,7 @@ import { pausePose } from '../src/game/view/pauseScreen';
 import { yesNoPose } from '../src/game/view/yesNoMarks';
 import { hangarPanelStep } from '../src/game/levelScene';
 import { stageClearStar } from '../src/game/view/stageClear';
+import { burstPose } from '../src/game/view/bonusView';
 import { awardTouch } from '../src/data/awards';
 import { coast, dragSpeed, markerImage, markerScale, ringTurn } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
@@ -1096,5 +1097,15 @@ describe('the stars of a cleared stage', () => {
     expect(stageClearStar(1, 3)).toEqual({ x: 157, y: -22 });
     expect(stageClearStar(3, 3)).toEqual({ x: 177, y: -22 });
     expect(stageClearStar(2, 40)).toEqual({ x: 167 - 5 * 37, y: -8 });
+  });
+});
+
+describe('a popped balloon\'s burst', () => {
+  it('grows, wobbles and fades over half a second', () => {
+    expect(burstPose(1)).toEqual({ scale: expect.closeTo(0.5, 5), alpha: 0 });
+    expect(burstPose(0.5)!.alpha).toBe(1);
+    expect(burstPose(0.25)!.alpha).toBeCloseTo(0.5);
+    expect(burstPose(0.25)!.scale).toBeCloseTo(0.875 + 0.025);
+    expect(burstPose(0)).toBeNull();
   });
 });

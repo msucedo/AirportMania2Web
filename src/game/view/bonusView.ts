@@ -19,7 +19,18 @@ export const coinSwing = (time: number): number => 35 * Math.sin(2.3 * time);
 /** The helicopter's rotor frame for how far along it is (0x4990c). */
 export const helicopterFrame = (progress: number): number => ((Math.trunc(progress * 30) % 4) + 4) % 4;
 
-const SPLASH_TIME = 0.3;
+/**
+ * A popped balloon's burst with `clock` left (0x255ac, 0x255e4), which runs from 1 to nothing in
+ * half a second: it grows from half its size to all of it with a wobble that dies away, and
+ * comes and goes. Null once it is over.
+ */
+export function burstPose(clock: number): { scale: number; alpha: number } | null {
+  if (clock <= 0) return null;
+  return {
+    scale: 0.5 + 0.5 * (1 - clock) + 0.1 * Math.sin(10 * clock * Math.PI) * clock,
+    alpha: Math.max(0, Math.min(1, 2 * clock, 4 * (1 - clock))),
+  };
+}
 
 export class BonusView extends Container {
   private readonly balloons = new Map<number, { holder: Container; thread: Sprite; body: Sprite }>();
@@ -34,7 +45,7 @@ export class BonusView extends Container {
     super();
   }
 
-  /** The burst where a balloon was popped. How the original animates it has not been read. */
+  /** The burst where a balloon was popped. */
   splash(x: number, y: number): void {
     const sprite = this.textures.sprite('BALLOON.SPLASH');
     sprite.position.set(x, y);
@@ -105,10 +116,12 @@ export class BonusView extends Container {
     for (let i = this.splashes.length - 1; i >= 0; i--) {
       const splash = this.splashes[i]!;
       splash.age += dt;
-      const t = splash.age / SPLASH_TIME;
-      splash.sprite.scale.set(0.6 + 0.6 * t);
-      splash.sprite.alpha = Math.max(0, 1 - t);
-      if (t >= 1) {
+      const pose = burstPose(1 - 2 * splash.age);
+      if (pose) {
+        splash.sprite.scale.set(pose.scale);
+        splash.sprite.alpha = pose.alpha;
+      }
+      if (!pose) {
         splash.sprite.destroy();
         this.splashes.splice(i, 1);
       }
