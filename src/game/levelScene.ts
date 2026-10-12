@@ -136,6 +136,7 @@ export class LevelScene {
   private blackSmoke: BlackSmoke | null = null;
   /** Seconds of each hangar's work to its next spark (`hangar+0x90`). */
   private readonly sparkWaits = new Map<Hangar, number>();
+  private readonly repairSounds = new Map<Hangar, { stop(fade?: number): void }>();
   private readonly hud: Hud;
   private accumulator = 0;
   private endShown = false;
@@ -1029,9 +1030,13 @@ export class LevelScene {
       case 'repainted':
         this.planeViews.get(event.plane.id)?.repaint(paletteColor(event.plane.color));
         break;
-      case 'serviceStartedAtHangar':
-        this.audio.play('SOUNDS.REPAIRING_START');
+      case 'serviceStartedAtHangar': {
+        // 0x47298: its starting sound and then its loop, on one channel.
+        this.repairSounds.get(event.hangar)?.stop();
+        const sound = this.audio.sequence('SOUNDS.REPAIRING_START', 'SOUNDS.REPAIRING_LOOP');
+        if (sound) this.repairSounds.set(event.hangar, sound);
         break;
+      }
       case 'leftAngry':
         this.planeSound(event.plane, 'Out');
         break;
@@ -1102,6 +1107,12 @@ export class LevelScene {
       const plane = hangar.plane;
       panel.visible = hangar.use === 'working' && plane !== null;
       if (hangar.use !== 'working') this.sparkWaits.delete(hangar);
+      // 0x475c6: with less than a second of the work left the sound fades over a second.
+      const sound = this.repairSounds.get(hangar);
+      if (sound && (hangar.use !== 'working' || !plane || plane.descriptor.times.servicing - hangar.progress < 1)) {
+        sound.stop(1);
+        this.repairSounds.delete(hangar);
+      }
       if (hangar.use === 'working' && plane) {
         // 0x4747e: sparks fly off the plane while it is worked on, the first after 0.3 of the
         // hangar's time (0x47250, set as the work begins).

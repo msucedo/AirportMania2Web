@@ -115,6 +115,48 @@ export class AudioPlayer {
     };
   }
 
+  /**
+   * Plays `first` once and then `then` over and over, until stopped, fading over `fade` seconds
+   * (the engine's sound channel given two sounds, 0x8c2cc). Returns null when sound is off.
+   */
+  sequence(first: string, then: string): { stop(fade?: number): void } | null {
+    const { context, effects } = this;
+    if (!context || !effects || this.muted) return null;
+    const gain = context.createGain();
+    gain.connect(effects);
+    const sources: AudioBufferSourceNode[] = [];
+    let stopped = false;
+    void Promise.all([this.buffer(first), this.buffer(then)]).then(([start, loop]) => {
+      if (stopped) return;
+      const at = context.currentTime;
+      const play = (buffer: AudioBuffer | null, when: number, repeat: boolean): void => {
+        if (!buffer) return;
+        const source = context.createBufferSource();
+        source.buffer = buffer;
+        source.loop = repeat;
+        source.connect(gain);
+        source.start(when);
+        sources.push(source);
+      };
+      play(start, at, false);
+      play(loop, at + (start?.duration ?? 0), true);
+    });
+    return {
+      stop: (fade = 0) => {
+        if (stopped) return;
+        stopped = true;
+        gain.gain.linearRampToValueAtTime(0, context.currentTime + fade);
+        for (const source of sources) {
+          try {
+            source.stop(context.currentTime + fade);
+          } catch {
+            // Never started.
+          }
+        }
+      },
+    };
+  }
+
   /** Plays `intro` once (if given and different from the loop) and then loops `loop`. */
   playMusic(loop: string, intro?: string): void {
     const start = (): void => {

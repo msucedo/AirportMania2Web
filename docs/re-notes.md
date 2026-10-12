@@ -978,8 +978,11 @@ names. From it:
   level reached, and it waits 0.4 s of its own so the sound is heard before the page changes.
 - The loading screen plays `SOUNDS.CLICKING_SEATBUCKLE` as it goes to its buckled state
   (`0x55c82`). Built.
-- `SOUNDS.REPAIRING_LOOP` is loaded by the hangar (`0x46ac8`, kept at `+0x6c`) and never
-  played: nothing reads that field.
+- The hangar's sound (`+0x70`, a channel): as the work begins (`0x47298`) it is given
+  `SOUNDS.REPAIRING_START` and then `SOUNDS.REPAIRING_LOOP`, repeating (`0x8c2cc` twice); with
+  less than a second of the plane's `ServicingTime` left (`0x475c6`) it is faded over a second
+  (`0x8c14c`) and let go. Built. (An earlier reading here had the loop never played: its field
+  is read two at a time, at `0x472a2`.)
 
 ## Menu dialog (`0x66bbc`) and finish dialog (`0x376c4`)
 
