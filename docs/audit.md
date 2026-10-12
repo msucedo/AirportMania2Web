@@ -107,11 +107,26 @@ balloons; the runway's use and combos; the gas station's arrival and rules. The 
 (`0xcc000`–`0xe4000`) are cited only by where they start, but every one was run in the
 emulator for its builders' calls (`tools/re/stage_layout.py`), which is a reading of all of it.
 
-Not read line by line, and so still resting on the notes' sections for them: the hangar's
-building and draw (`0x46e44`–`0x47234`, `0x47710`–`0x4785c`), the stop spots' constructor and
-rules (`0x7921e`–`0x79a80`), the painting spot (`0x680b4`–`0x690e0`), the wash's own code
-(`0x84a8c`–`0x85a4c`), the gate's constructor and arrival (`0x42afc`–`0x4340a`), and the
-plane's landing and take-off (`0x7340`–`0x7d60`, `0x8108`–`0x8200`).
+The six stretches left over, read afterwards. Found and built:
+
+- the hangar (`0x46e44`, `0x476ca`): its panel comes and goes in a third of a second; the
+  plane shrinks to 0.7 of its size over the last 20 px going in and stands at 0.9 inside
+  (`0x74fe`); its nodes and links are as the port had them, which the notes had as assumed;
+- the stop spots' constructor (`0x79194`): a VIP spot has a rope (`STOPSPOT_VIP_FRONT`) the
+  port did not draw; the island's spots are sorted with the planes, their front over them;
+- the gate's draw (`0x436e4`, the part the notes had as not read; run in the emulator): the
+  letter is drawn on the node where the plane stands, not at the building;
+- every place's scale (slot 16): a place under the pointer, with a plane picked, swells.
+
+Read and found to match: the stop spot's and the gate's rules for joining an itinerary
+(`0x7983c`, `0x43e04`), the gate's arrival (`0x43238`–`0x43510`), the plane's constructor
+(`0x5684`: where it starts, its energy and height), its landing and take-off against the
+notes' sections (`0x7340`–`0x8200`).
+
+Still resting on the notes rather than on a fresh reading: the painting spot's chooser and
+sign (`0x680b4`–`0x68bf4`) and the wash's start and draw (`0x84e00`–`0x8585c`), both built
+from emulator runs in earlier passes; and which parts of each place's draw other than the
+gate's are left out of its swell.
 
 ## Pending: behaviour the port lacks
 
