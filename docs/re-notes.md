@@ -1591,7 +1591,9 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
 - Anti-fog machine draw (`0x19c40`): at the runway's position + (170 − 35·t, −30), so it sweeps
   along the runway; `ANTI_FOG.BASE`, then `ANTI_FOG.PROPELLER` turning three times a second and
   squeezed to 0.8 across, then `ANTI_FOG.NOSE`. Its fan is `SOUNDS.ANTI_FOG_SYSTEM_FAN`.
-- Web version: the machine's wobble as it appears is left out.
+  Its value (`+0x2c`) runs to 1 at 2 a second and back as it goes (`0x19bec`, `0x19c14`); under
+  1 the base and the nose are scaled (`1 + sin 2πv·(1 − v)·v`, `1 + sin 3πv·(1 − v)·v`) and
+  drawn at opacity `2v`, the propeller as it is (run in the emulator at 0.3). Built.
 
 ## Reading a stage script by running it
 

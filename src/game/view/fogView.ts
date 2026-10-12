@@ -18,10 +18,17 @@ export const puffLean = (index: number, age: number): number => 0.1 * Math.sin(0
 /** Where the machine is from the runway's centre after working `time` seconds: it sweeps along it. */
 export const machineOffset = (time: number): { x: number; y: number } => ({ x: 170 - 35 * time, y: -30 });
 
+/** The machine's base and nose with its value at `v`, under 1 (0x19c70): wider and taller by a wave that dies away. */
+export function machineWobble(v: number): { x: number; y: number } {
+  if (v >= 1) return { x: 1, y: 1 };
+  return { x: 1 + Math.sin(2 * Math.PI * v) * (1 - v) * v, y: 1 + Math.sin(3 * Math.PI * v) * (1 - v) * v };
+}
+
 export class FogView extends Container {
   private readonly puffs: Sprite[];
   private readonly machine = new Container();
   private readonly propeller: Sprite;
+  private readonly body: Sprite[];
   private machineFade = 0;
 
   constructor(
@@ -45,7 +52,8 @@ export class FogView extends Container {
     });
     this.propeller = textures.sprite('ANTI_FOG.PROPELLER');
     this.propeller.scale.set(0.8, 1);
-    this.machine.addChild(textures.sprite('ANTI_FOG.BASE'), this.propeller, textures.sprite('ANTI_FOG.NOSE'));
+    this.body = [textures.sprite('ANTI_FOG.BASE'), textures.sprite('ANTI_FOG.NOSE')];
+    this.machine.addChild(this.body[0]!, this.propeller, this.body[1]!);
     this.addChild(this.machine);
     this.visible = false;
   }
@@ -68,7 +76,14 @@ export class FogView extends Container {
     if (fog.machine === null) return;
     const at = machineOffset(fog.machine);
     this.machine.position.set(at.x, at.y);
-    this.machine.alpha = Math.min(1, 2 * this.machineFade);
+    // 0x19c5e–0x19cf6 (run in the emulator): while it comes or goes its base and nose wobble and
+    // clear by twice its value; the propeller is drawn as it is.
+    const v = this.machineFade;
+    const pose = machineWobble(v);
+    for (const part of this.body) {
+      part.scale.set(pose.x, pose.y);
+      part.alpha = Math.min(1, 2 * v);
+    }
     // Three turns a second.
     this.propeller.angle = -360 * 3 * fog.machine;
   }

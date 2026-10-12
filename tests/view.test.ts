@@ -31,6 +31,7 @@ import { stageClearStar } from '../src/game/view/stageClear';
 import { burstPose } from '../src/game/view/bonusView';
 import { flagStep } from '../src/game/view/orderFlags';
 import { backdropPieces, widgetPose } from '../src/game/view/dialog';
+import { machineWobble } from '../src/game/view/fogView';
 import { awardTouch } from '../src/data/awards';
 import { coast, dragSpeed, markerImage, markerScale, ringTurn } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
@@ -1136,5 +1137,14 @@ describe('a dialog\'s widget coming in', () => {
     expect(widgetPose(0.25, true)).toEqual({ scale: expect.closeTo(1.225, 5), alpha: 0.5 });
     expect(widgetPose(0.25, false)).toEqual({ scale: 1, alpha: 0.25 });
     expect(widgetPose(1, true)).toEqual({ scale: 1, alpha: 1 });
+  });
+});
+
+describe('the anti-fog machine coming in', () => {
+  it('wobbles as the original draws it', () => {
+    const pose = machineWobble(0.3);
+    expect(pose.x).toBeCloseTo(1.19972, 4);
+    expect(pose.y).toBeCloseTo(1.06489, 4);
+    expect(machineWobble(1)).toEqual({ x: 1, y: 1 });
   });
 });
