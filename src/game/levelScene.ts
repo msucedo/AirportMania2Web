@@ -1163,6 +1163,7 @@ export class LevelScene {
         passenger: plane.passenger,
         dirty: !plane.washDone,
         dirtAlpha: dirtAlpha(washElapsed(this.sim.stopSpots.find((spot) => spot.plane === plane)?.wash?.left) ?? 0),
+        washing: plane.state === PlaneState.WASHING ? washElapsed(this.sim.stopSpots.find((spot) => spot.plane === plane)?.wash?.left) : null,
         pitch: plane.pitch,
         idle: plane.state === PlaneState.WAITING && plane.queue.length === 0,
         gearDown: this.gearDown(plane),

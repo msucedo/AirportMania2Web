@@ -1366,6 +1366,12 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
     (∓(90 − rand·50), −90 + rand·50), falling at 150. A splash (`0x85950`) moves and shows in
     its clock's last second: scale `1.3 − 0.6·c`, opacity `c·clamp(6·min(c, 1 − c))`, coloured
     (`1 − c + 0.608c`, `1 − c + 0.957c`, 1).
+- The plane during the wash (state 9 of its update, `0x7d92`, with t its seconds there): from
+  1 to 5 s its blink timer (`+0x294`) is held at 0, so its eyes are shut; from 5 to 7 s it is
+  `floor(4u) − 2·floor(2u)` with `u = t − 5`, shut and open by quarters of a second; from 7 to
+  7.5 s it is 0 again and a shake (`+0x22c`) is `2(8 − t)`; after that the shake is 0. The
+  shake leans the plane about the point 25 px above its place (`0x84ee`): with
+  `p = 2·min(4, 12v)·v + 0.7071`, the lean is `0.15·cos(π·floor(p))·(2·frac(p)² − 1)`.
 - The dirt during the wash (`0x923a`): opacity `clamp((8 − t)/4 − 1)` with t the seconds in
   state 9; it stops being drawn once the plane is clean, two seconds in.
 - Web version: the pictures are placed by the point their resource names.

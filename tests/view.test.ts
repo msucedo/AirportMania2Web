@@ -20,7 +20,7 @@ import { parcelMarks, parcelPose } from '../src/game/view/luggageView';
 import { dirtAlpha, rollerPose, splashPose, starPose, washElapsed, waterPose } from '../src/game/view/washView';
 import { describe, expect, it } from 'vitest';
 import { paletteColor } from '../src/game/palette';
-import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace, nagFlash } from '../src/game/planeView';
+import { energyBar, moodFor, nagFlash, orientationFor, speechPlace, thoughtPlace, washLids, washShake } from '../src/game/planeView';
 import { listLimit, listRest, listRowAt, listRowY, listSettle } from '../src/game/view/improvementsDialog';
 import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoading';
 import { gateLabelStrength } from '../src/game/view/gateView';
@@ -1023,5 +1023,27 @@ describe('the tick or cross a touch leaves', () => {
     expect(yesNoPose(0.1).scaleY).toBeCloseTo(0.952169, 4);
     expect(yesNoPose(0.25).scaleX).toBeCloseTo(0.92);
     expect(yesNoPose(0.75)).toMatchObject({ scaleX: 0.8, alpha: 0.5 });
+  });
+});
+
+describe('a plane under the wash', () => {
+  it('keeps its eyes shut, then flutters them', () => {
+    expect(washLids(null)).toBeNull();
+    expect(washLids(0.5)).toBeNull();
+    expect(washLids(3)).toBe(0);
+    expect(washLids(5.1)).toBe(0);
+    expect(washLids(5.3)).toBe(1);
+    expect(washLids(5.6)).toBe(0);
+    expect(washLids(7.2)).toBe(0);
+    expect(washLids(7.6)).toBeNull();
+  });
+
+  it('shakes itself for half a second from the seventh', () => {
+    expect(washShake(6.9)).toBe(0);
+    expect(washShake(7.5)).toBe(0);
+    expect(Math.abs(washShake(7.1))).toBeLessThanOrEqual(0.15);
+    const leans = Array.from({ length: 50 }, (_, i) => washShake(7 + i / 100));
+    expect(Math.max(...leans)).toBeGreaterThan(0.1);
+    expect(Math.min(...leans)).toBeLessThan(-0.1);
   });
 });

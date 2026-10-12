@@ -36,6 +36,31 @@ export function thoughtPlace(corner: BalloonCorner): { x: number; y: number; fli
   return { x: left ? -50 : 50, y: below ? 15 : -80, flipX: left, flipY: below };
 }
 
+/**
+ * What a plane's blink timer is held at `seconds` into its wash (0x7d92), or null when it is left
+ * alone: shut (0) from the first second to the fifth, then shut and open by quarters of a second
+ * until the seventh, and shut for half a second more. The eyes are shut at 0.1 or less.
+ */
+export function washLids(seconds: number | null): number | null {
+  if (seconds === null || seconds <= 1 || seconds >= 7.5) return null;
+  if (seconds < 5 || seconds >= 7) return 0;
+  const u = seconds - 5;
+  return Math.floor(4 * u) - 2 * Math.floor(2 * u);
+}
+
+/**
+ * How far a plane leans `seconds` into its wash (0x7e34, 0x84ee): from the seventh second it
+ * shakes itself for half a second, a lean of up to 0.15 either way that swings eight times.
+ */
+export function washShake(seconds: number | null): number {
+  if (seconds === null || seconds < 7 || seconds >= 7.5) return 0;
+  const strength = 2 * (8 - seconds);
+  const phase = 2 * Math.min(4, 12 * strength) * strength + Math.SQRT1_2;
+  const whole = Math.floor(phase);
+  const part = phase - whole;
+  return 0.15 * Math.cos(whole * Math.PI) * (2 * part * part - 1);
+}
+
 /** Mouth animations (`0x13d798`, `0x13d848`, `0x13d7f0`): frames per second and the mouth shown on each frame. */
 const MOUTH_SEQUENCES = {
   talk: { fps: 16, frames: [9, 10, 11, 7, 8, 7, 10, 9, 10, 11, 7, 8, 7, 10] },
@@ -176,6 +201,8 @@ export interface PlaneLook {
   dirty?: boolean;
   /** How solid the dirt is: it fades while the plane is washed. */
   dirtAlpha?: number;
+  /** Seconds into its wash, while it is being washed. */
+  washing?: number | null;
   /** Nose-up angle of the body in degrees. */
   pitch?: number;
   /** Waiting with nothing to do: the eyes turn aside. */
@@ -446,6 +473,9 @@ export class PlaneView extends Container {
 
     this.blink -= dt;
     if (this.blink < 0) this.blink = 5 + Math.random() * 5;
+    // 0x7d92: under the wash its eyes are held shut, and then flutter.
+    const lids = washLids(look.washing ?? null);
+    if (lids !== null) this.blink = lids;
     const eyesShut = this.blink <= 0.1;
 
     this.lookTimer = Math.max(0, this.lookTimer - dt);
@@ -495,6 +525,10 @@ export class PlaneView extends Container {
       pose.root.visible = p === perspective;
       if (!pose.root.visible) return;
       pose.root.angle = look.pitch ?? 0;
+      // 0x84cc: it shakes itself, leaning about the point 25 px above its place.
+      const lean = washShake(look.washing ?? null);
+      pose.root.skew.x = Math.atan(lean);
+      pose.root.scale.y = Math.sqrt(1 + lean * lean);
       pose.remarks.visible = look.selected;
       for (const sprite of pose.remarkSprites) sprite.tint = remarkTint;
       for (const brow of pose.brows) {
