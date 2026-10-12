@@ -258,6 +258,8 @@ export class PlaneView extends Container {
   private gear: number;
   private gearFrame = 0;
   private selectedFor = 0;
+  /** The picked value (`plane+0x288`): it follows the plane's being picked at 5 a second. */
+  private picked = 0;
   private pointed = 0;
   private sequence: { fps: number; frames: readonly number[] } | null = null;
   private sequenceAt = 0;
@@ -526,6 +528,7 @@ export class PlaneView extends Container {
 
     // Selection highlight: the plane's colour pulsing towards white (0x8cc0).
     this.selectedFor = look.selected ? this.selectedFor + dt : 0;
+    this.picked = slide(this.picked, look.selected, 5, dt);
     const pulse = Math.max(0, Math.min(1, Math.sin(this.selectedFor * 12) + 0.5));
     const mix = (shift: number): number => {
       const c = (this.color.main >> shift) & 0xff;
@@ -545,7 +548,11 @@ export class PlaneView extends Container {
       pose.root.scale.y = Math.sqrt(1 + lean * lean);
       // 0x84ea–0x858e: the shake leans it about a point 25 px under its origin.
       pose.root.x = -25 * lean;
-      pose.remarks.visible = look.selected;
+      // 0x8c62–0x8d6e: the outline comes with the picked value (5 a second, 0x864c): as clear as
+      // it and, until it is whole, `2 − value` as large.
+      pose.remarks.visible = this.picked > 0;
+      pose.remarks.alpha = this.picked;
+      pose.remarks.scale.set(this.picked < 1 ? 2 - this.picked : 1);
       for (const sprite of pose.remarkSprites) sprite.tint = remarkTint;
       for (const brow of pose.brows) {
         brow.holder.rotation = (brow.side * this.browAngle * Math.PI) / 180;

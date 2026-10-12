@@ -249,12 +249,14 @@ export class NameDialog extends Container {
     const field = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.EDITBOX'), leftWidth: 18, rightWidth: 18, topHeight: 0, bottomHeight: 0 });
     field.setSize(170 + 36, 62);
     field.position.set(-85 - 18, -20 - 31);
-    // 0x2dc58: the text is centred in the field, the caret 3 px after it.
+    // 0x2dc58, 0x2dd70–0x2ddfc: the text is centred in the field; the caret is an underscore
+    // (0x5f) in light green (0.5, 1, 0.5), straight after the text and 3 px lower.
     this.shown = label('');
     this.shown.anchor.set(0.5);
     this.shown.position.set(0, -20);
-    this.caret = label('|');
+    this.caret = label('_');
     this.caret.anchor.set(0, 0.5);
+    this.caret.style.fill = 0x80ff80;
     centre.addChild(asked, field, this.shown, this.caret);
 
     const family = fontFamily(SCORE_FONT);
@@ -313,7 +315,7 @@ export class NameDialog extends Container {
     this.placeCaret();
   }
 
-  /** The caret stands 3 px after the character it follows (0x2dc58), which need not be the last. */
+  /** The caret stands straight after the character it follows, which need not be the last. */
   private placeCaret(): void {
     const whole = this.input.value;
     const at = this.input.selectionStart ?? whole.length;
@@ -324,7 +326,7 @@ export class NameDialog extends Container {
       before = at === 0 ? 0 : this.shown.width;
       this.shown.text = whole;
     }
-    this.caret.position.set(this.shown.x - width / 2 + before + (at === 0 ? 0 : 3), -20);
+    this.caret.position.set(this.shown.x - width / 2 + before, -20 + 3);
   }
 
   /** 0x80124: an empty name or one already in use is turned down with a note. */

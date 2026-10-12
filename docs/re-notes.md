@@ -160,7 +160,7 @@ outcome increments a level counter (unloading: `+0x148`/`+0x144`/`+0x140`; take-
 | `+0xb4` | GasStationPoints | `+0xd0` | LuggageLoadingTime |
 | `+0xb8` | LuggagePoints | `+0xd4` | FuelingTime |
 | `+0xbc` | WashingPoints | `+0xd8` | MaleEnergyFallTime |
-| `+0xc0` | RunwayPoints | `+0xdc` | FemaleEnergyFallTime (inferred, next slot) |
+| `+0xc0` | RunwayPoints | `+0xdc` | FemaleEnergyFallTime (`0xac2c`; the drain takes it when the plane's `+0x10` is set, `0x890c`) |
 
 ## Runway use completed (`0x6d584`) — confirmed
 
@@ -366,8 +366,9 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 - Colour names map to indices in the order of the strings at `0x16bfb0`: BLUE, ORANGE, GREEN,
   CYAN, PINK, YELLOW, VIOLET (1–7).
 - Two-colour draw (`0x84440`): the surface is drawn as one quad with per-vertex colours, main at
-  one corner, shade at the opposite one and their average at the other two. Which corner is which
-  is inferred from the rectangle fields (main top-left, shade bottom-right).
+  the top left corner (its third argument), shade at the bottom right (its fourth) and their
+  average at the other two (`0x84644`–`0x84684`: the four packed colours, for the corners
+  (x1, y2), (x2, y2), (x2, y1), (x1, y1)).
 - Sounds (confirmed ids): `SOUNDS.SELECT_PLANE`, `SOUNDS.PLACE_CLICK`, `SOUNDS.FORBIDDEN_CLICK`,
   `SOUNDS.QUEUE_CANCEL`, `SOUNDS.REROUTING` in the click handler; `SOUNDS.BONUS_X%1d` in the gate
   and runway; the plane's own sounds come from its descriptor's `Sounds` element. Which descriptor
@@ -476,7 +477,8 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
     (the last inferred from its helper); a new plane has 3. Stop spots, the painting stop spot
     and the wash and go get 0 in stages 1, 2, 4 and 8 and 1 in stages 3, 5, 6 and 7 (the last
     argument of `0x144e4` and `0x145a8`, the fourth of `0x14678`).
-- Web version: gear fold rate (4/s) and selection fade are assumed.
+- The outline of a picked plane (`0x8c62`–`0x8d6e`) is drawn while the picked value is above
+  zero, at that opacity and, under 1, scaled `2 − value`. Built; the gear folds at 2 a second.
 
 ## Special passengers and speech — confirmed
 
@@ -2217,7 +2219,7 @@ Rules:
 
 - The profile's factor at `+0x48` is the player's difficulty, now read and built (see "End of
   the level").
-- The loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
+- The two runway ring loops run seven times each (`0x6d16a`: under 7; `0x6d192`: up to 6).
 - Plane state 10 is taking luggage on (`0x6820`). The service tabs act as the finger lifts
   (`0x10ee8`), and so do the port's now. The stage options `0x6e`–`0x70` are the three
   runway machines.
@@ -2361,7 +2363,8 @@ verifies that each can be passed and that funds, stars and the opening of stage 
 - Web version: users and each one's progress are kept in the browser (`am2web.users.v1`,
   `am2web.progress.v2.user<id>`); the first user takes over the progress made before there
   were users, and without a user the game plays on that. The name is asked when the menu
-  opens with no user. Not read, and so ours: how a row's text is aligned, the caret's shape and colour, the buttons' height (30), and that the
+  opens with no user. The caret is an underscore in (0.5, 1, 0.5), straight after the text and 3 px lower
+  (`0x2dd70`–`0x2ddfc`). Not read, and so ours: how a row's text is aligned, the buttons' height (30), and that the
   note's and the question's texts are centred in their boxes (their text call's second flag
   is 0 where the hint's is 1). The browser's keyboard stands in for the device's.
 
