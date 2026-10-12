@@ -57,7 +57,7 @@ import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
 import { PlaneState, RULES, UNSELECTABLE_STATES } from './sim/rules';
-import { Simulation, type Gate, type Hangar, type Place, type Plane, type SimEvent, type StopSpot, secondTouch } from './sim/simulation';
+import { Simulation, type GasStation, type Gate, type Hangar, type Place, type Plane, type SimEvent, type StopSpot, secondTouch } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
 const tintOf = (color: PlaneColor | null): number => paletteColor(color).main;
@@ -136,6 +136,7 @@ export class LevelScene {
   private blackSmoke: BlackSmoke | null = null;
   /** Seconds of each hangar's work to its next spark (`hangar+0x90`). */
   private readonly sparkWaits = new Map<Hangar, number>();
+  private readonly fuelSounds = new Map<GasStation, { stop(fade?: number): void }>();
   private readonly repairSounds = new Map<Hangar, { stop(fade?: number): void }>();
   private readonly hud: Hud;
   private accumulator = 0;
@@ -942,11 +943,14 @@ export class LevelScene {
       case 'takeOff':
         this.planeSound(event.plane, 'Launching');
         break;
-      case 'fuelingStarted':
-        this.audio.play('SOUNDS.FUELING');
+      case 'fuelingStarted': {
+        // 0x40ce4: on a channel of the station's, so that it can be turned down.
+        const sound = this.audio.loop('SOUNDS.FUELING', 1, false);
+        if (sound) this.fuelSounds.set(event.station, sound);
         // 0x6764: it may whistle three to eight seconds into the fill-up.
         this.whistles.set(event.plane.id, 3 + Math.random() * 5);
         break;
+      }
       case 'tierReached':
         // 0x11f74: the tier's name, its sound, and stars and sparks off the bar.
         this.audio.play(`SOUNDS.GOAL_${event.tier}_ACHIEVED`);
@@ -1105,6 +1109,13 @@ export class LevelScene {
     this.moviesTab?.update(elapsed);
     for (const line of this.buoys) line.update(elapsed);
     for (const view of this.stationViews) view.update();
+    // 0x40e32: over the last second of the plane's `FuelingTime` the sound goes down with what is left.
+    for (const [station, sound] of this.fuelSounds) {
+      const left = station.plane ? station.plane.descriptor.times.fueling - station.progress : 0;
+      if (left >= 1) continue;
+      sound.stop(Math.max(0, left) / station.descriptor.speed);
+      this.fuelSounds.delete(station);
+    }
     for (const view of this.runwayViews) view.update(elapsed);
     for (const { hangar, panel, ticks } of this.hangarPanels) {
       const plane = hangar.plane;

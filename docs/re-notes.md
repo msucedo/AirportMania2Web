@@ -231,6 +231,13 @@ Its end, after the state's own code (`0x8426`):
 - Its depth (`+4`) is its ground line less 10 (`0x8686`).
 - Web version: the swell under the pointer was missing and is built.
 
+Its states' code was read through against the sections below and matches them: the holding
+pattern (`0x6f78`–`0x7340`: lanes at y 680 and 705, turns at x 380 and 100 of radius 80/1.5,
+the clock at 0.5 a second), taxiing node to node (`0x74bc`–`0x78fa`: 200 px/s², 200 px/s,
+braking within v²/2a), the mood by energy (`0x869a`: under 0.3, 0.5 and 0.7), the thought and
+speech balloons (`0x86d6`–`0x8764`, at 4 a second by `0xa0bc`), and off the screen by 100 px a
+leaving plane is taken away (`0x6f22`, `0xf6f8`).
+
 ## Giving up, taxiing and take-off — confirmed
 
 - `Plane::giveUp` (`0x6a24`): state 1, lost-plane counter (`level+0x138`) + 1, and the score is
@@ -1007,6 +1014,11 @@ names. From it:
   level reached, and it waits 0.4 s of its own so the sound is heard before the page changes.
 - The loading screen plays `SOUNDS.CLICKING_SEATBUCKLE` as it goes to its buckled state
   (`0x55c82`). Built.
+- The gas station's sound (`+0x70`, a channel given `SOUNDS.FUELING` once as the fill-up starts,
+  `0x40ce4`): in its update, with less than one of the plane's `FuelingTime` left, the
+  channel's level is set to what is left (`0x40e32` → `0x8be98`), so it goes down to nothing
+  over that last second. Built. (`0x8be98` sets a value of a channel: its level when given the
+  channel, its place across the screen when given the channel's `+0x18`.)
 - The hangar's sound (`+0x70`, a channel): as the work begins (`0x47298`) it is given
   `SOUNDS.REPAIRING_START` and then `SOUNDS.REPAIRING_LOOP`, repeating (`0x8c2cc` twice); with
   less than a second of the plane's `ServicingTime` left (`0x475c6`) it is faded over a second
