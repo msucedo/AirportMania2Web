@@ -1,3 +1,4 @@
+import { keepForOffline } from './engine/offline';
 import { usePalette } from './game/palette';
 import { SceneLoading } from './game/sceneLoading';
 import { dialogSound } from './game/view/dialog';
@@ -79,6 +80,7 @@ function goTo(screen: 'awards' | 'ending'): void {
 
 async function main(): Promise<void> {
   const host = document.getElementById('game')!;
+  keepForOffline();
   const params = new URLSearchParams(location.search);
   const data = await loadGameData();
   const app = await createScreen(host);

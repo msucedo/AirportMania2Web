@@ -6,11 +6,14 @@
   "scripts": {
     "import-assets": "node tools/import-assets.mjs",
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node tools/build-precache.mjs",
+    "serve:https": "node tools/serve-https.mjs",
+    "phone": "npm run build && node tools/serve-https.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@wasm-audio-decoders/ogg-vorbis": "0.1.20",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {

@@ -19,6 +19,9 @@ export class AudioPlayer {
   private musicToken = 0;
   private pendingMusic: (() => void) | null = null;
   muted = false;
+  /** Whether the samples are decoded by our own Vorbis decoder (`?vorbis=own` asks for it). */
+  private ownDecoder = new URLSearchParams(location.search).get('vorbis') === 'own';
+  private decoding: Promise<unknown> = Promise.resolve();
   private volumes = { sound: 1, music: 1 };
 
   constructor(private readonly resources: Resources) {}
@@ -238,11 +241,40 @@ export class AudioPlayer {
     try {
       const response = await fetch(this.resources.url(this.resources.sample(id).file));
       if (!response.ok) return null;
-      return await context.decodeAudioData(await response.arrayBuffer());
+      const bytes = await response.arrayBuffer();
+      if (!this.ownDecoder) {
+        try {
+          // The browser's decoder keeps the bytes it is given, so it gets a copy.
+          return await context.decodeAudioData(bytes.slice(0));
+        } catch {
+          // Safari before 18.4 does not decode Ogg Vorbis: from here on the samples are decoded by ours.
+          this.ownDecoder = true;
+        }
+      }
+      return await this.decodeVorbis(context, new Uint8Array(bytes));
     } catch (error) {
-      // Some browsers cannot decode Ogg Vorbis; the game stays playable without that sample.
+      // The game stays playable without that sample.
       console.warn(`Could not load sample ${id}`, error);
       return null;
     }
+  }
+
+  /** Decodes an Ogg Vorbis file without the browser's help, one file at a time. */
+  private decodeVorbis(context: AudioContext, bytes: Uint8Array): Promise<AudioBuffer> {
+    const next = this.decoding.then(async () => {
+      const { OggVorbisDecoder } = await import('@wasm-audio-decoders/ogg-vorbis');
+      const decoder = new OggVorbisDecoder();
+      try {
+        await decoder.ready;
+        const { channelData, samplesDecoded, sampleRate } = await decoder.decodeFile(bytes);
+        const buffer = context.createBuffer(Math.max(1, channelData.length), Math.max(1, samplesDecoded), sampleRate);
+        channelData.forEach((samples, channel) => buffer.getChannelData(channel).set(samples.subarray(0, samplesDecoded)));
+        return buffer;
+      } finally {
+        decoder.free();
+      }
+    });
+    this.decoding = next.catch(() => undefined);
+    return next;
   }
 }

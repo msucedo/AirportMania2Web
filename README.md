@@ -64,6 +64,41 @@ The enlarged art is an interpretation by the model, not the original drawing. Th
 Pillow and the Real-ESRGAN command-line build in `.tools/realesrgan/`; restart the dev server
 after running it.
 
+## On an iPhone, offline too
+
+The built game can be kept on a phone's home screen and played there without a connection. It
+needs no Apple certificate: it is a web page that Safari keeps. Safari only keeps a page for
+offline use when it comes over HTTPS, so this computer serves it with a certificate of its own.
+
+```sh
+brew install mkcert              # once
+python3 tools/make-icons.py      # once: the home-screen icon, from the game's own pictures
+npm run phone                    # builds, then serves on the home network and prints the addresses
+```
+
+Then, on the iPhone, on the same wifi:
+
+1. Once only, trust this computer's certificates: open `http://<address>:8080/rootCA.pem` in
+   Safari and allow the download; Settings → General → VPN & Device Management → install the
+   profile; Settings → General → About → Certificate Trust Settings → switch it on.
+2. Open `https://<address>:8443/` in Safari and wait for "Listo para jugar sin conexión" under
+   the game (about 35 MB are kept).
+3. Share → Add to Home Screen. It then opens from its icon, full screen, without this computer.
+
+Good to know:
+
+- The game on the home screen keeps its own progress, apart from Safari's.
+- After changing the game, `npm run phone` again and open it once on the wifi: the new build
+  replaces the old one, and is the one played from the next opening on.
+- If the computer's address changes, the certificate is made again by itself; the phone goes on
+  trusting it.
+- The original sounds are Ogg Vorbis, which Safari decodes only from iOS 18.4; on older ones
+  they are decoded by a decoder of ours (`?vorbis=own` tries it anywhere).
+- `.certs/` and `public/icons/` are not committed. Whoever has the key in mkcert's folder
+  (`mkcert -CAROOT`) could pose as any site to a phone that trusts it: keep it on this computer.
+- Ours, outside the game: the "turn the phone" notice, the line that says how the keeping is
+  going, and the margins that keep the game clear of the notch.
+
 ## Layout
 
 - `tools/import-assets.mjs` — copies assets and converts the data XML to JSON.
@@ -74,6 +109,7 @@ after running it.
   `gaps.py`, `audit.py`, `unused.py`), `stage_layout.py`, which runs a stage script in an
   emulator and lists what it builds, and `draw_trace.py`, which runs a draw routine and prints
   what it draws (both need `python3 -m venv .tools/venv && .tools/venv/bin/pip install unicorn`).
+- `public/sw.js`, `tools/build-precache.mjs`, `tools/serve-https.mjs` — offline keeping and the HTTPS server for a phone.
 - `tools/dev/play.mjs` — plays the first plane in a headless browser and takes screenshots.
 - `tools/dev/shoot-level.mjs` — drives a plane that needs fuel through a level and takes screenshots.
 - `tools/dev/play-all.mjs` — plays every level of the ten stages in order, buying improvements as the funds allow, and checks that each can be passed and that progress chains.
