@@ -226,8 +226,16 @@ Its end, after the state's own code (`0x8426`):
 - The body's transform (`0x848e`): scaled `1 + 0.1·p`, `p` (`+0x280`) following at 7 a second
   (`0xa014`) the mark the click handler puts on the plane under the pointer when it can be
   picked (`+0x27c`, `0x110c8`, cleared for all each frame at `0x10e2e`); scaled by the lane's
-  size (`+0x290`); the wash's shake; turned by the pitch (`+0x2fc`); moved `DespY − 28` down;
-  mirrored when it does not face right (`+0x224`); and put at its place.
+  size (`+0x290`); moved 25 up, leant by the wash's shake (`0xb4240`) and moved 25 down again
+  (`0x84ea`–`0x858e`: the shake is about a point 25 px under the body's origin, and the two
+  moves cancel when there is none); turned by the pitch (`+0x2fc`, `0x85ac`) about the body's
+  own origin; moved `DespY − 28` (`0x85b0`), which is up: the body's origin stands 23 to 41 px
+  above the plane's place; mirrored when it does not face right (`+0x224`); and put at its
+  place. So the body is over its shadow and its node, under its energy bar (60 above), and
+  inside the ellipse a touch picks it by (30 above, `0x10f14`).
+- The web version had read the two 25 px moves as being about the pitch and drew the body at
+  `DespY`, 28 px lower than this; picking a plane by the original's ellipse then took only the
+  top of what was drawn. Corrected.
 - Moving faster than 10 px a second it takes its heading from its speed (`0x9f90`, `0x5c8c`).
 - The picked value (`+0x284` flag, `+0x288`) follows at 5 a second and its clock (`+0x28c`)
   runs while picked; it is let go when the airport's picked plane is another (`0x8670`).
@@ -1319,9 +1327,8 @@ State 13, with a phase in `plane+0x330` and a clock in `+0x314` (`0x7eb2`). Posi
   TouchingLand, `+0x88` Loading, `+0x8c` Unloading, `+0x90` Whistle1, `+0x94` Whistle2.
 - Pitch (`+0x2fc`, degrees, nose up): −5 at the start of phase 2, rising 5 a second through
   the glide; in phase 4 it falls 40 a second to zero (`0x826a`). After lift-off (state 12,
-  `0x7d34`) it is `10·t²`. The plane's transform (`0x8584`) applies it as a rotation between a
-  translation of (0, 25) and one of (0, `OffsetY` − 28), before the mirroring for planes facing
-  right, so the body turns about a point 25 px above its origin.
+  `0x7d34`) it is `10·t²`. The plane's transform applies it as a rotation about the body's own
+  origin (`0x85ac`), before the body is lifted and mirrored (see the body's transform).
 - The dust is a smoke tail (class `SmokeTail`, made by `0x757c0` and kept at `plane+0x278`;
   `0x757b8` ends it). The plane's update calls `0x6870` unless `app[0xfc]+0x780` is set: in
   phase 3 (`0x8234`), in phase 4 while its clock is under 1 s (`0x82da`), and on the take-off

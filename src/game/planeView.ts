@@ -127,6 +127,9 @@ export function energyBar(energy: number): { solid: number; flicker: number | nu
 }
 
 /** Mood from energy (0x869a): which mouth to show and how far the eyebrows tilt, in degrees. */
+/** Where the body's origin stands from the plane's place (0x85b0): `DespY − 28`, so above it. */
+export const bodyLift = (offsetY: number): number => offsetY - 28;
+
 /** The mood itself, 0 content to 3 furious (`plane+0x25c`). */
 export const moodOf = (energy: number): number => (energy < 0.3 ? 3 : energy < 0.5 ? 2 : energy < 0.7 ? 1 : 0);
 
@@ -280,9 +283,9 @@ export class PlaneView extends Container {
 
     for (const p of PERSPECTIVES) {
       const root = new Container();
-      // The body turns about a point 25 px above its origin when the plane pitches (0x8584).
-      root.pivot.set(0, -25);
-      root.y = plane.body.offsetY - 25;
+      // 0x85ac–0x85cc: the body turns with the pitch about its own origin and is then lifted
+      // `28 − DespY` above the plane's place, where its shadow and the touch's ellipse are.
+      root.y = bodyLift(plane.body.offsetY);
       const pose: Pose = { root, remarks: new Container(), remarkSprites: [], brows: [], propellers: [], gear: null, gearRemark: null, gearFrames: [], mouth: null, opened: null, closed: null, eyeX: 0, color: null, oldColor: null, colorId: `${plane.body.color}.${p}` };
       const remark = (sprite: Sprite): Sprite => {
         pose.remarkSprites.push(sprite);
@@ -536,10 +539,12 @@ export class PlaneView extends Container {
       pose.root.visible = p === perspective;
       if (!pose.root.visible) return;
       pose.root.angle = look.pitch ?? 0;
-      // 0x84cc: it shakes itself, leaning about the point 25 px above its place.
+      // 0x84cc: under the wash it shakes itself.
       const lean = washShake(look.washing ?? null);
       pose.root.skew.x = Math.atan(lean);
       pose.root.scale.y = Math.sqrt(1 + lean * lean);
+      // 0x84ea–0x858e: the shake leans it about a point 25 px under its origin.
+      pose.root.x = -25 * lean;
       pose.remarks.visible = look.selected;
       for (const sprite of pose.remarkSprites) sprite.tint = remarkTint;
       for (const brow of pose.brows) {

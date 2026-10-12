@@ -32,6 +32,7 @@ import { burstPose } from '../src/game/view/bonusView';
 import { flagStep } from '../src/game/view/orderFlags';
 import { backdropPieces, widgetPose } from '../src/game/view/dialog';
 import { machineWobble } from '../src/game/view/fogView';
+import { bodyLift } from '../src/game/planeView';
 import { awardTouch } from '../src/data/awards';
 import { coast, dragSpeed, markerImage, markerScale, ringTurn } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
@@ -1146,5 +1147,14 @@ describe('the anti-fog machine coming in', () => {
     expect(pose.x).toBeCloseTo(1.19972, 4);
     expect(pose.y).toBeCloseTo(1.06489, 4);
     expect(machineWobble(1)).toEqual({ x: 1, y: 1 });
+  });
+});
+
+describe('where a plane\'s body stands', () => {
+  it('is over its place, under the touch\'s ellipse', () => {
+    expect(bodyLift(5)).toBe(-23);
+    // The ellipse is centred 30 px above the place (0x10f14) and reaches 29 up and down; a body
+    // some 58 px tall about its origin lies within it for every `DespY` of the table (−13 to 5).
+    for (const offset of [-13, -10, -6, -3, 0, 1, 5]) expect(Math.abs(bodyLift(offset) + 30)).toBeLessThanOrEqual(11);
   });
 });
