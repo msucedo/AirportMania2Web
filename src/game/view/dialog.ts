@@ -230,18 +230,45 @@ export function dialogButton(
   // 0x2ccea: the button's picture, 46 px square, is drawn at its own height with its two halves
   // as ends and stretched between them to the width and 28 px more, centred on the button.
   const across = width + 28;
-  const face = new NineSliceSprite({ texture: textures.texture('GUI.DIALOGS.BUTTON'), leftWidth: 23, rightWidth: 23, topHeight: 0, bottomHeight: 0 });
-  face.setSize(across, 46);
-  face.position.set(x - across / 2, y - 23);
-  // The touch area is its own node: the stretched sprite does not take presses reliably.
+  const faces = ['GUI.DIALOGS.BUTTON', 'GUI.DIALOGS.BUTTON_OVER'].map((id) => {
+    const face = new NineSliceSprite({ texture: textures.texture(id), leftWidth: 23, rightWidth: 23, topHeight: 0, bottomHeight: 0 });
+    face.setSize(across, 46);
+    face.position.set(x - across / 2, y - 23);
+    return face;
+  });
+  // 0x2cb50: with a finger down within 10 px of its sides and 30 above or below, it is pressed
+  // (its other face comes over at 8 a second, 0x9dd4, 0x2ca84); it acts as the finger lifts there.
   const zone = new Container();
-  zone.hitArea = new Rectangle(x - across / 2, y - 23, across, 46);
+  zone.hitArea = new Rectangle(x - (width + 20) / 2, y - 30, width + 20, 60);
   zone.eventMode = 'static';
   zone.cursor = 'pointer';
-  zone.on('pointerover', () => (face.texture = textures.texture('GUI.DIALOGS.BUTTON_OVER')));
-  zone.on('pointerout', () => (face.texture = textures.texture('GUI.DIALOGS.BUTTON')));
+  let pressed = false;
+  let over = 0;
+  let last = performance.now();
+  const show = (): void => {
+    faces[0]!.alpha = 1 - over;
+    faces[1]!.alpha = over;
+  };
+  show();
+  zone.onRender = () => {
+    const now = performance.now();
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    over = Math.max(0, Math.min(1, over + (pressed ? 8 : -8) * dt));
+    show();
+  };
   zone.on('pointerdown', (event) => {
     event.stopPropagation();
+    pressed = true;
+  });
+  // The original counts any finger down there; here the press has to start on the button, so
+  // that the touch that opened a dialog does not also press what appears under it.
+  zone.on('pointerout', () => (pressed = false));
+  zone.on('pointerupoutside', () => (pressed = false));
+  zone.on('pointerup', (event) => {
+    event.stopPropagation();
+    if (!pressed) return;
+    pressed = false;
     if (sound) audio.play(sound);
     onPress();
   });
@@ -251,7 +278,7 @@ export function dialogButton(
   text.anchor.set(0.5);
   text.position.set(x, y);
   if (text.width > width - 16) text.scale.set((width - 16) / text.width);
-  panel.addChild(face, text, zone);
+  panel.addChild(...faces, text, zone);
 }
 
 /**

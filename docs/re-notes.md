@@ -2958,5 +2958,11 @@ and clock `+0x50`, its transform kept at `+0x18` and handed to every widget.
   beyond the dialog's size on every side, with 20 px ends of its 62 px picture (`0xe4704`).
 - A button (`0x2cc58`): `GUI.DIALOGS.BUTTON` (46 px square), drawn at its own height with its
   two halves as ends (`0xe48d4` with 23) and stretched to the button's width plus 28, centred
-  on it; `BUTTON_OVER` over it while pressed; its label in `FONTS.MAIN`. The web version's
+  on it; `BUTTON_OVER` over it while pressed; its label in `FONTS.MAIN`. Update (`0x2cb50`),
+  only while its dialog is open and it is not switched off (`+0x270`): a finger down within
+  `(width + 20)/2` across and 30 up or down sets its pressed flag, whose value follows at 8 a
+  second (`0x9dd4`); on the frame the finger lifts there it acts (slot 6). Draw (`0x2ca6c`):
+  the plain face at `1 − value` and the other at `value`; switched off, the face at half and
+  the label at 0.7. Built, but the press has to start on the button (the original counts any
+  finger down there), and the wait for the dialog to finish opening is not kept. The web version's
   buttons were squeezed to their callers' heights before; they are these now.
