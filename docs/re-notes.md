@@ -517,6 +517,11 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
   - the icon at gate + `IconBarPosition`; from 12 px above it, bar segments 7 px apart going up:
     `n = (T − p)/T · ((T − 8)/2 + 8) / 2` of them, the whole part solid and one more with the
     fraction as opacity.
+- Gate colours (`0x43720`, the first part of its draw): a plane of another colour coming in
+  (`0x432b8`) keeps the colour the gate had (`+0xbc`), sets the new one (`+0xc0`) and a clock
+  (`+0xcc`) to 1 s, which the gate's update runs down. While it is above 0, with
+  `x = 7t − 2·floor(3.5t)`, folded back from 2 when over 1, the gate is drawn in its old
+  colours `x` and its new ones `1 − x`; then in the new alone. Web version: the same.
 - Colour multiplier (`0x43cdc`): `INDICATORS.X%d` at gate + `BonusPosition` whenever the gate's
   combo (`+0xc4`) is 2 or more, not only during service.
 - Hover label (`0x43d2a`), only for descriptors with `LabelOver`. With a plane picked, the place

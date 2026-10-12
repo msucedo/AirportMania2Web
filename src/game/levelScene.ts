@@ -52,7 +52,7 @@ import { tutorialFor, type Tutorial, type TutorialHint } from './sim/tutorial';
 import { GoalsPanel, HintDialog, TUTORIAL_FONTS, TUTORIAL_HINT_SURFACES, TUTORIAL_SOUNDS, TUTORIAL_SURFACES, TutorialGoalsDialog, TutorialIntro, TutorialReport } from './view/tutorialViews';
 import { LuggageView, luggageSurfaceIds } from './view/luggageView';
 import { GasStationView, gasStationSurfaceIds } from './view/gasStationView';
-import { GateView, gateLabelStrength, gateSurfaceIds } from './view/gateView';
+import { GateView, gateColorSwing, gateLabelStrength, gateSurfaceIds, mixColors } from './view/gateView';
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
@@ -111,7 +111,7 @@ export class LevelScene {
   private readonly ground = new Container();
   private readonly planeLayer = new Container();
   private readonly overlay = new Container();
-  private readonly gateViews: { gate: Gate; view: GateView; pointed?: number }[] = [];
+  private readonly gateViews: { gate: Gate; view: GateView; pointed?: number; colour?: number; from?: number; swing?: number }[] = [];
   /** Where the pointer was last, and how much some gate has been pointed at of late. */
   pointer: { x: number; y: number } | null = null;
   private anyGatePointed = 0;
@@ -1061,7 +1061,17 @@ export class LevelScene {
     for (const entry of this.gateViews) {
       const { gate, view } = entry;
       entry.pointed = Math.max(0, Math.min(1, (entry.pointed ?? 0) + (gate === pointed ? 7 : -7) * step));
-      view.update(step, gate.lastColor ? tintOf(gate.lastColor) : this.options.layout.neutralColor, gateLabelStrength(entry.pointed, this.anyGatePointed));
+      // 0x432b8, 0x4375e: a plane of another colour starts a second in which the gate swings
+      // between the colour it had and the new one.
+      const colour = gate.lastColor ? tintOf(gate.lastColor) : this.options.layout.neutralColor;
+      if (entry.colour === undefined) entry.colour = colour;
+      if (colour !== entry.colour) {
+        if (gate.lastColor) [entry.from, entry.swing] = [entry.colour, 1];
+        entry.colour = colour;
+      }
+      entry.swing = Math.max(0, (entry.swing ?? 0) - step);
+      const shown = entry.swing > 0 ? mixColors(entry.from ?? colour, colour, gateColorSwing(entry.swing)) : colour;
+      view.update(step, shown, gateLabelStrength(entry.pointed, this.anyGatePointed));
     }
     this.report?.update(seconds);
     const elapsed = this.paused ? 0 : seconds;

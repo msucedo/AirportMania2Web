@@ -39,6 +39,23 @@ export function arrowOpacity(frame: number, elapsed: number): number {
 }
 
 /**
+ * How much of its old colour a gate shows with `left` seconds of its change to go (0x4375e): for
+ * the second after a plane of another colour comes, it swings between the two seven times a
+ * second, from all old to all new.
+ */
+export function gateColorSwing(left: number): number {
+  if (left <= 0) return 0;
+  const x = 7 * left - 2 * Math.floor(3.5 * left);
+  return x > 1 ? 2 - x : x;
+}
+
+/** A colour `share` of the way from `to` back to `from`, channel by channel. */
+export function mixColors(from: number, to: number, share: number): number {
+  const channel = (shift: number): number => Math.round(((from >> shift) & 255) * share + ((to >> shift) & 255) * (1 - share));
+  return (channel(16) << 16) | (channel(8) << 8) | channel(0);
+}
+
+/**
  * How strongly a gate's label shows (0x43d38): `pointed` is the gate's own value, which follows
  * its being pointed at with a plane picked, and `any` the airport's, which follows any gate's
  * being so. Nothing until both are past a half; then the lesser of the first and what the second

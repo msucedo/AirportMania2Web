@@ -23,7 +23,7 @@ import { paletteColor } from '../src/game/palette';
 import { energyBar, moodFor, nagFlash, orientationFor, speechPlace, thoughtPlace, washLids, washShake } from '../src/game/planeView';
 import { listLimit, listRest, listRowAt, listRowY, listSettle } from '../src/game/view/improvementsDialog';
 import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoading';
-import { gateLabelStrength } from '../src/game/view/gateView';
+import { gateColorSwing, gateLabelStrength, mixColors } from '../src/game/view/gateView';
 import { pausePose } from '../src/game/view/pauseScreen';
 import { yesNoPose } from '../src/game/view/yesNoMarks';
 import { coast, dragSpeed, markerImage } from '../src/game/worldMap';
@@ -1045,5 +1045,18 @@ describe('a plane under the wash', () => {
     const leans = Array.from({ length: 50 }, (_, i) => washShake(7 + i / 100));
     expect(Math.max(...leans)).toBeGreaterThan(0.1);
     expect(Math.min(...leans)).toBeLessThan(-0.1);
+  });
+});
+
+describe('a gate changing colour', () => {
+  it('swings between the old and the new for a second', () => {
+    expect(gateColorSwing(1)).toBeCloseTo(1);
+    expect(gateColorSwing(0)).toBe(0);
+    expect(gateColorSwing(1 - 1 / 7)).toBeCloseTo(0);
+    expect(gateColorSwing(1 - 2 / 7)).toBeCloseTo(1);
+    expect(gateColorSwing(0.1)).toBeCloseTo(0.7);
+    expect(mixColors(0xff0000, 0x0000ff, 1)).toBe(0xff0000);
+    expect(mixColors(0xff0000, 0x0000ff, 0)).toBe(0x0000ff);
+    expect(mixColors(0x000000, 0xffffff, 0.5)).toBe(0x808080);
   });
 });
