@@ -26,6 +26,7 @@ import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoadin
 import { gateColorSwing, gateLabelStrength, mixColors } from '../src/game/view/gateView';
 import { pausePose } from '../src/game/view/pauseScreen';
 import { yesNoPose } from '../src/game/view/yesNoMarks';
+import { hangarPanelStep } from '../src/game/levelScene';
 import { awardTouch } from '../src/data/awards';
 import { coast, dragSpeed, markerImage, markerScale, ringTurn } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
@@ -1078,5 +1079,13 @@ describe('an award\'s touch area', () => {
     expect(awardTouch({ ...place, kind: 'special', height: 62 })).toEqual({ x: 25, y: 31 });
     expect(awardTouch({ ...place, kind: 'medal' })).toEqual({ x: 15, y: 45 });
     expect(awardTouch({ ...place, kind: 'diploma' })).toEqual({ x: 60, y: 45 });
+  });
+});
+
+describe('the hangar\'s panel', () => {
+  it('comes and goes in a third of a second', () => {
+    expect(hangarPanelStep(0, 0.1, true)).toBeCloseTo(0.3);
+    expect(hangarPanelStep(0.9, 0.1, true)).toBe(1);
+    expect(hangarPanelStep(0.2, 0.1, false)).toBe(0);
   });
 });

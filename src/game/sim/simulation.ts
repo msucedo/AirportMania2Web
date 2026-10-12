@@ -1665,6 +1665,11 @@ export class Simulation {
       // on is taken, and waits there.
       this.lookAhead(plane);
       const ahead = (): number => Math.hypot(plane.node!.x - plane.x, plane.node!.y - plane.y);
+      // 0x74fe: over the last 20 px into a hangar the plane shrinks to 0.7 of its size; anywhere
+      // else a plane under its size grows back at 0.2 a second (0x7548).
+      const entering = place.kind === 'hangar' && plane.goal === place.taxiNode && plane.node === plane.goal;
+      if (entering) plane.scale = 0.7 + 0.3 * Math.min(1, ahead() / 20);
+      else if (plane.scale < 1) plane.scale = Math.min(1, plane.scale + RULES.landing.scaleRate * dt);
       const braking = ahead() + plane.beyond <= (plane.speed * plane.speed) / (2 * a);
       plane.speed = braking ? Math.max(20, plane.speed - a * dt) : Math.min(RULES.taxiMaxSpeed, plane.speed + a * dt);
       let step = plane.speed * dt;
@@ -1683,6 +1688,8 @@ export class Simulation {
         plane.x = node.x;
         plane.y = node.y;
         step -= distance;
+        // 0x75d6: standing in the hangar it is at 0.9.
+        if (last && entering) plane.scale = 0.9;
         if (last) break;
         if (!plane.ahead) {
           // Nowhere to go on to yet: it stands on the node until a way opens.

@@ -63,6 +63,11 @@ import type { StageLayout } from './stages/layout';
 const tintOf = (color: PlaneColor | null): number => paletteColor(color).main;
 
 /** Where a sound is put between the speakers for a place `x` across the screen (0x6b24): −0.5 at the left edge, 0.5 at the right. */
+/** A step of the hangar panel's showing (0xa110): 3 a second up while there is work, down after. */
+export const hangarPanelStep = (shown: number, dt: number, working: boolean): number => Math.max(0, Math.min(1, shown + (working ? 3 : -3) * dt));
+
+const VIP_ROPE = 'STOPSPOT_VIP_FRONT';
+
 const placeAcross = (x: number): number => x / SCREEN_WIDTH - 0.5;
 
 const STEP = 1 / 60;
@@ -127,6 +132,7 @@ export class LevelScene {
   /** Per plane: where it was last frame and how long until its next ring on the water. */
   private readonly wakes = new Map<number, { x: number; y: number; next: number }>();
   private readonly stationViews: GasStationView[] = [];
+  private readonly panelShown = new Map<Hangar, number>();
   private readonly hangarPanels: { hangar: Hangar; panel: Container; ticks: Sprite[] }[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
   private readonly floating = new FloatingTexts();
@@ -251,7 +257,7 @@ export class LevelScene {
       if (isScenery(entry)) for (const id of scenerySurfaceIds(entry)) ids.add(id);
       else ids.add(entry.resource);
     }
-    for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip]) ids.add(id);
+    for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip, VIP_ROPE]) ids.add(id);
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
     if (layout.water) for (const id of WATER_SURFACES) ids.add(id);
     for (const id of YES_NO_SURFACES) ids.add(id);
@@ -746,10 +752,25 @@ export class LevelScene {
     }
     for (const spot of this.sim.stopSpots) {
       // The wash and go's own draw (0x853b4) is its grating on the ground.
-      for (const id of spot.wash ? ['WASH_AND_GO.GRATING'] : spot.vip ? layout.stopSpotSurfaces.vip : layout.stopSpotSurfaces.normal) {
+      const ids = spot.wash ? ['WASH_AND_GO.GRATING'] : spot.vip ? layout.stopSpotSurfaces.vip : layout.stopSpotSurfaces.normal;
+      for (const [index, id] of ids.entries()) {
         const sprite = this.textures.sprite(id);
         sprite.position.copyFrom(spot.position);
-        this.ground.addChild(sprite);
+        // 0x79392, 0x79408: an island's spot is two pictures sorted with the planes, the back
+        // one 20 behind the spot and the spot's own 30 before it. Any other lies on the ground.
+        if (spot.wash || ids.length < 2) this.ground.addChild(sprite);
+        else {
+          sprite.zIndex = spot.position.y + (index === 0 ? -20 : 30);
+          this.planeLayer.addChild(sprite);
+        }
+      }
+      // 0x792c8: a VIP spot that is not an island's has its rope 9 px right and below, sorted
+      // 20 before the spot.
+      if (!spot.wash && spot.vip && ids.length < 2) {
+        const rope = this.textures.sprite(VIP_ROPE);
+        rope.position.set(spot.position.x + 9, spot.position.y + 9);
+        rope.zIndex = spot.position.y + 20;
+        this.planeLayer.addChild(rope);
       }
       this.addRemark(spot, this.ground, spot.position);
       if (spot.wash) this.washViews.push(new WashView(this.textures, spot, this.planeLayer));
@@ -1135,7 +1156,13 @@ export class LevelScene {
     for (const view of this.runwayViews) view.update(elapsed);
     for (const { hangar, panel, ticks } of this.hangarPanels) {
       const plane = hangar.plane;
-      panel.visible = hangar.use === 'working' && plane !== null;
+      // 0x473f8, 0x476ca: the panel comes and goes in a third of a second (0xa110), as wide as
+      // that share and as tall as its square, and as clear.
+      const shown = hangarPanelStep(this.panelShown.get(hangar) ?? 0, elapsed, hangar.use === 'working' && plane !== null);
+      this.panelShown.set(hangar, shown);
+      panel.visible = shown > 0;
+      panel.scale.set(shown, shown * shown);
+      panel.alpha = shown;
       if (hangar.use !== 'working') this.sparkWaits.delete(hangar);
       // 0x475c6: with less than a second of the work left the sound fades over a second.
       const sound = this.repairSounds.get(hangar);

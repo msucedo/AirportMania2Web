@@ -876,10 +876,15 @@ Vtable `0x17a8e8`, kind 5.
   is already in its itinerary.
 - Constructor (`0x46c14`): besides the place node at position + `NodePosition` it adds the exit
   node (`+0x88`) 10 px right and 20 px below it, and pass-through nodes at (−10, +30) and
-  (+50, +30). Which pairs are linked is assumed in the web version.
+  (+50, +30). Links (`0x46ee2`–`0x46f10`): place–exit, exit–left, exit–right, left–right.
+  Two more nodes of the other kind at (+40, −15) and (−60, −15) are linked to each other
+  (`0x46f3a`–`0x46f6c`). The web version has the same.
 - Draw (`0x47678`): while a plane is serviced, `HANGARS.PROGRESS` at position + (34, 20) and four
   `HANGARS.PROGRESS_TICK`s at (−9, −10), (−7, −3), (−5, 4) and (−3, 11) from it. Tick i (1–4)
   shows once `progress × 4 ≥ (ServicingTime − 1) × i` and pops in over half a unit of that value.
+  The panel is there while `+0x84` is above zero: it follows the flag at `+0x80` (set as the
+  work starts, `0x472ba`; cleared as it ends, `0x47610`) at 3 a second (`0xa110`, `0x473f8`),
+  and under 1 the panel is scaled by (v, v²) and its opacity by v (`0x476f2`–`0x4770c`). Built.
 - Web version: the plane is drawn at the middle of the building while it is serviced instead of
   being walked in.
 
@@ -1264,6 +1269,13 @@ State 0 with a phase in `plane+0x330` (`0x6f78`); the flight speed is 80 (`0x177
   `(100 − x) / 80`.
 - Phase 2: the mirror turn, `x = 100 − sin(πt)·80/1.5`, back to y 680 and scale 0.8, phase 0.
 - Stop spot touch area: ±35 × ±20 around its position (`0x7921e`, same in `0x78d44`).
+- Stop spot constructor (`0x79194`), by kind (`0x7927e`): 0 plain and 1 VIP are sorted 1000
+  behind their height, so on the ground; 2 and 3, the island's, 30 before it, with their
+  `…_BACK` picture as a static image at the spot, 20 behind it (`0x793c6`, `0x7943c`). A VIP
+  spot adds `STOPSPOT_VIP_FRONT` at (+9, +9) sorted 20 before the spot (`0x792c8`), or at
+  (−8, −24) sorted 20 behind it when its flag `+0x68` is set (`0x79338`; no script sets it).
+  Energy drain factor (`+0x6c`): VIP 0.25, the rest 0.5. Nodes and links (`0x794a0`–`0x7962a`)
+  as the web version has them. Built: the rope and the island's sorting.
 
 ## Taxiing — confirmed
 
@@ -1290,6 +1302,10 @@ node it heads for is marked taken (`node+0xc`), which the router (`0x46200`) rea
   that a plane removed lets its nodes go. Where the graph has no way at all between two places
   the plane goes straight, holding nothing. Over the 92 levels the automatic player now loses
   4 planes and scores 1.6% less than without this.
+- Size on the way (`0x74fe`–`0x7578`): when the node ahead is the last and the place is a hangar
+  (kind 5), the size `+0x290` is `0.7 + 0.3·min(1, d/20)`, d what is left to the node; on
+  reaching it the size is set to 0.9 (`0x75d6`). In any other case a size under 1 grows 0.2 a
+  second. Built.
 
 ## Plane sounds by event — confirmed
 
