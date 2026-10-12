@@ -57,7 +57,7 @@ import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
 import { PlaneState, RULES, UNSELECTABLE_STATES } from './sim/rules';
-import { Simulation, type GasStation, type Gate, type Hangar, type Place, type Plane, type SimEvent, type StopSpot, secondTouch } from './sim/simulation';
+import { Simulation, type GasStation, type Gate, type Hangar, type Luggage, type Place, type Plane, type SimEvent, type StopSpot, secondTouch } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
 const tintOf = (color: PlaneColor | null): number => paletteColor(color).main;
@@ -136,7 +136,8 @@ export class LevelScene {
   private blackSmoke: BlackSmoke | null = null;
   /** Seconds of each hangar's work to its next spark (`hangar+0x90`). */
   private readonly sparkWaits = new Map<Hangar, number>();
-  private readonly fuelSounds = new Map<GasStation, { stop(fade?: number): void }>();
+  private readonly fuelSounds = new Map<GasStation, { level(value: number): void }>();
+  private readonly beltSounds = new Map<Luggage, { level(value: number): void }>();
   private readonly repairSounds = new Map<Hangar, { stop(fade?: number): void }>();
   private readonly hud: Hud;
   private accumulator = 0;
@@ -655,9 +656,9 @@ export class LevelScene {
     const voiced = pattern.includes('%s');
     const pitch = voiced ? (plane.sex === 'MALE' ? plane.descriptor.pitch.male : plane.descriptor.pitch.female) : 1;
     // 0x6b24: a plane's sounds are placed by where it is across the screen (the channel is given
-    // `x / 480 − 0.5` every frame). How the engine turns that into left and right is not read:
-    // it is taken as all the way at either edge, and fixed as the sound starts.
-    this.audio.play(pattern.replace('%s', plane.sex), { pitch, pan: 2 * (plane.x / SCREEN_WIDTH - 0.5) });
+    // `x / 480 − 0.5` every frame, half of what the helicopter's is given at the same place,
+    // 0x49588). Here it is fixed as the sound starts.
+    this.audio.play(pattern.replace('%s', plane.sex), { pitch, pan: plane.x / SCREEN_WIDTH - 0.5 });
     if (voiced) this.planeViews.get(plane.id)?.talk();
   }
 
@@ -979,7 +980,8 @@ export class LevelScene {
         break;
       case 'helicopterArrived':
         // 0x49568: its engine at half volume, heard from the side it is on.
-        this.rotor = this.audio.loop('SOUNDS.HELICOPTER_LOOP', 0.5);
+        // 0x4956a: from nothing to half over a second (0x8c17c).
+        this.rotor = this.audio.loop('SOUNDS.HELICOPTER_LOOP', 0.5, true, 1);
         break;
       case 'helicopterLeft':
         this.rotor?.stop(0.5);
@@ -1004,9 +1006,11 @@ export class LevelScene {
       case 'washStarted':
         this.audio.play('SOUNDS.WASHING');
         break;
-      case 'luggageStarted':
-        this.audio.play(event.luggage.descriptor.sound);
+      case 'luggageStarted': {
+        const sound = this.audio.loop(event.luggage.descriptor.sound, 1, false);
+        if (sound) this.beltSounds.set(event.luggage, sound);
         break;
+      }
       case 'hazardAppeared':
         if (event.kind === 'ice') this.audio.play('SOUNDS.RUNWAY_FREEZING');
         else if (event.kind === 'sand') this.audio.play('SOUNDS.SAND_APPEARS');
@@ -1111,10 +1115,16 @@ export class LevelScene {
     for (const view of this.stationViews) view.update();
     // 0x40e32: over the last second of the plane's `FuelingTime` the sound goes down with what is left.
     for (const [station, sound] of this.fuelSounds) {
-      const left = station.plane ? station.plane.descriptor.times.fueling - station.progress : 0;
-      if (left >= 1) continue;
-      sound.stop(Math.max(0, left) / station.descriptor.speed);
-      this.fuelSounds.delete(station);
+      if (!station.plane) this.fuelSounds.delete(station);
+      const left = station.plane ? station.plane.descriptor.times.fueling - station.progress : 1;
+      if (left < 1) sound.level(left);
+    }
+    // 0x56cf2: the luggage belt's likewise, and by the same number: what is left of the plane's
+    // `FuelingTime`, not of its luggage time.
+    for (const [luggage, sound] of this.beltSounds) {
+      if (!luggage.plane) this.beltSounds.delete(luggage);
+      const left = luggage.plane ? luggage.plane.descriptor.times.fueling - luggage.progress : 1;
+      if (left < 1) sound.level(left);
     }
     for (const view of this.runwayViews) view.update(elapsed);
     for (const { hangar, panel, ticks } of this.hangarPanels) {

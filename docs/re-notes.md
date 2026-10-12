@@ -208,8 +208,9 @@ Its start, every frame and whatever the state:
 
 - `+0x354` rises and `+0x350` falls with time (`0x6b06`).
 - Its sound channel (`+0x3c`) is given `x / screen width − 0.5` (`0x6b24` → `0x8be98`): where the
-  plane is across the screen. Web version: its sounds are placed left to right by that, fixed
-  as each starts; how the engine uses the number is not read.
+  plane is across the screen, from −0.5 to 0.5 (the helicopter's channel is given
+  `(x − 240) / 240`, the whole range, `0x49588`). Web version: its sounds are placed left to
+  right by that, fixed as each starts.
 - Its floating texts are updated (`0x658e0`).
 - The eyes' shift (`+0x298` flag, `+0x29c` value) follows at 8 a second (`0x9dd4`), and the
   gear (`+0x250`, `+0x254`) at 2 a second (`0x9e28`). (The web version had both at 4.)
@@ -1019,6 +1020,11 @@ names. From it:
   channel's level is set to what is left (`0x40e32` → `0x8be98`), so it goes down to nothing
   over that last second. Built. (`0x8be98` sets a value of a channel: its level when given the
   channel, its place across the screen when given the channel's `+0x18`.)
+- The luggage belt's sound (`+0x94`) is turned down the same way (`0x56cf2`), and by the same
+  number: what is left of the plane's `FuelingTime` (`0x5aa8`), though the belt is done at
+  its `LuggageLoadingTime` (`0x5ab8`). Built as it is.
+- The helicopter's channel starts at nothing and is brought to 0.5 over a second (`0x4956a`,
+  `0x8c17c`); its place is `(x − 240) / 240`. Built.
 - The hangar's sound (`+0x70`, a channel): as the work begins (`0x47298`) it is given
   `SOUNDS.REPAIRING_START` and then `SOUNDS.REPAIRING_LOOP`, repeating (`0x8c2cc` twice); with
   less than a second of the plane's `ServicingTime` left (`0x475c6`) it is faded over a second

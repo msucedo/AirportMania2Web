@@ -88,11 +88,13 @@ export class AudioPlayer {
    * the speakers (-1 left to 1 right) and stops it, fading over `fade` seconds. With `repeat` off
    * it plays once but can still be stopped. Returns null when sound is off.
    */
-  loop(id: string, volume = 1, repeat = true): { pan(value: number): void; stop(fade?: number): void } | null {
+  loop(id: string, volume = 1, repeat = true, rise = 0): { pan(value: number): void; level(value: number): void; stop(fade?: number): void } | null {
     const { context, effects } = this;
     if (!context || !effects || this.muted) return null;
     const gain = context.createGain();
-    gain.gain.value = volume;
+    // With `rise` it comes up to its volume over that many seconds.
+    gain.gain.value = rise > 0 ? 0 : volume;
+    if (rise > 0) gain.gain.linearRampToValueAtTime(volume, context.currentTime + rise);
     const panner = context.createStereoPanner();
     panner.connect(gain).connect(effects);
     let source: AudioBufferSourceNode | null = null;
@@ -108,6 +110,9 @@ export class AudioPlayer {
     return {
       pan: (value) => {
         panner.pan.value = Math.max(-1, Math.min(1, value));
+      },
+      level: (value) => {
+        gain.gain.value = Math.max(0, value);
       },
       stop: (fade = 0) => {
         if (stopped) return;
