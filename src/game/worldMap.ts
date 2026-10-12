@@ -68,6 +68,15 @@ export interface WorldMapOptions {
   onAwards: () => void;
 }
 
+/** How large a level's marker is with its coming at `clock`, 0 to 1 (0x5def0, read off runs of it). */
+export const markerScale = (clock: number): number => {
+  const c = Math.max(0, Math.min(1, clock));
+  return c * (2 - c);
+};
+
+/** How far round the chosen level's ring has turned after `time` seconds, in degrees (0x5def0). */
+export const ringTurn = (time: number): number => 108 * time;
+
 /** The speed a drag has, in px a second (0x5ff22): it follows the touch's by 0.4 a frame, within ±480, and under 10 is none. */
 export function dragSpeed(speed: number, moved: number, dt: number): number {
   const next = Math.max(-480, Math.min(480, 0.6 * speed + (0.4 * moved) / dt));
@@ -100,6 +109,9 @@ export class WorldMap {
   readonly root = new Container();
   private readonly map = new Container();
   private readonly cursor: Sprite;
+  private readonly ring = new Container();
+  private chosen = 0;
+  private readonly markers: { sprite: Sprite; clock: number; held: boolean; press: number }[] = [];
   private dialog: Container | null = null;
   private selected: { stage: number; level: number } | null = null;
   private time = 0;
@@ -118,7 +130,6 @@ export class WorldMap {
     this.map.scale.set(MAP_SCALE);
     this.map.addChild(textures.sprite('MAP.BACK'));
     this.cursor = textures.sprite('MAP.LEVEL_SELECTED');
-    this.cursor.visible = false;
 
     const icon = (stage: number): Sprite => {
       const picture = textures.sprite(`MAP.STAGES.${stage}`);
@@ -194,7 +205,9 @@ export class WorldMap {
     for (const star of MAP_STREAKS.slice(4)) put(new MapStreak(textures, star));
     for (const [x, y, size] of MAP_STARS) put(new StarView(textures, { x, y }, size));
     put(new MapSatellite(textures, { x: 1813, y: 80 }));
-    this.map.addChild(this.cursor);
+    this.ring.addChild(this.cursor);
+    this.ring.visible = false;
+    this.map.addChild(this.ring);
 
     let next: { stage: number; level: number } | null = null;
     for (const [stage, levels] of [...positions].sort((a, b) => a[0] - b[0])) {
@@ -207,6 +220,15 @@ export class WorldMap {
         if (isNext && !next) next = { stage, level };
         const marker = textures.sprite(`MAP.LEVELS.${markerImage(stars, isNext)}`);
         marker.position.copyFrom(at);
+        // 0x5dc3e: a level's marker waits a tenth of a second for each level up to its own, and
+        // one more, before it comes.
+        const entry = { sprite: marker, clock: -0.1 * (level + 1), held: false, press: 0 };
+        this.markers.push(entry);
+        marker.on('pointerdown', () => (entry.held = true));
+        const release = (): void => void (entry.held = false);
+        marker.on('pointerup', release);
+        marker.on('pointerupoutside', release);
+        marker.on('pointerout', release);
         if (reachable) {
           marker.eventMode = 'static';
           marker.cursor = 'pointer';
@@ -282,8 +304,9 @@ export class WorldMap {
   /** The level the profile is on is marked on the map. */
   private mark(stage: number, level: number, at: Point): void {
     this.selected = { stage, level };
-    this.cursor.visible = true;
-    this.cursor.position.copyFrom(at);
+    this.ring.visible = true;
+    // 0x5def0: 4.5 px above the marker's place, which is 9 of the map's.
+    this.ring.position.set(at.x, at.y - 9);
   }
 
   private open(dialog: Container): void {
@@ -364,11 +387,21 @@ export class WorldMap {
     this.speed = next.speed;
   }
 
-  /** The selection mark breathes so the chosen level stands out. */
+  /** The map's own life: its scroll, the chosen level's ring and the markers coming in. */
   update(seconds: number): void {
     this.time += seconds;
     this.scroll(seconds);
-    this.cursor.scale.set(1 + 0.08 * Math.sin(this.time * 5));
+    // 0x5ded8, 0x5def0: the ring comes at 5 a second, lies flattened to 0.6 and turns 108° a second.
+    this.chosen = Math.min(1, this.chosen + (this.ring.visible ? 5 : 0) * seconds);
+    this.ring.scale.set(this.chosen, 0.6 * this.chosen);
+    this.cursor.angle = ringTurn(this.time);
+    for (const marker of this.markers) {
+      // 0x5de42: its wait, then half a second of coming; touched, it swells a tenth (0xa068).
+      marker.clock = Math.min(1, marker.clock + (marker.clock < 0 ? 1 : 2) * seconds);
+      marker.press = Math.max(0, Math.min(1, marker.press + (marker.held ? 5 : -5) * seconds));
+      marker.sprite.visible = marker.clock >= 0;
+      marker.sprite.scale.set(markerScale(marker.clock) * (1 + 0.1 * marker.press));
+    }
     for (const item of this.decor) item.update(seconds);
   }
 

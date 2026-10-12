@@ -26,7 +26,7 @@ import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoadin
 import { gateColorSwing, gateLabelStrength, mixColors } from '../src/game/view/gateView';
 import { pausePose } from '../src/game/view/pauseScreen';
 import { yesNoPose } from '../src/game/view/yesNoMarks';
-import { coast, dragSpeed, markerImage } from '../src/game/worldMap';
+import { coast, dragSpeed, markerImage, markerScale, ringTurn } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
 import { comboArrows, usingArrow } from '../src/game/view/runwayView';
@@ -1058,5 +1058,15 @@ describe('a gate changing colour', () => {
     expect(mixColors(0xff0000, 0x0000ff, 1)).toBe(0xff0000);
     expect(mixColors(0xff0000, 0x0000ff, 0)).toBe(0x0000ff);
     expect(mixColors(0x000000, 0xffffff, 0.5)).toBe(0x808080);
+  });
+});
+
+describe('the map\'s level markers', () => {
+  it('come in fast at first, and the chosen one\'s ring turns', () => {
+    expect(markerScale(0)).toBe(0);
+    expect(markerScale(0.25)).toBeCloseTo(0.4375);
+    expect(markerScale(0.5)).toBeCloseTo(0.75);
+    expect(markerScale(1)).toBe(1);
+    expect(ringTurn(0.5)).toBeCloseTo(54);
   });
 });

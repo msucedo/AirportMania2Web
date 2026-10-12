@@ -1053,6 +1053,13 @@ names. From it:
   Marker image (`0x5dc9e`): `MAP.LEVELS.0` for a level not reached, `1` for the profile's
   current level, and `tier + 1` (2–6) for a level passed, tiers running from goal to perfect.
   `MAP.LEVEL_SELECTED` marks the chosen one.
+  A marker (`0x5db60`; update `0x5de28`, draw `0x5def0`, read off runs of the draw) starts
+  waiting, its clock at `−0.1·(level + 1)` s; at 0 it comes, the clock running to 1 at 2 a
+  second, drawn `c·(2 − c)` large; touched, it swells by a tenth of a value that follows the
+  touch at 5 a second. A leaving state (the clock back at 2 a second, as large and as clear
+  as it) is never set. For the profile's level a value rises at 5 a second and
+  `MAP.LEVEL_SELECTED` is drawn under the marker, 4.5 px above its place: that value large,
+  flattened to 0.6 of its height, and turned `108·t` degrees by the app's clock.
 - Bar: `MAP.HUD.BACK` at (0, 261) and `MAP.HUD.REFLEXION` at (8, 269) (`0x609b8`); four buttons
   (`0x60e50`) across x 5–122, 122–240, 240–357 and 357–480, y 267–321, with the labels
   `MAP.MAIN_MENU`, `MAP.TUTORIAL`, `MAP.AWARDS_ROOM` and `MAP.PLAY` centred at y 305 and the
