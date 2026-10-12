@@ -160,6 +160,24 @@ the airport's constructor (`0xe994`). Set aside with a reason: the message dialo
 Still said to be ours in `src/`: the knob's cross-fade on a slider, the credits' line height,
 how the engine keeps bordered letters apart, and the storage formats.
 
+## Fifth pass: the data tables, name by name (2026-10-11)
+
+Every name each table reader of the game takes (the strings of `0xa9c4`, `0x440c8`, `0x4138c`,
+`0x4798c`, `0x573d4`, `0x6e678`, `0x52560`, `0x53078`, `0x1d5f8` and the tables' own loaders)
+was looked for in the port, and every field the port's readers make was looked for in the rest
+of it.
+
+- `TalkHappy` and `TalkNormal` were read and never played. Following them gave `0x5f28`: a
+  plane left waiting with nothing queued says so in the voice of its mood. Built, with the
+  mouth it chats with (`0x13d740`) and the whistle's full nineteen frames (`0x13d7f0`).
+- `ExtraPlaneNumber`: the link between a stage's licence and its levels' second schedule,
+  which the notes had as inferred, is read (`0xff36`: improvement 199 plus that number) and is
+  what the port has.
+- `PlanesUsePantoons` is read by the port and not used: each stage's layout says the same
+  thing by hand. They agree for every stage.
+- Not used and not needed here: the tables' `Count`, the resources' texture hints
+  (`Dithering`, `Filter`, `MipMapLevels`, `StorageFormat`, `PremulAlpha`…).
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.
