@@ -1288,7 +1288,12 @@ export class LevelScene {
         heading: plane.heading,
         altitude: plane.altitude,
         scale: plane.scale,
-        selected: plane.selected,
+        // 0x244d0, 0x1083c, 0x1086c: with a finger on a ready tab, the planes it would reach
+        // look picked: those landed and not yet loaded for coffee, those in the air for a film.
+        selected:
+          plane.selected ||
+          (this.coffeeTab?.held === true && this.sim.coffee?.ready === true && plane.landed && !plane.loaded) ||
+          (this.moviesTab?.held === true && this.sim.movies?.ready === true && !plane.landed),
         pointed: plane === pointedPlane,
         energy: plane.energy,
         need: idle ? plane.need : null,

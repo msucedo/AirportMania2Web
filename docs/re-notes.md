@@ -575,9 +575,10 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
 - Draw (`0x24170`): the `_OFF` image with its top-left at (x − w/2, y − 10 − (h − 20)·(1 − f)),
   `f` being the ready fade (6/s), stretched vertically by `1 + 0.3·sin(πf)` while not ready;
   the `_ON` image over it with the touch fade (5/s) as opacity. It is drawn behind the bar.
-- Web version: the tab acts when the finger goes down, not when it is lifted; the mark on the
-  planes it would reach (`+0x284`) is not drawn; in-flight movies is not offered in stages 1
-  and 2, so only its filler exists.
+  `+0x284` is the plane's picked flag (the one the selected plane has; a plane not selected
+  clears it each frame, `0x8682`), so those planes look picked for as long as the finger stays.
+- Web version: the same; in-flight movies is not offered in stages 1 and 2, so only its
+  filler exists.
 
 ## Gate, runway and order flag drawing
 
@@ -1506,8 +1507,7 @@ Some levels have a bonus event, created by the stage script (found by running th
   of a second, falls at 50 px/s (`0x177d64`) swinging `35·sin(2.3·t)` degrees, and on passing
   y 290 pays (`0x25de0`): the amount is added to the score, shown in `FONTS.SCORE` and
   `SOUNDS.CASH` plays; then it shrinks away. It needs no touch.
-- Web version: how the splash is animated has not been read (it grows and fades over 0.3 s);
-  the award counters the events raise (code 0x20) are not kept.
+- Web version: all of it, the splash and the award (0x20) included.
 
 ## Stage 3 ("Monsters") — read with the emulated script (`0xd07bc`)
 
@@ -1982,8 +1982,7 @@ animation.
   - runway (`0x6da34`): sand 13, ice 12, fog 11 or 14 first; a landed plane then needs
     unloaded, serviced, fuelled, luggage, loaded.
   - stop spot, wash and go, painting stop spot (`0x797a8`, `0x85290`, `0x67dd8`): landed.
-- Web version: which value the game's `+0x14` holds has not been read, so three occasions pass
-  in silence. Hints 0, 5, 9 and 10 are in the table but nothing raises them: `0x10890` is only
+- Hints 0, 5, 9 and 10 are in the table but nothing raises them: `0x10890` is only
   called with 1 to 8 (the helpers above) and, by the runway (`0x6da94`), with its hazard's.
 
 ### Dialogs and the goals panel
@@ -2217,9 +2216,6 @@ Rules:
 
 Drawing:
 
-- Planes: the mark on planes a service tab would reach is not drawn.
-- Gate: the hover label; the first part of its draw routine has not been read. Order flag
-  offsets are assumed.
 - The font effects (gradients), the
   shop's item list layout (`0x4ca54`), the interiors of the map dialogs, how the level
   announcement is dismissed and what a level "introduces".
@@ -2511,8 +2507,7 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   and the stage all become 1 and the map opens.
 - Web version: the name is asked at Play, as there. "Nothing reached yet" is kept as a mark
   set when the question is answered, either way, or a level has been played. The inside of a
-  choice is not read (a check box with its text to its right), nor what `+0x44` and
-  `app+0x120` are.
+  choice is read (see the tutorial question); what `+0x44` and `app+0x120` are is not.
 
 ## Plane information dialog — confirmed
 
