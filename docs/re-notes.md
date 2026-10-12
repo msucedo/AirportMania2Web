@@ -2854,6 +2854,23 @@ Another of the app's screens (vtable `0x17ad10`; enter `0x55a38`, update `0x55b3
   "You are playing a beta version of Aiport Mania - Wild Trips"; nothing in the binary sets
   that byte, so it is never shown, here either.
 
+## Dialog slider — confirmed
+
+Class `0x2d7b4(parent, x, y, width)`, vtable `0x17a248`; the sound and music ones (`0x2f3c4`,
+`0x2f450`) make it 120 wide.
+
+- Its origin is `x − width/2`. The bar is `GUI.DIALOGS.BAR` as a three-patch (`0xe48d4`) with
+  10 px ends, `width + 10` long, from (−5, −5).
+- Update (`0x2d674`): the finger counts over it from x −13 to `width + 13` and y ±22 (`0x2d6c6`);
+  a press there starts a drag, during which the value is `clamp(x / width)` and the slider's
+  own slot 6 is called every frame; the drag ends when the finger is no longer down.
+- Draw (`0x2d5c4`): the knob at (`width·value`, 0), `NIPPLE` at `1 − over` and `NIPPLE_OVER` at
+  `over`, the eased value of being over or dragged.
+- Sound's slot 6 (`0x2f3ac`) keeps the value as the effects' level; music's (`0x2f42c`) sets the
+  music channel to 0.75 of it.
+- Web version: all of it but the knob's cross-fade, which swaps while held. It had the
+  slider 150 wide and levels of its own (0.8 and 0.45).
+
 ## How a dialog opens and closes — confirmed
 
 The dialog base's update (`0x2b7b0`), state `+0x54` (0 opening, 1 open, 2 closing, 3 closed)

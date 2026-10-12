@@ -1,7 +1,9 @@
 import type { Resources } from '../data/resources';
 
-const EFFECTS_LEVEL = 0.8;
-const MUSIC_LEVEL = 0.45;
+// 0x2f3ac, 0x2f42c: the sound slider's value is the effects' level as it is, and the music's
+// level is three quarters of its slider's.
+const EFFECTS_LEVEL = 1;
+const MUSIC_LEVEL = 0.75;
 
 /**
  * Sound effects and music by resource id, on the Web Audio API.

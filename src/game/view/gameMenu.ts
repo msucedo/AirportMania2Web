@@ -33,7 +33,7 @@ const WIDTH = 340;
 const HEIGHT: Record<Page, number> = { options: 220, gameOptions: 240, advanced: 220, palette: 250, menu: 240, finish: 260, askRestart: 200, askMap: 200 };
 /** The two questions (0x373e8, 0x3710c) and the colour help are 400 wide; the options' own dialog 360. */
 const WIDE: Partial<Record<Page, number>> = { askRestart: 400, askMap: 400, palette: 400, gameOptions: 360, advanced: 360 };
-const SLIDER = { x: 85, width: 150 };
+const SLIDER = { x: 85, width: 120 };
 
 export interface GameMenuOptions {
   strings: Strings;
@@ -56,7 +56,7 @@ export interface GameMenuOptions {
  * The options' own dialog (`0x2220`) comes two ways too. A level's Options (`0x678e8`) opens it
  * with sound and music and the three switches (turn with the device, show tips, tap on
  * bubbles); the options page's Advanced (`0x67b80`) opens it with the three switches and the
- * colour help (`0x265ac`), where one of four colour tables is picked. Slider width is assumed.
+ * colour help (`0x265ac`), where one of four colour tables is picked.
  */
 export class GameMenu extends Container {
   private settings: Settings;
@@ -231,9 +231,11 @@ export class GameMenu extends Container {
   private volume(centre: Container, y: number, label: string, channel: 'sound' | 'music', at: { box: number; label: number; slider: number }): void {
     dialogText(centre, label, at.label, y, 14, fontFamily(MAIN_FONT), 0).style.fill = MAIN_FILL;
     const left = at.slider - SLIDER.width / 2;
-    const bar = new NineSliceSprite({ texture: this.textures.texture('GUI.DIALOGS.BAR'), leftWidth: 8, rightWidth: 8, topHeight: 5, bottomHeight: 5 });
-    bar.setSize(SLIDER.width + 12, 12);
-    bar.position.set(left - 6, y - 6);
+    // 0x2d864: the bar's picture, its 10 px ends kept, drawn out to the slider's 120 px (0x2f3da)
+    // and 10 more, from 5 px left of it and 5 above.
+    const bar = new NineSliceSprite({ texture: this.textures.texture('GUI.DIALOGS.BAR'), leftWidth: 10, rightWidth: 10, topHeight: 0, bottomHeight: 0 });
+    bar.setSize(SLIDER.width + 10, bar.texture.height);
+    bar.position.set(left - 5, y - 5);
     const knob: Sprite = this.textures.sprite('GUI.DIALOGS.NIPPLE');
     // The switch turns the channel off and back to where the slider was.
     let remembered = this.settings[channel] > 0 ? this.settings[channel] : 1;
@@ -248,7 +250,8 @@ export class GameMenu extends Container {
     };
 
     const zone = new Container();
-    zone.hitArea = new Rectangle(left - 14, y - 18, SLIDER.width + 28, 36);
+    // 0x2d6c6: it takes the finger from 13 px before to 13 after, and 22 above and below.
+    zone.hitArea = new Rectangle(left - 13, y - 22, SLIDER.width + 26, 44);
     zone.eventMode = 'static';
     zone.cursor = 'pointer';
     let held = false;
