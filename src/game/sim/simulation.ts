@@ -792,7 +792,9 @@ export class Simulation {
     if (place.kind === 'runway') {
       // 0x6da58: nothing lands on or leaves from a runway under fog or ice.
       if ((place.fog && !place.fog.lifting) || (place.ice && !place.ice.lifting) || (place.sand && !place.sand.lifting)) return false;
-      return !plane.landed || (plane.unloaded && plane.loaded);
+      // 0x6da9c–0x6db04: a plane in the air may always come; one on the ground must have
+      // unloaded, been serviced, fuelled, taken its luggage and loaded, in that order of asking.
+      return !plane.landed || (plane.unloaded && plane.serviceDone && plane.gasDone && plane.luggageDone && plane.loaded);
     }
     if (place.kind === 'gasStation') return plane.landed && plane.unloaded && plane.serviceDone && !plane.gasDone;
     // 0x56c18: everything before it done, and the luggage still to take on.

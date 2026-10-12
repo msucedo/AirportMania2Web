@@ -287,7 +287,11 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   whenever its state is not 0.
 - Gate slot 15: needs the plane landed; unloaded planes need every service flag set and must not
   have loaded. Runway slot 15: blocked by `+0xd4`, `+0xcc`, `+0xd0` (ice, sand, obstacle; not
-  used in level 1); a landed plane needs to have unloaded (the rest of the check is not read).
+  used in level 1), each with its hint (13, 12, and 11 or 14); a plane not landed is let in;
+  a landed one must not have taken off already (`+0x26f`) and must have unloaded, been
+  serviced, fuelled, taken its luggage and loaded (`0x6dab4`–`0x6db04`, the helpers that give
+  the hints). The web version asked only for unloaded and loaded, which comes to the same,
+  as loading needs the rest; it asks for all now.
 - `addOrder` calls slot 15 only when the queue is empty in state 0 or 2. The runway entry stays
   in the queue until touch-down (`0x73b0`), so orders can be added during the approach.
 - Waiting with a queue (`0x7952`): the front place's slot 15 is re-checked; failure clears the
@@ -899,8 +903,9 @@ sometimes with `0x10000` or-ed in), `0x141ac` gate, `0x1428c` hangar (constructo
   moved sideways by `(w − 0.5) · drift · size`, `w` being how far along its two second beat it
   is (`0x72b6c`). The island gives (1, 1, 0, 11); the carrier, over (0, 47)–(480, 85),
   (1, 1, −200, 11), so its sea slides by; the tutorial, over the lake (0, 58)–(62, 75),
-  (2, 0.4, 0, 0). In which order the slide and the glint's own scale are applied has not been
-  settled: the slide is applied unscaled.
+  (2, 0.4, 0, 0). The draw scales first (`0x72b62`), then moves by the slide (`0x72b9e`) and
+  then to the glint's place (`0x72bc0`), so the slide is not scaled by the glint's own size on
+  show; the web version has it so.
 - Rings, `0x13950` → `0x86770` (`STAGES.ISLAND.WATER_RING`), kept at `airport + 0x780`. A plane
   below altitude 1 adds one at its position (`0x6cb2`) every
   `clamp(5 / max(5, speed), 0.07, ·) × (0.7 + 0.3 rand)` seconds; the upper clamp is read as 1.
@@ -1276,8 +1281,10 @@ In the playing state of the level update (`0x117c6`):
   from 0.7 to 1.1, and the profile is saved. It is read in three places: the level's clock
   (`0x117f0`), the planes' energy drain (`0x8966`) and a line the level's draw writes when its
   `+0x9c` is set (`0x1247a`).
-- Web version: the same, kept with the player's progress; the tutorial's end does not move it
-  (whether the original's does is not read).
+- The tutorial's end (`0x7f7e2`) sets the profile's level to 1 and, for a player who had
+  reached nothing, the stage reached and the current one to 1.
+- Web version: the same, kept with the player's progress; a new player's mark is on the
+  first level of the first stage without that.
 
 ## Patience and loading speed labels — confirmed
 
@@ -1418,8 +1425,8 @@ node it heads for is marked taken (`node+0xc`), which the router (`0x46200`) rea
 
 At the end of the bar's draw (`0x4f39a`), once `(TotalTime − elapsed) / TotalTime` is zero or
 less, `GUI.INGAMEGUI.NO_MORE_TIME` (`hud+0x3f8`) is drawn at (14, 0) with opacity
-`0.5 + 0.5·sin(11·t)`. Which clock `t` is has not been identified; the web version uses the
-bar's own.
+`0.5 + 0.5·sin(11·t)`, `t` being the bar's own clock (`hud+0x40c`, which its update adds the
+frame's time to, `0x4eb5e`); the web version has the same.
 
 ## Dirt — confirmed
 
@@ -2424,12 +2431,13 @@ verifies that each can be passed and that funds, stars and the opening of stage 
     earned: 36 when 30 has been earned in every stage.
   - `0x114e4`: 39 when every medal is gold; 37 when 31 has been earned in every stage. 38
     (Game Master) is posted nowhere found.
-- Web version: awards and the two counts are kept with the user's progress. Taken, not read:
-  that `app[0xfc]+0x128` is the tutorial (only the diploma is earned there), that the diploma is
-  for passing the academy's third day, that the bonus flag `+0x34` means a balloon got away
-  (and nothing for the helicopter), that `+0x140`/`+0x14c` are the early arrivals and
-  departures, that `+0x70` plays no part, and that the end-of-level events are for a passed
-  level. The combo's event is posted when the port resets the combo. Levels played before the
+- Read since: `app[0xfc]+0x128` is the tutorial, and the diploma is posted by its report's
+  Continue after the last day (`0x7f7d2`); the bonus flag `+0x34` is set only by a balloon
+  going off the top (`0x25dd8` from `0x22034`), never by the helicopter; `+0x140`, `+0x144`
+  and `+0x148` count arrivals early (energy 0.6 or more, `0x63f4`), on time and late, and
+  `+0x14c` on the same for departures; the end-of-level events are only for a level passed
+  (`0x1195c`: with no tier the whole block is skipped).
+- Web version: awards and the two counts are kept with the user's progress. The combo's event is posted when the port resets the combo. Levels played before the
   fewest lost planes were kept do not count for Friendly Skies until played again.
 - Announcing (`0x318e4` → `0x31dc4`): the award's `<text>.EARN`, formatted with its value
   (`0x1b3ac`), in `FONTS.MAIN` wrapped to 240 px (`0x25218`), about (240, 160). Its
@@ -2594,9 +2602,9 @@ made by `0x70924` with the text `LOADING_SCREEN.LOADING` and a coin thrown for d
   `app+0x150`.
 - Web version: opened with `?ending`, reached from the last stage's clear screen, and it goes
   back to the main menu. The first wait is 1 s (`0x3497c`: state 0 and `+0xc` = 1 as the
-  scene is made); the web version had 10. Taken, not read:
-, the giant font's colours,
-  that the text is at height 160. The loading screen between is not built.
+  scene is made); the web version had 10. The letters are laid out about (240, 160)
+  (`0x3529e`, `0x35388`) and drawn (`0x35650`) with no colour of their own: the giant font's
+  effect is all the colour they have. The loading screen between is not built.
 
 ## Leaving a level from its menu — confirmed
 
