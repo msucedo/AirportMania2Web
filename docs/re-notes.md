@@ -2248,7 +2248,10 @@ verifies that each can be passed and that funds, stars and the opening of stage 
 - Draw (`0x2885c`): the whole roll's opacity is the clock while appearing or leaving (so it
   reaches a half and then is full). Per item `p = y − offset + 135`, opacity
   `clamp((min(p, 265 − p) − height/2)/50)`.
-- Web version: the font's height is taken to be its cached size (11); `COLOR` and `IMAGE_LINE`
+- A line's height is what the measure gives (`0x27df8`: `0x944e8` with a second place to write
+  to, which gets the font's own line height, `font+8`, for each line).
+- Web version: the font's height is taken to be its cached size (11), not that line height,
+  which is not in the data; `COLOR` and `IMAGE_LINE`
   are not built, no text using them; the dialog goes at once on Close instead of fading.
 
 ## Help — confirmed
@@ -2966,6 +2969,11 @@ once and a pop of its own for the stars.
 `0x25218(font, text, width, align, share)` makes a layout (`0x94978`) and `0x95134(layout,
 transform, vertical align, height)` draws it. The last argument, 0.8 wherever it is called, is
 not a size: a line narrower than that share of the width is not spread out to it (`0x94d70`).
+Lines are only spread out at all in mode 3 of its fourth argument (`0x94ab6`); of the game's
+calls only the tips shower's uses it (`0x7a274`), the text box takes its caller's mode, the
+award notice is centred (1) and the tutorial question's choices are left (0). The web version
+spreads the tip's lines with the browser's own justifying, which does every line but the last
+rather than those over the share.
 The notes had it as the text's scale for the tips shower and the award notice, and the web
 version drew those two at 0.8 of their size; they are at their own size now.
 

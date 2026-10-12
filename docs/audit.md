@@ -238,6 +238,23 @@ Gone through against their notes and, where it was cheap, a fresh reading or a r
 Still open: what each award counts in its description and the awards room's ribbon width;
 the credits' line height; the engine's text.
 
+## Ninth pass: what was left (2026-10-11)
+
+- The spray can (`0x77a80`, `0x77b78`) and the first loading screen match their notes.
+- The moon and the three far stars are never on a 480 px screen in the original either
+  (`0x29e08`, `0x29968`).
+- The ending's floaters are drawn at their own size; the number each is made with only
+  measures its sway (`0x35ce4`, `0x35e6c`). The port had scaled the pictures. Built.
+- The awards room's ribbon is the name plus 90 wide, from y 5 (`0x1e366`). Built. The value in
+  an earned award's description is the one kept with the award (`0x1ae38`).
+- The tips shower's text is laid out spread to its width (`0x7a274`, mode 3). Built with the
+  browser's justifying.
+- A credits line's height is the font's own line height (`0x27df8`); the port uses the font's
+  cached size, the other not being in the data.
+
+What stays ours, by its nature: the fonts' colour effects and how bordered letters are kept
+apart, which are the engine's rasterising of TrueType and are drawn here by the browser.
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.
