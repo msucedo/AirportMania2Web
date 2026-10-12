@@ -2259,8 +2259,7 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   drawn (`0x7a72c`) at that opacity and scaled `0.5 + 0.5·v` about its middle; its words are
   black at 0.9 (`0x7a81e`). A tip that is replaced is switched off and goes the same way
   (`0x7a044`).
-- Web version: `%d` is taken to be the stage, as for the hints; a tip comes in as above but
-  one that is replaced goes at once; the four numbers of the bubble's cut are taken as 34
+- Web version: `%d` is taken to be the stage, as for the hints; the four numbers of the bubble's cut are taken as 34
   from the left and 23 from the top.
 
 ## Users — confirmed
@@ -2566,8 +2565,8 @@ made by `0x70924` with the text `LOADING_SCREEN.LOADING` and a coin thrown for d
   when it has run to its end the way back is shown, at (20, 305) (`0x34ee8`), which leads to
   `app+0x150`.
 - Web version: opened with `?ending`, reached from the last stage's clear screen, and it goes
-  back to the main menu. Taken, not read: the first wait (10 s here; where the original sets
-  `+0xc` was looked for and not found: `0x3433c`'s 10, 2.5 and −9 are a three-patch's),
+  back to the main menu. The first wait is 1 s (`0x3497c`: state 0 and `+0xc` = 1 as the
+  scene is made); the web version had 10. Taken, not read:
   where a floater's scale is applied, the giant font's colours,
   that the text is at height 160. The loading screen between is not built.
 

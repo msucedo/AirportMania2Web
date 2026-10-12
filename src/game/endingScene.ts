@@ -26,8 +26,8 @@ const SURFACES = [
   ...[0, 1, 2].map((n) => `FINAL_VICTORY.PALM_TREE.${n}`),
 ];
 
-/** Seconds before the credits are made; they then wait 20 more before they appear (0x34b46). */
-const CREDITS_AFTER = 10;
+/** Seconds before the credits are made (`+0xc`, set to 1 at 0x3497c); they then wait 20 more before they appear (0x34b46). */
+const CREDITS_AFTER = 1;
 
 export interface EndingOptions {
   strings: Strings;

@@ -6,7 +6,7 @@ import type { TextureStore } from '../../engine/textures';
 import { HELP_PAGES, helpPictures, nextTip } from '../help';
 import { dialogButton } from './dialog';
 import { SCORE_FONT } from './floatingText';
-import { tipsShower } from './tipsShower';
+import { tipsShower, type TipsShower } from './tipsShower';
 import { centred, textBox, white } from './tutorialViews';
 
 // The help dialog (0x49c80): a 400×250 frame. Pages 1 to 7 have a picture at (−150, −70) with
@@ -54,10 +54,12 @@ export class HelpDialog extends Container {
       textBox(centre, strings.t(`HELP_DIALOG.${page}.2`), { x1: -190, y1: -18, x2: 94, y2: 98 }, white(), false);
     } else {
       textBox(centre, strings.t('HELP_DIALOG.TIPS'), { x1: -190, y1: -110, x2: 190, y2: -80 }, white(), false);
-      centre.addChild(this.tipsShower());
+      const shower = this.tipsShower();
+      centre.addChild(shower);
       dialogButton(textures, audio, centre, { x: 150, y: 110, width: 85, height: 30 }, strings.t('HELP_DIALOG.NEXT_TIP_SHORT'), family, () => {
         this.tip = nextTip(this.tip, Number.parseInt(strings.t('GAME_TIP.COUNT'), 10));
-        this.show();
+        // The shower stays; the tip it had goes as the next comes (0x7a044).
+        shower.say(`GAME_TIP.${this.tip}`);
       });
     }
 
@@ -80,7 +82,7 @@ export class HelpDialog extends Container {
   }
 
   /** The shower sits at (0, 5) and is 400 wide. */
-  private tipsShower(): Container {
+  private tipsShower(): TipsShower {
     const shower = tipsShower(this.textures, this.strings, `GAME_TIP.${this.tip}`, 400);
     shower.position.set(0, 5);
     return shower;
