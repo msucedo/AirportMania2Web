@@ -946,6 +946,15 @@ Vtable `0x17a8e8`, kind 5.
   `FUNDS` at y 60 with `stars × PerStarAmount + StageClearAmount`, labels at x −175 and values
   right-aligned at 175. Its continue (`0x78a9c`) moves to the next stage, whose first level
   starts with those funds and no improvements. Stage 1 starts with nothing.
+  - Its update (`0x78594`): the clock (`+0x64`) runs at 2 a second, and 6 more while the
+    screen is touched. First it waits for 3 of it. Then (state 1, clock from 0) a counter
+    follows `int(3·clock)`; each step up to the number of stars adds a
+    `GUI.FINAL_REPORT.STAR_SMALL` at (`167 − step·(n − 1 − k)`, `−8 − 14·(k mod 2)`), k from 1
+    and `step = min(10, 200 / n)`, plays `SOUNDS.CASH` and adds the per-star amount to the
+    funds shown, which start at the bonus alone (`0x7820a`). Three steps after the last star
+    the Continue button is made, 360 wide at (0, 110) (`0x787a8`). There is no number beside
+    the stars. Built; the web version had one star with a number, and the button from the
+    start.
 - Improvements dialog (`0x4c3c8`), frame 430×270: `IMPROVEMENTS_DIALOG.TEXT_SHORT` centred at
   (55, −130) and the item title at (60, −100) in `FONTS.MAIN`; rules at y −115 and 65 (centre x
   55, width 325); description in `FONTS.WHITE`; `COST` at (−110, 65) and `AVAILABLE` at
