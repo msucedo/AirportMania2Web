@@ -16,12 +16,13 @@ export function tipsShower(textures: TextureStore, strings: Strings, text: strin
   const character = textures.sprite('GUI.TIPS_SHOWER.SURFACE');
   character.position.set(-(tip / 2), 0);
 
-  // `FONTS.TEEN` (Teen Bold at 10, 0.9 of its width) drawn at 0.8 of its size.
+  // `FONTS.TEEN` (Teen Bold at 10, 0.9 of its width), at its own size: the 0.8 its layout is given
+  // (0x7a268) is the share of the width a line must fill to be spread out (0x94d70), not a size.
   const words = new Text({
     text: strings.t(text),
-    style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 10, fill: 0x000000, wordWrap: true, wordWrapWidth: (tip - 68) / (0.8 * 0.9) },
+    style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 10, fill: 0x000000, wordWrap: true, wordWrapWidth: (tip - 68) / 0.9 },
   });
-  words.scale.set(0.8 * 0.9, 0.8);
+  words.scale.set(0.9, 1);
   words.anchor.set(0, 0.5);
   words.position.set(60 - tip / 2 + 34, 0);
 

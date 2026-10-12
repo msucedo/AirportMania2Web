@@ -2242,7 +2242,7 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   dialog and opens the page before or after.
 - Tips shower: `GUI.TIPS_SHOWER.SURFACE` drawn at x = −(width − 120)/2 = −140 and the tips
   60 px right of the shower (draw `0x7a0e0`). A tip (`0x7a188`) is `GAME_TIP.<n>` in
-  `FONTS.TEEN` at 0.8, wrapped to (width − 120) − 68 = 212 (`0x25218`), on
+  `FONTS.TEEN`, wrapped to (width − 120) − 68 = 212 (`0x25218`), on
   `GUI.TIPS_SHOWER.SPEECH_BUBBLE` stretched (`0xe4704`, cuts 34 and 23) to 280 wide and the
   text's height + 23, from (−140, floor(−height/2 − 11)); the text is drawn 34 px in from the
   bubble's left, centred on the tip's height (draw `0x7a72c`). The shower and each tip fade
@@ -2397,7 +2397,7 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   level. The combo's event is posted when the port resets the combo. Levels played before the
   fewest lost planes were kept do not count for Friendly Skies until played again.
 - Announcing (`0x318e4` → `0x31dc4`): the award's `<text>.EARN`, formatted with its value
-  (`0x1b3ac`), in `FONTS.MAIN` at 0.8 wrapped to 240 px (`0x25218`), about (240, 160). Its
+  (`0x1b3ac`), in `FONTS.MAIN` wrapped to 240 px (`0x25218`), about (240, 160). Its
   sound by id (`0x1b70c`): 1–20 `AWARD_NEW_PLANE`, 21 `AWARD_BABY_CRY`, 22
   `AWARD_EMERGENCY_SIREN`, 23 `AWARD_PRESIDENT_MARCH`, 24 `AWARD_SWITCH_A_ROO`, 25
   `AWARD_SUPER_RUNWAY_COORDINATOR`, 34 `AWARD_FINISH_ALL_LEVELS`, the rest `AWARD_GENERIC`.
@@ -2922,6 +2922,14 @@ The final report (`0x328d4`) pops in its result (`0x32a46`), each star (`0x32898
 button (`0x33b70`) and fades in every row (`0x32c02`…`0x33a76`); the stage-cleared dialog pops
 in its stars and its button (`0x7871e`, `0x787d2`). Built; the web version had the rows at
 once and a pop of its own for the stars.
+
+## Text laid out in a box — confirmed
+
+`0x25218(font, text, width, align, share)` makes a layout (`0x94978`) and `0x95134(layout,
+transform, vertical align, height)` draws it. The last argument, 0.8 wherever it is called, is
+not a size: a line narrower than that share of the width is not spread out to it (`0x94d70`).
+The notes had it as the text's scale for the tips shower and the award notice, and the web
+version drew those two at 0.8 of their size; they are at their own size now.
 
 ## Dialog slider — confirmed
 

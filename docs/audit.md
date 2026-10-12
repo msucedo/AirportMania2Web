@@ -178,6 +178,25 @@ of it.
 - Not used and not needed here: the tables' `Count`, the resources' texture hints
   (`Dithering`, `Filter`, `MipMapLevels`, `StorageFormat`, `PremulAlpha`…).
 
+## Sixth pass: the dialogs' controls (2026-10-11)
+
+- Button (`0x2cb50`, `0x2ca6c`): pressed while a finger is down on it, acting as the finger
+  lifts, its two faces cross-fading at 8 a second. The port acted on the press and swapped
+  the face when the pointer was over it. Built, except that the press must start on the button
+  and that buttons do not wait for their dialog to finish opening.
+- Text field (`0x2de10`): the first character typed takes the place of what the field starts
+  with; a character that would make the text wider than the field less 12 is not taken; the
+  caret can stand anywhere. Built on the browser's own input.
+- Text in a box (`0x25218`): its last argument is the share of the width a line must fill to
+  be spread out, not a size. The tips shower's words and the award notice were drawn at 0.8 of
+  their size from that misreading; corrected. Lines are not spread out in the port.
+- Check box (`0x2d9ec`), slider, image, label, rule, frame, backdrop and how a widget comes
+  in: read in this pass or the fourth, and as the port has them.
+- The buttons of the questions and reports (`0x378e4`…`0x7fac8`) are the same button with a
+  label and a place, which their callers' notes give.
+- Not for the port: the Game Center notice (`0x310b0`, `0x31228`), the string's own routines
+  (`0x30d80`).
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.

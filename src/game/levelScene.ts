@@ -600,7 +600,7 @@ export class LevelScene {
 
   /**
    * Announces the awards earned, one at a time (0x318e4 → 0x31dc4): the award's `EARN` text in
-   * `FONTS.MAIN` at 0.8, wrapped to 240 px, at (240, 160), with the award's sound. See
+   * `FONTS.MAIN`, wrapped to 240 px, at (240, 160), with the award's sound. See
    * view/awardNotice.ts for how it comes, stays and goes.
    */
   private updateNotices(seconds: number): void {
@@ -610,7 +610,7 @@ export class LevelScene {
       if (next) {
         this.notice.state = next;
         const pose = noticePose(next);
-        this.notice.text.scale.set(0.8 * pose.scale);
+        this.notice.text.scale.set(pose.scale);
         this.notice.text.alpha = pose.alpha;
         return;
       }
@@ -638,7 +638,7 @@ export class LevelScene {
     const value = this.options.progress.awards[id]?.value ?? 0;
     const text = new Label({
       text: this.strings.t(`${awardText(id)}.EARN`, value),
-      style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER, align: 'center', wordWrap: true, wordWrapWidth: 240 / 0.8 },
+      style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 14, fill: MAIN_FILL, stroke: BORDER, align: 'center', wordWrap: true, wordWrapWidth: 240 },
     });
     text.anchor.set(0.5);
     text.position.set(240, 160);
