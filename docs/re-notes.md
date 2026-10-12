@@ -1187,13 +1187,18 @@ names. From it:
 
 - `tools/re/calls.py <start> <end>` lists every call of a compiled script with the constants
   set up before it; it was used to read this one.
-- The map image is 2040×510 and everything on it is placed in its pixels. Drawn at half size it
-  spans the 480×320 screen above the bar; that scale is inferred from the fit, not read.
+- The map image is 2040×510 and everything on it is placed in its pixels. It is drawn as it is
+  (`0x63af8`: the picture at its place plus the map's scroll, scale 1), so the screen shows a
+  480 by 290 window of it above the bar, and it scrolls both ways. The web version drew it at
+  half size, fitted to the screen's height and scrolling across only; that was a guess from
+  the fit, and wrong.
+- Entering (`0x5fcb6`), the scroll is the one kept in the profile (`+0x28`, `+0x2c`), held
+  within the map's ends; a new player's is the top left corner.
 - Stage icons, `0x60218(map, stage, levels, x, y)` (`MAP.STAGES.%d`, stage 5 through `0x60408`
   with a propeller): 1 (151, 260), 2 (280, 68), 3 (526, 255), 4 (661, 63), 5 (901, 144),
   6 (1011, 323), 7 (1209, 144), 8 (1360, 323), 9 (1591, 98), 10 (1864, 344).
-- Ribbons, `0x6052c(map, stage, x, y)` (`MAP.HERALDIC_RIBBON` with a text, taken to be the
-  stage title): y 351, 136, 323, 128, 196, 396, 216, 386, 169, 428 at the icons' x.
+- Ribbons, `0x6052c(map, stage, x, y)` (class `0x5d990`, draw `0x5dae8`: `MAP.HERALDIC_RIBBON`
+  at its place and `STAGES.%d.TITLE` in `FONTS.TEEN`, grey 0.2, centred on it): y 351, 136, 323, 128, 196, 396, 216, 386, 169, 428 at the icons' x.
 - Level markers come from `LEVELS_POSITION_TABLE` (`0x606bc`; some levels are listed twice).
   Marker image (`0x5dc9e`): `MAP.LEVELS.0` for a level not reached, `1` for the profile's
   current level, and `tier + 1` (2–6) for a level passed, tiers running from goal to perfect.
@@ -1244,8 +1249,9 @@ names. From it:
   Every frame (`0x60050`) the map moves by its speed; at an end (`−(size − 480)` and 0 across,
   `−(size − 290)` and 0 down) it stops there with no speed; over 5 px a second the speed is
   multiplied by `0.1^dt`, and once under 10 it is cleared and the place rounded.
-- Web version: the same, across (the map is not taller than the screen); both dialogs follow
-  the positions above.
+- A level marker takes a touch 20 px to either side and from 18 above to 12 below its place
+  (`0x5db7e`); a stage icon over its picture (`0x5d488`).
+- Web version: the same, both ways; both dialogs follow the positions above.
 
 ## End of the level — confirmed
 

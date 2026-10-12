@@ -39,6 +39,8 @@ export interface ProgressData {
   tips?: number;
   /** The player's difficulty (profile `+0x48`); 1 for a new player. */
   difficulty?: number;
+  /** Where the map was left (profile `+0x28`, `+0x2c`). */
+  mapScroll?: { x: number; y: number };
 }
 
 /**
@@ -117,6 +119,16 @@ export class Progress {
 
   private stored(stage: number, level: number): LevelRecord | undefined {
     return this.data.records[key(stage, level)];
+  }
+
+  /** Where the map was left (profile `+0x28`, `+0x2c`): its top left corner for a new player. */
+  get mapScroll(): { x: number; y: number } {
+    return this.data.mapScroll ?? { x: 0, y: 0 };
+  }
+
+  set mapScroll(at: { x: number; y: number }) {
+    this.data.mapScroll = { x: at.x, y: at.y };
+    this.save();
   }
 
   /** The player's difficulty (profile `+0x48`). */

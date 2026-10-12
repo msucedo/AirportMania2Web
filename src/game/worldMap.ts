@@ -32,8 +32,11 @@ const STAGE_ICONS: readonly { stage: number; icon: Point; ribbon: Point }[] = [
 ];
 
 /** The map image is 2040×510 and the level table uses its pixels; shown at half size it fills the 480×320 screen above the bar. */
-const MAP_SCALE = 0.5;
-const MAP_WIDTH = 2040 * MAP_SCALE;
+// 0x63af8: the map's picture, 2040 by 510, is drawn as it is, moved by the map's scroll. What is
+// seen of it is the screen above the bar: 480 by 290 (0x60050).
+const MAP_WIDTH = 2040;
+const MAP_HEIGHT = 510;
+const MAP_VIEW = 290;
 const BAR_Y = 261;
 
 type BarButton = 'RETURN' | 'TUTORIAL' | 'AWARDS' | 'PLAY';
@@ -78,8 +81,8 @@ export const markerScale = (clock: number): number => {
 export const ringTurn = (time: number): number => 108 * time;
 
 /** The speed a drag has, in px a second (0x5ff22): it follows the touch's by 0.4 a frame, within ±480, and under 10 is none. */
-export function dragSpeed(speed: number, moved: number, dt: number): number {
-  const next = Math.max(-480, Math.min(480, 0.6 * speed + (0.4 * moved) / dt));
+export function dragSpeed(speed: number, moved: number, dt: number, most = 480): number {
+  const next = Math.max(-most, Math.min(most, 0.6 * speed + (0.4 * moved) / dt));
   return Math.abs(next) < 10 ? 0 : next;
 }
 
@@ -127,7 +130,6 @@ export class WorldMap {
     private readonly options: WorldMapOptions,
   ) {
     const { strings, progress, playable } = options;
-    this.map.scale.set(MAP_SCALE);
     this.map.addChild(textures.sprite('MAP.BACK'));
     this.cursor = textures.sprite('MAP.LEVEL_SELECTED');
 
@@ -157,9 +159,12 @@ export class WorldMap {
       const at = STAGE_ICONS[stage - 1]!.ribbon;
       const band = textures.sprite('MAP.HERALDIC_RIBBON');
       band.position.copyFrom(at);
-      const title = new Text({ text: strings.t(`STAGES.${stage}.TITLE`), style: { fontFamily: fontFamily(MAIN_FONT), fontSize: 20, fill: 0x5a4a2a } });
+      // 0x5d990, 0x5dae8: the title in `FONTS.TEEN` (Teen Bold at 10, 0.9 of its width), dark
+      // grey (0.2), centred on the ribbon's place.
+      const title = new Text({ text: strings.t(`STAGES.${stage}.TITLE`), style: { fontFamily: fontFamily('FONTS.TEEN_BD'), fontSize: 10, fill: 0x333333 } });
       title.anchor.set(0.5);
-      title.position.set(at.x, at.y - 3);
+      title.scale.x = 0.9;
+      title.position.set(at.x, at.y);
       this.map.addChild(band, title);
     };
     const put = (item: Decoration | (Container & { update(dt: number): void })): void => {
@@ -232,7 +237,8 @@ export class WorldMap {
         if (reachable) {
           marker.eventMode = 'static';
           marker.cursor = 'pointer';
-          marker.hitArea = new Rectangle(-24, -30, 48, 60);
+          // 0x5db7e: 20 px to either side, from 18 above to 12 below.
+          marker.hitArea = new Rectangle(-20, -18, 40, 30);
           marker.on('pointertap', () => {
             audio.play('SOUNDS.CLICK');
             this.askLevel(stage, level);
@@ -293,8 +299,11 @@ export class WorldMap {
 
     const start = next as { stage: number; level: number } | null;
     if (start) this.mark(start.stage, start.level, positions.get(start.stage)![start.level - 1]!);
-    const centre = STAGE_ICONS.find((s) => s.stage === (options.focus ?? start?.stage ?? 1))?.icon.x ?? 0;
-    this.scrollTo(SCREEN_WIDTH / 2 - centre * MAP_SCALE);
+    // 0x5fcb6: the map is where the player left it (profile `+0x28`, `+0x2c`), kept within its ends.
+    const kept = progress.mapScroll;
+    const asked = options.focus === undefined ? undefined : STAGE_ICONS.find((s) => s.stage === options.focus)?.icon;
+    if (asked) this.scrollTo(SCREEN_WIDTH / 2 - asked.x, MAP_VIEW / 2 - asked.y);
+    else this.scrollTo(kept.x, kept.y);
   }
 
   private stageOpen(stage: number): boolean {
@@ -345,27 +354,28 @@ export class WorldMap {
   }
 
   /** The touch holding the map, and the speed it runs on at when let go. */
-  private held: { pointer: number; last: number; speed: number } | null = null;
-  private speed = 0;
+  private held: { pointer: Point; last: Point; speed: Point } | null = null;
+  private speed: Point = { x: 0, y: 0 };
 
-  private scrollTo(x: number): void {
-    this.map.x = Math.max(SCREEN_WIDTH - MAP_WIDTH, Math.min(0, x));
+  private scrollTo(x: number, y: number): void {
+    this.map.position.set(Math.max(SCREEN_WIDTH - MAP_WIDTH, Math.min(0, x)), Math.max(MAP_VIEW - MAP_HEIGHT, Math.min(0, y)));
   }
 
   private enableDragging(): void {
     this.map.eventMode = 'static';
-    this.map.hitArea = new Rectangle(0, 0, 2040, 510);
+    this.map.hitArea = new Rectangle(0, 0, MAP_WIDTH, MAP_HEIGHT);
     // 0x6002c: a touch on the map takes hold of it and stops it.
     this.map.on('pointerdown', (event: FederatedPointerEvent) => {
-      this.held = { pointer: event.global.x, last: event.global.x, speed: 0 };
-      this.speed = 0;
+      const at = { x: event.global.x, y: event.global.y };
+      this.held = { pointer: at, last: { ...at }, speed: { x: 0, y: 0 } };
+      this.speed = { x: 0, y: 0 };
     });
     this.map.on('globalpointermove', (event: FederatedPointerEvent) => {
-      if (this.held) this.held.pointer = event.global.x;
+      if (this.held) this.held.pointer = { x: event.global.x, y: event.global.y };
     });
     // 0x5ffd4: let go, it runs on at the speed the drag had.
     const release = (): void => {
-      if (this.held) this.speed = this.held.speed;
+      if (this.held) this.speed = { ...this.held.speed };
       this.held = null;
     };
     this.map.on('pointerup', release);
@@ -374,18 +384,33 @@ export class WorldMap {
 
   /** The map follows the touch that holds it and runs on when let go (0x5fe86, 0x60050). */
   private scroll(dt: number): void {
-    let x = this.map.x;
-    if (this.held) {
-      const moved = this.held.pointer - this.held.last;
-      this.held.last = this.held.pointer;
-      x += moved;
-      if (Math.abs(moved) < 1) x = Math.floor(x + 0.5);
-      if (dt > 0) this.held.speed = dragSpeed(this.held.speed, moved, dt);
+    const before = { x: this.map.x, y: this.map.y };
+    const next = { x: this.map.x, y: this.map.y };
+    for (const axis of ['x', 'y'] as const) {
+      let at = next[axis];
+      if (this.held) {
+        const moved = this.held.pointer[axis] - this.held.last[axis];
+        this.held.last[axis] = this.held.pointer[axis];
+        at += moved;
+        if (Math.abs(moved) < 1) at = Math.floor(at + 0.5);
+        // 0x5ff22: the drag's speed is kept within 480 across and 320 down.
+        if (dt > 0) this.held.speed[axis] = dragSpeed(this.held.speed[axis], moved, dt, axis === 'x' ? 480 : 320);
+      }
+      const low = axis === 'x' ? SCREEN_WIDTH - MAP_WIDTH : MAP_VIEW - MAP_HEIGHT;
+      const run = coast(at, this.speed[axis], dt, low);
+      next[axis] = run.x;
+      this.speed[axis] = run.speed;
     }
-    const next = coast(x, this.speed, dt, SCREEN_WIDTH - MAP_WIDTH);
-    this.map.x = next.x;
-    this.speed = next.speed;
+    this.map.position.set(next.x, next.y);
+    // Where it comes to rest is kept with the player's progress.
+    const still = !this.held && this.speed.x === 0 && this.speed.y === 0;
+    if (still && (before.x !== next.x || before.y !== next.y || this.unsaved)) {
+      this.options.progress.mapScroll = next;
+      this.unsaved = false;
+    } else if (before.x !== next.x || before.y !== next.y) this.unsaved = true;
   }
+
+  private unsaved = false;
 
   /** The map's own life: its scroll, the chosen level's ring and the markers coming in. */
   update(seconds: number): void {
