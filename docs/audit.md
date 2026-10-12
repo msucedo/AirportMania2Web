@@ -133,6 +133,33 @@ that the hangar's own picture is its front half, with the remark over it (the po
 over the back), and that the belt's remark comes after its front; both built, with the
 swell kept to the parts the original scales.
 
+## Fourth pass: the constructors set aside by rule, and what the port itself called unread (2026-10-11)
+
+The 91 functions the ledger had as "only loads resources or makes objects" were gone through
+with `tools/re/gaps.py`: 78 have no number of their own in what is not cited, and every image
+they load is one the port names (`tools/re/unused.py`). The 13 with numbers were read; the
+places in `src/` that said "not read" or "assumed" were then taken one by one. Found and built:
+
+- the stage-cleared dialog (`0x78594`): the stars come one by one in a zigzag row, each with
+  the till's ring and its share added to the funds, and the button comes after them;
+- a dialog's widgets (`0x2bd38`): they pop or fade in over half a second; the final report's
+  rows fade, its result, stars and button pop;
+- a report's backdrop (`0x2c890`): eight pictures drifting up and turning, not one large one;
+- the order flags (`0x6ba58`, `0x6b850`): on the place's node, coming and going in a third of a
+  second, each drawn again over everything at half strength;
+- the sliders (`0x2d7b4`): 120 wide, not 150; the sound level is the slider's value and the
+  music's three quarters of it (the port had levels of its own);
+- hints (`0x108ce`): how long one keeps quiet goes by the stage reached, 3 to 5;
+- a popped balloon's burst (`0x255e4`); the tutorial question's choices (`0x7ea9c`).
+
+Read and found to match: the buoys (`0x23338`), the tutorial report's Continue (`0x7f774`),
+the airport's constructor (`0xe994`). Set aside with a reason: the message dialog `0x32170`
+(only the language change and a failed saved game use it), the money sign
+(`GUI.INGAMEGUI.MONEY_SIGNS.DOLLAR`, loaded at `0x4e482` and kept nowhere).
+
+Still said to be ours in `src/`: the knob's cross-fade on a slider, the credits' line height,
+how the engine keeps bordered letters apart, and the storage formats.
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.
