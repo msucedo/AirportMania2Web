@@ -617,7 +617,15 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
   - stop spots, wash, painting spot (`0x797f4`, `0x853b4`, `0x680f8`): their own picture and
     remark; an island's back picture and a VIP's rope are static images and do not.
   Built so.
-- Not read: the order flag offsets. The runway draw is covered under "Runway drawing".
+- Order flags (`0x5ea8` for the picked plane, `0x5b70` as an order is added): the manager
+  (`airport+0x1d0`) first sends every flag away (`0x6ba24`: state 3), then `0x6ba58(position,
+  colour, number)` makes two for each order, at the place's node (`place+0x30`): one sorted
+  11 behind the node at full strength and one at depth 1000 at half (`0x6bb04`, `0x6bb54`).
+  A flag (`0x6b850`) comes in at 3 a second and goes at 3 (`0x6b942`), and is drawn
+  (`0x6b9a8`) 5 px above its position: `INDICATORS.FLAGS.COLOR` in the plane's colour and the
+  number over it, at its strength times its value. The place the plane heads for is number 1
+  while it taxis or has not landed. Built; the web version had them 46 px above the place
+  (26 above and 40 right of a runway's node), drawn once and at once. The runway draw is covered under "Runway drawing".
 
 ## Gas station drawing — confirmed
 

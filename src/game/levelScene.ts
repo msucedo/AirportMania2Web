@@ -211,7 +211,7 @@ export class LevelScene {
       this.coffeeTab = new ServiceTab(textures, sim.coffee, SERVICE_SLOTS.coffee, { on: 'GUI.INGAMEGUI.COFFEE_AND_CAKE_ON', off: 'GUI.INGAMEGUI.COFFEE_AND_CAKE_OFF' });
       this.hud.behind.addChild(this.coffeeTab);
     } else this.hud.behind.addChild(serviceGrip(textures, SERVICE_SLOTS.coffee));
-    this.flags = new OrderFlags(textures);
+    this.flags = new OrderFlags(textures, this.planeLayer);
     this.bonusView = new BonusView(textures, sim);
     this.goalEffects = new GoalEffects(textures);
     // 0x13128: the HUD is put on the level's list when the airport is built, and what play adds
@@ -1216,7 +1216,7 @@ export class LevelScene {
       });
     }
     const selected = this.sim.selected;
-    this.flags.update(selected, selected ? tintOf(selected.color) : 0xffffff);
+    this.flags.update(selected, selected ? tintOf(selected.color) : 0xffffff, step);
 
     // 0x10f4c, 0x110c8: every frame the plane under the pointer is marked, if it can be picked.
     const under = !this.paused && !this.dialog && this.pointer ? this.sim.planeAt(this.pointer.x, this.pointer.y) : null;

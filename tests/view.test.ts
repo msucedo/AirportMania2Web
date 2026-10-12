@@ -29,6 +29,7 @@ import { yesNoPose } from '../src/game/view/yesNoMarks';
 import { hangarPanelStep } from '../src/game/levelScene';
 import { stageClearStar } from '../src/game/view/stageClear';
 import { burstPose } from '../src/game/view/bonusView';
+import { flagStep } from '../src/game/view/orderFlags';
 import { awardTouch } from '../src/data/awards';
 import { coast, dragSpeed, markerImage, markerScale, ringTurn } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
@@ -1107,5 +1108,13 @@ describe('a popped balloon\'s burst', () => {
     expect(burstPose(0.25)!.alpha).toBeCloseTo(0.5);
     expect(burstPose(0.25)!.scale).toBeCloseTo(0.875 + 0.025);
     expect(burstPose(0)).toBeNull();
+  });
+});
+
+describe('an order flag', () => {
+  it('comes and goes in a third of a second', () => {
+    expect(flagStep(0, 0.1, true)).toBeCloseTo(0.3);
+    expect(flagStep(0.9, 0.1, true)).toBe(1);
+    expect(flagStep(0.2, 0.1, false)).toBe(0);
   });
 });
