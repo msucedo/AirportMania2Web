@@ -29,7 +29,7 @@ for line in open(sys.argv[1]):
     elif guess == 'fontanería?':
         category, note = 'fontanería', 'by rule: no numbers and no text'
     elif guess == 'cubierta?':
-        category, note = 'cubierta', 'by rule: only loads resources or makes objects'
+        category, note = 'cubierta', 'by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)'
     else:
         category, note = 'sin clasificar', guess
     rows.append((address, size, category, note, evidence))

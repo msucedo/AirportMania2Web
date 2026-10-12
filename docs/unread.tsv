@@ -3,7 +3,7 @@ address	bytes	category	note	evidence
 3260	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2ca4* tables=0
 338c	60	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 2aa0* 15d54 tables=0
 33c8	64	fontanería	by rule: names of types only	floats=0 stores=0 <- 338c a1c9c tables=0 AirbornePropeller
-35ac	68	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 STAGES.AIRBORNE.PROPELLER
+35ac	68	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 STAGES.AIRBORNE.PROPELLER
 3810	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 35f0 8a4cc tables=0
 38f0	92	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 383c tables=0
 3b5c	116	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 38f0 8abc4 tables=0
@@ -20,7 +20,7 @@ a3a0	112	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 9d60* 
 a59c	96	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- a488 a624 a810 tables=0
 a868	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- a83c* tables=0
 a994	48	fontanería	by rule: names of types only	floats=0 stores=1 <-  tables=1 Airplane
-b8ac	1292	cubierta	parser of the plane descriptor table; the port reads the same table	floats=0 stores=60 <- 3f3b0 tables=0 Type; AirplaneDescriptor table corrupted; AirplaneDescriptor table corrupted; PLANE.DESCRI
+b8ac	1292	cubierta	parser of the plane descriptor table; the port reads the same table; checked name by name in the fifth pass	floats=0 stores=60 <- 3f3b0 tables=0 Type; AirplaneDescriptor table corrupted; AirplaneDescriptor table corrupted; PLANE.DESCRI
 c01c	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- b8ac tables=0
 c8d8	844	fontanería	by rule: no numbers and no text	floats=0 stores=32 <- c1b4 cc24 tables=0
 cc24	100	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- c1b4 tables=0
@@ -28,10 +28,10 @@ cc88	2288	fontanería	by rule: no numbers and no text	floats=0 stores=45 <- c1b4
 e440	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 e4aa	94	fontanería	fragment and graph node plumbing	floats=0 stores=7 <-  tables=0
 e5e8	144	fontanería	fragment and graph node plumbing	floats=0 stores=6 <- e5a8 16e64 28e28 tables=0 Graph_Node
-e678	544	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- e8cc 101b4* tables=0 .INTRO; .LOOP
+e678	544	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <- e8cc 101b4* tables=0 .INTRO; .LOOP
 e898	52	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 101b4* tables=0
 e8cc	184	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 12540 tables=0
-e994	1296	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=76 <- e984 tables=0 Airport Object Created; GAME_TIP.COUNT
+e994	1296	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=76 <- e984 tables=0 Airport Object Created; GAME_TIP.COUNT
 ef44	1080	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- eea4 ef34 tables=0
 f37c	304	fontanería	by rule: no numbers and no text	floats=0 stores=24 <- ef44 f728 12540 12ac4 12ddc* tables=0
 f5d4	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 253e4 tables=0
@@ -42,7 +42,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 128c8	508	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 stores=19 <- 10684* tables=0 %s_%s
 12ac4	552	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 stores=21 <- 12cec tables=0 %s_%s
 12cec	240	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 profile,users,stores=1 <- 712c4* tables=0 save%d.dat
-13ebc	200	cubierta	by rule: only loads resources or makes objects	floats=2 new×1,stores=1 <- def50* e18c4* tables=0
+13ebc	200	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=2 new×1,stores=1 <- def50* e18c4* tables=0
 15208	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- fe8c* 10050* 101b4* 10b58* 115a0* 12ddc* tables=0
 15434	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f5a8 42afc* 42ebc* tables=0
 15460	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f410 563fc 565f4* tables=0
@@ -84,13 +84,13 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 195d0	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 25b94 25bd0* 2e6ec* 2ead0* 2edb4 tables=0
 195fc	116	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 195d0 3bbb4 82678 tables=0
 19728	44	cubierta	anti-fog machine, built	floats=0 stores=0 <-  tables=1 Graph_Node; AntiFog
-19754	108	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=5 <- 199c8 19a8c tables=0 ANTI_FOG.BASE; ANTI_FOG.NOSE; ANTI_FOG.PROPELLER; SOUNDS.ANTI_FOG_SYSTEM_FAN
+19754	108	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=5 <- 199c8 19a8c tables=0 ANTI_FOG.BASE; ANTI_FOG.NOSE; ANTI_FOG.PROPELLER; SOUNDS.ANTI_FOG_SYSTEM_FAN
 197c0	172	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
 19a8c	236	cubierta	anti-fog machine, built	floats=7 stores=9 <- 19a7c* tables=0
 19e50	56	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 AntiFog; DustPuff; AntiSand
-19e88	208	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 19f58 1a048 1a10c* tables=0 BRUSH.%d
+19e88	208	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 19f58 1a048 1a10c* tables=0 BRUSH.%d
 19f58	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-1a6e4	128	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 SAND_PUFF
+1a6e4	128	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 SAND_PUFF
 1aa98	56	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 DustPuff; AntiSand
 1b0a0	164	cubierta	awards room items and dialog, built	floats=16 draws,stores=0 <-  tables=1
 1b388	36	fontanería	text lookup, list merge by time	floats=0 profile,users,stores=0 <- 1aaf4* 1b0a0 1e6f0* tables=0
@@ -117,24 +117,24 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 211f8	540	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 211ec tables=0
 21518	856	cubierta	balloons bonus registration/loading; built	floats=0 stores=25 <- 1d3d4 1e5cc* tables=0 BalloonsBonus::Balloon; BalloonsBonus
 21870	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-21c6c	164	cubierta	by rule: only loads resources or makes objects	floats=1 new×1,stores=2,formed@22636 <-  tables=0
+21c6c	164	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=1 new×1,stores=2,formed@22636 <-  tables=0
 21dbc	140	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-22210	232	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 21dbc 222f8* tables=0 BALLOON.%d; BALLOON.THREAD
+22210	232	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <- 21dbc 222f8* tables=0 BALLOON.%d; BALLOON.THREAD
 22620	68	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 BalloonsBonus::Balloon; BalloonsBonus; Bat
-22664	208	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 2275c* 22a64 tables=0 STAGES.MONSTERS.BAT.%d
+22664	208	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 2275c* 22a64 tables=0 STAGES.MONSTERS.BAT.%d
 22734	40	fontanería	text lookup, list merge by time	floats=4 stores=0 <- 14f6c* tables=0
 22a64	88	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 22cfc	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-22d40	144	cubierta	by rule: only loads resources or makes objects	floats=1 loads,stores=1 <-  tables=1
-22dd0	176	cubierta	by rule: only loads resources or makes objects	floats=33 loads,stores=1 <-  tables=1
+22d40	144	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=1 loads,stores=1 <-  tables=1
+22dd0	176	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=33 loads,stores=1 <-  tables=1
 22e80	232	muerta	the level's bird: never made (see notes)	floats=26 draws,stores=0 <-  tables=1
 2300c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Bird
-23338	176	cubierta	by rule: only loads resources or makes objects	floats=18 loads,stores=5 <- 23274* 234e0 tables=0 STAGES.ISLAND.BUOY; STAGES.ISLAND.BUOY_MASK
+23338	176	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=18 loads,stores=5 <- 23274* 234e0 tables=0 STAGES.ISLAND.BUOY; STAGES.ISLAND.BUOY_MASK
 234e0	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 236a0	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Buoys; ChristmasTree
-236cc	204	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=10 <- 23a84 tables=0 STAGES.NORTH_POLE.RED_SHINE; STAGES.NORTH_POLE.GREEN_SHINE; STAGES.NORTH_POLE.BLUE_SHINE; 
+236cc	204	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=14 loads,stores=10 <- 23a84 tables=0 STAGES.NORTH_POLE.RED_SHINE; STAGES.NORTH_POLE.GREEN_SHINE; STAGES.NORTH_POLE.BLUE_SHINE; 
 23798	668	sin datos	Christmas tree and its lights: no images	floats=66 draws,stores=1 <-  tables=1
-23a34	80	cubierta	by rule: only loads resources or makes objects	floats=3 loads,sound,stores=1 <-  tables=1 SOUNDS.MELODY_TREE
+23a34	80	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=3 loads,sound,stores=1 <-  tables=1 SOUNDS.MELODY_TREE
 23a84	56	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 23c00	172	sin datos	Christmas tree and its lights: no images	floats=23 stores=7 <-  tables=1 ChristmasTree; ClickeableHorizonObject
 23cac	180	sin datos	Christmas tree and its lights: no images	floats=27 draws,stores=0 <-  tables=1
@@ -148,17 +148,17 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 24534	220	cubierta	Coffee and Cake / In-Flight Movies tabs, built	floats=0 stores=2 <- 24860 tables=0 GUI.INGAMEGUI.IN_FLIGHT_MOVIES_ON; SOUNDS.IN_FLIGHT_MOVIES_READY; GUI.INGAMEGUI.IN_FLIGHT_
 2472c	160	sin datos	ClickeableMessage: not used by the data	floats=13 stores=5 <-  tables=1
 24ae0	68	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 CoffeeAndCake; InFlightMovies; ClickeableMessage
-24b24	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 250bc tables=0 FONTS.TEEN; BACK_SPRITES.SPEECH_BUBBLE
+24b24	52	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 250bc tables=0 FONTS.TEEN; BACK_SPRITES.SPEECH_BUBBLE
 24ee8	60	sin datos	ClickeableMessage: not used by the data	floats=3 stores=4 <-  tables=1
 24f24	72	sin datos	ClickeableMessage: not used by the data	floats=8 stores=3 <-  tables=1
 24f6c	336	sin datos	ClickeableMessage: not used by the data	floats=14 draws,stores=0 <-  tables=1
 250bc	148	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 25304	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ClickeableMessage
 254a8	28	fontanería	type names	floats=0 stores=0 <- 21dbc 23d60 2425c 250bc 25eb8 25ef8 tables=1 ClickSplash
-256d4	84	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 BALLOON.SPLASH; ClickeableSoundZone
+256d4	84	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 BALLOON.SPLASH; ClickeableSoundZone
 25728	92	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 2582c	60	sin datos	ClickeableMessage: not used by the data	floats=3 stores=1 <-  tables=1
-25868	248	cubierta	by rule: only loads resources or makes objects	floats=33 loads,sound,stores=2 <-  tables=1
+25868	248	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=33 loads,sound,stores=2 <-  tables=1
 25b5c	56	fontanería	type names	floats=0 stores=0 <-  tables=1 ClickSplash; ClickeableSoundZone
 25e5c	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 21a48* 49518* 59140* bca34* tables=1
 25eb8	64	fontanería	by rule: names of types only	floats=0 stores=0 <- 21870 49108 58db0 bc6b0 tables=1 CoinBonus
@@ -166,9 +166,9 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 25f5c	216	cubierta	coin bonus and combo explosion, built	floats=0 draws,loads,stores=3 <- 263bc tables=0 COIN_BONUS
 26450	56	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Bonucer; CoinBonus
 26b58	112	cubierta	coin bonus and combo explosion, built	floats=14 stores=0 <-  tables=1 ComboExplosion
-271b0	64	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.BONUS_REMARK
+271b0	64	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 EFFECTS.BONUS_REMARK
 27294	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ComboExplosion
-27374	512	cubierta	by rule: only loads resources or makes objects	floats=0 new×4,stores=1 <-  tables=1 FONTS.WHITE; CONTINUE_GAME_DIALOG.TEXT
+27374	512	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 new×4,stores=1 <-  tables=1 FONTS.WHITE; CONTINUE_GAME_DIALOG.TEXT
 27580	96	cubierta	continue-game question buttons	floats=2 stores=1 <- 27374 tables=0
 277ec	64	cubierta	palette selection dialog of the options; built	floats=0 profile,users,stores=0 <-  tables=1
 2782c	96	cubierta	continue-game question buttons	floats=2 stores=1 <- 27374 tables=0 YES
@@ -177,53 +177,53 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 28df8	48	cubierta	stars, sun, moon, deicer: built	floats=0 draws,stores=0 <-  tables=1
 290c0	44	fontanería	by rule: small helper	floats=1 stores=0 <-  tables=1
 291d0	220	cubierta	stars, sun, moon, deicer: built	floats=0 stores=2 <-  tables=1 SingleStar
-294b4	96	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=2 AMBIENT.STAR; StarField
+294b4	96	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=2 AMBIENT.STAR; StarField
 297a4	108	cubierta	stars, sun, moon, deicer: built	floats=10 stores=2 <-  tables=1
 29810	76	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 StarField::Star
-2985c	268	cubierta	by rule: only loads resources or makes objects	floats=7 loads,stores=9 <- 296f0* tables=0 AMBIENT.STAR
-29a4c	108	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 AMBIENT.STAR; Sun
-29ab8	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 29afc* 29d34 tables=0 AMBIENT.SUN; AMBIENT.SUNRAY
+2985c	268	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=7 loads,stores=9 <- 296f0* tables=0 AMBIENT.STAR
+29a4c	108	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 AMBIENT.STAR; Sun
+29ab8	52	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 29afc* 29d34 tables=0 AMBIENT.SUN; AMBIENT.SUNRAY
 29d34	80	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Moon
-29f78	236	cubierta	by rule: only loads resources or makes objects	floats=13 new×1,stores=5,formed@2a91e <-  tables=0
+29f78	236	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=13 new×1,stores=5,formed@2a91e <-  tables=0
 2a8f0	140	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 SingleStar; StarField; StarField::Star; Sun; Moon; Deicer
-2a97c	88	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <- 2a9d4 2aca0 tables=0 DEICER; AIR; SOUNDS.DE_ICER_WORKING
+2a97c	88	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=4 <- 2a9d4 2aca0 tables=0 DEICER; AIR; SOUNDS.DE_ICER_WORKING
 2aa88	172	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
 2aca0	224	cubierta	stars, sun, moon, deicer: built	floats=5 stores=10 <- 2ac90* tables=0
 2b14c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Deicer
 2b16c	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 2b6f4 tables=0
 2b708	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 2a94 e440 1b094 268d8 27574 28f34 tables=8
-2bb20	188	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=0 draws,stores=20 <- 328d4* tables=0
-2bf94	196	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=4 <- 2bf78 tables=0
-2c09c	208	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=6 draws,loads,stores=4 <- 2c080 tables=0
-2c188	208	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=6 draws,loads,stores=3 <- 2c16c tables=0
-2c28c	272	cubierta	by rule: only loads resources or makes objects	floats=16 loads,stores=2 <- 2c26c* tables=0 GUI.DIALOGS.SEPARATOR
-2c39c	36	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=0 draws,stores=0 <-  tables=1
-2c8ac	208	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=5 <- 2c6a4* tables=0
-2ceb4	68	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=1 <- 4ccac 7f508 tables=0
-2cef8	92	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=0 draws,stores=0 <-  tables=1
-2cf8c	248	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=11 <- 2cf54* tables=0
+2bb20	188	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=0 draws,stores=20 <- 328d4* tables=0
+2bf94	196	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=6 loads,stores=4 <- 2bf78 tables=0
+2c09c	208	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=6 draws,loads,stores=4 <- 2c080 tables=0
+2c188	208	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=6 draws,loads,stores=3 <- 2c16c tables=0
+2c28c	272	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=16 loads,stores=2 <- 2c26c* tables=0 GUI.DIALOGS.SEPARATOR
+2c39c	36	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=0 draws,stores=0 <-  tables=1
+2c8ac	208	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=6 loads,stores=5 <- 2c6a4* tables=0
+2ceb4	68	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=4 stores=1 <- 4ccac 7f508 tables=0
+2cef8	92	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=0 draws,stores=0 <-  tables=1
+2cf8c	248	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=6 loads,stores=11 <- 2cf54* tables=0
 2d084	28	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <- 4c218* tables=0
-2d17c	472	cubierta	by rule: only loads resources or makes objects	floats=25 loads,stores=12 <- 2d14c* tables=0
-2d354	248	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=3 stores=2 <- 2d17c 4c218* tables=0
+2d17c	472	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=25 loads,stores=12 <- 2d14c* tables=0
+2d354	248	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=3 stores=2 <- 2d17c 4c218* tables=0
 2e1cc	28	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
-2f098	80	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=3 draws,stores=0 <-  tables=1
-2f36c	64	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=1 stores=0 <-  tables=1
+2f098	80	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=3 draws,stores=0 <-  tables=1
+2f36c	64	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=1 stores=0 <-  tables=1
 2f408	36	fontanería	by rule: small helper	floats=2 stores=3 <-  tables=1
-2f494	40	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=3 <-  tables=1
+2f494	40	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=4 stores=3 <-  tables=1
 2f744	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2b6f4 2b708 tables=0
-2f770	472	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=84 stores=9 <- 2b7b0* 2bb20 2bbdc* 2bd38* 4d688* 4d92c* tables=0
+2f770	472	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=84 stores=9 <- 2b7b0* 2bb20 2bbdc* 2bd38* 4d688* 4d92c* tables=0
 2f948	104	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 2de10* 2e3d0* 80124* tables=0
 2f9b0	160	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 2de10* tables=0
 30c04	132	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 2f744 tables=0
-30d80	404	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=27 stores=11 <- 2f9b0 tables=0
+30d80	404	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=27 stores=11 <- 2f9b0 tables=0
 310b0	328	no aplica	online leaderboard page of the awards room, achievements notice	floats=0 loads,stores=4 <- 3aadc tables=0 FONTS.WHITE; AWARDS_ROOM.3; GSN.ACHIEVEMENT_UNLOCKED
-311f8	48	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=4 stores=1 <-  tables=1
-31228	260	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): the port's own, laid out from their callers	floats=25 draws,stores=0 <-  tables=1
+311f8	48	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=4 stores=1 <-  tables=1
+31228	260	cubierta	dialog widgets (base, bar, slider, check box, button, text field, list): read in the sixth pass; the port's follow them	floats=25 draws,stores=0 <-  tables=1
 317d0	276	cubierta	award notice: manager update, particle, draw; built	floats=1 stores=1 <-  tables=1
 31ac8	128	cubierta	award notice: manager update, particle, draw; built	floats=0 draws,loads,sound,stores=1 <- 31648* tables=0
 31ca8	252	cubierta	award notice: manager update, particle, draw; built	floats=25 draws,stores=0 <- 31a14* tables=0
 32140	48	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 50600 712c4* tables=0
-32170	476	cubierta	by rule: only loads resources or makes objects	floats=26 new×3,stores=1 <- 32140 55b3c* tables=0 FONTS.WHITE; CLOSE
+32170	476	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=26 new×3,stores=1 <- 32140 55b3c* tables=0 FONTS.WHITE; CLOSE
 342a4	152	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 34170* 7f774* 821b8* 9f494 9fb28 tables=0
 345e8	340	fontanería	by rule: no numbers and no text	floats=0 loads,stores=14 <- 345d8 tables=0
 34aac	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
@@ -244,17 +244,17 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 38640	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 3710c* tables=0
 388e0	120	cubierta	buttons of the finish, restart and map questions	floats=9 stores=1 <- 3710c* tables=0 YES
 38b64	88	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-395f4	60	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 STAGES.TUTORIAL.FLAG
+395f4	60	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 STAGES.TUTORIAL.FLAG
 39774	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Flag; FlyingSanta
-397a0	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 397f4* 39b18 tables=0 STAGES.NORTH_POLE.SANTA; STAGES.NORTH_POLE.REINDEER
+397a0	52	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 397f4* 39b18 tables=0 STAGES.NORTH_POLE.SANTA; STAGES.NORTH_POLE.REINDEER
 397d4	32	fontanería	by rule: small helper	floats=2 stores=0 <- 13f84* tables=0
 39b18	76	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 39ca8	60	fontanería	by rule: names of types only	floats=0 stores=1 <-  tables=1 FlyingSanta; FlyingStrip
 3a078	112	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=2
 3a278	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 FlyingStrip; Fog
-3a2a4	112	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 FOG
+3a2a4	112	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 FOG
 3a804	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Fog
-3a8f4	48	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <-  tables=1 FONTS.MAIN
+3a8f4	48	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <-  tables=1 FONTS.MAIN
 3a924	268	no aplica	frame counter, Game Center achievement names, build configuration	floats=6 stores=2 <-  tables=1 FPS = %.03f
 3aadc	352	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 3ac3c tables=0
 3ac3c	672	no aplica	frame counter, Game Center achievement names, build configuration	floats=0 profile,stores=1 <- 318e4* 3b0e8 tables=0 AM2S_AWARD_%02dG; AM2S_AWARD_%02dS; AM2S_AWARD_%02dB; AM2S_AWARD_%02d
@@ -276,7 +276,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 3ef2c	108	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
 3ef98	212	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=7 <-  tables=1 system.cfg
 3f090	184	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 3cb90* tables=0
-3f2a4	72	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 FONTS.ULTRA
+3f2a4	72	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 FONTS.ULTRA
 3f314	112	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 3cb90* 805ac* tables=0
 3f384	32	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 3f450	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 3f430 6cbf0* 6cf14* tables=0
@@ -286,22 +286,22 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 3fc28	280	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=16 <- 3b4a8 tables=0 reflexive
 3fd40	180	no aplica	options and build settings on disk (system.cfg, bv.bin, build expiry), publisher name	floats=0 stores=12 <- 3b4a8 tables=0 ENGLISH
 3ff20	124	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 3fe7c tables=0
-4016c	56	cubierta	by rule: only loads resources or makes objects	floats=0 new×1,stores=1 <- 3ff9c 40008 a207c tables=0 GameTip
-40680	168	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=5 <- 40728 40788* tables=0 INDICATORS.FUELING_MARK; INDICATORS.FUELING_MARK_TICK; SOUNDS.FUELING
+4016c	56	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 new×1,stores=1 <- 3ff9c 40008 a207c tables=0 GameTip
+40680	168	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=5 <- 40728 40788* tables=0 INDICATORS.FUELING_MARK; INDICATORS.FUELING_MARK_TICK; SOUNDS.FUELING
 40728	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 4136c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 GasStation
-4138c	444	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=0 <- 41564 tables=0 Speed; RemarkSurfaceResource; BackSurfaceResource; SurfaceSpotResource; NodePosition; Rect
+4138c	444	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=0 <- 41564 tables=0 Speed; RemarkSurfaceResource; BackSurfaceResource; SurfaceSpotResource; NodePosition; Rect
 41548	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 183d4 tables=0
-41564	1328	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=50 <- 10b58* 3f3d0 tables=0 Type; Count; GasStation; GAS_STATION.DESCRIPTOR_TABLE; GasStationDescriptorTable; GasStati
+41564	1328	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=50 <- 10b58* 3f3d0 tables=0 Type; Count; GasStation; GAS_STATION.DESCRIPTOR_TABLE; GasStationDescriptorTable; GasStati
 41cdc	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 41564 tables=0
 42464	556	fontanería	by rule: no numbers and no text	floats=0 stores=9 <- 41f60 tables=0
 42690	136	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 41f60 tables=0
 42718	252	fontanería	by rule: no numbers and no text	floats=0 stores=8 <- 41f60 tables=0
 42e08	152	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 440a8	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Gate
-440c8	1192	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=2 <- 4458c tables=0 Loading; Unloading; Speed; RemarkSurfaceResource; NodePosition; PlaneOrientation; DespZ; S
+440c8	1192	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=2 <- 4458c tables=0 Loading; Unloading; Speed; RemarkSurfaceResource; NodePosition; PlaneOrientation; DespZ; S
 44570	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 18500 tables=0
-4458c	1116	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=42 <- 10b58* 3f5a8 tables=0 Type; Count; Gate; GateDescriptor table corrupted; GateDescriptor table corrupted; GATES.D
+4458c	1116	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=42 <- 10b58* 3f5a8 tables=0 Type; Count; Gate; GateDescriptor table corrupted; GateDescriptor table corrupted; GATES.D
 44c30	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 4458c tables=0
 454a4	260	fontanería	by rule: no numbers and no text	floats=0 stores=15 <- 44dc0 tables=0
 455a8	484	fontanería	by rule: no numbers and no text	floats=0 stores=19 <- 44dc0 tables=0
@@ -312,18 +312,18 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 46788	184	cubierta	hangar helpers; built	floats=8 stores=5 <- 46230* tables=0
 4695c	84	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=3 <- 45d58* 466dc* tables=0
 469b0	84	cubierta	hangar helpers; built	floats=4 stores=0 <- 464dc tables=0
-46a04	52	cubierta	by rule: only loads resources or makes objects	floats=0 new×1,stores=3 <- 45bd4* tables=0 Hangar
+46a04	52	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 new×1,stores=3 <- 45bd4* tables=0 Hangar
 46ad8	300	fontanería	by rule: no numbers and no text	floats=0 stores=2 <-  tables=1
 4796c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Hangar
 47b4c	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 1817c tables=0
-47b68	1328	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=50 <- 10b58* 3f3f0 tables=0 Type; Count; Hangar; HANGAR.DESCRIPTOR_TABLE; HangarDescriptorTable; HangarDescriptorTable
+47b68	1328	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=50 <- 10b58* 3f3f0 tables=0 Type; Count; Hangar; HANGAR.DESCRIPTOR_TABLE; HangarDescriptorTable; HangarDescriptorTable
 482e0	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 47b68 tables=0
 48a68	556	fontanería	by rule: no numbers and no text	floats=0 stores=9 <- 48564 tables=0
 48c94	136	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 48564 tables=0
 48d1c	256	fontanería	by rule: no numbers and no text	floats=0 stores=8 <- 48564 tables=0
 48e1c	748	cubierta	helicopter bonus; built	floats=0 stores=9 <- 48564 tables=0 HelicopterBonus
 49108	208	cubierta	helicopter bonus; built	floats=6 stores=0 <-  tables=1
-491d8	252	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <- 49108 4996c* tables=0 HELICOPTER.%d; SOUNDS.HELICOPTER_LOOP
+491d8	252	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=4 <- 49108 4996c* tables=0 HELICOPTER.%d; SOUNDS.HELICOPTER_LOOP
 49374	420	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 492d4 49364 tables=0
 49c04	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 HelicopterBonus
 4a410	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
@@ -333,7 +333,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 4b1ac	156	cubierta	hint dialog and horizon objects; built	floats=0 stores=2 <-  tables=1 HorizonObject
 4b484	112	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=5
 4b67c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 HorizonObject; Ice
-4b6a8	100	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 RUNWAY.FROZEN
+4b6a8	100	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 RUNWAY.FROZEN
 4bb64	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Ice
 4ca38	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 4cc68	68	cubierta	shop: buttons, list reset and draw; read this session	floats=0 stores=1 <- 4c218* tables=0 IMPROVEMENTS_DIALOG.BUY; IMPROVEMENTS_DIALOG.SELL
@@ -344,16 +344,16 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 4d598	240	cubierta	shop: buttons, list reset and draw; read this session	floats=20 stores=0 <-  tables=1
 4f4c0	116	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 50160	116	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 StoneHengeIsland; TikiIsland; TropicalIsland; VulcanoIsland; IslandWater
-501d4	60	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <- 5022c tables=0 STAGES.ISLAND.WAVES; MESHES.WATER_MESH
+501d4	60	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <- 5022c tables=0 STAGES.ISLAND.WAVES; MESHES.WATER_MESH
 505e0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 IslandWater
 50600	124	muerta	language dialog: made at start-up and kept at app+0x13c, but nothing opens it in this build	floats=0 stores=0 <- 50bec 510bc tables=0 LANGUAGE_SELECTION_DIALOG.CHANGES_NEED_RESTART
 50980	96	muerta	language dialog: made at start-up and kept at app+0x13c, but nothing opens it in this build	floats=2 stores=1 <- 5073c* tables=0 LANGUAGE_SELECTION_DIALOG.CHANGE_LANGUAGE
-50c00	316	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=2 <- 5073c* tables=0 GUI.DIALOGS.COMBOBOX.TEXT_REMARK
-50ecc	496	cubierta	by rule: only loads resources or makes objects	floats=0 loads,new×1,stores=7 <-  tables=1 FLAGS.%s
+50c00	316	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=14 loads,stores=2 <- 5073c* tables=0 GUI.DIALOGS.COMBOBOX.TEXT_REMARK
+50ecc	496	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,new×1,stores=7 <-  tables=1 FLAGS.%s
 510c8	68	muerta	language dialog: made at start-up and kept at app+0x13c, but nothing opens it in this build	floats=3 draws,stores=0 <-  tables=1
 52270	96	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- 52160 tables=0
-523ce	162	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=6 <-  tables=0
-52560	2460	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=92 <- 524a4 53038 tables=0 Name; Number; Number; False; True; LEVELS_DB; LevelsDB; AreasCount; Area; LevelsCount; Ext
+523ce	162	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=6 <-  tables=0
+52560	2460	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=92 <- 524a4 53038 tables=0 Name; Number; Number; False; True; LEVELS_DB; LevelsDB; AreasCount; Area; LevelsCount; Ext
 53038	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 10b58* tables=0
 53ce4	520	fontanería	by rule: no numbers and no text	floats=0 stores=5 <- 53078* tables=0
 53eec	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 52560 tables=0
@@ -372,23 +372,23 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 55ec8	456	sin datos	long range radar and radar: their pictures are commented out of the resources	floats=34 loads,stores=8 <- 5629c tables=0 GUI.INGAMEGUI.LONG_RANGE_RADAR.IMAGE; GUI.INGAMEGUI.LONG_RANGE_RADAR.TICK; GUI.INGAMEGUI.L
 56090	524	sin datos	long range radar and radar: their pictures are commented out of the resources	floats=61 draws,stores=0 <-  tables=1
 563d0	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 LongRangeRadar; Luggage
-563fc	408	cubierta	by rule: only loads resources or makes objects	floats=2 loads,stores=13 <- 56594 565f4* tables=0 LUGGAGES.PARCEL; LUGGAGES.PARCEL_MARK
+563fc	408	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=2 loads,stores=13 <- 56594 565f4* tables=0 LUGGAGES.PARCEL; LUGGAGES.PARCEL_MARK
 56594	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 573b4	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Luggage
-573d4	1020	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=3 <- 577ec tables=0 Resource; Speed; RemarkSurfaceResource; BackSurfaceResource; NodePosition; DespZ; FrontSur
+573d4	1020	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=3 <- 577ec tables=0 Resource; Speed; RemarkSurfaceResource; BackSurfaceResource; NodePosition; DespZ; FrontSur
 577d0	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 182a8 tables=0
-577ec	1112	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=42 <- 10b58* 3f410 tables=0 Type; Count; Luggage; LUGGAGE.DESCRIPTOR_TABLE; LuggageDescriptorTable; LuggageDescriptorT
+577ec	1112	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=42 <- 10b58* 3f410 tables=0 Type; Count; Luggage; LUGGAGE.DESCRIPTOR_TABLE; LuggageDescriptorTable; LuggageDescriptorT
 57e8c	60	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 577ec tables=0
 586e4	348	fontanería	by rule: no numbers and no text	floats=0 stores=20 <- 5801c tables=0
 58840	512	fontanería	by rule: no numbers and no text	floats=0 stores=21 <- 5801c tables=0
 58a40	508	fontanería	by rule: no numbers and no text	floats=0 stores=25 <- 5801c 585e0 tables=0
 58c3c	372	sin datos	lunar buggy bonus: its pictures are commented out of the resources	floats=0 stores=1 <- 577ec 57ec8 57f80 5801c 585e0 tables=0 LunarBuggyBonus
 58db0	200	cubierta	luggage; built	floats=6 stores=0 <-  tables=1
-58e78	132	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=6 <- 58db0 tables=0 STAGES.MOON.BUGGY.CHASSIS; STAGES.MOON.BUGGY.WHEEL_LARGE; STAGES.MOON.BUGGY.WHEEL_SMALL; S
+58e78	132	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=6 <- 58db0 tables=0 STAGES.MOON.BUGGY.CHASSIS; STAGES.MOON.BUGGY.WHEEL_LARGE; STAGES.MOON.BUGGY.WHEEL_SMALL; S
 58f9c	420	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 58efc 58f8c tables=0
 592cc	128	sin datos	lunar buggy bonus: its pictures are commented out of the resources	floats=12 stores=4 <-  tables=1
 5934c	508	sin datos	lunar buggy bonus: its pictures are commented out of the resources	floats=42 draws,stores=1 <-  tables=1
-59548	184	cubierta	by rule: only loads resources or makes objects	floats=3 new×1,stores=2,formed@59616 <-  tables=0
+59548	184	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=3 new×1,stores=2,formed@59616 <-  tables=0
 59600	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 LunarBuggyBonus
 5a830	140	no aplica	main menu's promotions and links out	floats=3 draws,stores=0 <-  tables=1
 5a8bc	692	no aplica	main menu's promotions and links out	floats=89 draws,touch,stores=8 <-  tables=1 http://reflexive.lemonteam.com/
@@ -409,18 +409,18 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 5ddf4	52	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 profile,users,stores=2 <- 5dda4* 5fb44* tables=0
 5e4b4	88	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Map::MapSnow
 5e50c	100	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
-5eb18	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 5eb4c* 5edc8 tables=0 MAP.SATELLITE; MAP.SATELLITE_BRIGHT
+5eb18	52	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 5eb4c* 5edc8 tables=0 MAP.SATELLITE; MAP.SATELLITE_BRIGHT
 5edc8	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-5f248	360	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=19 <- 5f420* 5f4c4 5f5dc 5f684* tables=0 FONTS.WHITE
+5f248	360	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=19 <- 5f420* 5f4c4 5f5dc 5f684* tables=0 FONTS.WHITE
 5f3b0	112	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=4 draws,stores=0 <-  tables=5
 5f4a0	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 5f4c4	136	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 stores=1 <- 60e50* tables=0 MAP.PLAY; MAP.HUD.BUTTONS.PLAY_ON
 5f5dc	132	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 stores=1 <- 60e50* tables=0 MAP.AWARDS_ROOM; MAP.HUD.BUTTONS.AWARDS_ON
 5f660	36	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-5f74c	576	cubierta	by rule: only loads resources or makes objects	floats=2 loads,stores=35 <- 5f73c tables=0 MAP.LEVELS
+5f74c	576	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=2 loads,stores=35 <- 5f73c tables=0 MAP.LEVELS
 614f4	148	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 5e50c tables=0
-61950	224	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=1 <-  tables=1
-61bb4	236	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=1 <-  tables=1
+61950	224	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=14 loads,stores=1 <-  tables=1
+61bb4	236	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=14 loads,stores=1 <-  tables=1
 625a8	160	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=12 <- 6225c tables=0
 62648	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 5e6e4* 614f4 tables=0
 62670	68	fontanería	by rule: no numbers and no text	floats=0 stores=4 <- 62648 tables=0
@@ -442,12 +442,12 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 67bb8	108	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 684a0	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 68700	180	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-68e60	76	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 68700 68f08* tables=0 PAINTING_STOPSPOT.COLOR; PAINTING_STOPSPOT.COLOR_SHADING; PAINTING_STOPSPOT.READY
-68eac	92	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 684a0 690a0* tables=0 PAINTING_STOPSPOT.RIGHT_OFF_ISLAND; PAINTING_STOPSPOT.RIGHT_OFF; PAINTING_STOPSPOT.RIGHT; 
+68e60	76	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <- 68700 68f08* tables=0 PAINTING_STOPSPOT.COLOR; PAINTING_STOPSPOT.COLOR_SHADING; PAINTING_STOPSPOT.READY
+68eac	92	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <- 684a0 690a0* tables=0 PAINTING_STOPSPOT.RIGHT_OFF_ISLAND; PAINTING_STOPSPOT.RIGHT_OFF; PAINTING_STOPSPOT.RIGHT; 
 69170	92	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 PaintingSign; PaintingPalette; PaintingStopSpot; LightFan
-695ec	84	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.LIGHT_FAN; BonusStar
-69b88	160	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.BONUS_STAR; Spark
-69d9c	72	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.SPARK
+695ec	84	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 EFFECTS.LIGHT_FAN; BonusStar
+69b88	160	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 EFFECTS.BONUS_STAR; Spark
+69d9c	72	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 EFFECTS.SPARK
 6a1b0	80	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 LightFan; BonusStar; Spark
 6a940	96	muerta	perfect scores message: nothing reads where it is kept (see audit)	floats=2 stores=1 <- 6a6cc* tables=0
 6aca4	168	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 40728 42e08 46ad8 56594 6cdd0 78c68 tables=1
@@ -461,29 +461,29 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 6cdd0	296	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 6e658	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Runway
 6e6b8	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 3f47c tables=0
-6e6d4	1112	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=6 <- 3f430 tables=0 Type; Count; Runway; RUNWAY.DESCRIPTOR_TABLE; RunwayDescriptorTable; RunwayDescriptorTable
+6e6d4	1112	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables; checked name by name in the fifth pass	floats=0 stores=6 <- 3f430 tables=0 Type; Count; Runway; RUNWAY.DESCRIPTOR_TABLE; RunwayDescriptorTable; RunwayDescriptorTable
 6ed74	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 6e6d4 tables=0
 6f310	88	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 6eef0 tables=0
 6f368	308	cubierta	sand on runways; built	floats=0 stores=5 <- 6eef0 tables=0 Sand
-6f49c	208	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 6f56c 6f5cc* tables=0 RUNWAY.SAND.%d
+6f49c	208	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <- 6f56c 6f5cc* tables=0 RUNWAY.SAND.%d
 6f56c	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 6fafc	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Sand; ScalableStaticZImage
 6fb28	60	cubierta	sand on runways; built	floats=2 stores=5 <- 46c14* 78cb8* 79194* 84a8c* tables=0
 6fb64	68	cubierta	sand on runways; built	floats=0 draws,stores=0 <-  tables=1
 6fba8	40	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 6ffa4	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScalableStaticZImage; ScaryCloud
-6ffd0	184	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 70098* 702dc tables=0 STAGES.MONSTERS.SCARY_CLOUD_%d
+6ffd0	184	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 70098* 702dc tables=0 STAGES.MONSTERS.SCARY_CLOUD_%d
 702dc	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 70464	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScaryCloud; ScaryFog
-70490	184	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 70580* 70740 tables=0 STAGES.MONSTERS.FOG_%d
+70490	184	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 70580* 70740 tables=0 STAGES.MONSTERS.FOG_%d
 70548	56	fontanería	small constructors of scenery called by built ones	floats=8 stores=0 <- 149d4* tables=0
 70740	112	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 708f4	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScaryFog
 70b70	372	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 70ad0 70b60 tables=0
-71c40	84	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 FONTS.ULTRA
+71c40	84	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 FONTS.ULTRA
 71dfc	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScoreMessage; ScrollingCloud
 71e28	40	fontanería	small constructors of scenery called by built ones	floats=4 stores=0 <- 14858* tables=0
-71f20	184	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 71e50* 71fd8 tables=0 STAGES.AIRBORNE.CLOUDS.%d
+71f20	184	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 71e50* 71fd8 tables=0 STAGES.AIRBORNE.CLOUDS.%d
 71fd8	96	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 722cc	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ScrollingCloud; ScrollingDistantObject
 722f8	52	fontanería	small constructors of scenery called by built ones	floats=6 stores=0 <- 14b5c* tables=0
@@ -492,7 +492,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 72934	92	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 73100	160	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=12 <- 72db4 tables=0
 731a0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Sea
-73258	312	cubierta	by rule: only loads resources or makes objects	floats=6 loads,stores=2 <- 737e0 tables=0 SerializableLine
+73258	312	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=6 loads,stores=2 <- 737e0 tables=0 SerializableLine
 7368c	192	cubierta	moon sky, sky, sea loaders; built	floats=6 stores=0 <-  tables=1
 737e0	348	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 7368c tables=0
 73b9c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 SerializableLine; ShowAreaLevel
@@ -500,14 +500,14 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 73d50	152	no aplica	developer's overlay (ShowAreaLevel: %d-%d, %3d %3d)	floats=8 draws,stores=0 <-  tables=1
 73de8	224	no aplica	developer's overlay (ShowAreaLevel: %d-%d, %3d %3d)	floats=11 new×1,stores=4,formed@73fb2 <-  tables=0
 73f9c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 ShowAreaLevel
-74088	48	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <-  tables=1 FONTS.MAIN
+74088	48	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <-  tables=1 FONTS.MAIN
 740b8	276	no aplica	developer's overlay (ShowAreaLevel: %d-%d, %3d %3d)	floats=3 touch,stores=1 <-  tables=1 %3d %3d
 741dc	156	cubierta	moon sky, sky, sea loaders; built	floats=0 stores=1 <-  tables=1 Sky
 74c48	152	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 74f08	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Sky; SkyLights
 754ec	92	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 SkyLights; SmokeTail
-75aa4	120	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.SMOKE
-75db8	200	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 76304 tables=0 EFFECTS.SMOKE_BLACK
+75aa4	120	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 EFFECTS.SMOKE
+75db8	200	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <- 76304 tables=0 EFFECTS.SMOKE_BLACK
 75e80	88	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 764d8	92	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 SmokeTail; Smoke; BlackSmoke; Snow
 76534	120	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
@@ -525,15 +525,15 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 77660	208	cubierta	painting stop spot spray; built	floats=21 touch,stores=6 <-  tables=1
 77730	184	cubierta	painting stop spot spray; built	floats=14 draws,stores=0 <-  tables=1 Spray
 777e8	104	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-77850	76	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=3 <- 7789c 7796c* tables=0 SPRAY_TOP; SPRAY_COLOR; SPRAY_RAY
+77850	76	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=3 <- 7789c 7796c* tables=0 SPRAY_TOP; SPRAY_COLOR; SPRAY_RAY
 77f4c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Spray
 78830	96	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=2 stores=1 <- 78594* tables=0 FINAL_REPORT_DIALOG.CONTINUE
 78c68	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 67bb8 84a28 tables=1
 79a80	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 StopSpot
 79aa0	64	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=0 stores=1 <-  tables=1 SWG_INTRO
-7a3c4	452	cubierta	by rule: only loads resources or makes objects	floats=29 loads,new×1,stores=11 <- 79fec* tables=0
+7a3c4	452	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=29 loads,new×1,stores=11 <- 79fec* tables=0
 7a880	68	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=3 stores=1 <-  tables=1 RealTutorial
-7a8c4	104	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <- 7a9d8 7c084 tables=0 FONTS.TEEN; INDICATORS.NO; INDICATORS.YES; GUI.GOAL_CHECKBOX
+7a8c4	104	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=4 <- 7a9d8 7c084 tables=0 FONTS.TEEN; INDICATORS.NO; INDICATORS.YES; GUI.GOAL_CHECKBOX
 7ac28	240	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=4 stores=1 <- 7cdc4* tables=0 BasicSequenceTutorial; CombosTutorial; ExtrasTutorial
 7b0fc	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 7b534 7b784 7ba50 tables=1
 7b784	80	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
@@ -541,11 +541,11 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 7c0d0	120	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 7bf24 tables=0
 7c68c	116	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 7c148 tables=0
 7c700	240	fontanería	by rule: no numbers and no text	floats=0 stores=10 <- 7c148 7cff8 tables=0
-7cb08	344	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=7 <- 7ad18* 7b068 tables=0 TUTORIAL_DIALOG.LEVEL3.GOAL1; TUTORIAL_DIALOG.LEVEL3.GOAL2; TUTORIAL_DIALOG.LEVEL3.GOAL3
-7cc60	356	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=15 <- 7aeac 7cb08 7d31c 7d464 tables=0 GUI.TUTORIAL_BACK_TOP; GUI.TUTORIAL_BACK_RIGHT; GUI.TUTORIAL_BACK_CORNER; GUI.TUTORIAL_BAC
+7cb08	344	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=7 <- 7ad18* 7b068 tables=0 TUTORIAL_DIALOG.LEVEL3.GOAL1; TUTORIAL_DIALOG.LEVEL3.GOAL2; TUTORIAL_DIALOG.LEVEL3.GOAL3
+7cc60	356	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=15 <- 7aeac 7cb08 7d31c 7d464 tables=0 GUI.TUTORIAL_BACK_TOP; GUI.TUTORIAL_BACK_RIGHT; GUI.TUTORIAL_BACK_CORNER; GUI.TUTORIAL_BAC
 7cedc	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 7cdc4* tables=0
-7d31c	328	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=8 <- 7ad18* 7afd4 tables=0 TUTORIAL_DIALOG.LEVEL2.GOAL1; TUTORIAL_DIALOG.LEVEL2.GOAL2
-7d464	356	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <- 7ad18* 7af40 tables=0 TUTORIAL_DIALOG.LEVEL1.GOAL1; TUTORIAL_DIALOG.LEVEL1.GOAL2; TUTORIAL_DIALOG.LEVEL1.GOAL3; 
+7d31c	328	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=8 <- 7ad18* 7afd4 tables=0 TUTORIAL_DIALOG.LEVEL2.GOAL1; TUTORIAL_DIALOG.LEVEL2.GOAL2
+7d464	356	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=4 <- 7ad18* 7af40 tables=0 TUTORIAL_DIALOG.LEVEL1.GOAL1; TUTORIAL_DIALOG.LEVEL1.GOAL2; TUTORIAL_DIALOG.LEVEL1.GOAL3; 
 7d5c8	104	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 RealTutorial; BasicSequenceTutorial; CombosTutorial; ExtrasTutorial
 7d9e4	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 7daa0	96	cubierta	buttons of the final report and the tutorial dialogs; opening screen name	floats=2 stores=1 <- 7d650* tables=0 TUTORIAL_DIALOG.CONTINUE
@@ -570,21 +570,21 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 83780	116	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 82d58 tables=0
 838bc	152	fontanería	by rule: no numbers and no text	floats=0 stores=11 <- 837f4 tables=0
 839f0	348	fontanería	by rule: no numbers and no text	floats=0 stores=3 <- 82ec4 tables=0
-83d54	68	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <- 29e9c 84084 tables=1 StaticImage
+83d54	68	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <- 29e9c 84084 tables=1 StaticImage
 84084	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-841cc	68	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <- 6fba8 84424 tables=1 StaticZImage
+841cc	68	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <- 6fba8 84424 tables=1 StaticZImage
 8430c	280	cubierta	two-colour image, wash and go parts; built	floats=2 draws,stores=4 <- 842fc* tables=0
 84424	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 84994	116	cubierta	two-colour image, wash and go parts; built	floats=0 stores=0 <-  tables=1 StaticImage; StaticZImage; WaterSplash; CleanShinyStar; ShowerWater; WashingRoller; WashAn
 84a28	84	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-8568c	164	cubierta	by rule: only loads resources or makes objects	floats=1 new×1,stores=2,formed@8674a <-  tables=0
+8568c	164	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=1 new×1,stores=2,formed@8674a <-  tables=0
 85868	72	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-85a90	96	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 AMBIENT.STAR
+85a90	96	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 AMBIENT.STAR
 85c7c	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 85e44	68	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
-86094	224	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 85e44 865fc* tables=0 WASH_AND_GO.ROLLER_%d
-86174	224	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 85c7c 86524* tables=0 WASH_AND_GO.WATER_%d
-86254	204	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 85868 86320* tables=0 WASH_AND_GO.SPLASH_%d
+86094	224	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 85e44 865fc* tables=0 WASH_AND_GO.ROLLER_%d
+86174	224	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 85c7c 86524* tables=0 WASH_AND_GO.WATER_%d
+86254	204	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=2 <- 85868 86320* tables=0 WASH_AND_GO.SPLASH_%d
 866d4	140	cubierta	two-colour image, wash and go parts; built	floats=0 stores=0 <-  tables=1 WaterSplash; CleanShinyStar; ShowerWater; WashingRoller; WashAndGo; WaterRingPlane
 86844	108	cubierta	two-colour image, wash and go parts; built	floats=7 stores=5 <- 6af0* tables=0
 869c8	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
@@ -599,10 +599,10 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 87244	316	sin datos	silhouettes under the island's water: no such images	floats=34 draws,stores=0 <-  tables=1
 87380	104	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 8752c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 WaterSilhouette; YesNoMessage
-87558	104	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 INDICATORS.NO; INDICATORS.YES
+87558	104	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 INDICATORS.NO; INDICATORS.YES
 87964	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 YesNoMessage
 87b4c	140	sin datos	silhouettes under the island's water: no such images	floats=9 draws,stores=0 <-  tables=1
-87be8	156	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 River
+87be8	156	cubierta	by rule: only loads resources or makes objects; gone through in the fourth pass (docs/audit.md)	floats=0 loads,stores=1 <-  tables=1 River
 87c84	452	sin datos	silhouettes under the island's water: no such images	floats=68 loads,stores=4 <- 87e48 tables=0 AMBIENT.WAVE_REFLECT
 87e48	84	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 87e9c	516	sin datos	silhouettes under the island's water: no such images	floats=39 draws,loads,new×1,stores=5 <-  tables=1

@@ -8,18 +8,22 @@ assets: they are imported from your own extracted copy and are never committed.
 ```sh
 npm install
 npm run import-assets            # reads ~/Desktop/AirportMania2_Assets (or pass a path)
-npm run dev                      # http://localhost:5173  (?map opens the world map, ?map=2 centres it on a stage and ?stage=2&level=3 opens a level directly (stage 0 is the tutorial), ?go skips the shop before a level and ?nointro its announcement, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
+npm run dev                      # http://localhost:5173  (?map opens the world map, ?map=2 opens it on a stage and ?stage=2&level=3 opens a level directly (stage 0 is the tutorial), ?go skips the shop before a level and ?nointro its announcement, ?reset clears saved progress, ?nodes shows the taxi graph, ?mute disables audio, ?lang=english picks a language)
 npm test
 ```
 
 ## Status
 
-The game opens on the original main menu and world map: touch a level's marker, or Play for the
-current one, and confirm in its dialog.
-All ten stages are playable (92 levels): Arches, the island, the monsters' stage, the North
-Pole, Airborne, Africa, the Antarctic, the carrier, the Moon and Mars. Options in the main
-menu set the sound and music volume and, under Advanced, the language (eight are available);
-during a level the menu button opens the original menu, with the options and the ways out.
+The game is whole: opening screens, main menu, users, the world map, the ten stages (92
+levels: Arches, the island, the monsters' stage, the North Pole, Airborne, Africa, the Antarctic,
+the carrier, the Moon and Mars), the tutorial, the shop, the awards room and the ending.
+
+The world map is drawn at its own size and is dragged both ways; it opens where it was left.
+Touch a level's marker, or Play for the current one, and confirm in its dialog. Options in the
+main menu set the sound and music volume and, under Advanced, the three switches and the colour
+help; the language is the browser setting kept with the options (`?lang=` picks another of the
+eight). During a level the menu button opens the original menu, with the options and the ways
+out.
 
 Money works as in the original: a level's score is added to the funds of the next level, where
 the improvements shop opens before play; clearing a stage pays its stars and a bonus into the
@@ -44,9 +48,11 @@ The stages' animated scenery is drawn (clouds, stars, the aurora, snow, Santa's 
 the skies of the Moon and Mars), and so are the wash, the luggage conveyor, the deicer and the
 smoke planes leave on the runway; `docs/re-notes.md` lists what is still approximate.
 
-The rules come from the original binary. What was read, what is assumed and what is still a
-placeholder (some draw details, the payout rule) is tracked
-in `docs/re-notes.md` and `src/game/sim/rules.ts`.
+The rules, layouts and drawing come from the original binary: `docs/re-notes.md` holds what
+was read, with addresses, and says where something is ours; `docs/audit.md` holds how much of
+the logic has been read (68.5% cited by address, the rest set aside with a reason in
+`docs/unread.tsv`) and what each pass over it found. Left out on purpose: the publisher's
+promotions, the online leaderboard, saving a level in play and the tester's back door.
 
 ## Sharper images (optional)
 
@@ -64,10 +70,14 @@ after running it.
 - `src/data/` — typed loaders for resources, planes, gates, runways and levels.
 - `src/game/sim/` — deterministic simulation, independent of rendering.
 - `src/game/levelScene.ts` — PixiJS view, input and HUD.
-- `tools/re/` — helpers for reading the disassembly (`prepare.sh`, `reidx.py`, `stage_calls.py`), and
-  `stage_layout.py`, which runs a stage script in an emulator and lists what it builds (needs
-  `python3 -m venv .tools/venv && .tools/venv/bin/pip install unicorn`).
+- `tools/re/` — helpers for reading the disassembly (`prepare.sh`, `reidx.py`, `disf.py`, `args.py`,
+  `gaps.py`, `audit.py`, `unused.py`), `stage_layout.py`, which runs a stage script in an
+  emulator and lists what it builds, and `draw_trace.py`, which runs a draw routine and prints
+  what it draws (both need `python3 -m venv .tools/venv && .tools/venv/bin/pip install unicorn`).
 - `tools/dev/play.mjs` — plays the first plane in a headless browser and takes screenshots.
 - `tools/dev/shoot-level.mjs` — drives a plane that needs fuel through a level and takes screenshots.
 - `tools/dev/play-all.mjs` — plays every level of the ten stages in order, buying improvements as the funds allow, and checks that each can be passed and that progress chains.
 - `tools/dev/shoot-flow.mjs` — checks a finished level, its report, saved progress, the shop and the next level.
+- `tools/dev/shoot-steps.mjs` — runs clicks, drags, waits and page scripts on any URL and captures where asked;
+  `shoot-stage.mjs`, `shoot-clear.mjs`, `shoot-wash.mjs`, `type-name.mjs` and `early.mjs` set up one scene each
+  (their first lines say how to call them).
