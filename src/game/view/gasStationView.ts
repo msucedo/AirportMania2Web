@@ -21,6 +21,8 @@ export function needleAngle(fraction: number): number {
  * stands, the pump, and while a plane fills up a gauge 80 px above that mark.
  */
 export class GasStationView extends Container {
+  /** What swells under the pointer. */
+  readonly body = new Container();
   private readonly mark: Sprite;
   private readonly needle: Sprite;
 
@@ -33,7 +35,10 @@ export class GasStationView extends Container {
     const node = { x: station.node.x - station.position.x, y: station.node.y - station.position.y };
     const spot = textures.sprite(station.descriptor.surfaces.spot);
     spot.position.copyFrom(node);
-    this.addChild(spot, textures.sprite(station.descriptor.surfaces.back));
+    // 0x40f36: the pump, and the remark over it, take the station's scale; the mark on the
+    // ground (0x40f2a) and the gauge (0x41028) do not.
+    this.body.addChild(textures.sprite(station.descriptor.surfaces.back));
+    this.addChild(spot, this.body);
 
     this.mark = textures.sprite('INDICATORS.FUELING_MARK');
     this.needle = textures.sprite('INDICATORS.FUELING_MARK_TICK');

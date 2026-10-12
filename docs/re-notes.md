@@ -525,8 +525,14 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
 - Read through again line by line (fourth pass): update `0x67e24`, finish `0x67df8`, paint
   `0x68014`, own draw `0x680f8`, chooser update `0x68bf4`, sign `0x68584`. Nothing differs
   from the web version.
-- Web version: the turning direction of the ring and the can's rotation sign follow Pixi's
-  convention, not checked against the engine's.
+- The engine's rotation (`0xb4114`, degrees) turns the way Pixi's does: the chooser's draw run
+  in the emulator with the clock at 1/16 s gives the ring the matrix (0.707, 0.707, −0.707,
+  0.707). So the ring's turning, the can's (`20·sin 5t + 15 − 28`, `0x77bae`) and the plane's
+  pitch (given as it is, `0x85a4`: a plane facing left lifts its nose) are as the web version
+  has them.
+- Chooser's draw (`0x68854`) read through: rows scaled `(2 − min(1, |mark − i|))/2`, pushed
+  `clamp(mark − i)·10`, 30 px apart, the whole by `0.5 + 0.5·open·shown` and as clear; the ring
+  by `0.5 + 0.5·(1 − open)·shown`, its first disc in two halves under and over the rest.
 
 ## Service tabs: coffee and cake, in-flight movies — confirmed
 
@@ -597,10 +603,20 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
   gas station `0x411e4`, luggage belt `0x57210`, stop spots, wash and painting spot `0x68474`
   0.1; hangar `0x47944` 0.07; runway `0x6e620` 0.03 across and 0.09 down. Built: the web
   version scales each place's whole view (a gate's building only); which of its parts each
-  draw leaves unscaled was read for the gate alone. By the order of calls in the others: the
-  runway scales its strip, both numbers and its remark, and not its arrows (`0x6dd60`–`0x6e1e2`);
-  the gas station and the belt ask for the scale for their back picture and remark and build
-  the transforms of their other parts apart (`0x40f36`, `0x56dfc`).
+  draw leaves unscaled was then read for each:
+  - runway (`0x6dd60`–`0x6e1e2`): the strip, both numbers and the remark; not the arrows;
+  - gas station (`0x40f2a`–`0x410ae`): the pump (`+0x5c`) and the remark; not the mark on the
+    ground (`+0x60`, drawn plain) nor the gauge;
+  - luggage belt (`0x56dee`–`0x57070`): back (`+0x68`), belt, parcel and front (`+0x64`), and
+    the remark, which comes after the front (`0x56fc2`), not after the back; not the mark on
+    the ground (`+0x6c`) nor the parcel marks;
+  - hangar (`0x47698`–`0x476c6`): its own picture and the remark after it. Its own picture is
+    the descriptor's `+0x24`, the front half (`0x46a6c`; the table is read remark, front,
+    back into `+0x20`, `+0x24`, `+0x28`, `0x47a1a`), and the back half is the static image
+    (`+0x28`, `0x46e1e`). The web version had the remark over the back half;
+  - stop spots, wash, painting spot (`0x797f4`, `0x853b4`, `0x680f8`): their own picture and
+    remark; an island's back picture and a VIP's rope are static images and do not.
+  Built so.
 - Not read: the order flag offsets. The runway draw is covered under "Runway drawing".
 
 ## Gas station drawing — confirmed
@@ -1482,6 +1498,8 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
     (∓(90 − rand·50), −90 + rand·50), falling at 150. A splash (`0x85950`) moves and shows in
     its clock's last second: scale `1.3 − 0.6·c`, opacity `c·clamp(6·min(c, 1 − c))`, coloured
     (`1 − c + 0.608c`, `1 − c + 0.957c`, 1).
+- Water `0x85d60`, star `0x85b90`/`0x85c48`, splash `0x85950`/`0x85a4c` (moved by `0x9f18`
+  only in its last second) read through as well: as the web version has them.
 - Read through again line by line (fourth pass): start `0x84d60`–`0x85290`, update `0x852b0`
   (the energy is given before the points are worked out, `0x8534a` then `0x85362`), roller
   `0x85f28`. Nothing differs from the web version.

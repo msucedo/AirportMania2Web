@@ -126,9 +126,12 @@ notes' sections (`0x7340`–`0x8200`).
 The painting spot (update, finish, paint, chooser and who touches it, sign) and the wash
 (start, update, roller) were then read through as well: nothing differs from the port.
 
-Still resting on earlier emulator runs rather than on a fresh reading: the chooser's draw
-(`0x68854`), the wash's water, stars and splashes (`0x85950`–`0x85f28`), and which parts of
-each place's draw other than the gate's are left out of its swell.
+Then the last three: the chooser's draw and the wash's water, stars and splashes match the
+port; the engine's rotation was found to turn as Pixi's does, which settles the ring, the
+spray can and the plane's pitch. Reading which parts of each place take its swell found
+that the hangar's own picture is its front half, with the remark over it (the port had it
+over the back), and that the belt's remark comes after its front; both built, with the
+swell kept to the parts the original scales.
 
 ## Pending: behaviour the port lacks
 

@@ -38,6 +38,8 @@ export class LuggageView extends Container {
   private readonly frames: string[];
   private readonly parcel: Sprite;
   private readonly marks = new Container();
+  /** What swells under the pointer. */
+  readonly body = new Container();
 
   constructor(
     private readonly textures: TextureStore,
@@ -54,7 +56,10 @@ export class LuggageView extends Container {
     this.parcel = textures.sprite('LUGGAGES.PARCEL');
     this.parcel.visible = false;
     this.marks.position.copyFrom(descriptor.parcelMarks);
-    this.addChild(spot, textures.sprite(descriptor.surfaces.back), this.belt, this.parcel, textures.sprite(descriptor.surfaces.front), this.marks);
+    // 0x56dfc, 0x56e4c, 0x56f8a: the back, the belt, the parcel and the front take the belt's
+    // scale, and the remark after them (0x56fc2); the mark on the ground and the marks do not.
+    this.body.addChild(textures.sprite(descriptor.surfaces.back), this.belt, this.parcel, textures.sprite(descriptor.surfaces.front));
+    this.addChild(spot, this.body, this.marks);
   }
 
   update(): void {

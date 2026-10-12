@@ -748,9 +748,9 @@ export class LevelScene {
       if (buoys[0]) this.ground.addChild(buoys[0]);
       this.ground.addChild(view);
       // 0x6e1e2: the last thing the runway draws.
-      this.addRemark(runway, view, runway.position);
+      const flash = this.addRemark(runway, view, runway.position);
       // 0x6e620: a runway swells 3 % along and 9 % across.
-      this.swellWith(runway, [view], 0.03, 0.09);
+      this.swellWith(runway, flash ? [view.body, flash] : [view.body], 0.03, 0.09);
       if (buoys[1]) this.ground.addChild(buoys[1]);
     }
     for (const spot of this.sim.stopSpots) {
@@ -762,7 +762,8 @@ export class LevelScene {
         sprite.position.copyFrom(spot.position);
         // 0x79392, 0x79408: an island's spot is two pictures sorted with the planes, the back
         // one 20 behind the spot and the spot's own 30 before it. Any other lies on the ground.
-        pictures.push(sprite);
+        // The spot's own picture is the one that swells (0x797f4); an island's back is a static image apart.
+        if (index === ids.length - 1) pictures.push(sprite);
         if (spot.wash || ids.length < 2) this.ground.addChild(sprite);
         else {
           sprite.zIndex = spot.position.y + (index === 0 ? -20 : 30);
@@ -777,7 +778,8 @@ export class LevelScene {
         rope.zIndex = spot.position.y + 20;
         this.planeLayer.addChild(rope);
       }
-      this.addRemark(spot, this.ground, spot.position);
+      const flash = this.addRemark(spot, this.ground, spot.position);
+      if (flash) pictures.push(flash);
       this.swellWith(spot, pictures);
       if (spot.wash) this.washViews.push(new WashView(this.textures, spot, this.planeLayer));
       if (spot.painting) {
@@ -829,12 +831,13 @@ export class LevelScene {
       front.zIndex = depth;
       panel.zIndex = depth;
       this.planeLayer.addChild(back, front, panel);
-      // 0x476c6: over the back half.
+      // 0x476c6: the hangar's own draw is its front half (descriptor `+0x24`, 0x46a6c) and the
+      // remark straight after it; the back half is a static image apart (`+0x28`, 0x46e1e).
       const remark = this.addRemark(hangar, this.planeLayer, hangar.position);
-      if (remark) remark.zIndex = back.zIndex;
+      if (remark) remark.zIndex = front.zIndex + 0.01;
       this.hangarPanels.push({ hangar, panel, ticks });
-      // 0x47944: 7 %.
-      this.swellWith(hangar, [back, front], 0.07);
+      // 0x47944: 7 %, the front half and its remark.
+      this.swellWith(hangar, remark ? [front, remark] : [front], 0.07);
     }
     for (const station of this.sim.gasStations) {
       const view = new GasStationView(this.textures, station);
@@ -842,8 +845,8 @@ export class LevelScene {
       view.zIndex = station.position.y + station.descriptor.node.y + station.descriptor.depthOffset;
       this.planeLayer.addChild(view);
       // 0x40f62: over its back.
-      this.addRemark(station, view, null, 2);
-      this.swellWith(station, [view]);
+      this.addRemark(station, view.body, null);
+      this.swellWith(station, [view.body]);
       this.stationViews.push(view);
     }
     for (const luggage of this.sim.luggages) {
@@ -852,8 +855,8 @@ export class LevelScene {
       view.zIndex = luggage.position.y + luggage.descriptor.depthOffset;
       this.planeLayer.addChild(view);
       // 0x56fc2: over its back.
-      this.addRemark(luggage, view, null, 2);
-      this.swellWith(luggage, [view]);
+      this.addRemark(luggage, view.body, null);
+      this.swellWith(luggage, [view.body]);
       this.luggageViews.push(view);
     }
     for (const decoration of layout.decorations) {
@@ -910,13 +913,8 @@ export class LevelScene {
   }
 
   /** Gives `place` its flash, drawn in `parent` at `at` (or the parent's origin), at child `index` or last. */
-  /** Has `views` swell about the place while it is pointed at, by `x` across and `y` down. */
+  /** Has `views`, each standing at the place, swell while it is pointed at, by `x` across and `y` down. */
   private swellWith(place: Place, views: Container[], x = 0.1, y = x): void {
-    for (const view of views) {
-      if (view.position.x !== 0 || view.position.y !== 0) continue;
-      view.pivot.copyFrom(place.position);
-      view.position.copyFrom(place.position);
-    }
     this.swells.push({ place, views, x, y, value: 0 });
   }
 

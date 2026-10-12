@@ -45,6 +45,8 @@ export class RunwayView extends Container {
   private readonly using: Sprite[] = [];
   /** Shown while a plane is on its way to use the runway (`+0xa4`, faded at 3/s into `+0xa8`). */
   private usingFade = 0;
+  /** What swells under the pointer. */
+  readonly body = new Container();
   private usingPhase = 0;
   private usingLanding = false;
 
@@ -60,7 +62,11 @@ export class RunwayView extends Container {
     const far = textures.sprite(`RUNWAY.NUMBER_${runway.number}`);
     far.position.set(runway.position.x + 152, runway.position.y + 1);
     far.angle = 180;
-    this.addChild(strip, near, far);
+    // 0x6dd60–0x6de00: the strip and both numbers take the runway's scale; the arrows do not.
+    this.body.pivot.copyFrom(runway.position);
+    this.body.position.copyFrom(runway.position);
+    this.body.addChild(strip, near, far);
+    this.addChild(this.body);
     for (let i = 0; i < USING_ARROWS; i++) {
       const arrow = textures.sprite(USING_LEFT);
       arrow.visible = false;
