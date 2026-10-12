@@ -25,6 +25,7 @@ import { listLimit, listRest, listRowAt, listRowY, listSettle } from '../src/gam
 import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoading';
 import { gateLabelStrength } from '../src/game/view/gateView';
 import { pausePose } from '../src/game/view/pauseScreen';
+import { yesNoPose } from '../src/game/view/yesNoMarks';
 import { coast, dragSpeed, markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
@@ -1012,5 +1013,15 @@ describe('the pause screen', () => {
     expect(pausePose(0)).toEqual({ alpha: 0, scale: 0.5, offset: 15 });
     expect(pausePose(0.5)).toEqual({ alpha: 0.5, scale: 0.75, offset: 22.5 });
     expect(pausePose(1)).toEqual({ alpha: 1, scale: 1, offset: 30 });
+  });
+});
+
+describe('the tick or cross a touch leaves', () => {
+  it('wobbles for half a second and goes over its last half', () => {
+    expect(yesNoPose(0)).toEqual({ scaleX: 0.8, scaleY: 0.8, alpha: 1 });
+    expect(yesNoPose(0.1).scaleX).toBeCloseTo(0.912855, 4);
+    expect(yesNoPose(0.1).scaleY).toBeCloseTo(0.952169, 4);
+    expect(yesNoPose(0.25).scaleX).toBeCloseTo(0.92);
+    expect(yesNoPose(0.75)).toMatchObject({ scaleX: 0.8, alpha: 0.5 });
   });
 });

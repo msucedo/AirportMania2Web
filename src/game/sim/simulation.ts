@@ -424,6 +424,8 @@ export class Simulation {
   private events: SimEvent[] = [];
   /** The level's time has run out (`level+0x90`); play goes on until the airport is done. */
   timeOver = false;
+  /** Seconds played since the time ran out (`level+0x8c`), by the real clock. */
+  private overtime = 0;
   /** Seconds until the end of the level is next considered (`level+0x1dc`). */
   private endDelay = 0;
   /** Score tiers the goal bar has reached (`level+0x1b4`): 1 the goal, 5 a perfect score. */
@@ -650,6 +652,8 @@ export class Simulation {
     const plane = this.planeAt(x, y);
     if (plane) {
       if (UNSELECTABLE_STATES.has(plane.state)) {
+        // 0x11180: and whatever plane was picked is let go.
+        if (this.selected) this.deselect();
         this.emit({ type: 'forbidden' });
         return;
       }
@@ -868,7 +872,8 @@ export class Simulation {
   update(dt: number): void {
     if (this.ended) return;
     // 0x117f0: the level's clock runs at the player's difficulty.
-    this.time += dt * (this.config.difficulty ?? 1);
+    // Once the time is out the clock stays there (0x1181c).
+    if (!this.timeOver) this.time += dt * (this.config.difficulty ?? 1);
 
     while (this.pending.length > 0 && this.pending[0]!.time <= this.time) this.spawn(this.pending.shift()!);
 
@@ -1144,6 +1149,8 @@ export class Simulation {
       this.emit({ type: 'timeOver' });
       return;
     }
+    // 0x11890: counted as they pass, whatever the player's difficulty.
+    this.overtime += dt;
     this.endDelay = Math.max(0, this.endDelay - dt);
     if (this.endDelay > 0) return;
     const holder = this.planes.find((p) => !p.gone && (p.energy > 0 || !(p.landed && p.state === PlaneState.WAITING)));
@@ -1996,7 +2003,7 @@ export class Simulation {
     this.score = before + points;
     // 0x11f08: the goal reached after the time has run out, with the seconds played since.
     if (this.timeOver && before < this.goals.goal && this.score >= this.goals.goal) {
-      this.emit({ type: 'award', id: AWARD.FLYING_TIME, value: Math.trunc(this.time - this.totalTime) });
+      this.emit({ type: 'award', id: AWARD.FLYING_TIME, value: Math.trunc(this.overtime) });
     }
   }
 

@@ -1,3 +1,4 @@
+import { YES_NO_SURFACES, YesNoMarks } from './view/yesNoMarks';
 import { PauseScreen } from './view/pauseScreen';
 import { inRuns } from './loadingScreen';
 import { Label } from './view/effectText';
@@ -165,6 +166,7 @@ export class LevelScene {
   private report: FinalReport | null = null;
   /** The tutorial's day, in stage 0 (`level+0x128`), and its goals on screen. */
   private tutorial: Tutorial | null = null;
+  private readonly marks: YesNoMarks;
   /** The last touch on the airport, for telling a second one. */
   private lastTouch: { time: number; x: number; y: number } | null = null;
   private goalsPanel: GoalsPanel | null = null;
@@ -203,7 +205,8 @@ export class LevelScene {
     // to that list later (stars, sparks, the tier's name) is drawn after it, over it.
     this.explosions = new ComboExplosions(textures, this.planeLayer, this.goalEffects);
     this.fireworks = new Fireworks(textures);
-    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud, this.goalEffects, this.fireworks);
+    this.marks = new YesNoMarks(textures);
+    this.root.addChild(this.ground, this.planeLayer, this.overlay, this.flags, this.bonusView, this.floating, this.hud, this.goalEffects, this.marks, this.fireworks);
     this.build();
   }
 
@@ -244,6 +247,7 @@ export class LevelScene {
     for (const id of [...layout.stopSpotSurfaces.normal, ...layout.stopSpotSurfaces.vip]) ids.add(id);
     for (const decoration of [...layout.decorations, ...layout.gateDecorations]) ids.add(decoration.resource);
     if (layout.water) for (const id of WATER_SURFACES) ids.add(id);
+    for (const id of YES_NO_SURFACES) ids.add(id);
     if (sim.stopSpots.some((spot) => spot.painting)) for (const id of PAINTING_SURFACES) ids.add(id);
     if (sim.stopSpots.some((spot) => spot.wash)) for (const id of ['WASH_AND_GO.GRATING', ...WASH_SURFACES]) ids.add(id);
     if (sim.bonus) for (const id of BONUS_SURFACES[sim.bonus.kind]) ids.add(id);
@@ -891,6 +895,8 @@ export class LevelScene {
         this.audio.play('SOUNDS.REROUTING');
         break;
       case 'order':
+        // 0x112f6: a tick where the touch was.
+        if (this.pointer) this.marks.show(true, this.pointer.x, this.pointer.y);
         // 0x1129e: a rerouting has its own sound instead.
         if (!event.again) this.audio.play('SOUNDS.PLACE_CLICK');
         // 0x1129a: the place flashes in the plane's colour.
@@ -904,6 +910,8 @@ export class LevelScene {
       }
       case 'forbidden':
         this.audio.play('SOUNDS.FORBIDDEN_CLICK');
+        // 0x1116e, 0x1135a: a cross where the touch was.
+        if (this.pointer) this.marks.show(false, this.pointer.x, this.pointer.y);
         // Sent somewhere it cannot go while it has nothing else to do, the plane says what it
         // needs (0x5b10).
         if (event.plane && event.plane.queue.length === 0 && (event.plane.state === PlaneState.FLYING || event.plane.state === PlaneState.WAITING)) this.speak(event.plane);
@@ -1166,6 +1174,7 @@ export class LevelScene {
     for (const remark of this.remarks.values()) remark.update(seconds);
     this.explosions.update(this.paused ? 0 : seconds);
     this.goalEffects.update(this.paused ? 0 : seconds);
+    this.marks.update(this.paused ? 0 : seconds);
     this.fireworks.update(seconds);
 
     const remaining = this.sim.totalTime > 0 ? Math.max(0, this.sim.totalTime - this.sim.time) / this.sim.totalTime : 0;

@@ -87,6 +87,16 @@ Read from pseudocode and the callee disassembly.
   empty queue nothing is said (`0x60aa`). A second touch is not counted towards a third. Web
   version: the same, told at the touch's start.
 - Pressing on nothing with a plane selected cancels its queue (`0x6028`, `SOUNDS.QUEUE_CANCEL`).
+- A touch leaves a mark where it was (`YesNoMessage`, `0x875c0`; update `0x876cc`, draw
+  `0x87718`): `INDICATORS.YES` when the order is taken (`0x112f6`), `INDICATORS.NO` when it
+  is refused (`0x1135a`) or the plane touched cannot be picked (`0x1116e`, which also lets go
+  of the plane picked before). It lasts a second, rising 20 px in it; with `u = min(1, 2t)`
+  it is drawn `0.8·(1 + 0.3(1 − u)·sin(πu))` wide and `0.8·(1 + 0.25(1 − u)·sin(2πu))` high,
+  and `2·(1 − t)` clear, at most whole. Web version: built.
+- In the shop's state of the level's update (`0x11712`), with the tester's byte set, the keys
+  `T` and `P` add 1 000 000 and 30 000 to the level's funds: part of the back door left out.
+- After the time is out the level's clock stays at its end (`0x1181c`) and `+0x8c` counts the
+  seconds on, by the real clock.
 - The selected plane is stored at controller `+0x118`.
 
 ## Plane (`0x45e4`–`0xa9c4`)
