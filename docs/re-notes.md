@@ -1036,7 +1036,9 @@ Vtable `0x17a8e8`, kind 5.
   it is set as the dialog is made (`0x4c3e2`), as it is opened (`0x4c1c6`, `0x4c204`) and after a
   purchase or a sale (`0x4c008`, `0x4c13e`). So a pick sounds, and opening, buying and selling
   do not.
-- Web version: all of it. Ours: the edge bands fade evenly (their vertex colours are not read).
+- The bands (`0x4dd80`): −115…−105, −105…105 and 105…115; a quad's four opacities are 0, 0, 1
+  and 1 (`0x4ddba`–`0x4ddc8`), so an outer band clears evenly from the edge in.
+- Web version: all of it.
 - The dialog object is made once at start-up (`0x4be20`, kept at `app+0x1b4`) and shown by
   `Level::start` (`0xfe8c`) with `MUSICS.SHOPPING` before every level except the tutorial and
   level 1 of stage 1; leaving it starts the level. The web version does the same and reloads the
