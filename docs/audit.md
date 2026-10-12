@@ -197,6 +197,27 @@ of it.
 - Not for the port: the Game Center notice (`0x310b0`, `0x31228`), the string's own routines
   (`0x30d80`).
 
+## Seventh pass: the notes' own doubts, the map and the main menu (2026-10-11)
+
+The lines of the notes that said inferred, assumed or not read were gone through. Read and
+built from them: service tabs act as the finger lifts; the tips shower and its tips come and
+go with a fade; an award swells under the finger; the ending makes its credits after 1 s, not
+10. Read and matching: which sound a plane makes at each moment; plane states 6, 7, 9 and 10;
+the three runway machines' flags; the shop's sound flag.
+
+The map: its picture is drawn at its own size (`0x63af8`), so the screen is a window on a map
+2040 by 510 that scrolls both ways, and it opens where the player left it. The port had it at
+half size, fitted to the screen and scrolling across only, from a guess the notes owned up
+to. Rebuilt. The ribbons' titles are in `FONTS.TEEN`. The rest of the map (icons, markers,
+decorations) had been read off emulator runs and stands.
+
+The main menu: every piece the port builds is in the notes with its numbers; what is not
+cited there is the three promotions, which are left out on purpose.
+
+Still open: the vertex colours of the shop list's edge bands; that a plane taken away lets
+its nodes go; what each award counts in its description and the awards room's ribbon width;
+the engine's text (fonts' colour effects, bordered letters, spreading lines out).
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.
