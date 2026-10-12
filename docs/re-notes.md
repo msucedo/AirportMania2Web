@@ -33,15 +33,15 @@ Airport builder methods (first argument is the airport/stage object):
 
 Class identification is by address proximity to each class's descriptor-parsing code
 (`"Gate"` used at `0x42af0`, `"GasStation"` at `0x40674`, `"StopSpot"` at `0x78b48`,
-`ComboTimeTotal` at `0x6e67c`). The taxi node is identified only by its layout (position plus a
-link list): inferred.
+`ComboTimeTotal` at `0x6e67c`). The taxi node (made by `0x45ff4`, linked by `0x45d58`) keeps its place
+at `+4`/`+8`, a taken flag at `+0xc` and its links; see "Taxi graph".
 
 ### Runway (`0x6cf14`)
 
 - Click rectangle: (x−190, y−18) to (x+190, y+18). The position is the runway centre. Confirmed.
 - Node position: (x+144, y) with heading 180° when the flag is 0; (x−144, y) with heading 0° when
-  the flag is 1. Confirmed for the arithmetic; that this node is where planes touch down / line up
-  is inferred.
+  the flag is 1. It is the node a landing plane stops on and a departing one starts
+  from (`0x7402`, `0x616a`).
 - Landing approach (`0x7fb0`–`0x8054`, confirmed): with heading 0 the plane starts at node.x + 750
   moving left at 250 px/s; otherwise at node.x − 750 moving right. It descends from altitude 600
   at 250 units/s (2.4 s). Take-off (`0x6110`) sets an acceleration of 200 px/s² (field `+0x2e8`; `+0x2e0` is the velocity), rightwards when the flag is 1.
@@ -65,9 +65,9 @@ All confirmed from immediates unless noted. See `src/game/stages/arches.ts`.
 
 Improvements registered for the stage (id, price): `0x01` 10000, `0x72` 60000, `0x0a` 20000,
 `0x16` 20000 (`IMPROVEMENTS.GATE_0`, confirmed), `0x1e` 25000, `0x1f` 30000, `0x20` 35000
-(confirmed), `0xcb` 85000. The meaning of the others follows the string order in the function
-(extra storage place, painting stop spot, VIP storage place, improved gates A/B, plane 4 licence):
-inferred. Registered order: `0x01`, `0x0a`, `0x72`, `0x16`, `0x1e`, `0x1f`, `0xcb`, `0x20`.
+(confirmed), `0xcb` 85000. The others are, by the icons the script registers them with (run with
+`stage_layout.py --offers`): extra storage place, VIP storage place, painting stop spot, improved
+gates A and B, plane 4 licence. Registered order: `0x01`, `0x0a`, `0x72`, `0x16`, `0x1e`, `0x1f`, `0xcb`, `0x20`.
 `0x13458` also stores a number per improvement (2 for `0x01`, 4 for `0x16`, 3 for `0x1e`, 1000
 for the rest): the level from which the shop marks it "try me" (see the improvements dialog).
 
@@ -1201,8 +1201,8 @@ names. From it:
 - Web version: all of that. Turning with the device does nothing here, and its switch is
   kept only so that the dialog is whole. The colour table picked is kept with the settings,
   not the profile. The language choice of our own that Advanced used to open is gone: the
-  language is the one in the settings (`?lang=` tries another). Slider width is assumed; the
-  pause screen is not used. Settings are stored in the browser (`am2web.settings.v1`).
+  language is the one in the settings (`?lang=` tries another). The sliders are 120 wide (see "Dialog slider"); the
+  pause screen is shown when the page is hidden. Settings are stored in the browser (`am2web.settings.v1`).
 
 ## World map (script `0xccc8c`)
 
@@ -2173,8 +2173,8 @@ place and plane; only what is added later (the service tabs) lies over them.
   a sand puff the y it appeared at, the painting sign `spot.y − 15`, an image made by `0x1404c`
   the depth it is given (600 for the arch of Arches, 120 for the Antarctic building).
 - Web version: planes, gates and the objects above are sorted this way. The hangar, gas
-  station, luggage conveyor, stop spots and runways are still drawn in fixed layers under the
-  planes; their depths have not been read.
+  station, luggage conveyor and the island's stop spots are sorted by the depths below; plain
+  stop spots and runways, 1000 behind their line, lie on the ground.
 
 - Depths set by the places' constructors (`object+4`):
   - runway (`0x6d0c6`) and stop spot (`0x78f66`): y − 1000, so under everything sorted;
@@ -2187,7 +2187,6 @@ place and plane; only what is added later (the service tabs) lies over them.
 
 ## Stage 3: what is still approximate
 
-- Fog: the machine's wobble.
 - The balloon corner of its runways is taken to be the island's.
 - Everything listed for stages 1 and 2 below applies here too.
 
@@ -2226,11 +2225,13 @@ Rules:
 
 Drawing:
 
-- The font effects (gradients), the
-  shop's item list layout (`0x4ca54`), the interiors of the map dialogs, how the level
-  announcement is dismissed and what a level "introduces".
-- Turning direction of the paint chooser's ring and of the spray can; the clock that blinks
-  the time-over light; whether the airport darkens at night.
+- The font effects (gradients), which are the engine's rasterising and are drawn here by the
+  browser.
+- Read since and no longer open: how the level's announcement comes and goes (`0x519f0`), the
+  shop's item list, the map's dialogs, the turning
+  direction of the paint chooser's ring and of the spray can (the engine turns as Pixi does),
+  the clock that blinks the time-over light (the bar's own), and that nothing darkens the
+  airport at night.
 
 Checked end to end by `tools/dev/play-all.mjs`, which plays the thirteen levels in order and
 verifies that each can be passed and that funds, stars and the opening of stage 2 chain.
