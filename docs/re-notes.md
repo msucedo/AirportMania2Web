@@ -1234,7 +1234,12 @@ names. From it:
 - Bar: `MAP.HUD.BACK` at (0, 261) and `MAP.HUD.REFLEXION` at (8, 269) (`0x609b8`); four buttons
   (`0x60e50`) across x 5–122, 122–240, 240–357 and 357–480, y 267–321, with the labels
   `MAP.MAIN_MENU`, `MAP.TUTORIAL`, `MAP.AWARDS_ROOM` and `MAP.PLAY` centred at y 305 and the
-  `…_ON` images shown when pressed.
+  `…_ON` images shown when pressed. What each does, the map closing first (its slot
+  `0x1c`) in all but Play: Main Menu (`0x5f4a0`) shows the menu (`app+0x14c`); Tutorial
+  (`0x5f708`) sets the profile's current stage and level to 0 and 1 and starts the scene
+  loading in mode 2, with no question; Awards Room (`0x5f660`) shows the room (`app+0x150`);
+  Play is `0x5f54c`. None is ever disabled. The web version kept Tutorial and Awards Room off
+  from its first map until 2026-10-12, by an oversight.
 - Also in the script and not drawn by the web version: `MAP.ISLAND_FRONT`, clouds
   (`0x61210`), wind streams (`0x60bec`), carrier waves, satellites and twinkling points
   (`0x60cc4`), the "coming soon" sign, and the level information dialog (`0x64824`).

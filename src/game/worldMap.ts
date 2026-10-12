@@ -105,8 +105,7 @@ export function coast(x: number, speed: number, dt: number, low: number): { x: n
  * The world map: the original image with the stage icons, ribbons and level markers where the
  * map script and the level position table put them, and the bar with its four buttons. A level
  * is started from the dialog its marker opens, or with Play for the current one; a stage's icon
- * opens its description. Dragging scrolls the map, which runs on when let go. The
- * original's drifting clouds, ships, wind and satellites are not drawn, and the tutorial and awards buttons do nothing yet.
+ * opens its description. Dragging scrolls the map, which runs on when let go.
  */
 export class WorldMap {
   readonly root = new Container();
@@ -255,17 +254,14 @@ export class WorldMap {
     glass.position.set(8, 269);
     bar.addChild(back);
     for (const button of BUTTONS) {
-      const enabled = button.id === 'RETURN' || button.id === 'PLAY';
       const pressed = textures.sprite(`MAP.HUD.BUTTONS.${button.id}_ON`);
       pressed.position.set(button.image, 267);
       pressed.visible = false;
       const label = new Text({ text: strings.t(button.text), style: { fontFamily: fontFamily(SCORE_FONT), fontSize: 12, fill: 0xffffff } });
       label.anchor.set(0.5);
       label.position.set(button.label, 305);
-      label.alpha = enabled ? 1 : 0.4;
       if (label.width > button.x2 - button.x1 - 8) label.scale.set((button.x2 - button.x1 - 8) / label.width);
       bar.addChild(pressed, label);
-      if (!enabled) continue;
       const zone = new Container();
       zone.hitArea = new Rectangle(button.x1, 267, button.x2 - button.x1, 53);
       zone.eventMode = 'static';
@@ -286,7 +282,8 @@ export class WorldMap {
         }
         audio.play('SOUNDS.CLICK');
         if (button.id === 'RETURN') options.onMenu();
-        // The tutorial is stage 0; its first day starts at once.
+        // 0x5f708: the tutorial is stage 0, level 1, and starts at once; 0x5f660: the awards room;
+        // 0x5f4a0: the main menu. None of the four is ever off.
         else if (button.id === 'TUTORIAL') options.onPlay(0, 1);
         else if (button.id === 'AWARDS') options.onAwards();
       });
