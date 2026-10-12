@@ -779,7 +779,9 @@ Draw routine `0x40ed4`:
   scaled `1 + 0.025 sin(200 v)`.
 - Moon (`0x29dc0`, `0x29e08`): 0.02 per second, position (`700 − 150 v⁴`, `350 − 400 v`). On a
   480 px screen it is never in view, so the web version leaves it out, as it does the three stars
-  beyond x 480.
+  beyond x 480. Checked again (2026-10-11): the moon's draw (`0x29e08`) puts its 80 px picture
+  at that place with scale 1, and a star's (`0x29968`) at the place it was made with
+  (`0x74682`–`0x747e8`), neither scaled to the screen; so the original does not show them either.
 - Clouds, `0xcda08(height, speed 5)`: six `MovingImage`s (`0x7232c`, draw `0x72440`) with a loop
   of `2 × 1300 / speed` seconds. Each is at x `−100 + speed × ((t + offset) mod loop)` and is
   drawn only in the first half of the loop. Surfaces 1, 2, 3, 1, 2, 3; y at 0.275, 0.325, 0.175,
