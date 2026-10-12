@@ -1393,7 +1393,9 @@ node it heads for is marked taken (`node+0xc`), which the router (`0x46200`) rea
     go before they set off.
 - Web version: planes hold nodes the same way and wait on a node while the way on is taken.
   A plane with no node held ahead asks for one again each frame (`0x78fa`–`0x7930`: `0x46200`).
-  Taken, not read: that a plane removed lets its nodes go. Where the graph has no way at all between two places
+  A plane lets its node go as its take-off starts (`0x616a`: the flag cleared and both
+  pointers emptied); one that leaves in anger does so from the air and holds none, so no
+  plane is ever taken away holding a node. Where the graph has no way at all between two places
   the plane goes straight, holding nothing. Over the 92 levels the automatic player now loses
   4 planes and scores 1.6% less than without this.
 - Size on the way (`0x74fe`–`0x7578`): when the node ahead is the last and the place is a hangar

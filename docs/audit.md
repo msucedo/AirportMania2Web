@@ -218,6 +218,24 @@ Still open: the vertex colours of the shop list's edge bands; that a plane taken
 its nodes go; what each award counts in its description and the awards room's ribbon width;
 the engine's text (fonts' colour effects, bordered letters, spreading lines out).
 
+## Eighth pass: the pieces marked built (2026-10-11)
+
+Gone through against their notes and, where it was cheap, a fresh reading or a run:
+
+- found and built: the gas station's barrier nodes (`0x409d6`), which the notes had as of no
+  known purpose; the anti-fog machine's wobble (`0x19c70`, run in the emulator), which they
+  had as left out; the award notice goes at a finger lifted anywhere (`0x31c2e`), not only on
+  it;
+- read again and matching: the flash of a place taking an order (`0x6af20`), the helicopter
+  and its award (`0x49518`, `0x49708`), the shop list's bands (`0x4dd80`), the de-icer and the
+  sand against their notes, the carrier's islands, when a plane lets its node go (`0x616a`);
+- not read again: the balloons and the coin, the stars, sun and moon, the spray can, the
+  ending's floaters, the loading screen. Their notes carry addresses and formulas from the
+  passes that built them.
+
+Still open: what each award counts in its description and the awards room's ribbon width;
+the credits' line height; the engine's text.
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.
