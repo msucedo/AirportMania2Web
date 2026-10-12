@@ -515,6 +515,16 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
 - Spray draw (`0x77b78`): can = `SPRAY_COLOR` tinted + `SPRAY_TOP`, rotated `20·sin 5t − 13`°,
   at (45 + 4·sin t, 15·cos t − 20), mirrored, at the plane (15 px further left for variant 2);
   `SPRAY_RAY` tinted at (−6, −17) on the can, flickering.
+- Who touches the chooser (`0x10e40`–`0x10efc`, the airport's input): every frame each
+  touchable of the lists `+0xe8` and `+0xe0` is told it is not held (slot 9, `0x68e4c`); with a
+  finger down, the first one that is there (slot 10, `0x68e54`) and has the finger in its area
+  is told it is held, and on the frame the finger lifts it is told to act (slot 8, `0x68e28`:
+  paint the row `+0x68`, when it is one of the colours). The chooser opens only when its
+  value is under 0.1 and it is held, and closes only when it is over 0.9 and not held
+  (`0x68c24`–`0x68c8a`). The web version does the same.
+- Read through again line by line (fourth pass): update `0x67e24`, finish `0x67df8`, paint
+  `0x68014`, own draw `0x680f8`, chooser update `0x68bf4`, sign `0x68584`. Nothing differs
+  from the web version.
 - Web version: the turning direction of the ring and the can's rotation sign follow Pixi's
   convention, not checked against the engine's.
 
@@ -1472,6 +1482,9 @@ Class with vtable `0x17beb8`, kind 6, built by `0x14678` on the stop spot's base
     (∓(90 − rand·50), −90 + rand·50), falling at 150. A splash (`0x85950`) moves and shows in
     its clock's last second: scale `1.3 − 0.6·c`, opacity `c·clamp(6·min(c, 1 − c))`, coloured
     (`1 − c + 0.608c`, `1 − c + 0.957c`, 1).
+- Read through again line by line (fourth pass): start `0x84d60`–`0x85290`, update `0x852b0`
+  (the energy is given before the points are worked out, `0x8534a` then `0x85362`), roller
+  `0x85f28`. Nothing differs from the web version.
 - The plane during the wash (state 9 of its update, `0x7d92`, with t its seconds there): from
   1 to 5 s its blink timer (`+0x294`) is held at 0, so its eyes are shut; from 5 to 7 s it is
   `floor(4u) − 2·floor(2u)` with `u = t − 5`, shut and open by quarters of a second; from 7 to

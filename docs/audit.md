@@ -123,10 +123,12 @@ Read and found to match: the stop spot's and the gate's rules for joining an iti
 (`0x5684`: where it starts, its energy and height), its landing and take-off against the
 notes' sections (`0x7340`–`0x8200`).
 
-Still resting on the notes rather than on a fresh reading: the painting spot's chooser and
-sign (`0x680b4`–`0x68bf4`) and the wash's start and draw (`0x84e00`–`0x8585c`), both built
-from emulator runs in earlier passes; and which parts of each place's draw other than the
-gate's are left out of its swell.
+The painting spot (update, finish, paint, chooser and who touches it, sign) and the wash
+(start, update, roller) were then read through as well: nothing differs from the port.
+
+Still resting on earlier emulator runs rather than on a fresh reading: the chooser's draw
+(`0x68854`), the wash's water, stars and splashes (`0x85950`–`0x85f28`), and which parts of
+each place's draw other than the gate's are left out of its swell.
 
 ## Pending: behaviour the port lacks
 
