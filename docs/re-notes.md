@@ -1031,8 +1031,11 @@ Vtable `0x17a8e8`, kind 5.
 - A pick (`0x4d92c`) refreshes the dialog (`0x4c218`, which plays
   `SOUNDS.ITEM_SELECTION_CHANGE` unless the dialog's `+0x7c` is set); picking the same row again
   within the engine's double-touch time (0.4 s, `0xaf332`) buys or sells it (`0x4bee0`).
-- Web version: all of it. Ours: the edge bands fade evenly (their vertex colours are not read),
-  and the sound plays on every pick but not when the dialog opens (`+0x7c` is not read).
+- The dialog's `+0x7c` silences the next refresh and is cleared by it (`0x4c36a`, `0x4c3a6`):
+  it is set as the dialog is made (`0x4c3e2`), as it is opened (`0x4c1c6`, `0x4c204`) and after a
+  purchase or a sale (`0x4c008`, `0x4c13e`). So a pick sounds, and opening, buying and selling
+  do not.
+- Web version: all of it. Ours: the edge bands fade evenly (their vertex colours are not read).
 - The dialog object is made once at start-up (`0x4be20`, kept at `app+0x1b4`) and shown by
   `Level::start` (`0xfe8c`) with `MUSICS.SHOPPING` before every level except the tutorial and
   level 1 of stage 1; leaving it starts the level. The web version does the same and reloads the
@@ -1380,8 +1383,8 @@ node it heads for is marked taken (`node+0xc`), which the router (`0x46200`) rea
     (`0x616a`) lets its node go; planes changing places (`0x7b9a`) have each place's node let
     go before they set off.
 - Web version: planes hold nodes the same way and wait on a node while the way on is taken.
-  Taken, not read: that a plane still on its way asks again each frame for a node ahead, and
-  that a plane removed lets its nodes go. Where the graph has no way at all between two places
+  A plane with no node held ahead asks for one again each frame (`0x78fa`–`0x7930`: `0x46200`).
+  Taken, not read: that a plane removed lets its nodes go. Where the graph has no way at all between two places
   the plane goes straight, holding nothing. Over the 92 levels the automatic player now loses
   4 planes and scores 1.6% less than without this.
 - Size on the way (`0x74fe`–`0x7578`): when the node ahead is the last and the place is a hangar
