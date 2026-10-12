@@ -21,7 +21,7 @@ Airport builder methods (first argument is the airport/stage object):
 |---|---|---|---|
 | `0x1328c` | sprite | `0x83e84` | resource name, position |
 | `0x13de4` | scaled/tiled sprite | `0x83f80` | resource name, position, scale |
-| `0x1404c` | decoration sprite | `0x842fc` | resource name, position, float (inferred: depth) |
+| `0x1404c` | decoration sprite | `0x842fc` | resource name, position, depth (a `StaticZImage`, sorted by it) |
 | `0x135f4` | unknown, 0x1d4 bytes | `0x74548` | float (82.0 in Arches), 1.0 |
 | `0x141ac` | gate | `0x42ea0` | position, upgraded flag, letter; ctor gets `letter - 'A'` |
 | `0x1434c` | gas station | `0x40778` | position, 1, 1 |
@@ -128,8 +128,10 @@ descriptor `+0x8`.
 | 3 | taxiing to the next queued place | `0x6594`, `0x66c8` | confirmed |
 | 4 | loading at a gate (second arrival, normally on the same gate) | `0x62cc`, called by gate `0x43238` | confirmed |
 | 5 | unloading at a gate (first visit); queue cleared | `0x6378`, called by gate `0x43238` | confirmed |
-| 6 | in the hangar | `0x6698`, called by hangar | inferred |
-| 7, 9 | gas station phases | `0x6748` | inferred |
+| 6 | in the hangar | `0x6698`, called by the hangar (`0x47248`) | confirmed |
+| 7 | filling up | `0x6748`, called by the gas station (`0x40cda`); `0x6798` ends it | confirmed |
+| 9 | being washed | `0x67b8`, called by the wash (`0x84e66`); `0x67c8` ends it | confirmed |
+| 10 | taking luggage on | `0x6820`, called by the belt; `0x6848` ends it | confirmed |
 | 8 | being repainted on a painting stop spot | `0x6354`, called by `0x68014` | confirmed |
 | 10 | unknown, set from `0x56b78` | `0x6820` | unknown |
 | 11 | taking off | `0x6110`, called by runway `0x6d584` | confirmed |
@@ -357,7 +359,11 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
 - Sounds (confirmed ids): `SOUNDS.SELECT_PLANE`, `SOUNDS.PLACE_CLICK`, `SOUNDS.FORBIDDEN_CLICK`,
   `SOUNDS.QUEUE_CANCEL`, `SOUNDS.REROUTING` in the click handler; `SOUNDS.BONUS_X%1d` in the gate
   and runway; the plane's own sounds come from its descriptor's `Sounds` element. Which descriptor
-  slot plays at each moment is matched by name in the web version, not read from the binary.
+  slot plays at each moment is read: `In` as it appears (`0x592c`), `GoingOut` as a landing
+  starts (`0x73e6`), `Landing` on the glide (`0x7f82`), `TouchingLand` (`0x8124`), `Unloading`
+  and `Loading` as each starts (`0x63aa`, `0x62de`), `Launching` as the take-off starts
+  (`0x6180`), `Out` as it leaves in anger (`0x6a5e`), `Cannot` when an order is refused
+  (`0x7a28`, `0x747e`) and in what it says (`0x5bd4`). The web version plays each there.
 - Music: `<area music>.INTRO` then `.LOOP`; the final report uses `MUSICS.FINAL_REPORT.<tier>`.
 
 ## In-game HUD (`InGameGUI`)
@@ -549,7 +555,9 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
 ## Service tabs: coffee and cake, in-flight movies — confirmed
 
 - The stage script ends with `0x12f90(airport, 0, owns 0x73, owns 0x74, owns 0x6e, owns 0x6f,
-  owns 0x70)`. The last three are stored as bytes at `airport+0xac…0xae` (use not read). For
+  owns 0x70)`. The last three are stored as bytes at `airport+0xac…0xae`: the de-icer, the
+  anti-fog and the anti-sand machines, looked at by the ice (`0x4b906`), the fog (`0x3a4d2`)
+  and the sand (`0x6f77e`). For
   `0x73` (in-flight movies) it creates a tab at (354, 11), otherwise a `GUI.INGAMEGUI.GRIP`
   filler at (354, 9); for `0x74` (coffee and cake) a tab at (395, 11) or a filler at (395, 9).
 - Tab base class `0x24010(position, recharge)`: touch area x ±20, y −5…+36. `+0x24` counts down
@@ -823,8 +831,8 @@ Draw routine `0x40ed4`:
   - Slot 6 (`0x797c8`): when the plane leaves state 2 the spot is freed and the modifier cleared
     (`0x62c4`). Slots 13/14/9: reserve (state 1), busy (state ≠ 0), release.
   - Constructor (`0x79194`): a four-way switch sets `+0x6c` to 0.25, 0.5, 0.25 or 0.5; mapping
-    0.5 to the plain spot and 0.25 to the VIP one is inferred. It creates six pass-through nodes
-    (offsets built from ±30, ±10, ±15) and five links whose pairing has not been read.
+    0.5 to the plain spots and 0.25 to the VIP ones, read since (see "Holding pattern": the
+    stop spot's constructor), with its six pass-through nodes and five links.
 
 ## Game flow, progress and shop (web version)
 
@@ -834,7 +842,7 @@ data and assets.
 - Screens are page loads: no `level` parameter shows the stage screen, `?level=N` plays a level.
   Progress is kept in `localStorage` (`am2web.progress.v1`); `?reset` clears it.
 - Stars are the goals reached (0–5). Each newly earned star pays the area's `PerStarAmount`
-  (2000 in stage 1). That payout rule is an assumption; `StageClearAmount` is not used yet.
+  (2000 in stage 1), read since (`0x115a0`), as is `StageClearAmount` (`0x7802c`).
 - The shop lists the improvements the stage script registers for Arches, with its ids and prices
   (see above). The original dialog also offers selling (`IMPROVEMENTS_DIALOG.SELL`); not done.
 - A level is kept twice in its stage's table (`0x534b2`: entries of 0x58, the second half for
@@ -842,7 +850,7 @@ data and assets.
   `0x10190`, `0x10222`, `0x51706`, `0x64954`) passes whether the level's record owns the
   improvement `199 + ExtraPlaneNumber` of its area (`0xff36`: `area+0x28 + 0xc7`): 0xcb in stage
   1. The web version keeps that id per stage; every one agrees with the table.
-- A level opens when the previous one has at least one star: assumed.
+- A level opens when the previous one has been passed (`0x34170`).
 
 ## Stage scripts beyond Arches
 
@@ -2175,9 +2183,9 @@ Rules:
 - The profile's factor at `+0x48` is the player's difficulty, now read and built (see "End of
   the level").
 - The loop bounds of the two runway ring loops (seven nodes each is assumed from the tables).
-- Plane state 10 (set from `0x56b78`) is unknown; it has not been seen to matter here.
-- The service tab acts when the finger goes down, not when it is lifted.
-- The stage options `0x6e`–`0x70` are not understood.
+- Plane state 10 is taking luggage on (`0x6820`). The service tabs act as the finger lifts
+  (`0x10ee8`), and so do the port's now. The stage options `0x6e`–`0x70` are the three
+  runway machines.
 
 Drawing:
 
@@ -2555,10 +2563,12 @@ made by `0x70924` with the text `LOADING_SCREEN.LOADING` and a coin thrown for d
   (`0x357a4`) of `2t` under 0.5, `2(4 − t)` over 3.5, else `1 + 0.25·sin(2π(t − 0.5))`; scale
   `0.5 + 0.5·swell`, opacity `clamp(2·swell)`.
 - After a wait (`+0xc`) the credits roll is made at (240, 160), speed 40, delay 20 (`0x34b46`);
-  when it has run to its end the way back is shown, which leads to `app+0x150`.
+  when it has run to its end the way back is shown, at (20, 305) (`0x34ee8`), which leads to
+  `app+0x150`.
 - Web version: opened with `?ending`, reached from the last stage's clear screen, and it goes
-  back to the main menu. Taken, not read: the first wait (10 s; `0x3433c` has 10, 2.5 and −9),
-  the way back's place (20, 305), where a floater's scale is applied, the giant font's colours,
+  back to the main menu. Taken, not read: the first wait (10 s here; where the original sets
+  `+0xc` was looked for and not found: `0x3433c`'s 10, 2.5 and −9 are a three-patch's),
+  where a floater's scale is applied, the giant font's colours,
   that the text is at height 160. The loading screen between is not built.
 
 ## Leaving a level from its menu — confirmed
@@ -2617,8 +2627,7 @@ set to 1, colour kept).
 - Where each draws it: the runway last (`0x6e1e2`), the gate over its letter (`0x439ac`), the
   hangar over its back half (`0x476c6`), the gas station and the luggage conveyor over their
   backs (`0x40f62`, `0x56fc2`).
-- Web version: the stop spot's is drawn over its image on the ground; where the original's draw
-  puts it has not been read. `tools/re/dataref.py` finds the code that forms a data address.
+- The stop spot's is drawn straight after its own picture (`0x79830`), as the web version has it. `tools/re/dataref.py` finds the code that forms a data address.
 
 ## Combo explosion — confirmed
 
