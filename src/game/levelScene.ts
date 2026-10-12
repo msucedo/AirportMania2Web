@@ -224,6 +224,7 @@ export class LevelScene {
     const tipDue = options.stage !== 0 && options.settings.showTips && options.progress.tipDue(Number.parseInt(texts.t('GAME_TIP.COUNT'), 10) || 0);
     const sim = new Simulation({
       arrivalDelay: tipDue ? 6 : 0,
+      tutorial: options.stage === 0,
       difficulty: options.progress.difficulty,
       layout,
       schedule,

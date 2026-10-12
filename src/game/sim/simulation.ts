@@ -345,6 +345,8 @@ export function secondTouch(seconds: number, dx: number, dy: number): boolean {
 }
 
 export interface SimulationConfig {
+  /** The tutorial is on (`airport+0x128`): its gates work a fifth faster (0x430b4) and its runways' combos last a fifth longer (0x6dc00). */
+  tutorial?: boolean;
   /** Seconds every arrival is put back (0x10636): 6 when a tip is to be shown as the level starts. */
   arrivalDelay?: number;
   /** The player's difficulty (profile `+0x48`): it scales the level's clock and the planes' energy drain. 1 when left out. */
@@ -1811,7 +1813,7 @@ export class Simulation {
     if (runway.use === 'landing') advance(runway.takeOffs, combo.crossFactor * dt, combo.takeOffDecay);
     else if (runway.use === 'takeOffReserved') advance(runway.landings, combo.crossFactor * dt, combo.landingDecay);
 
-    const step = dt / runway.descriptor.comboTime;
+    const step = dt / (runway.descriptor.comboTime * (this.config.tutorial ? 1.2 : 1));
     advance(runway.takeOffs, step, combo.takeOffDecay);
     advance(runway.landings, step, combo.landingDecay);
     for (const track of [runway.takeOffs, runway.landings]) {
@@ -1835,7 +1837,7 @@ export class Simulation {
   private updateGate(gate: Gate, dt: number): void {
     const plane = gate.plane;
     if (!plane || (gate.service !== 'unloading' && gate.service !== 'loading')) return;
-    gate.progress += gate.descriptor.speed * dt;
+    gate.progress += gate.descriptor.speed * (this.config.tutorial ? 1.2 : 1) * dt;
     if (gate.progress <= plane.descriptor.times.loading) return;
 
     const service = gate.service;

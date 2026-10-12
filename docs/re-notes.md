@@ -269,6 +269,10 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   calls them with step = dt / `ComboTimeTotal`, clears the flag when the value reaches 1, and
   resets the consecutive counter when the value is 0 (an award is raised for 4 or more).
 - While the runway is reserved, the other kind's timer gets an extra call with step = 6 × dt.
+- With the tutorial on (`airport+0x128`), `ComboTimeTotal` counts as 1.2 times itself in this
+  update (`0x6dc00`), and a gate's `Speed` is made 1.2 times itself as the gate is built
+  (`0x430b4`). They are the only two rules that look at it; its other readers tell the
+  tutorial of what happens. Web version: both.
 - `Runway::planeDone` continues a combo when the timer value is above 0.
 
 ## Taxi graph — confirmed
