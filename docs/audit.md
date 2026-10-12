@@ -255,6 +255,17 @@ the credits' line height; the engine's text.
 What stays ours, by its nature: the fonts' colour effects and how bordered letters are kept
 apart, which are the engine's rasterising of TrueType and are drawn here by the browser.
 
+## The ledger after these passes (2026-10-12)
+
+`docs/unread.tsv` was written again from fresh evidence: 660 functions of the logic are not
+cited by address, every one set aside with a reason. Its "cubierta" lines keep the reasons
+they were given (loaders, table readers, dialog controls, pieces built), but those groups are
+the ones passes four to nine went through, with what each found written above.
+
+One finding of the last pass was in the port's own drawing, not in what was unread: the
+plane's body was drawn 28 px under where the original puts it (`0x85b0`), which only showed
+once the touch's ellipse was the original's.
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.
