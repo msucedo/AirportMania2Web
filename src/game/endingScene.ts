@@ -81,13 +81,13 @@ export class EndingScene {
     }
 
     FLOATERS.forEach((floater, index) => {
+      // 0x35fa6, 0x36170: the picture is drawn at its own size; the number each is made with
+      // (0.5 to 1) only measures how far it sways.
       const sprite = textures.pinned(floater.resource);
-      sprite.scale.set(floater.scale);
       this.front.addChild(sprite);
       let propeller: Sprite | null = null;
       if (floater.propeller) {
         propeller = textures.sprite('FINAL_VICTORY.LITTLE_PLANE_PROPELLER');
-        propeller.scale.set(floater.scale);
         this.front.addChild(propeller);
       }
       this.floaters.push({ sprite, propeller, clock: -floater.delay, index });

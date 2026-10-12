@@ -2568,6 +2568,10 @@ made by `0x70924` with the text `LOADING_SCREEN.LOADING` and a coin thrown for d
   (`0x35e6c`): under 2, with u = 2 − t, moved (`60u²·scale`, `−160u⁴·scale`) and turned
   `25u²`; always turned `7·sin(0.3t)` and moved (`11·sin(0.47t)·scale`, `10·cos(0.53t)·scale`),
   then to its place.
+  The number a floater is made with (0.5, 0.75, 0.85, 1; `+0x10`, the first argument on the
+  stack of `0x35ce4`) multiplies only those moves: its picture, and the little plane's
+  propeller (`0x36170`, turning 5000° a second), are drawn at their own size. The web version
+  had scaled the pictures by it.
 - Ground: four rings of thirty pairs, the pair i at depth `i/4 + from`: buildings (five
   pictures) from 40, canyon (four) from 30, mountains (six) from 20, palm trees (three) from 10.
   A pair is picture `i mod n` 120 px right and picture `(i + 3) mod n`, mirrored, 120 px left
@@ -2588,7 +2592,7 @@ made by `0x70924` with the text `LOADING_SCREEN.LOADING` and a coin thrown for d
 - Web version: opened with `?ending`, reached from the last stage's clear screen, and it goes
   back to the main menu. The first wait is 1 s (`0x3497c`: state 0 and `+0xc` = 1 as the
   scene is made); the web version had 10. Taken, not read:
-  where a floater's scale is applied, the giant font's colours,
+, the giant font's colours,
   that the text is at height 160. The loading screen between is not built.
 
 ## Leaving a level from its menu — confirmed
