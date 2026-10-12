@@ -25,7 +25,13 @@ export async function createScreen(host: HTMLElement): Promise<Application> {
   host.appendChild(app.canvas);
 
   const fit = (): void => {
-    const scale = Math.min(host.clientWidth / SCREEN_WIDTH, host.clientHeight / SCREEN_HEIGHT);
+    // The room is what the host leaves inside its padding (a phone's notch and home bar).
+    const style = getComputedStyle(host);
+    const room = {
+      width: host.clientWidth - (Number.parseFloat(style.paddingLeft) || 0) - (Number.parseFloat(style.paddingRight) || 0),
+      height: host.clientHeight - (Number.parseFloat(style.paddingTop) || 0) - (Number.parseFloat(style.paddingBottom) || 0),
+    };
+    const scale = Math.min(room.width / SCREEN_WIDTH, room.height / SCREEN_HEIGHT);
     const width = Math.floor(SCREEN_WIDTH * scale);
     const height = Math.floor(SCREEN_HEIGHT * scale);
     const resolution = Math.max(1, Math.min(MAX_RESOLUTION, (width / SCREEN_WIDTH) * (window.devicePixelRatio || 1)));
@@ -35,5 +41,41 @@ export async function createScreen(host: HTMLElement): Promise<Application> {
   };
   fit();
   window.addEventListener('resize', fit);
+  // A phone turned over says so late, and not always as a resize.
+  const later = (): void => {
+    fit();
+    window.setTimeout(fit, 300);
+  };
+  window.addEventListener('orientationchange', later);
+  window.addEventListener('pageshow', later);
+  window.visualViewport?.addEventListener('resize', fit);
+  quietBrowserGestures();
   return app;
+}
+
+/**
+ * Ours, for phones: two quick touches are the browser's own gesture (it zooms or slides the
+ * page), and the game's way of taking an order back. The browser's is called off; the game's
+ * pointer events come all the same.
+ */
+function quietBrowserGestures(): void {
+  const typing = (target: EventTarget | null): boolean => target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+  const off = (event: Event): void => {
+    if (!typing(event.target)) event.preventDefault();
+  };
+  for (const name of ['dblclick', 'gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(name, off, { passive: false });
+  let last = 0;
+  document.addEventListener(
+    'touchend',
+    (event) => {
+      const now = performance.now();
+      if (now - last < 350) off(event);
+      last = now;
+    },
+    { passive: false },
+  );
+  // Should the page have been moved all the same, it is put back.
+  window.addEventListener('scroll', () => {
+    if (window.scrollX !== 0 || window.scrollY !== 0) window.scrollTo(0, 0);
+  });
 }
