@@ -59,7 +59,7 @@ filler is accounted for (`tools/re/audit.py` prints the figure). The rest is the
 - Sounds: the emergency arrival, the map's Play (which starts the level reached at once),
   the loading belt's click.
 
-## Second pass: reading the game's functions again (2026-10-11, under way)
+## Second pass: reading the game's functions again (2026-10-11)
 
 `tools/re/gaps.py <start> <end>` lists the stretches of a function that nothing cites, with the
 numbers they use, what they call and what they write. Reading those is the second pass.
@@ -76,13 +76,18 @@ Found so far, and built:
 - the gate's draw (`0x436e4`): for a second after its colour changes it swings between the
   old and the new.
 
-Gone through and found already covered: the plane's flight, landing, taxiing and take-off
-(their sections in the notes), the HUD's update, the scheduling in the level's start.
+- the runway's update (`0x6db18`) and the gate's constructor (`0x430b4`): with the tutorial on,
+  combos last a fifth longer and gates work a fifth faster;
+- the hangar's update (`0x4747e`): its starting sound and then its loop on one channel, faded a
+  second before the work ends. Every other stoppable sound of the logic (`0x8cae8`, `0x8c2cc`:
+  the gas station, the luggage belt, the helicopter, the anti-fog and de-icing machines) was
+  checked against the port and is played as the game plays it.
 
-Still to go through: the rest of the gate (`0x42afc`–`0x43238`, its constructor), the runway
-(`0x6d584`–`0x6dc6a`), the hangar (`0x46e44`–`0x4785c`), the gas station (`0x40952`–`0x410d0`),
-the stop spots (`0x7921e`–`0x79a80`), the painting spot (`0x680b4`–`0x690e0`) and the wash's
-own code (`0x84a8c`–`0x85a4c`).
+Gone through and found already covered: the plane's flight, landing, taxiing and take-off
+(their sections in the notes), the HUD's update, the scheduling in the level's start, the
+runway's use and combos, the gas station, the stop spots, the painting spot and the wash's
+own code. For those the check was of each stretch's numbers, calls and writes against the
+notes' sections, opening what did not match; not a line-by-line reading.
 
 ## Pending: behaviour the port lacks
 
