@@ -227,6 +227,8 @@ export class NameDialog extends Container {
   private readonly input: HTMLInputElement;
   private readonly shown: Label;
   private readonly caret: Label;
+  /** The text as it last stood within the field's width. */
+  private kept: string | null = null;
   private note: Container | null = null;
   private readonly blink: ReturnType<typeof setInterval>;
 
@@ -266,10 +268,23 @@ export class NameDialog extends Container {
     this.input.autocomplete = 'off';
     this.input.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;border:0;padding:0;';
     this.input.value = mode === 'rename' ? (users.current?.name ?? '') : users.defaultName(strings.t('USER_NAME_DIALOG.DEFAULT_USER_NAME'));
+    // 0x80880, 0x2e0e0–0x2e13c: the field starts fresh, and the first character typed then takes
+    // the place of all that is in it; a space is not taken while it is fresh or empty. Rubbing
+    // out or moving the caret leaves it as it is and ends that.
+    let fresh = true;
+    this.input.addEventListener('beforeinput', (event) => {
+      if (event.inputType.startsWith('delete')) fresh = false;
+      if (!event.inputType.startsWith('insert') || event.data === null) return;
+      if (event.data === ' ' && (fresh || this.input.value === '')) return event.preventDefault();
+      if (fresh) this.input.value = '';
+      fresh = false;
+    });
     this.input.addEventListener('input', () => this.typed());
     this.input.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') this.accept();
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'Backspace') fresh = false;
     });
+    this.input.addEventListener('keyup', () => this.placeCaret());
     document.body.appendChild(this.input);
     this.input.focus();
     this.eventMode = 'static';
@@ -282,11 +297,34 @@ export class NameDialog extends Container {
   /** The text is cut back until it fits the field (0x2e3d0). */
   private typed(): void {
     this.shown.text = this.input.value;
-    while (this.shown.width > 170 && this.input.value.length > 0) {
+    // 0x2e164: it may be no wider than the field less 12; a character that makes it so is not
+    // taken. What the field starts with is cut back from its end instead (0x2e3d0).
+    if (this.shown.width > 170 - 12 && this.kept !== null) {
+      const at = Math.max(0, (this.input.selectionStart ?? 1) - (this.input.value.length - this.kept.length));
+      this.input.value = this.kept;
+      this.input.setSelectionRange(at, at);
+      this.shown.text = this.input.value;
+    }
+    while (this.shown.width > 170 - 12 && this.input.value.length > 0) {
       this.input.value = this.input.value.slice(0, -1);
       this.shown.text = this.input.value;
     }
-    this.caret.position.set(this.shown.x + this.shown.width / 2 + 3, -20);
+    this.kept = this.input.value;
+    this.placeCaret();
+  }
+
+  /** The caret stands 3 px after the character it follows (0x2dc58), which need not be the last. */
+  private placeCaret(): void {
+    const whole = this.input.value;
+    const at = this.input.selectionStart ?? whole.length;
+    const width = this.shown.width;
+    let before = width;
+    if (at < whole.length) {
+      this.shown.text = whole.slice(0, at);
+      before = at === 0 ? 0 : this.shown.width;
+      this.shown.text = whole;
+    }
+    this.caret.position.set(this.shown.x - width / 2 + before + (at === 0 ? 0 : 3), -20);
   }
 
   /** 0x80124: an empty name or one already in use is turned down with a note. */

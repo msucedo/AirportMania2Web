@@ -2291,6 +2291,14 @@ verifies that each can be passed and that funds, stars and the opening of stage 
     (−width/2 − 18, −31); a text too wide for the width loses its last characters (`0x2e3d0`).
     Drawn (`0x2dbf8`) with the text centred, a character at a time, and a caret 3 px after
     it with opacity `4·(sin(8t) + 0.5)`.
+  - Its update (`0x2de10`): a tap in it puts the caret at the nearest character; keys 0x14 and
+    0x15 move it a character; 8 rubs out the one before it; any other character the font has
+    (`0x93f38`) goes in at the caret, and comes out again if the text is then wider than the
+    width less 12 (`0x2e164`). A flag (`+0x198`), which the name dialog sets as it makes the
+    field (`0x80880`), has the first character typed take the place of the whole text
+    (`0x2e114`); a space is not taken while it is set or the text is empty (`0x2e0e0`);
+    rubbing out, moving the caret or tapping clears it. Built on the browser's own input,
+    which keeps the text and the caret.
   - Accepting (`0x80124`): spaces around the name are dropped; an empty name opens the note
     with `NAME_NULL`, one some user already has (`0x82808`) the note with `NAME_REPEATED`;
     otherwise modes 0 and 1 add the user (`0x82694`) and mode 2 renames the current one, and
