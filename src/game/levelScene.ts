@@ -62,6 +62,9 @@ import type { StageLayout } from './stages/layout';
 
 const tintOf = (color: PlaneColor | null): number => paletteColor(color).main;
 
+/** Where a sound is put between the speakers for a place `x` across the screen (0x6b24): −0.5 at the left edge, 0.5 at the right. */
+const placeAcross = (x: number): number => x / SCREEN_WIDTH - 0.5;
+
 const STEP = 1 / 60;
 
 export interface LevelOptions {
@@ -658,7 +661,7 @@ export class LevelScene {
     // 0x6b24: a plane's sounds are placed by where it is across the screen (the channel is given
     // `x / 480 − 0.5` every frame, half of what the helicopter's is given at the same place,
     // 0x49588). Here it is fixed as the sound starts.
-    this.audio.play(pattern.replace('%s', plane.sex), { pitch, pan: plane.x / SCREEN_WIDTH - 0.5 });
+    this.audio.play(pattern.replace('%s', plane.sex), { pitch, pan: placeAcross(plane.x) });
     if (voiced) this.planeViews.get(plane.id)?.talk();
   }
 
@@ -1004,7 +1007,8 @@ export class LevelScene {
         this.audio.play('SOUNDS.IN_FLIGHT_MOVIES');
         break;
       case 'washStarted':
-        this.audio.play('SOUNDS.WASHING');
+        // 0x84e00: where the wash is.
+        this.audio.play('SOUNDS.WASHING', { pan: placeAcross(event.plane.x) });
         break;
       case 'luggageStarted': {
         const sound = this.audio.loop(event.luggage.descriptor.sound, 1, false);
@@ -1052,9 +1056,11 @@ export class LevelScene {
         this.planeSound(event.plane, 'Out');
         break;
       case 'score':
-        // Every award and penalty rings the till (0x5d2c, 0x5de0).
-        this.audio.play('SOUNDS.CASH');
-        if (event.multiplier > 1) this.audio.play(`SOUNDS.BONUS_X${event.multiplier}`);
+        // Every award and penalty rings the till (0x5d2c, 0x5de0), on the plane's own channel
+        // and so where the plane is; a combo's sound is placed where its gate or runway is
+        // (0x43452, 0x6d788, 0x6d8f0), which is where the plane stands.
+        this.audio.play('SOUNDS.CASH', { pan: placeAcross(event.plane.x) });
+        if (event.multiplier > 1) this.audio.play(`SOUNDS.BONUS_X${event.multiplier}`, { pan: placeAcross(event.plane.x) });
         break;
       default:
         break;

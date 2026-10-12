@@ -1023,6 +1023,10 @@ names. From it:
 - The luggage belt's sound (`+0x94`) is turned down the same way (`0x56cf2`), and by the same
   number: what is left of the plane's `FuelingTime` (`0x5aa8`), though the belt is done at
   its `LuggageLoadingTime` (`0x5ab8`). Built as it is.
+- Sounds started with a place of their own (`0x8caa4`'s last argument, `x / screen width − 0.5`):
+  a gate's combo (`0x43452`), a runway's (`0x6d788`, `0x6d8f0`) and the wash's (`0x84e00`).
+  The till's ring is played on the plane's channel (`0x5d48`, `0x5dfa`) and so has the plane's
+  place. Built.
 - The helicopter's channel starts at nothing and is brought to 0.5 over a second (`0x4956a`,
   `0x8c17c`); its place is `(x − 240) / 240`. Built.
 - The hangar's sound (`+0x70`, a channel): as the work begins (`0x47298`) it is given
