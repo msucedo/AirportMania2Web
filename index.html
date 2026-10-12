@@ -2,16 +2,32 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <title>Airport Mania 2 (web)</title>
+    <!-- Kept on the phone's home screen it opens without the browser's bars. -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Airport Mania 2" />
+    <link rel="apple-touch-icon" href="icons/icon-180.png" />
     <style>
-      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-      #game { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+      /* The game keeps clear of the notch and the home bar. */
+      #game { box-sizing: border-box; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
       canvas { image-rendering: auto; touch-action: none; }
+      /* Ours, outside the game: a phone held upright is asked to be turned, and the keeping of the
+         game for playing offline says how far it has got. */
+      #turn { display: none; position: fixed; inset: 0; z-index: 10; background: #000; color: #fff; font: 600 20px/1.4 system-ui, sans-serif; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+      @media (orientation: portrait) and (pointer: coarse) { #turn { display: flex; } }
+      #offline { display: none; position: fixed; left: 50%; bottom: calc(8px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 9; padding: 6px 12px; border-radius: 12px; background: rgba(0, 0, 0, 0.7); color: #fff; font: 13px/1.2 system-ui, sans-serif; pointer-events: none; white-space: nowrap; }
     </style>
   </head>
   <body>
     <div id="game"></div>
+    <div id="turn">Gira el teléfono para jugar</div>
+    <div id="offline"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -8,3 +8,7 @@ src/data/generated/
 .re/
 .tools/
 public/assets-hd/
+
+# Icons made from the game's pictures, and the local HTTPS certificates.
+public/icons/
+.certs/
