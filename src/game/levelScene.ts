@@ -1360,7 +1360,8 @@ export class LevelScene {
   /**
    * The end of a tutorial day (0x11d36): goals still pending have failed, and the day is passed
    * with every goal done and something scored. Passing leads to the next day, and the last to
-   * the map; whether the original records the tutorial as done has not been read.
+   * the map (the report's Continue, 0x7f774): the last also earns the diploma and, for a player
+   * who had reached nothing, opens the first stage; nothing else records the tutorial as done.
    */
   private showTutorialEnd(tutorial: Tutorial): void {
     tutorial.finish();

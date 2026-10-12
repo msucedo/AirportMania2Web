@@ -1963,10 +1963,18 @@ animation.
   or `INDICATORS.NO` 6 px lower at 0.45 of its size, popping in over a second as
   `(1 + sin(4π·t))·t·(1 − t) + t`, and its text 12 px to the right in black `FONTS.TEEN`.
 - Web version: the rules are drawn as a plain line;
-  whether the game records the tutorial as done, what the map's Tutorial button asks first
-  (`TUTORIAL_QUESTION_DIALOG`, `0x7e590`) and which dialog leads to which have not been read:
-  the opening is followed by the goals, and passing a day leads to the next, the last to the
-  map.
+  the opening is followed by the goals.
+- The report's Continue (`0x7f774`): with days left (`profile+0x20` under the airport's
+  `+0x64`), the next day's record is made (`0x821b8`) and the level started again (`0xfe8c`).
+  After the last: an award event (`0x9d60`, `0x9db0`: the diploma), the profile's level back
+  to 1 and, if nothing had been reached (`+0x14` zero), stage and level reached and current set
+  to 1; then the level is left (`0x10684`) for the map. Nothing else records the tutorial as
+  done. The web version does the same; its first stage is always open.
+- The tutorial question's choice (`0x7ea9c`): a check box (`0x2dad8`) at its place, and its
+  words in `FONTS.WHITE` laid out (`0x25218`) in the rectangle it is given moved (10, 12) — for
+  both choices (40, −60)–(350, 50), so from 50 right of the box, 48 above to 62 below — left
+  aligned and centred up and down; it takes a touch within 20 px of the box (`0x2d9c0`) or in
+  that rectangle (`0x7ee5a`). Built.
 
 ## Animated scenery — confirmed
 
