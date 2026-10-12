@@ -154,6 +154,11 @@ export class Progress {
     return stage === first || this.stored(stage, 1) !== undefined;
   }
 
+  /** The furthest stage the player has reached (profile `+0x14`). */
+  get stageReached(): number {
+    return Math.max(...[...this.stages.keys()].filter((stage) => this.stageUnlocked(stage)));
+  }
+
   /** A level opens once the previous one has been passed. */
   unlocked(stage: number, level: number): boolean {
     if (!this.stageUnlocked(stage)) return false;

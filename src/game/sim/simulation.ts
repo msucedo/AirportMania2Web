@@ -351,6 +351,8 @@ export interface SimulationConfig {
   arrivalDelay?: number;
   /** The player's difficulty (profile `+0x48`): it scales the level's clock and the planes' energy drain. 1 when left out. */
   difficulty?: number;
+  /** The furthest stage the player has reached (profile `+0x14`): how long hints keep quiet goes by it. */
+  stageReached?: number;
   layout: StageLayout;
   schedule: LevelSchedule;
   goals: LevelGoals;
@@ -846,7 +848,7 @@ export class Simulation {
       return;
     }
     if (this.selected !== plane) return;
-    this.hintQuiet.set(id, RULES.hints.quiet);
+    this.hintQuiet.set(id, Math.max(RULES.hints.least, Math.min(RULES.hints.most, this.config.stageReached ?? 0)));
     this.emit({ type: 'hint', plane, id });
   }
 

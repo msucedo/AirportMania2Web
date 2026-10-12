@@ -239,6 +239,7 @@ export class LevelScene {
       arrivalDelay: tipDue ? 6 : 0,
       tutorial: options.stage === 0,
       difficulty: options.progress.difficulty,
+      stageReached: options.progress.stageReached,
       layout,
       schedule,
       goals: findGoals(area, options.level, extraPlane),

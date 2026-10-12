@@ -1908,7 +1908,9 @@ animation.
   `SAND`, 14 `SPACE_GAS`.
 - A counter per id at `level+0x170 + 4·id`: above zero it is counted down and nothing is
   shown. Otherwise, if the plane is the selected one (`level+0x118`), the hint is shown and
-  the counter set to the game's `+0x14` kept between 3 and 5.
+  the counter set to the profile's `+0x14` (`0x108ce`: `0x827a8`), the furthest stage reached
+  (it is what the main menu's Play and the map's look at), kept between 3 and 5. Built; the
+  web version had 3 always.
 - Raised by the routines that say whether a plane may go to a place now (slot 15, with the
   order given by hand), through one helper per thing done (`0x6b3fc` landed → 1, `0x6b428`
   unloaded → 2, `0x6b454` serviced → 3, `0x6b4ac` fuelled → 4, `0x6b480` luggage → 6,

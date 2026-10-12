@@ -1,5 +1,4 @@
 // Game rules recovered from the original binary. See docs/re-notes.md for addresses.
-// Everything under PROVISIONAL has not been read from the binary yet and is a placeholder.
 
 /** Plane states, numbered as in the original (`plane+0x32c`). */
 export const PlaneState = {
@@ -134,10 +133,10 @@ export const RULES = {
    */
   /**
    * Hints (0x10890): once one of a kind has been shown, the next `quiet` occasions for it pass in
-   * silence. The original takes the number from the game's own state (`+0x14`), kept between 3
-   * and 5; which value that is has not been read, so the least is used.
+   * silence: the furthest stage the player has reached (profile `+0x14`, 0x108d6), kept between
+   * `least` and `most`.
    */
-  hints: { quiet: 3 },
+  hints: { least: 3, most: 5 },
   hazards: { margin: 30, idle: 3, patience: 25, fade: 2, machineAt: 2 },
   fog: { tries: 30, apart: 30, time: 15, machineTime: 5 },
   ice: { tries: 20, apart: 40, time: 30, machineTime: 7 },
@@ -191,11 +190,6 @@ export const RULES = {
 
   runwayHalfWidth: 190,
   runwayHalfHeight: 18,
-} as const;
-
-export const PROVISIONAL = {
-  /** The router skips nodes another plane is using; the simulation does not track that yet. */
-  taxiIgnoresNodeOccupancy: true,
 } as const;
 
 export function clamp01(value: number): number {
