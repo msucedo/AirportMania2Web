@@ -98,6 +98,8 @@ export class TaxiGraph {
     this.link(station, right);
     this.link(station, left);
     this.link(right, left);
+    // 0x409d6–0x40a22: and a barrier behind it, from 30 px right to 50 left, 15 above.
+    this.link(this.addNode({ x: node.x + 30, y: node.y - 15 }, true), this.addNode({ x: node.x - 50, y: node.y - 15 }, true));
     return station;
   }
 

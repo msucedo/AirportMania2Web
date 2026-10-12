@@ -819,8 +819,9 @@ Draw routine `0x40ed4`:
   - Slots 13/14/9: reserve (state 1), busy (state ≠ 0), release (state 0).
   - Constructor (`0x40952`): two pass-through nodes at (+30, +9) and (−15, +9) linked to the
     station node and to each other, plus two linked terminal nodes at (+30, −15) and (−50, −15)
-    whose purpose is not known (not modelled). The reference point is taken to be the station
-    node; that is an assumption.
+    (`0x409d6`–`0x40a22`): a barrier, as the hangar and the belt have, that no other link may
+    cross. All from the station's node (`0x40964`: the pair its depth is worked out from).
+    Built; the web version had left the barrier out.
 - Stop spot: vtable `0x17b928`, kind 3.
   - Slot 11 (`0x7983c`): a plane that has not landed needs a runway in its itinerary; a plane
     that has not unloaded is refused once a gate is in the itinerary; a landed, unloaded plane
