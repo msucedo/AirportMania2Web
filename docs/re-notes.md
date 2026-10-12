@@ -474,7 +474,19 @@ Vtables: gate `0x17a878`, runway `0x17b4d8`. Kind (slot 8): runway 0, gate 1.
   the bar moves 16 px to the right; it swells for a quarter of a second every two.
 - `Plane::say(icon)` (`0x5bd4`): plays a sound by mood (`plane+0x25c`): the `Cannot` sound
   (`plane+0x2c`) for moods 0 and 1, `TalkUpset` (`+0x1c`) for 2 and `TalkMad` (`+0x20`) for 3.
-  The plane also caches `TalkHappy` (`+0x14`), `TalkNormal` (`+0x18`), `Loading` (`+0x24`) and
+  Its mouth chats (`0x13d740`: 24 fps, 5 6 7 8 7 6 5 6 7 8 7 6 5 6 7 8) for mood 0 and talks
+  (`0x13d798`) for the others (`0x5c0a`–`0x5c72`).
+- A plane left waiting with nothing queued says so (`0x5f28`): `TalkHappy` (`+0x14`),
+  `TalkNormal` (`+0x18`), `TalkUpset` or `TalkMad` by its mood, its mouth chatting unless it is
+  mad, its eyes turning for a second (`+0x300` = 1). Called, when the queue is empty, as
+  loading ends (`0x6330`), as a repaint ends (`0x6372`), as unloading ends with no order to
+  start (`0x655a`), as a wash ends (`0x6818`), as the luggage is on (`0x686a`), on reaching a
+  place that only has it wait (`0x7698`: a stop spot, the hangar's way out) and on landing
+  (`0x83fa`). Not after fuelling. Built; the web version had none of it, and never played
+  `TalkHappy` or `TalkNormal`.
+- The whistling mouth (`0x13d7f0`) has nineteen frames at 6 a second: 12 13 14 15 16 17 12 13
+  14 15 16 17 16 17 13 12 13 14 15. Built; the web version ran 12 to 17 round.
+  The plane also caches `Loading` (`+0x24`) and
   `Unloading` (`+0x28`). It runs the talking mouth, turns the eyes for a second and shows the
   icon in the speech balloon for two seconds. It is called with the plane's need when an order
   is given to an idle plane (state 0 or 2, empty queue) for a place it cannot enter (`0x5b10`),
@@ -825,8 +837,11 @@ data and assets.
   (2000 in stage 1). That payout rule is an assumption; `StageClearAmount` is not used yet.
 - The shop lists the improvements the stage script registers for Arches, with its ids and prices
   (see above). The original dialog also offers selling (`IMPROVEMENTS_DIALOG.SELL`); not done.
-- Owning the plane licence (`0xcb`) switches levels to their `HasExtraPlane="true"` schedule and
-  goals. That link is inferred from the data (`ExtraPlane="4"`, `ExtraPlaneNumber="4"`).
+- A level is kept twice in its stage's table (`0x534b2`: entries of 0x58, the second half for
+  `HasExtraPlane="true"`), and whoever asks for it (`0x53c44`, `0x53c24`, from `0xff64`,
+  `0x10190`, `0x10222`, `0x51706`, `0x64954`) passes whether the level's record owns the
+  improvement `199 + ExtraPlaneNumber` of its area (`0xff36`: `area+0x28 + 0xc7`): 0xcb in stage
+  1. The web version keeps that id per stage; every one agrees with the table.
 - A level opens when the previous one has at least one star: assumed.
 
 ## Stage scripts beyond Arches

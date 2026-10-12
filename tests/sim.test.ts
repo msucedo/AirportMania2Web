@@ -175,6 +175,8 @@ describe('simulation, level 1-1', () => {
     expect(plane.approach).toBeNull();
     const order = ['landingStarted', 'landingApproach', 'touchdown', 'landed'].map((type) => events.findIndex((e) => e.type === type));
     expect(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1]!))).toBe(true);
+    // Landed with nothing queued, it says it is waiting (0x83fa).
+    expect(events.filter((e) => e.type === 'waiting')).toHaveLength(1);
   });
 
   it('makes a second plane circle until the runway it was sent to is free', () => {

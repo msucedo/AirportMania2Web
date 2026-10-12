@@ -322,6 +322,8 @@ export type SimEvent =
   | { type: 'touchdown'; plane: Plane; runway: Runway }
   | { type: 'landed'; plane: Plane; runway: Runway }
   | { type: 'takeOff'; plane: Plane; runway: Runway }
+  /** A plane is left waiting with no order to go on with (0x5f28). */
+  | { type: 'waiting'; plane: Plane }
   | { type: 'leftAngry'; plane: Plane }
   | { type: 'departed'; plane: Plane }
   | { type: 'timeOver' }
@@ -1217,6 +1219,7 @@ export class Simulation {
     if (wash.left > 0) return;
     wash.left = null;
     plane.state = PlaneState.WAITING;
+    this.reportIn(plane);
     this.addEnergy(plane, RULES.wash.energy);
     this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.washing), 1, 'service');
     this.emit({ type: 'counted', what: 'washes' });
@@ -1247,6 +1250,7 @@ export class Simulation {
     // 0x67df8: the plane waits again, cheered up, and the spot has to recharge.
     booth.job = null;
     plane.state = PlaneState.WAITING;
+    this.reportIn(plane);
     this.addEnergy(plane, RULES.painting.energy);
     booth.left = booth.recharge;
     booth.ready = false;
@@ -1460,6 +1464,11 @@ export class Simulation {
   }
 
   /** Makes `node` the one the plane holds, letting go of the one it held. */
+  /** 0x5f28's callers: a plane that comes to wait with nothing queued says so. */
+  private reportIn(plane: Plane): void {
+    if (plane.state === PlaneState.WAITING && plane.queue.length === 0) this.emit({ type: 'waiting', plane });
+  }
+
   private hold(plane: Plane, node: TaxiNode | null): void {
     if (plane.node && plane.node !== node) plane.node.occupied = false;
     plane.node = node;
@@ -1715,6 +1724,7 @@ export class Simulation {
       // Out at the exit node: the hangar pays and waits for the plane to move on (0x472f4).
       place.use = 'done';
       plane.state = PlaneState.WAITING;
+      this.reportIn(plane);
       this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.hangar), 1, 'service');
       this.emit({ type: 'counted', what: 'repairs' });
     } else if (place.kind === 'hangar') {
@@ -1734,6 +1744,7 @@ export class Simulation {
       } else {
         // `StopSpot::planeArrived` (0x79788): the plane simply waits there.
         plane.state = PlaneState.WAITING;
+        this.reportIn(plane);
         this.emit({ type: 'parked', plane, spot: place });
       }
     }
@@ -1758,6 +1769,7 @@ export class Simulation {
     if (landing) {
       this.addEnergy(plane, RULES.energyBoost);
       plane.state = PlaneState.WAITING;
+      this.reportIn(plane);
       // The original arms the landing timer when it sees the landed plane waiting (0x6dd0a).
       runway.landings.active = true;
       this.emit({ type: 'landed', plane, runway });
@@ -1851,6 +1863,7 @@ export class Simulation {
 
     const service = gate.service;
     plane.state = PlaneState.WAITING;
+    this.reportIn(plane);
     if (service === 'loading') {
       gate.service = 'loaded';
       plane.loaded = true;
@@ -1893,6 +1906,7 @@ export class Simulation {
     // `Plane::luggageFinished` (0x6848).
     plane.luggageDone = true;
     plane.state = PlaneState.WAITING;
+    this.reportIn(plane);
     plane.need = Need.LOAD;
     this.emit({ type: 'luggageFinished', plane, luggage });
     this.addScore(plane, roundScore(clamp01(plane.energy) * plane.descriptor.points.luggage), 1, 'service');

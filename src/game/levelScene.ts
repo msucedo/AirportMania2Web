@@ -26,7 +26,7 @@ import { SKY_SURFACES, SkyView } from './view/sky';
 import { BuoyLine, ShoreWaves, WATER_SURFACES, WaterRings, ringInterval } from './view/waterEffects';
 import { createScenery, scenerySurfaceIds, type SceneryView } from './view/scenery';
 import { backdropOf, isScenery } from './stages/layout';
-import { PASSENGER_ICONS, PlaneView, planeSurfaceIds, type BalloonCorner, type Passenger } from './planeView';
+import { PASSENGER_ICONS, PlaneView, planeSurfaceIds, type BalloonCorner, type Passenger, moodOf } from './planeView';
 import type { Progress } from './progress';
 import { FINAL_REPORT_FONTS, FINAL_REPORT_SURFACES, FinalReport, tierFor } from './view/finalReport';
 import { FloatingTexts, MAIN_FONT, SCORE_FONT } from './view/floatingText';
@@ -656,12 +656,23 @@ export class LevelScene {
   /** The plane says what it needs, in the voice of its mood (0x5bd4). */
   private speak(plane: Plane): void {
     // Content or merely impatient it makes its "cannot" sound; upset or furious it complains.
-    this.planeSound(plane, plane.energy < 0.3 ? 'TalkMad' : plane.energy < 0.5 ? 'TalkUpset' : 'Cannot');
+    // Only a content plane's mouth chats (0x5c0a); the others' talk.
+    const mood = moodOf(plane.energy);
+    this.planeSound(plane, mood === 3 ? 'TalkMad' : mood === 2 ? 'TalkUpset' : 'Cannot', mood === 0);
     this.planeViews.get(plane.id)?.speak(plane.need);
   }
 
+  /**
+   * A plane left waiting with no order says so in the voice of its mood (0x5f28): happy, normal,
+   * upset or mad. Its mouth chats unless it is mad, and its eyes turn for a second.
+   */
+  private reportIn(plane: Plane): void {
+    const mood = moodOf(plane.energy);
+    this.planeSound(plane, ['TalkHappy', 'TalkNormal', 'TalkUpset', 'TalkMad'][mood]!, mood < 3);
+  }
+
   /** A plane's own sound: descriptor slot, with `%s` filled by its sex and its voice pitch. */
-  private planeSound(plane: Plane, slot: string): void {
+  private planeSound(plane: Plane, slot: string, chat = false): void {
     const pattern = plane.descriptor.sounds[slot];
     if (!pattern) return;
     const voiced = pattern.includes('%s');
@@ -670,7 +681,7 @@ export class LevelScene {
     // `x / 480 − 0.5` every frame, half of what the helicopter's is given at the same place,
     // 0x49588). Here it is fixed as the sound starts.
     this.audio.play(pattern.replace('%s', plane.sex), { pitch, pan: placeAcross(plane.x) });
-    if (voiced) this.planeViews.get(plane.id)?.talk();
+    if (voiced) this.planeViews.get(plane.id)?.talk(chat);
   }
 
   /** Advances the simulation in fixed steps and redraws. */
@@ -1003,6 +1014,9 @@ export class LevelScene {
       case 'tierLost':
         // 0x1219e.
         this.audio.play(event.tier === 1 ? 'SOUNDS.GOAL_1_LOST' : 'SOUNDS.GOAL_GENERIC_LOST');
+        break;
+      case 'waiting':
+        this.reportIn(event.plane);
         break;
       case 'timeOver':
         this.audio.play('SOUNDS.TIME_OVER');

@@ -65,7 +65,10 @@ export function washShake(seconds: number | null): number {
 const MOUTH_SEQUENCES = {
   talk: { fps: 16, frames: [9, 10, 11, 7, 8, 7, 10, 9, 10, 11, 7, 8, 7, 10] },
   cheer: { fps: 14, frames: [5, 6, 6, 6, 6, 6, 6, 6, 6, 5] },
-  whistle: { fps: 6, frames: [12, 13, 14, 15, 16, 17] },
+  // 0x13d7f0: nineteen frames, not a plain run of six.
+  whistle: { fps: 6, frames: [12, 13, 14, 15, 16, 17, 12, 13, 14, 15, 16, 17, 16, 17, 13, 12, 13, 14, 15] },
+  // 0x13d740: the mouth of a plane in a fair mood talking.
+  chat: { fps: 24, frames: [5, 6, 7, 8, 7, 6, 5, 6, 7, 8, 7, 6, 5, 6, 7, 8] },
 } as const;
 
 /** Surface ids a plane needs, for all three perspectives. */
@@ -124,6 +127,9 @@ export function energyBar(energy: number): { solid: number; flicker: number | nu
 }
 
 /** Mood from energy (0x869a): which mouth to show and how far the eyebrows tilt, in degrees. */
+/** The mood itself, 0 content to 3 furious (`plane+0x25c`). */
+export const moodOf = (energy: number): number => (energy < 0.3 ? 3 : energy < 0.5 ? 2 : energy < 0.7 ? 1 : 0);
+
 export function moodFor(energy: number): { mouth: number; browAngle: number } {
   if (energy < 0.3) return { mouth: 4, browAngle: 25 };
   if (energy < 0.5) return { mouth: 2, browAngle: 10 };
@@ -431,8 +437,8 @@ export class PlaneView extends Container {
   }
 
   /** The plane speaks: its mouth runs the talking animation and the eyes turn aside (0x5bd4). */
-  talk(): void {
-    this.sequence = MOUTH_SEQUENCES.talk;
+  talk(chat = false): void {
+    this.sequence = chat ? MOUTH_SEQUENCES.chat : MOUTH_SEQUENCES.talk;
     this.sequenceAt = 0;
     this.lookTimer = 1;
   }
