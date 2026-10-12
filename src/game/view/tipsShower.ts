@@ -31,7 +31,33 @@ export function tipsShower(textures: TextureStore, strings: Strings, text: strin
   const bubble = new NineSliceSprite({ texture: textures.texture('GUI.TIPS_SHOWER.SPEECH_BUBBLE'), leftWidth: 34, rightWidth: 17, topHeight: 23, bottomHeight: 22 });
   bubble.setSize(tip, Math.round(words.height) + 23);
   bubble.position.set(60 - tip / 2, Math.floor(-words.height / 2 - 11));
-  shower.addChild(character, bubble, words);
+  // 0x7a81e: the words are black at 0.9.
+  words.alpha = 0.9;
+  // 0x7a0ce, 0x7a760–0x7a7a8: the shower comes in at 5 a second and its tip at 3, the tip
+  // growing from half its size about its middle as it clears.
+  const balloon = new Container();
+  balloon.pivot.set(60, 0);
+  balloon.position.set(60, 0);
+  balloon.addChild(bubble, words);
+  shower.addChild(character, balloon);
+  let whole = 0;
+  let shown = 0;
+  let last = performance.now();
+  const show = (): void => {
+    shower.alpha = Math.max(0.001, whole);
+    balloon.alpha = shown;
+    balloon.scale.set(0.5 + 0.5 * shown);
+  };
+  show();
+  shower.onRender = () => {
+    const now = performance.now();
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    whole = Math.min(1, whole + 5 * dt);
+    shown = Math.min(1, shown + 3 * dt);
+    show();
+    if (whole >= 1 && shown >= 1) shower.onRender = null;
+  };
   return shower;
 }
 

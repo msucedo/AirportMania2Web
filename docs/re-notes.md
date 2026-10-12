@@ -2247,9 +2247,13 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   text's height + 23, from (−140, floor(−height/2 − 11)); the text is drawn 34 px in from the
   bubble's left, centred on the tip's height (draw `0x7a72c`). The shower and each tip fade
   (`+0x20`, `+0x1c`), and a tip grows from half its height as it appears.
-- Web version: `%d` is taken to be the stage, as for the hints; the tip's text is drawn
-  black (its colour call `0xb4290` is not read); tips change at once, without the fade; the
-  four numbers of the bubble's cut are taken as 34 from the left and 23 from the top.
+  The shower's value follows its flag at 5 a second (`0x7a0ce`) and a tip's at 3; the tip is
+  drawn (`0x7a72c`) at that opacity and scaled `0.5 + 0.5·v` about its middle; its words are
+  black at 0.9 (`0x7a81e`). A tip that is replaced is switched off and goes the same way
+  (`0x7a044`).
+- Web version: `%d` is taken to be the stage, as for the hints; a tip comes in as above but
+  one that is replaced goes at once; the four numbers of the bubble's cut are taken as 34
+  from the left and 23 from the top.
 
 ## Users — confirmed
 

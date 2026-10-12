@@ -341,6 +341,10 @@ export class LevelScene {
     const release = (event: FederatedPointerEvent): void => {
       scene.heldChooser?.release(event.global.y);
       scene.heldChooser = null;
+      // 0x10ee8: a tab acts as the finger lifts on it (its slot 8, 0x244a8), not as it goes down.
+      const at = event.global;
+      if (scene.coffeeTab?.held && scene.coffeeTab.contains(at.x, at.y) && !scene.paused && !scene.dialog) scene.sim.serveCoffee();
+      if (scene.moviesTab?.held && scene.moviesTab.contains(at.x, at.y) && !scene.paused && !scene.dialog) scene.sim.showMovies();
       if (scene.coffeeTab) scene.coffeeTab.held = false;
       if (scene.moviesTab) scene.moviesTab.held = false;
     };
@@ -362,12 +366,10 @@ export class LevelScene {
     if (this.dialog) return;
     if (this.coffeeTab?.contains(x, y) && !this.paused) {
       this.coffeeTab.held = true;
-      this.sim.serveCoffee();
       return;
     }
     if (this.moviesTab?.contains(x, y) && !this.paused) {
       this.moviesTab.held = true;
-      this.sim.showMovies();
       return;
     }
     // Balloons and the helicopter are on top of everything, the bar included, and take the
