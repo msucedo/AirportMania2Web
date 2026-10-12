@@ -89,6 +89,30 @@ runway's use and combos, the gas station, the stop spots, the painting spot and 
 own code. For those the check was of each stretch's numbers, calls and writes against the
 notes' sections, opening what did not match; not a line-by-line reading.
 
+## Third pass: line by line (2026-10-11)
+
+What the second pass only checked against the notes, read through. Found and built:
+
+- the plane's update (`0x6af0`): the eyes' shift runs at 8 a second and the gear at 2 (the
+  port had 4 for both); its sounds are placed across the screen by where it is; the plane
+  under the pointer, when it can be picked, is a tenth larger;
+- the gas station (`0x40e32`) and the luggage belt (`0x56cf2`): their sound is turned down
+  over its last second (the belt's by the plane's fueling time, as the game has it);
+- the helicopter (`0x4956a`): its sound comes up to half over a second;
+- the awards room's table: each kind of award has its own touch area, a special trophy's by
+  the `Height` the table gives it, which the port did not read.
+
+Read through and found to match the notes: the plane's holding pattern, taxiing, mood and
+balloons; the runway's use and combos; the gas station's arrival and rules. The stage scripts
+(`0xcc000`–`0xe4000`) are cited only by where they start, but every one was run in the
+emulator for its builders' calls (`tools/re/stage_layout.py`), which is a reading of all of it.
+
+Not read line by line, and so still resting on the notes' sections for them: the hangar's
+building and draw (`0x46e44`–`0x47234`, `0x47710`–`0x4785c`), the stop spots' constructor and
+rules (`0x7921e`–`0x79a80`), the painting spot (`0x680b4`–`0x690e0`), the wash's own code
+(`0x84a8c`–`0x85a4c`), the gate's constructor and arrival (`0x42afc`–`0x4340a`), and the
+plane's landing and take-off (`0x7340`–`0x7d60`, `0x8108`–`0x8200`).
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.
