@@ -59,6 +59,31 @@ filler is accounted for (`tools/re/audit.py` prints the figure). The rest is the
 - Sounds: the emergency arrival, the map's Play (which starts the level reached at once),
   the loading belt's click.
 
+## Second pass: reading the game's functions again (2026-10-11, under way)
+
+`tools/re/gaps.py <start> <end>` lists the stretches of a function that nothing cites, with the
+numbers they use, what they call and what they write. Reading those is the second pass.
+
+Found so far, and built:
+
+- the click handler (`0x10b58`): the tick or cross a touch leaves (`YesNoMessage`); a plane's
+  orders are cancelled only by a second touch on nothing; touching a plane that cannot be
+  picked lets go of the one picked;
+- the level's update (`0x11654`): after the time is out the clock stays and the seconds on are
+  counted by the real clock;
+- the plane's update (`0x6af0`), state 9: under the wash it shuts its eyes, flutters them and
+  shakes itself;
+- the gate's draw (`0x436e4`): for a second after its colour changes it swings between the
+  old and the new.
+
+Gone through and found already covered: the plane's flight, landing, taxiing and take-off
+(their sections in the notes), the HUD's update, the scheduling in the level's start.
+
+Still to go through: the rest of the gate (`0x42afc`–`0x43238`, its constructor), the runway
+(`0x6d584`–`0x6dc6a`), the hangar (`0x46e44`–`0x4785c`), the gas station (`0x40952`–`0x410d0`),
+the stop spots (`0x7921e`–`0x79a80`), the painting spot (`0x680b4`–`0x690e0`) and the wash's
+own code (`0x84a8c`–`0x85a4c`).
+
 ## Pending: behaviour the port lacks
 
 In the order they would be seen. None is a rule of play except the second.
