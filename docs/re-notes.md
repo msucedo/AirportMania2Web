@@ -587,7 +587,10 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
   gas station `0x411e4`, luggage belt `0x57210`, stop spots, wash and painting spot `0x68474`
   0.1; hangar `0x47944` 0.07; runway `0x6e620` 0.03 across and 0.09 down. Built: the web
   version scales each place's whole view (a gate's building only); which of its parts each
-  draw leaves unscaled was read for the gate alone.
+  draw leaves unscaled was read for the gate alone. By the order of calls in the others: the
+  runway scales its strip, both numbers and its remark, and not its arrows (`0x6dd60`–`0x6e1e2`);
+  the gas station and the belt ask for the scale for their back picture and remark and build
+  the transforms of their other parts apart (`0x40f36`, `0x56dfc`).
 - Not read: the order flag offsets. The runway draw is covered under "Runway drawing".
 
 ## Gas station drawing — confirmed
