@@ -323,7 +323,22 @@ export class AwardsRoom {
     node.hitArea = new Rectangle(-reach.x, -reach.y, 2 * reach.x, 2 * reach.y);
     node.eventMode = 'static';
     node.cursor = 'pointer';
+    // 0x1b574, 0x1b57c, 0x1b5c2: with a finger on it the award swells a tenth, at 5 a second.
+    let touched = false;
+    let swell = 0;
+    let last = performance.now();
+    node.on('pointerdown', () => (touched = true));
+    node.on('pointerout', () => (touched = false));
+    node.on('pointerupoutside', () => (touched = false));
+    node.onRender = () => {
+      const now = performance.now();
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      swell = Math.max(0, Math.min(1, swell + (touched && !this.dialog ? 5 : -5) * dt));
+      node.scale.set(1 + 0.1 * swell);
+    };
     node.on('pointerup', () => {
+      touched = false;
       if (this.drag?.moved || this.dialog) return;
       // 0x1be8c: a plane trophy that is had opens the plane's own dialog.
       const plane = place.kind === 'plane' && awards[place.id]?.earned === true ? this.options.planes.get(place.number) : undefined;
