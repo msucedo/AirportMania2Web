@@ -107,10 +107,10 @@ In the order they would be seen. None is a rule of play except the second.
      (`0x25bd0` is the engine's plain button, not a bounce);
    - never drawn by the game, so nothing to build: the HUD's money sign (loaded at `0x4e482`,
      kept at `+0x24` and read nowhere) and `EFFECTS.BONUS_REMARK` (see the combo explosion);
-   - still not read: the level marker's own draw (`0x5def0`) and update (`0x5de28`); the port
-     builds the markers from the map's script.
-7. **The original's language dialog** (`0x5073c`): this build takes the language from the
-   device; the port's own choice stands in for it.
+   - read and built later that day: the level marker's own update and draw (`0x5de28`,
+     `0x5def0`) and the awards room's back button (`0x4bcd0`, `0x4bcfc`).
+7. ~~**The original's language dialog**~~ (`0x5073c`): never opened in this build (it is made
+   and kept at `app+0x13c`, which only its own code reads), so there is nothing to build.
 
 Not pending, for the record: `SOUNDS.REPAIRING_LOOP` is loaded and never played;
 `EFFECTS.FIREWORKS.EXPLOSIONS.%d` is loaded and never drawn; the UFO (`0xbc784`) is in the

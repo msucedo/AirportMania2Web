@@ -999,6 +999,10 @@ names. From it:
 - The options' own dialog (`0x2220(dialog, kind)`), 360 wide, read by running its builder
   (`tools/re/draw_trace.py 0x2220 --r1 0|1 --stub …`). There is no language entry in this
   build: the language comes from the device.
+  A language dialog exists (`0x5073c`: `LANGUAGE_SELECTION_DIALOG.TITLE`, a list of flags
+  `FLAGS.%s`, `CHANGE_LANGUAGE`, `CANCEL`, and a notice that changes need a restart); it is
+  made at start-up (`0x3d748`) and kept at `app+0x13c`, but only its own code reads that
+  field: nothing opens it.
   - Kind 1, 240 high, opened by a level's Options (`0x678e8`): `SOUND_FX` from (−130, −105)
     with its switch at x −160 and slider on x 100, `MUSIC` likewise at y −65; the three labels
     from x −160 at y −25, 15 and 55, each with its switch at x 145; `BACK` 310 wide at y 100.

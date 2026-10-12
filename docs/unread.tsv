@@ -41,7 +41,6 @@ f728	92	cubierta	level restart: clears, saves, random seed for the radar; the po
 f784	60	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- f728 fe8c* tables=0
 f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats=0 profile,users,stores=53 <- f7c0* 11654* 37b68* 38b64 tables=0 http://www.southwindsgames.com/airport-mania-wild-trips/playlog/playlog.php; PlayerName; C
 10050	356	cubierta	stage lookup by number ("Invalid Stage Number")	floats=0 profile,users,stores=4 <- fe8c* 10044 tables=0 Invalid Stage Number
-10920	44	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- e440 31a14* 3730c 375e8 378c8 4a410 tables=0
 12540	904	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 profile,stores=9 <- 128c8 12ac4 tables=0
 128c8	508	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 stores=19 <- 10684* tables=0 %s_%s
 12ac4	552	no aplica	save files of a level in play (save%d.dat, %s_%s)	floats=0 stores=21 <- 12cec tables=0 %s_%s
@@ -51,7 +50,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 15434	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f5a8 42afc* 42ebc* tables=0
 15460	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f410 563fc 565f4* tables=0
 1548c	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f3d0 40680 40788* 40ed4* tables=0
-154b8	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f3f0 46a38* 46c14* tables=0
+154b8	44	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 10b58* 3f3f0 46a38 46c14* tables=0
 154e4	64	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 12540 tables=0
 15524	168	fontanería	by rule: no numbers and no text	floats=0 stores=2 <- 12540 tables=0
 155cc	664	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 12540 tables=0
@@ -336,6 +335,7 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 4695c	84	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=3 <- 45d58* 466dc* tables=0
 469b0	84	cubierta	hangar helpers; built	floats=4 stores=0 <- 464dc tables=0
 46a04	52	cubierta	by rule: only loads resources or makes objects	floats=0 new×1,stores=3 <- 45bd4* tables=0 Hangar
+46a38	160	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=5 <- 46ad8 46c14* tables=0 HANGARS.PROGRESS; HANGARS.PROGRESS_TICK; SOUNDS.REPAIRING_START; SOUNDS.REPAIRING_LOOP
 46ad8	300	fontanería	by rule: no numbers and no text	floats=0 stores=2 <-  tables=1
 47888	228	cubierta	by rule: only loads resources or makes objects	floats=7 new×1,stores=5,formed@47982 <-  tables=0
 4796c	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Hangar
@@ -360,8 +360,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 4b67c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 HorizonObject; Ice
 4b6a8	100	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 RUNWAY.FROZEN
 4bb64	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Ice
-4bcd0	44	vista	a button of the hint dialog (near 0x4bb84); not read	floats=5 stores=1 <-  tables=2
-4bcfc	292	vista	a button of the hint dialog (near 0x4bb84); not read	floats=24 draws,stores=0 <-  tables=2
 4c1d8	64	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 11654* tables=0
 4ca38	28	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 4cc68	68	cubierta	shop: buttons, list reset and draw; read this session	floats=0 stores=1 <- 4c218* tables=0 IMPROVEMENTS_DIALOG.BUY; IMPROVEMENTS_DIALOG.SELL
@@ -374,12 +372,11 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 50160	116	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 StoneHengeIsland; TikiIsland; TropicalIsland; VulcanoIsland; IslandWater
 501d4	60	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <- 5022c tables=0 STAGES.ISLAND.WAVES; MESHES.WATER_MESH
 505e0	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 IslandWater
-50600	124	pendiente	language dialog of the original (the port has a choice of its own)	floats=0 stores=0 <- 50bec 510bc tables=0 LANGUAGE_SELECTION_DIALOG.CHANGES_NEED_RESTART
-5073c	580	cubierta	by rule: only loads resources or makes objects	floats=0 new×5,stores=2 <-  tables=1 FONTS.WHITE; LANGUAGE_SELECTION_DIALOG.TITLE; CANCEL
-50980	96	pendiente	language dialog of the original (the port has a choice of its own)	floats=2 stores=1 <- 5073c tables=0 LANGUAGE_SELECTION_DIALOG.CHANGE_LANGUAGE
-50c00	316	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=2 <- 5073c tables=0 GUI.DIALOGS.COMBOBOX.TEXT_REMARK
+50600	124	muerta	language dialog: made at start-up and kept at app+0x13c, but nothing opens it in this build	floats=0 stores=0 <- 50bec 510bc tables=0 LANGUAGE_SELECTION_DIALOG.CHANGES_NEED_RESTART
+50980	96	muerta	language dialog: made at start-up and kept at app+0x13c, but nothing opens it in this build	floats=2 stores=1 <- 5073c* tables=0 LANGUAGE_SELECTION_DIALOG.CHANGE_LANGUAGE
+50c00	316	cubierta	by rule: only loads resources or makes objects	floats=14 loads,stores=2 <- 5073c* tables=0 GUI.DIALOGS.COMBOBOX.TEXT_REMARK
 50ecc	496	cubierta	by rule: only loads resources or makes objects	floats=0 loads,new×1,stores=7 <-  tables=1 FLAGS.%s
-510c8	68	pendiente	language dialog of the original (the port has a choice of its own)	floats=3 draws,stores=0 <-  tables=1
+510c8	68	muerta	language dialog: made at start-up and kept at app+0x13c, but nothing opens it in this build	floats=3 draws,stores=0 <-  tables=1
 52270	96	fontanería	by rule: no numbers and no text	floats=0 new×1,stores=1 <- 52160 tables=0
 523ce	162	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=6 <-  tables=0
 52560	2460	cubierta	parsers of the descriptor tables and the levels database; the port reads the same tables	floats=0 stores=92 <- 524a4 53038 tables=0 Name; Number; Number; False; True; LEVELS_DB; LevelsDB; AreasCount; Area; LevelsCount; Ext
@@ -439,8 +436,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 5d990	344	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=11 <- 6052c* tables=0 FONTS.TEEN; MAP.HERALDIC_RIBBON; STAGES.%d.TITLE
 5dae8	120	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=8 draws,stores=0 <-  tables=1
 5ddf4	52	cubierta	map: stage icons, level markers, buttons, dialogs; built	floats=0 profile,users,stores=2 <- 5dda4* 5fb44* tables=0
-5de28	200	vista	level marker of the map: its own update and draw; the port builds it from the script	floats=20 profile,users,stores=8 <-  tables=1
-5def0	424	vista	level marker of the map: its own update and draw; the port builds it from the script	floats=54 draws,stores=0 <-  tables=1 Map::MapBat
 5e4b4	88	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 Map::MapSnow
 5e50c	100	fontanería	by rule: no numbers and no text	floats=0 loads,stores=1 <-  tables=1
 5eb18	52	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=2 <- 5eb4c* 5edc8 tables=0 MAP.SATELLITE; MAP.SATELLITE_BRIGHT
@@ -485,10 +480,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 69b88	160	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.BONUS_STAR; Spark
 69d9c	72	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 EFFECTS.SPARK
 6a1b0	80	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 LightFan; BonusStar; Spark
-6a328	532	muerta	perfect scores message: nothing reads where it is kept (see audit)	floats=35 draws,touch,stores=3 <-  tables=1
-6a53c	100	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=4 <-  tables=1 FONTS.MAIN; FONTS.ULTRA
-6a5a0	52	fontanería	by rule: no numbers and no text	floats=0 stores=1 <-  tables=1
-6a5d4	56	muerta	perfect scores message: nothing reads where it is kept (see audit)	floats=0 draws,stores=0 <-  tables=1
 6a940	96	muerta	perfect scores message: nothing reads where it is kept (see audit)	floats=2 stores=1 <- 6a6cc* tables=0
 6aca4	168	fontanería	by rule: no numbers and no text	floats=0 stores=0 <- 40728 42e08 46ad8 56594 6cdd0 78c68 tables=1
 6b0cc	320	cubierta	flash of a place taking an order; built	floats=38 stores=0 <- 6af20* 6b20c* tables=0
@@ -647,8 +638,6 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 87380	104	fontanería	by rule: no numbers and no text	floats=0 stores=0 <-  tables=1
 8752c	44	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 WaterSilhouette; YesNoMessage
 87558	104	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 INDICATORS.NO; INDICATORS.YES
-875d0	328	cubierta	by rule: only loads resources or makes objects	floats=16 loads,stores=12 <- 875c0 tables=0 INDICATORS.NO; INDICATORS.YES
-87718	264	sin datos	silhouettes under the island's water: no such images	floats=35 draws,stores=0 <-  tables=1
 87964	32	fontanería	by rule: names of types only	floats=0 stores=0 <-  tables=1 YesNoMessage
 87b4c	140	sin datos	silhouettes under the island's water: no such images	floats=9 draws,stores=0 <-  tables=1
 87be8	156	cubierta	by rule: only loads resources or makes objects	floats=0 loads,stores=1 <-  tables=1 River
@@ -708,4 +697,3 @@ f7d8	1716	no aplica	uploads a play log to the studio server (playlog.php)	floats
 8b480	124	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 8b3dc tables=0
 8b810	60	fontanería	by rule: no numbers and no text	floats=0 stores=1 <- 8b76c tables=0
 8ba1c	172	fontanería	by rule: no numbers and no text	floats=0 stores=8 <- 89e10 8a3b4 tables=0
-8be84	804	no aplica	reading and writing saved objects, compression	floats=155 stores=33 <- a9dac tables=0
