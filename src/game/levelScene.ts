@@ -133,6 +133,8 @@ export class LevelScene {
   private readonly wakes = new Map<number, { x: number; y: number; next: number }>();
   private readonly stationViews: GasStationView[] = [];
   private readonly swells: { place: Place; views: Container[]; x: number; y: number; value: number }[] = [];
+  /** Where the finger is while it holds a balloon or the helicopter. */
+  private bonusHeld: { x: number; y: number } | null = null;
   private readonly panelShown = new Map<Hangar, number>();
   private readonly hangarPanels: { hangar: Hangar; panel: Container; ticks: Sprite[] }[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
@@ -336,11 +338,14 @@ export class LevelScene {
     // The colour chooser of a painting spot follows the finger while it is held down.
     app.stage.on('globalpointermove', (event: FederatedPointerEvent) => {
       scene.heldChooser?.move(event.global.y);
+      if (scene.bonusHeld) scene.bonusHeld = { x: event.global.x, y: event.global.y };
       scene.pointer = { x: event.global.x, y: event.global.y };
     });
     const release = (event: FederatedPointerEvent): void => {
       scene.heldChooser?.release(event.global.y);
       scene.heldChooser = null;
+      if (scene.bonusHeld && !scene.paused && !scene.dialog) scene.sim.tapBonus(event.global.x, event.global.y);
+      scene.bonusHeld = null;
       // 0x31c2e: a finger lifted anywhere sends the award's notice away.
       if (scene.notice) scene.notice.touched = true;
       // 0x10ee8: a tab acts as the finger lifts on it (its slot 8, 0x244a8), not as it goes down.
@@ -376,7 +381,12 @@ export class LevelScene {
     }
     // Balloons and the helicopter are on top of everything, the bar included, and take the
     // touch first.
-    if (!this.paused && this.sim.tapBonus(x, y)) return;
+    // 0x10e9a–0x10efa: a finger on one holds it (a balloon swells, 0x21f70), and it acts as the
+    // finger lifts on it (0x22044, 0x4974c).
+    if (!this.paused && this.sim.bonusAt(x, y)) {
+      this.bonusHeld = { x, y };
+      return;
+    }
     if (this.hud.contains(y)) return;
     if (first) {
       this.audio.preload(['SOUNDS.SELECT_PLANE', 'SOUNDS.PLACE_CLICK', 'SOUNDS.FORBIDDEN_CLICK', 'SOUNDS.QUEUE_CANCEL', 'SOUNDS.REROUTING', 'SOUNDS.PLANE_EMERGENCY_IN', 'SOUNDS.BONUS_X2', 'SOUNDS.CASH']);
@@ -1164,7 +1174,7 @@ export class LevelScene {
     for (const piece of this.scenery) piece.update(elapsed);
     this.rings?.update(elapsed);
     this.drawPainting(elapsed);
-    this.bonusView.update(elapsed);
+    this.bonusView.update(elapsed, this.bonusHeld);
     for (const fog of this.fogViews) fog.update(elapsed);
     for (const ice of this.iceViews) ice.update(elapsed);
     for (const sand of this.sandViews) sand.update();

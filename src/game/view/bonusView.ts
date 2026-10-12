@@ -33,7 +33,7 @@ export function burstPose(clock: number): { scale: number; alpha: number } | nul
 }
 
 export class BonusView extends Container {
-  private readonly balloons = new Map<number, { holder: Container; thread: Sprite; body: Sprite }>();
+  private readonly balloons = new Map<number, { holder: Container; thread: Sprite; body: Sprite; swell: number }>();
   private readonly coins = new Map<number, Sprite>();
   private readonly splashes: { sprite: Sprite; age: number }[] = [];
   private helicopter: Sprite | null = null;
@@ -53,7 +53,7 @@ export class BonusView extends Container {
     this.splashes.push({ sprite, age: 0 });
   }
 
-  update(dt: number): void {
+  update(dt: number, finger: { x: number; y: number } | null = null): void {
     const { sim, textures } = this;
 
     const alive = new Set(sim.balloons.map((b) => b.id));
@@ -74,13 +74,18 @@ export class BonusView extends Container {
         body.position.set(0, 20);
         holder.addChild(thread, body);
         this.addChild(holder);
-        view = { holder, thread, body };
+        view = { holder, thread, body, swell: 0 };
         this.balloons.set(balloon.id, view);
       }
       const lean = balloonLean(balloon.y);
       view.holder.position.set(balloon.x, balloon.y);
       view.thread.angle = lean;
       view.body.angle = -lean;
+      // 0x21fc8, 0x21f70: under a finger (30 px about it) its value rises at 3 a second, and the
+      // balloon is drawn that share of 0.3 larger.
+      const held = finger !== null && Math.abs(finger.x - balloon.x) <= 30 && Math.abs(finger.y - balloon.y) <= 30;
+      view.swell = Math.max(0, Math.min(1, view.swell + (held ? 3 : -3) * dt));
+      view.body.scale.set(1 + 0.3 * view.swell);
     }
 
     const coins = new Set(sim.coins.map((c) => c.id));

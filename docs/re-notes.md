@@ -1476,7 +1476,10 @@ Some levels have a bonus event, created by the stage script (found by running th
 - Balloons (`BalloonsBonus`, builder `0x13ac4`, update `0x21a48`): ten balloons, the next one
   1 to 2 s after each (libc `rand`). A balloon (`0x222f8`) starts at y 350 and a random x in
   10…470 with one of three images, rises 100 px/s (`0x21fc0`) and goes at y −30; it takes
-  touches within 30 px. It is drawn (`0x21ee8`) leaning `3·sin(0.05·y)` degrees, thread and
+  touches within 30 px: it is one of the airport's touchables, held while a finger is on it
+  (its value, `+0x20`, follows at 3 a second, `0x21fc8`, and the balloon is drawn
+  `1 + 0.3·value` as large, `0x21f70`) and popped as the finger lifts there; the helicopter
+  is tapped the same way, on the lift. It is drawn (`0x21ee8`) leaning `3·sin(0.05·y)` degrees, thread and
   all, the balloon itself turned back upright about a point 20 px above. Popped (`0x22044`):
   `SOUNDS.BALLOON_POP` at pitch 0.98…1.02, a `BALLOON.SPLASH` and a coin 20 px below. The splash
   (`0x254d4`): a clock from 1 falling at 2 a second (`0x255ac`); drawn (`0x255e4`) at scale

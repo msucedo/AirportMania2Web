@@ -1122,6 +1122,15 @@ export class Simulation {
    * A touch on a bonus object: a balloon pops (0x22044) or the helicopter is tapped (0x4974c),
    * and either releases a coin. Returns whether the touch landed on one.
    */
+  /** Whether a balloon or the helicopter is at (x, y), where a touch is theirs. */
+  bonusAt(x: number, y: number): boolean {
+    if (this.ended || !this.bonus) return false;
+    const rule = RULES.bonus;
+    const helicopter = this.helicopter;
+    if (helicopter && Math.abs(x - helicopter.x) <= rule.helicopter.reachX && Math.abs(y - helicopter.y) <= rule.helicopter.reachY) return true;
+    return this.balloons.some((b) => Math.abs(x - b.x) <= rule.balloons.reach && Math.abs(y - b.y) <= rule.balloons.reach);
+  }
+
   tapBonus(x: number, y: number): boolean {
     if (this.ended || !this.bonus) return false;
     const rule = RULES.bonus;
