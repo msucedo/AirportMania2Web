@@ -277,8 +277,7 @@ export const TUTORIAL_QUESTION_SURFACES = ['GUI.DIALOGS.CHECKBOX_BACK', 'GUI.DIA
 /**
  * The question a new game starts with (0x7e590): a 400×250 frame with two choices, to attend
  * the academy at (−170, −90) and to skip it at (−170, 20), the first picked, and Play, 260
- * wide, at (0, 110). How a choice is drawn inside (0x7ea9c) has not been read: a check box with
- * its text to the right.
+ * wide, at (0, 110). A choice (0x7ea9c) is a check box with its words to the right.
  */
 export class TutorialQuestionDialog extends Container {
   private tutorial = true;
@@ -299,16 +298,22 @@ export class TutorialQuestionDialog extends Container {
     const { overlay, centre } = centred(this.textures, 400, 250);
     const choice = (y: number, text: string, picks: boolean): void => {
       const box = this.textures.sprite('GUI.DIALOGS.CHECKBOX_BACK');
-      box.position.set(-170 + 20, y + 20);
+      // 0x7eaca: the check box stands on the choice's place.
+      box.position.set(-170, y);
       centre.addChild(box);
       if (this.tutorial === picks) {
         const tick = this.textures.sprite('GUI.DIALOGS.CHECKBOX_ON');
         tick.position.copyFrom(box.position);
         centre.addChild(tick);
       }
-      textBox(centre, this.strings.t(text), { x1: -120, y1: y, x2: 190, y2: y + 60 }, white(), false);
+      // 0x7eb6a: its words, in `FONTS.WHITE`, start 50 px right of it and are centred up and down
+      // in a box from 48 above it to 62 below, 310 wide (the rectangle (40, −60)–(350, 50) it is
+      // made with, moved (10, 12)). A touch counts on the box (20 px about it) or on the words' box.
+      const words = textBox(centre, this.strings.t(text), { x1: -120, y1: y - 48, x2: 190, y2: y + 62 }, white(), false);
+      words.anchor.set(0, 0.5);
+      words.position.set(-120, y + 7);
       const zone = new Container();
-      zone.hitArea = new Rectangle(-190, y - 10, 380, 70);
+      zone.hitArea = new Rectangle(-190, y - 48, 380, 110);
       zone.eventMode = 'static';
       zone.cursor = 'pointer';
       zone.on('pointerdown', (event) => {
