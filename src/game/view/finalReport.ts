@@ -1,13 +1,13 @@
 import { Label, ULTRA_EFFECT, titleText } from './effectText';
 import { BORDER, SCORE_FILL, SCORE_NEGATIVE_FILL } from './faces';
-import { Container, TilingSprite, type Sprite, type FillInput } from 'pixi.js';
+import { Container, TilingSprite, type FillInput } from 'pixi.js';
 import type { LevelGoals } from '../../data/levels';
 import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import type { Simulation } from '../sim/simulation';
-import { dialogButton, dialogFrame, dialogRule, widgetAppear } from './dialog';
+import { dialogButton, dialogFrame, dialogRule, widgetAppear, dialogBackdrop } from './dialog';
 import { SCORE_FONT } from './floatingText';
 
 export const FINAL_REPORT_SURFACES = [
@@ -60,13 +60,12 @@ export function reportPercent(count: number, total: number): number {
  * clock apart; the clock runs at double speed and four times faster while the screen is held.
  * The punctuality rows grow a bar of ticks to the share of planes for arrivals and departures.
  * Last comes the score and, a full unit later, the Continue button. Coordinates are from the
- * dialog's centre. The turning backdrop's speed and the font colour effects are approximations.
+ * dialog's centre. The font colour effects are approximations.
  */
 export class FinalReport extends Container {
   onContinue: (() => void) | null = null;
 
   private readonly panel: Container;
-  private readonly backdrop: Sprite;
   private readonly steps: (() => boolean | void)[] = [];
   private clock = 0;
   private held = false;
@@ -99,10 +98,8 @@ export class FinalReport extends Container {
       window.removeEventListener('pointercancel', release);
     });
 
-    this.backdrop = textures.sprite(tier === 'FAIL' ? 'GUI.FINAL_REPORT.SPIRAL' : 'GUI.FINAL_REPORT.BACK_STAR');
-    this.backdrop.scale.set(4);
-    this.backdrop.alpha = 0.18;
-    this.panel.addChild(this.backdrop);
+    // 0x32634, 0x3275e: the backdrop, over the box's 400 by 250.
+    dialogBackdrop(textures, this.panel, tier === 'FAIL' ? 'GUI.FINAL_REPORT.SPIRAL' : 'GUI.FINAL_REPORT.BACK_STAR', BOX.width, BOX.height);
     // 0x3241c: rules across at y −40 and 54, 400 wide, and down at x 42, centred at y −60 and 10.
     dialogRule(textures, this.panel, 0, -40, 400);
     dialogRule(textures, this.panel, 0, 54, 400);
@@ -178,7 +175,6 @@ export class FinalReport extends Container {
   }
 
   update(seconds: number): void {
-    this.backdrop.rotation += seconds * 0.4;
     this.clock += seconds * (this.held ? 8 : 2);
     // Bars grow 20 px per unit of the clock, with a tick of sound as they go (0x33086).
     for (const growing of this.growing) {

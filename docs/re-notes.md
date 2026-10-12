@@ -2864,6 +2864,20 @@ Another of the app's screens (vtable `0x17ad10`; enter `0x55a38`, update `0x55b3
   "You are playing a beta version of Aiport Mania - Wild Trips"; nothing in the binary sets
   that byte, so it is never shown, here either.
 
+## A report's backdrop — confirmed
+
+Widget `0x2c890(parent, image, width, height)`: the final report's (400 by 250,
+`GUI.FINAL_REPORT.BACK_STAR`, or `SPIRAL` for a fail) and the tutorial report's (390 by 240).
+
+- Its clock (`+0xb4`) runs at 0.12 a second, kept within −1…1 (`0x2c97c`).
+- Draw (`0x2ca28` → `0x2c6a4`, run in the emulator at clocks 0, 0.1 and 0.3): eight of the
+  image, i from 0. With `p = clock + i/4` kept within −1…1: at (`column[i]·width/2`,
+  `−p·height/2`), the columns −0.5, 0.7, −0.4, −0.8, 0.6, 0.1, 0.4, −0.35 (`0x13d8c8`); scale 1,
+  or 0.8 for odd i; turned `−720·p + 211·i` degrees for even i and `720·p + 211·i` for odd; at
+  opacity 0.5, times `(1 − |p|)/0.1` beyond 0.9 (and the same of the column, which none
+  reaches).
+- Built; the web version had one picture, four times its size and faint, turning slowly.
+
 ## How a dialog's widget comes in — confirmed
 
 A widget (base `0x2bbdc`) is still until told to come in, one of two ways, each setting its

@@ -155,6 +155,57 @@ export function widgetAppear(parent: Container, x: number, y: number, pop: boole
   return inner;
 }
 
+/** Where each of the backdrop's eight pictures drifts, across the dialog's width (table at 0x13d8c8). */
+const BACKDROP_COLUMNS = [-0.5, 0.7, -0.4, -0.8, 0.6, 0.1, 0.4, -0.35];
+
+/**
+ * The pictures behind a report (widget `0x2c890`, draw `0x2ca28`, read off runs of it): eight of
+ * the one image, each a quarter of the way after the last on a climb from the dialog's foot to
+ * its head that takes `clock` from −1 to 1. Odd ones are four fifths the size; each turns twice
+ * on the way, the even ones backwards; all are half clear, and clear away over the last tenth
+ * at either end.
+ */
+export function backdropPieces(clock: number, width: number, height: number): { x: number; y: number; scale: number; angle: number; alpha: number }[] {
+  return BACKDROP_COLUMNS.map((column, i) => {
+    let p = clock + i / 4;
+    p -= 2 * Math.ceil((p - 1) / 2);
+    const edge = (value: number): number => (Math.abs(value) > 0.9 ? (1 - Math.abs(value)) / 0.1 : 1);
+    return {
+      x: (column * width) / 2,
+      y: (-p * height) / 2,
+      scale: 1 - 0.2 * (i % 2),
+      angle: (i % 2 ? 720 : -720) * p + 211 * i,
+      alpha: 0.5 * edge(p) * edge(column),
+    };
+  });
+}
+
+/** The backdrop itself: its clock runs at 0.12 a second (0x2c990). */
+export function dialogBackdrop(textures: TextureStore, parent: Container, image: string, width: number, height: number): void {
+  const holder = new Container();
+  const sprites = BACKDROP_COLUMNS.map(() => holder.addChild(textures.sprite(image)));
+  let clock = 0;
+  let last = performance.now();
+  const show = (): void => {
+    backdropPieces(clock, width, height).forEach((piece, i) => {
+      const sprite = sprites[i]!;
+      sprite.position.set(piece.x, piece.y);
+      sprite.scale.set(piece.scale);
+      sprite.angle = piece.angle;
+      sprite.alpha = piece.alpha;
+    });
+  };
+  show();
+  holder.onRender = () => {
+    const now = performance.now();
+    clock = (clock + 0.12 * Math.min(0.1, (now - last) / 1000)) % 2;
+    last = now;
+    show();
+  };
+  holder.eventMode = 'none';
+  parent.addChild(holder);
+}
+
 export function dialogText(panel: Container, value: string, x: number, y: number, size: number, family: string, anchorX = 0): Label {
   const node = new Label({ text: value, style: { fontFamily: family, fontSize: size, fill: 0xffffff, stroke: BORDER } });
   node.anchor.set(anchorX, 0.5);

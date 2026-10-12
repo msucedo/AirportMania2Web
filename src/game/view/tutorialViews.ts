@@ -6,7 +6,7 @@ import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import type { Tutorial, TutorialGoal, TutorialHint } from '../sim/tutorial';
-import { dialogButton, dialogFrame, dialogRule } from './dialog';
+import { dialogButton, dialogFrame, dialogRule, dialogBackdrop } from './dialog';
 import { MAIN_FONT, SCORE_FONT } from './floatingText';
 
 // What the tutorial shows: the hint dialog every hint of the game uses (0x4aedc), the dialogs a
@@ -149,8 +149,8 @@ export class TutorialGoalsDialog extends Container {
 }
 
 /**
- * How the day went (0x7efb4): a 400×250 frame over the final report's star, or its spiral for a
- * fail (390×240); "Success" or "Failed" in the box (−150, −110)–(150, −80); the day's words for
+ * How the day went (0x7efb4): a 400×250 frame over the final report's drifting stars, or its
+ * spirals for a fail (over 390×240); "Success" or "Failed" in the box (−150, −110)–(150, −80); the day's words for
  * it in (−185, −70)–(185, 60); and either Continue at (0, 105), or Try again at (0, 50) and Main
  * Menu at (0, 105), each 380 wide. It plays the final report's music and sound for the best
  * result or for a fail.
@@ -162,10 +162,8 @@ export class TutorialReport extends Container {
     audio.playMusic(`MUSICS.FINAL_REPORT.${tier}`);
     audio.play(`SOUNDS.FINAL_REPORT.${tier}`);
     const { overlay, centre } = centred(textures, 400, 250);
-    const back = textures.sprite(passed ? 'GUI.FINAL_REPORT.BACK_STAR' : 'GUI.FINAL_REPORT.SPIRAL');
-    back.anchor.set(0.5);
-    back.setSize(390, 240);
-    centre.addChild(back);
+    // 0x7f120, 0x7f360: the report's backdrop, over 390 by 240.
+    dialogBackdrop(textures, centre, passed ? 'GUI.FINAL_REPORT.BACK_STAR' : 'GUI.FINAL_REPORT.SPIRAL', 390, 240);
     textBox(centre, strings.t(passed ? 'TUTORIAL_REPORT.SUCCESS' : 'TUTORIAL_REPORT.FAILED'), { x1: -150, y1: -110, x2: 150, y2: -80 }, ultra(), true);
     rule(textures, centre, -85, 380);
     textBox(centre, strings.t(`TUTORIAL_DIALOG.LEVEL${day}.${passed ? 'SUCCESS' : 'FAILED'}`), { x1: -185, y1: -70, x2: 185, y2: 60 }, white(), false);

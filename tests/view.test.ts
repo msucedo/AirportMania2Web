@@ -30,6 +30,7 @@ import { hangarPanelStep } from '../src/game/levelScene';
 import { stageClearStar } from '../src/game/view/stageClear';
 import { burstPose } from '../src/game/view/bonusView';
 import { flagStep } from '../src/game/view/orderFlags';
+import { backdropPieces, widgetPose } from '../src/game/view/dialog';
 import { awardTouch } from '../src/data/awards';
 import { coast, dragSpeed, markerImage, markerScale, ringTurn } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
@@ -1116,5 +1117,24 @@ describe('an order flag', () => {
     expect(flagStep(0, 0.1, true)).toBeCloseTo(0.3);
     expect(flagStep(0.9, 0.1, true)).toBe(1);
     expect(flagStep(0.2, 0.1, false)).toBe(0);
+  });
+});
+
+describe('a report\'s backdrop', () => {
+  it('is where the original draws each picture', () => {
+    const at = backdropPieces(0.3, 400, 250);
+    expect(at[0]).toMatchObject({ x: -100, y: -37.5, scale: 1, alpha: 0.5 });
+    expect(at[3]!.y).toBeCloseTo(118.75);
+    expect(at[3]!.alpha).toBeCloseTo(0.25);
+    expect(Math.cos((backdropPieces(0, 400, 250)[1]!.angle * Math.PI) / 180) * 0.8).toBeCloseTo(0.685734, 4);
+    expect(backdropPieces(0, 400, 250)[4]!.alpha).toBeCloseTo(0);
+  });
+});
+
+describe('a dialog\'s widget coming in', () => {
+  it('pops or fades over half a second', () => {
+    expect(widgetPose(0.25, true)).toEqual({ scale: expect.closeTo(1.225, 5), alpha: 0.5 });
+    expect(widgetPose(0.25, false)).toEqual({ scale: 1, alpha: 0.25 });
+    expect(widgetPose(1, true)).toEqual({ scale: 1, alpha: 1 });
   });
 });
