@@ -69,11 +69,8 @@ In the order they would be seen. None is a rule of play except the second.
    on bubbles; and the touch area of a plane as the original has it.
 3. ~~**Colour help**~~ (`0x265ac`): built on 2026-10-11, with the three other colour tables.
 4. ~~**The gate's label on hover**~~ (`0x43d2a`): built on 2026-10-11.
-5. **The pause screen** (`0x6a210`; update `0x6a328`, draw `0x6a5d4`; kept at `app+0x148`):
-   `PAUSE.PAUSED` 30 px above the screen's middle and `PAUSE.TEXT` 30 px below, coming in, held
-   until a touch, and going. Nothing in the game's own code switches to it: the device does,
-   when the app is interrupted. What would stand for that on the web is ours to choose, so it
-   is left for the owner to decide.
+5. ~~**The pause screen**~~ (`0x6a210`): built on 2026-10-11; it comes when the page is hidden
+   during play, the owner's choice of what stands for the device's interruption.
 6. **Small looks**, gone through on 2026-10-11:
    - built: the island's shore waves (`MESHES.WATER_MESH`, `0x5021c`), the check box's
      pressed picture, the menu entries' highlight and their acting as they are let go

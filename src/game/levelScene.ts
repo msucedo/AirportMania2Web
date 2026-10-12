@@ -1,3 +1,4 @@
+import { PauseScreen } from './view/pauseScreen';
 import { inRuns } from './loadingScreen';
 import { Label } from './view/effectText';
 import { BORDER, MAIN_FILL } from './view/faces';
@@ -327,6 +328,11 @@ export class LevelScene {
     app.stage.on('pointerup', release);
     app.stage.on('pointerupoutside', release);
     app.ticker.add((ticker) => scene.frame(ticker.deltaMS / 1000));
+    // The original's pause screen is shown by the device when the app is interrupted; here,
+    // when the page is hidden.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) scene.interrupt();
+    });
     return scene;
   }
 
@@ -405,6 +411,18 @@ export class LevelScene {
     if (next.kind === 'hangar') return 11;
     if (next.kind === 'luggage') return 14;
     return next.painting ? 15 : next.wash ? 13 : 12;
+  }
+
+  /** The game is interrupted in play: it stops under the pause screen until a touch (0x6a53c, 0x6a5a0). */
+  interrupt(): void {
+    if (this.paused || this.dialog || this.sim.ended) return;
+    this.paused = true;
+    const screen = new PauseScreen(this.strings, () => {
+      this.dialog = null;
+      this.paused = false;
+    });
+    this.dialog = screen;
+    this.root.addChild(screen);
   }
 
   /** The improvements shop for this level; a purchase or sale means building the airport again. */

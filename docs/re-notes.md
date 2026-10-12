@@ -1001,8 +1001,14 @@ names. From it:
   its place, heights counting a fifth more; with tap on bubbles on, also one whose speech
   balloon is past 0.6 of its showing and within 27 px across and 23 px up or down of the
   touch; of several, the one in front.
-- `0x6a210` draws `PAUSE.PAUSED` and `PAUSE.TEXT` centred on the screen; it is not opened by a
-  button (most likely when the app is interrupted).
+- The pause screen (`0x6a210`, kept at `app+0x148`; vtable `0x17b348`: update `0x6a328`, draw
+  `0x6a5d4`, enter `0x6a53c`, leave `0x6a5a0`): the texts `PAUSE.PAUSED` in `FONTS.ULTRA` and
+  `PAUSE.TEXT` in `FONTS.MAIN`, centred. A clock runs from 0 to 1 at 2 a second as it comes;
+  it then waits for a touch to be let go; and the clock runs back at 2 a second. With the
+  clock at `c` both are `c` clear and `0.5 + 0.5c` large, and stand that share of 30 px above
+  and below the screen's middle (read off runs of the update). Entering stops the level
+  (`0x108f0`) and leaving starts it again (`0x10920`). Nothing in the game's own code
+  switches to it: the device does. Web version: shown when the page is hidden during play.
 - Web version: all of that. Turning with the device does nothing here, and its switch is
   kept only so that the dialog is whole. The colour table picked is kept with the settings,
   not the profile. The language choice of our own that Advanced used to open is gone: the

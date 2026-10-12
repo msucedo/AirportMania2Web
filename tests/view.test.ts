@@ -24,6 +24,7 @@ import { energyBar, moodFor, orientationFor, speechPlace, thoughtPlace, nagFlash
 import { listLimit, listRest, listRowAt, listRowY, listSettle } from '../src/game/view/improvementsDialog';
 import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoading';
 import { gateLabelStrength } from '../src/game/view/gateView';
+import { pausePose } from '../src/game/view/pauseScreen';
 import { coast, dragSpeed, markerImage } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
@@ -1003,5 +1004,13 @@ describe('the island\'s shore waves', () => {
     expect(shoreSlide(0)).toBe(0);
     expect(shoreSlide(1)).toBeCloseTo(0.25);
     expect(shoreSlide(5)).toBeCloseTo(0.25);
+  });
+});
+
+describe('the pause screen', () => {
+  it('brings its texts in from half their size and half their distance', () => {
+    expect(pausePose(0)).toEqual({ alpha: 0, scale: 0.5, offset: 15 });
+    expect(pausePose(0.5)).toEqual({ alpha: 0.5, scale: 0.75, offset: 22.5 });
+    expect(pausePose(1)).toEqual({ alpha: 1, scale: 1, offset: 30 });
   });
 });
