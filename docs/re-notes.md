@@ -86,7 +86,8 @@ Read from pseudocode and the callee disassembly.
   and the new order is then given as usual, without `SOUNDS.PLACE_CLICK` (`0x1129e`). With an
   empty queue nothing is said (`0x60aa`). A second touch is not counted towards a third. Web
   version: the same, told at the touch's start.
-- Pressing on nothing with a plane selected cancels its queue (`0x6028`, `SOUNDS.QUEUE_CANCEL`).
+- A second touch (see rerouting) on nothing with a plane selected cancels its queue (`0x6028`,
+  `SOUNDS.QUEUE_CANCEL`); a single one does nothing (`0x11456`).
 - A touch leaves a mark where it was (`YesNoMessage`, `0x875c0`; update `0x876cc`, draw
   `0x87718`): `INDICATORS.YES` when the order is taken (`0x112f6`), `INDICATORS.NO` when it
   is refused (`0x1135a`) or the plane touched cannot be picked (`0x1116e`, which also lets go

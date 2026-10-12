@@ -672,7 +672,8 @@ export class Simulation {
       else this.emit({ type: 'forbidden', plane: selected });
       return;
     }
-    this.cancelQueue(selected);
+    // 0x11456: only a second touch on nothing takes the plane's orders away.
+    if (again) this.cancelQueue(selected);
   }
 
   /**
