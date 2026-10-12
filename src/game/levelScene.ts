@@ -132,6 +132,7 @@ export class LevelScene {
   /** Per plane: where it was last frame and how long until its next ring on the water. */
   private readonly wakes = new Map<number, { x: number; y: number; next: number }>();
   private readonly stationViews: GasStationView[] = [];
+  private readonly swells: { place: Place; views: Container[]; x: number; y: number; value: number }[] = [];
   private readonly panelShown = new Map<Hangar, number>();
   private readonly hangarPanels: { hangar: Hangar; panel: Container; ticks: Sprite[] }[] = [];
   private readonly planeViews = new Map<number, PlaneView>();
@@ -748,16 +749,20 @@ export class LevelScene {
       this.ground.addChild(view);
       // 0x6e1e2: the last thing the runway draws.
       this.addRemark(runway, view, runway.position);
+      // 0x6e620: a runway swells 3 % along and 9 % across.
+      this.swellWith(runway, [view], 0.03, 0.09);
       if (buoys[1]) this.ground.addChild(buoys[1]);
     }
     for (const spot of this.sim.stopSpots) {
       // The wash and go's own draw (0x853b4) is its grating on the ground.
       const ids = spot.wash ? ['WASH_AND_GO.GRATING'] : spot.vip ? layout.stopSpotSurfaces.vip : layout.stopSpotSurfaces.normal;
+      const pictures: Container[] = [];
       for (const [index, id] of ids.entries()) {
         const sprite = this.textures.sprite(id);
         sprite.position.copyFrom(spot.position);
         // 0x79392, 0x79408: an island's spot is two pictures sorted with the planes, the back
         // one 20 behind the spot and the spot's own 30 before it. Any other lies on the ground.
+        pictures.push(sprite);
         if (spot.wash || ids.length < 2) this.ground.addChild(sprite);
         else {
           sprite.zIndex = spot.position.y + (index === 0 ? -20 : 30);
@@ -773,6 +778,7 @@ export class LevelScene {
         this.planeLayer.addChild(rope);
       }
       this.addRemark(spot, this.ground, spot.position);
+      this.swellWith(spot, pictures);
       if (spot.wash) this.washViews.push(new WashView(this.textures, spot, this.planeLayer));
       if (spot.painting) {
         const sign = new PaintingSign(this.textures, spot, layout.water);
@@ -797,7 +803,7 @@ export class LevelScene {
       view.zIndex = gate.position.y + gate.descriptor.depthOffset;
       this.planeLayer.addChild(view);
       // 0x439ac: over the gate's letter.
-      this.addRemark(gate, view, null, 3);
+      this.addRemark(gate, view, null, view.remarkIndex);
       this.gateViews.push({ gate, view });
     }
     for (const hangar of this.sim.hangars) {
@@ -827,6 +833,8 @@ export class LevelScene {
       const remark = this.addRemark(hangar, this.planeLayer, hangar.position);
       if (remark) remark.zIndex = back.zIndex;
       this.hangarPanels.push({ hangar, panel, ticks });
+      // 0x47944: 7 %.
+      this.swellWith(hangar, [back, front], 0.07);
     }
     for (const station of this.sim.gasStations) {
       const view = new GasStationView(this.textures, station);
@@ -835,6 +843,7 @@ export class LevelScene {
       this.planeLayer.addChild(view);
       // 0x40f62: over its back.
       this.addRemark(station, view, null, 2);
+      this.swellWith(station, [view]);
       this.stationViews.push(view);
     }
     for (const luggage of this.sim.luggages) {
@@ -844,6 +853,7 @@ export class LevelScene {
       this.planeLayer.addChild(view);
       // 0x56fc2: over its back.
       this.addRemark(luggage, view, null, 2);
+      this.swellWith(luggage, [view]);
       this.luggageViews.push(view);
     }
     for (const decoration of layout.decorations) {
@@ -900,6 +910,16 @@ export class LevelScene {
   }
 
   /** Gives `place` its flash, drawn in `parent` at `at` (or the parent's origin), at child `index` or last. */
+  /** Has `views` swell about the place while it is pointed at, by `x` across and `y` down. */
+  private swellWith(place: Place, views: Container[], x = 0.1, y = x): void {
+    for (const view of views) {
+      if (view.position.x !== 0 || view.position.y !== 0) continue;
+      view.pivot.copyFrom(place.position);
+      view.position.copyFrom(place.position);
+    }
+    this.swells.push({ place, views, x, y, value: 0 });
+  }
+
   private addRemark(place: Place, parent: Container, at: { x: number; y: number } | null, index?: number): PlaceRemark | null {
     const image = remarkImages(this.sim, this.options.layout).get(place);
     if (!image || !this.textures.has(image)) return null;
@@ -1116,6 +1136,13 @@ export class LevelScene {
       entry.swing = Math.max(0, (entry.swing ?? 0) - step);
       const shown = entry.swing > 0 ? mixColors(entry.from ?? colour, colour, gateColorSwing(entry.swing)) : colour;
       view.update(step, shown, gateLabelStrength(entry.pointed, this.anyGatePointed));
+      view.swell(entry.pointed);
+    }
+    // Every other place swells the same way, by its own share (slot 16 of each: 0x411e4,
+    // 0x57210, 0x68474, 0x47944, 0x6e620).
+    for (const entry of this.swells) {
+      entry.value = Math.max(0, Math.min(1, entry.value + (entry.place === pointed ? 7 : -7) * step));
+      for (const view of entry.views) view.scale.set(1 + entry.x * entry.value, 1 + entry.y * entry.value);
     }
     this.report?.update(seconds);
     const elapsed = this.paused ? 0 : seconds;

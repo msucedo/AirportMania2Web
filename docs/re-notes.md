@@ -574,8 +574,21 @@ base constructor `0x78cb8` sets to 0.5; click area ±35 × ±20 around the posit
   and its `DespZ` above: `GATES.ON_OVER_LABEL`, `GATES.LETTERS.LABEL.<n>`, and
   `ON_OVER_LABEL_COLOR` in the gate's colours when it has any. Web version: the same, the
   coloured part in one colour.
-- Not read: the first part of the gate draw (`0x436e4`–`0x439ac`: building, colour, letter) and
-  the order flag offsets. The runway draw is covered under "Runway drawing".
+- First part of the gate draw (`0x436e4`–`0x439ac`), read and run in the emulator: the colour
+  picture in two colours (`0x84440`) and the front one, both at the gate and scaled by the
+  gate's own scale; then the letter at the gate's **node** plus the descriptor's
+  `NameSurfacePosition` (`+48`; nothing when the table has none), not at the gate: unscaled
+  (`0x43940`), or scaled with the building about the gate when `ScaleNumber` (`+0x38`) is set
+  (`0x438da`). The remark goes over it (`0x439ac`). Descriptor: `+24` IconBarPosition, `+32`
+  ArrowsPosition, `+40` BonusPosition, `+0x39` LabelOver. Built; the web version had the
+  letter at the gate.
+- A place's scale (slot 16, used by its draw about its position) is 1 plus a share of its
+  pointed value (`+0x2c`, which follows the pointer's mark at 7 a second): gate `0x44080`,
+  gas station `0x411e4`, luggage belt `0x57210`, stop spots, wash and painting spot `0x68474`
+  0.1; hangar `0x47944` 0.07; runway `0x6e620` 0.03 across and 0.09 down. Built: the web
+  version scales each place's whole view (a gate's building only); which of its parts each
+  draw leaves unscaled was read for the gate alone.
+- Not read: the order flag offsets. The runway draw is covered under "Runway drawing".
 
 ## Gas station drawing — confirmed
 

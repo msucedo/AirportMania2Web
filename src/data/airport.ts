@@ -20,6 +20,8 @@ export interface GateDescriptor {
   arrows: { loading: string; unloading: string }[];
   /** All positions are relative to the gate's own position. */
   node: Point;
+  /** Where its letter is drawn, from its node (`NameSurfacePosition`); the node itself when it has none. */
+  name: Point;
   arrowsPosition: Point;
   iconBar: Point;
   bonus: Point;
@@ -82,6 +84,7 @@ export function parseGateTable(tree: XmlNode[]): Map<number, GateDescriptor> {
       },
       arrows: children(node, 'ArrowsResources').map((n) => ({ loading: str(n, 'Loading'), unloading: str(n, 'Unloading') })),
       node: point(requireChild(node, 'NodePosition')),
+      name: children(node, 'NameSurfacePosition').map(point)[0] ?? { x: 0, y: 0 },
       arrowsPosition: point(requireChild(node, 'ArrowsPosition')),
       iconBar: point(requireChild(node, 'IconBarPosition')),
       bonus: point(requireChild(node, 'BonusPosition')),

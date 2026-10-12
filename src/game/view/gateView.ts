@@ -82,6 +82,10 @@ export class GateView extends Container {
   private readonly sign: Container | null = null;
   private readonly signColor: Sprite | null = null;
 
+  private readonly building = new Container();
+  /** Where the gate's remark goes among its children: over its letter (0x439ac). */
+  remarkIndex = 0;
+
   constructor(
     private readonly textures: TextureStore,
     private readonly gate: Gate,
@@ -91,7 +95,15 @@ export class GateView extends Container {
     const d = gate.descriptor;
     this.position.copyFrom(gate.position);
     this.color = textures.sprite(d.surfaces.color);
-    this.addChild(this.color, textures.sprite(d.surfaces.front), textures.sprite(d.surfaces.letterPattern.replace('%d', String(index))));
+    // 0x43940: the letter is drawn at the gate's node plus its `NameSurfacePosition`, not at
+    // the gate. With `ScaleNumber` it swells with the building (0x438da); without, it does not.
+    const letter = textures.sprite(d.surfaces.letterPattern.replace('%d', String(index)));
+    letter.position.set(d.node.x + d.name.x, d.node.y + d.name.y);
+    this.building.addChild(this.color, textures.sprite(d.surfaces.front));
+    if (d.scaleNumber) this.building.addChild(letter);
+    this.addChild(this.building);
+    if (!d.scaleNumber) this.addChild(letter);
+    this.remarkIndex = this.children.length;
 
     // Frame 3 is drawn first.
     for (let frame = ARROW_FRAMES - 1; frame >= 0; frame--) {
@@ -129,6 +141,11 @@ export class GateView extends Container {
       this.addChildAt(sprite, this.getChildIndex(this.bonus));
     }
     return sprite;
+  }
+
+  /** The building swells a tenth under the pointer (0x44080). */
+  swell(pointed: number): void {
+    this.building.scale.set(1 + 0.1 * pointed);
   }
 
   update(_dt: number, tint: number, label = 0): void {
