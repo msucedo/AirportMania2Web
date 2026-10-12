@@ -26,6 +26,7 @@ import { barWidth, cloudStart, sunPose, veilStep } from '../src/game/sceneLoadin
 import { gateColorSwing, gateLabelStrength, mixColors } from '../src/game/view/gateView';
 import { pausePose } from '../src/game/view/pauseScreen';
 import { yesNoPose } from '../src/game/view/yesNoMarks';
+import { awardTouch } from '../src/data/awards';
 import { coast, dragSpeed, markerImage, markerScale, ringTurn } from '../src/game/worldMap';
 import { reportPercent } from '../src/game/view/finalReport';
 import { clockDigits, goalBarFraction } from '../src/game/view/hud';
@@ -1068,5 +1069,14 @@ describe('the map\'s level markers', () => {
     expect(markerScale(0.5)).toBeCloseTo(0.75);
     expect(markerScale(1)).toBe(1);
     expect(ringTurn(0.5)).toBeCloseTo(54);
+  });
+});
+
+describe('an award\'s touch area', () => {
+  it('is its kind\'s, a special trophy\'s by its height', () => {
+    const place = { id: 34, number: 1, x: 0, y: 0, text: '' };
+    expect(awardTouch({ ...place, kind: 'special', height: 62 })).toEqual({ x: 25, y: 31 });
+    expect(awardTouch({ ...place, kind: 'medal' })).toEqual({ x: 15, y: 45 });
+    expect(awardTouch({ ...place, kind: 'diploma' })).toEqual({ x: 60, y: 45 });
   });
 });

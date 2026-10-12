@@ -2208,7 +2208,9 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   20 `AirplaneTrophyAward` and `AwardShine`/`Shine` entries; the `MiniGamePinAward`s are
   commented out. The room is wider than the screen (x up to about 920).
 - Award classes: base `0x1b1e4(award, kind?, textId, rect, x, y, 100)`; diploma `0x1b9a4`
-  (`AWARDS_ROOM.DIPLOMA`, `AWARDS.DIPLOMA`, touch rect ±60 × ±45), pig `0x1ba4c`
+  (`AWARDS_ROOM.DIPLOMA`, `AWARDS.DIPLOMA`, touch rect ±60 × ±45; the pig's and the clock's
+  are ±30 × ±25, a plane trophy's ±25 × ±45, a medal's ±15 × ±45 and a special trophy's ±25
+  by half the `Height` its table gives it, `0x1bf3e`), pig `0x1ba4c`
   (`AWARDS.STINGY_MANIAC`), clock `0x1bb18` (`AWARDS.FLYING_TIME`), plane trophy `0x1bcd8`
   (`AWARDS.PLANE_%d`, `AWARDS_ROOM.PLANES_TROPHIES.%d`), special trophy `0x1bf08`, medal
   `0x1c090` (heads bronze/silver/gold, `TAILS.%d`, `SILHOUETTE_%d`, `ICONS.%d`); description

@@ -11,6 +11,29 @@ export interface AwardPlace {
   y: number;
   /** Prefix of its texts: `.NAME`, `.EARN`, `.PRE_DESCRIPTION`, `.DESCRIPTION`. */
   text: string;
+  /** A special trophy's touch height (`Height`). */
+  height?: number;
+}
+
+/**
+ * Half the width and height of the area an award takes a touch in, about its place: the diploma
+ * 60 by 45 (0x1b9cc), the pig and the clock 30 by 25 (0x1ba74, 0x1bb40), a plane's trophy 25 by
+ * 45 (0x1bd38), a medal 15 by 45 (0x1c0bc), a special trophy 25 by half its `Height` (0x1bf3e).
+ */
+export function awardTouch(place: AwardPlace): { x: number; y: number } {
+  switch (place.kind) {
+    case 'diploma':
+      return { x: 60, y: 45 };
+    case 'pig':
+    case 'clock':
+      return { x: 30, y: 25 };
+    case 'plane':
+      return { x: 25, y: 45 };
+    case 'medal':
+      return { x: 15, y: 45 };
+    case 'special':
+      return { x: 25, y: Math.trunc((place.height ?? 0) / 2) };
+  }
 }
 
 /** Where an award's sparkles appear (`AwardShine`), by the award's id. */
@@ -35,7 +58,7 @@ export function parseAwardsTable(nodes: XmlNode[]): AwardPlace[] {
     else if (node.t === 'PigAward') places.push({ id: 40, kind: 'pig', number: 0, x, y, text: 'AWARDS.STINGY_MANIAC' });
     else if (node.t === 'ClockAward') places.push({ id: 41, kind: 'clock', number: 0, x, y, text: 'AWARDS.FLYING_TIME' });
     else if (node.t === 'MedalAward') places.push({ id: 20 + number, kind: 'medal', number, x, y, text: node.a.TextID ?? '' });
-    else if (node.t === 'SpecialTrophyAward') places.push({ id: 33 + number, kind: 'special', number, x, y, text: node.a.TextID ?? '' });
+    else if (node.t === 'SpecialTrophyAward') places.push({ id: 33 + number, kind: 'special', number, x, y, text: node.a.TextID ?? '', height: Number(node.a.Height) || 0 });
     else if (node.t === 'AirplaneTrophyAward') places.push({ id: number, kind: 'plane', number, x, y, text: `AWARDS.PLANE_${number}` });
   }
   return places;

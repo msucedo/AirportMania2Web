@@ -1,5 +1,5 @@
 import { type Application, Container, type FederatedPointerEvent, NineSliceSprite, Rectangle, type Sprite, Text, type Ticker } from 'pixi.js';
-import type { AwardPlace } from '../data/awards';
+import { type AwardPlace, awardTouch } from '../data/awards';
 import type { PlaneDescriptor } from '../data/planes';
 import { PlaneInfoDialog } from './view/planeInfoDialog';
 import type { GameData } from '../data/load';
@@ -319,8 +319,8 @@ export class AwardsRoom {
       node.addChild(label);
     }
 
-    const bounds = node.getLocalBounds();
-    node.hitArea = new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+    const reach = awardTouch(place);
+    node.hitArea = new Rectangle(-reach.x, -reach.y, 2 * reach.x, 2 * reach.y);
     node.eventMode = 'static';
     node.cursor = 'pointer';
     node.on('pointerup', () => {
