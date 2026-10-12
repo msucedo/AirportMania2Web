@@ -2864,6 +2864,20 @@ Another of the app's screens (vtable `0x17ad10`; enter `0x55a38`, update `0x55b3
   "You are playing a beta version of Aiport Mania - Wild Trips"; nothing in the binary sets
   that byte, so it is never shown, here either.
 
+## How a dialog's widget comes in — confirmed
+
+A widget (base `0x2bbdc`) is still until told to come in, one of two ways, each setting its
+state (`+0x68`) and a clock (`+0x6c`) that its update (`0x2bd38`) runs to 1 at 2 a second:
+
+- popped in (`0x2bce0`, state 1): scaled about its place by `1 + 0.3·(1 − c)·sin 2πc` and at
+  opacity `2c`;
+- faded in (`0x2bd0c`, state 2): at opacity `c`.
+
+The final report (`0x328d4`) pops in its result (`0x32a46`), each star (`0x32898`) and its
+button (`0x33b70`) and fades in every row (`0x32c02`…`0x33a76`); the stage-cleared dialog pops
+in its stars and its button (`0x7871e`, `0x787d2`). Built; the web version had the rows at
+once and a pop of its own for the stars.
+
 ## Dialog slider — confirmed
 
 Class `0x2d7b4(parent, x, y, width)`, vtable `0x17a248`; the sound and music ones (`0x2f3c4`,

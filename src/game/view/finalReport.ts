@@ -7,7 +7,7 @@ import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
 import type { Simulation } from '../sim/simulation';
-import { dialogButton, dialogFrame, dialogRule } from './dialog';
+import { dialogButton, dialogFrame, dialogRule, widgetAppear } from './dialog';
 import { SCORE_FONT } from './floatingText';
 
 export const FINAL_REPORT_SURFACES = [
@@ -60,8 +60,7 @@ export function reportPercent(count: number, total: number): number {
  * clock apart; the clock runs at double speed and four times faster while the screen is held.
  * The punctuality rows grow a bar of ticks to the share of planes for arrivals and departures.
  * Last comes the score and, a full unit later, the Continue button. Coordinates are from the
- * dialog's centre. The star's pop, the turning backdrop's speed and the font colour effects are
- * approximations.
+ * dialog's centre. The turning backdrop's speed and the font colour effects are approximations.
  */
 export class FinalReport extends Container {
   onContinue: (() => void) | null = null;
@@ -72,7 +71,6 @@ export class FinalReport extends Container {
   private clock = 0;
   private held = false;
   private growing: { bar: TilingSprite; target: number; leftward: boolean }[] = [];
-  private pops: { sprite: Sprite; age: number }[] = [];
 
   constructor(
     private readonly textures: TextureStore,
@@ -116,8 +114,8 @@ export class FinalReport extends Container {
       const node = new Label({ text, style: { fontFamily: family, fontSize: size, fill, stroke: BORDER } });
       // Rows are placed by their baseline: each sits just above the rule drawn under it.
       node.anchor.set(align === 2 ? 1 : 0, 0.85);
-      node.position.set(x, y);
-      this.panel.addChild(node);
+      // 0x32c02…: a row fades in over half a second.
+      widgetAppear(this.panel, x, y, false, node);
       return node;
     };
     const total = sim.planes.length;
@@ -125,17 +123,15 @@ export class FinalReport extends Container {
     this.steps.push(() => {
       const title = titleText(strings.t(tier === 'FAIL' ? 'SCORE.FAILED_SCORE' : `SCORE.${tier}_SCORE`), TITLE_FONT, 20, 0.8, ULTRA_EFFECT);
       title.anchor.set(0.5);
-      title.position.set(0, -97);
-      this.panel.addChild(title);
+      // 0x32a46: the result pops in, as the stars (0x32898) and the button (0x33b70) do.
+      widgetAppear(this.panel, 0, -97, true, title);
     });
     this.steps.push(() => {
       // One star for an expert score up to four for a perfect one (0x32a76).
       const stars = Math.max(0, ['FAIL', 'GOAL', 'EXPERT', 'MASTER', 'SUPREME', 'PERFECT'].indexOf(tier) - 1);
       for (const [x, y] of STAR_PLACES[stars] ?? []) {
         const star = textures.sprite('GUI.FINAL_REPORT.STAR');
-        star.position.set(x, y);
-        this.panel.addChild(star);
-        this.pops.push({ sprite: star, age: 0 });
+        widgetAppear(this.panel, x, y, true, star);
       }
     });
     this.steps.push(() => {
@@ -168,7 +164,7 @@ export class FinalReport extends Container {
     // The button comes a full unit after the score.
     this.steps.push(() => this.clock >= 1);
     this.steps.push(() => {
-      dialogButton(textures, audio, this.panel, { x: 0, y: 110, width: 200, height: 34 }, strings.t('FINAL_REPORT_DIALOG.CONTINUE'), fontFamily(SCORE_FONT), () => this.onContinue?.());
+      dialogButton(textures, audio, widgetAppear(this.panel, 0, 110, true), { x: 0, y: 0, width: 200, height: 34 }, strings.t('FINAL_REPORT_DIALOG.CONTINUE'), fontFamily(SCORE_FONT), () => this.onContinue?.());
     });
   }
 
@@ -183,12 +179,6 @@ export class FinalReport extends Container {
 
   update(seconds: number): void {
     this.backdrop.rotation += seconds * 0.4;
-    for (const pop of this.pops) {
-      pop.age += seconds;
-      const t = Math.min(1, pop.age / 0.25);
-      pop.sprite.scale.set(t < 1 ? 1.6 - 0.6 * t : 1);
-      pop.sprite.alpha = t;
-    }
     this.clock += seconds * (this.held ? 8 : 2);
     // Bars grow 20 px per unit of the clock, with a tick of sound as they go (0x33086).
     for (const growing of this.growing) {

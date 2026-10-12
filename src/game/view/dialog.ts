@@ -112,6 +112,49 @@ export function dialogFrame(textures: TextureStore, width: number, height: numbe
   return { overlay, panel, blocker };
 }
 
+/**
+ * How a widget stands `clock` into coming in, the clock running to 1 at 2 a second (0x2bd38).
+ * Popped in (0x2bce0) it swells and settles, `1 + 0.3·(1 − c)·sin 2πc`, and is clear by half
+ * way; faded in (0x2bd0c) it only clears, over the whole of it.
+ */
+export function widgetPose(clock: number, pop: boolean): { scale: number; alpha: number } {
+  const c = Math.max(0, Math.min(1, clock));
+  if (c >= 1) return { scale: 1, alpha: 1 };
+  return pop ? { scale: 1 + 0.3 * (1 - c) * Math.sin(2 * Math.PI * c), alpha: Math.min(1, 2 * c) } : { scale: 1, alpha: c };
+}
+
+/**
+ * Adds `node` to `parent` coming in as a widget does, about (x, y), where it is put. Returns the
+ * holder, which stands at (x, y) and is what to fill when `node` is left out.
+ */
+export function widgetAppear(parent: Container, x: number, y: number, pop: boolean, node?: Container): Container {
+  const holder = new Container();
+  holder.position.set(x, y);
+  const inner = new Container();
+  holder.addChild(inner);
+  if (node) {
+    node.position.set(0, 0);
+    inner.addChild(node);
+  }
+  parent.addChild(holder);
+  let clock = 0;
+  let last = performance.now();
+  const show = (): void => {
+    const pose = widgetPose(clock, pop);
+    inner.scale.set(pose.scale);
+    inner.alpha = pose.alpha;
+  };
+  show();
+  holder.onRender = () => {
+    const now = performance.now();
+    clock += 2 * Math.min(0.1, (now - last) / 1000);
+    last = now;
+    show();
+    if (clock >= 1) holder.onRender = null;
+  };
+  return inner;
+}
+
 export function dialogText(panel: Container, value: string, x: number, y: number, size: number, family: string, anchorX = 0): Label {
   const node = new Label({ text: value, style: { fontFamily: family, fontSize: size, fill: 0xffffff, stroke: BORDER } });
   node.anchor.set(anchorX, 0.5);

@@ -5,7 +5,7 @@ import type { Strings } from '../../data/strings';
 import type { AudioPlayer } from '../../engine/audio';
 import { fontFamily } from '../../engine/fonts';
 import type { TextureStore } from '../../engine/textures';
-import { dialogButton, dialogFrame, dialogRule } from './dialog';
+import { dialogButton, dialogFrame, dialogRule, widgetAppear } from './dialog';
 import { SCORE_FONT } from './floatingText';
 
 const BOX = { width: 400, height: 250 };
@@ -93,8 +93,9 @@ export class StageClear extends Container {
         count += 1;
         if (count > reward.stars) continue;
         const star = textures.sprite('GUI.FINAL_REPORT.STAR_SMALL');
-        star.position.copyFrom(stageClearStar(count, reward.stars));
-        centre.addChild(star);
+        // 0x7871e: it pops in.
+        const at = stageClearStar(count, reward.stars);
+        widgetAppear(centre, at.x, at.y, true, star);
         audio.play('SOUNDS.CASH');
         funds += perStar;
         total.text = String(Math.round(funds));
@@ -102,7 +103,7 @@ export class StageClear extends Container {
       if (count <= reward.stars + 3) return;
       state = 2;
       // 0x787a8: 360 wide at (0, 110).
-      dialogButton(textures, audio, centre, { x: 0, y: 110, width: 360, height: 34 }, strings.t('FINAL_REPORT_DIALOG.CONTINUE'), money, onContinue);
+      dialogButton(textures, audio, widgetAppear(centre, 0, 110, true), { x: 0, y: 0, width: 360, height: 34 }, strings.t('FINAL_REPORT_DIALOG.CONTINUE'), money, onContinue);
     };
   }
 }
