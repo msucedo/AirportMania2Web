@@ -57,7 +57,8 @@ export class AudioPlayer {
     for (const id of ids) void this.buffer(id);
   }
 
-  play(id: string, options: { pitch?: number; volume?: number } = {}): void {
+  /** `pan` puts the sound between the speakers, −1 left to 1 right. */
+  play(id: string, options: { pitch?: number; volume?: number; pan?: number } = {}): void {
     const { context, effects } = this;
     if (!context || !effects || this.muted) return;
     void this.buffer(id).then((buffer) => {
@@ -65,7 +66,13 @@ export class AudioPlayer {
       const source = context.createBufferSource();
       source.buffer = buffer;
       source.playbackRate.value = options.pitch ?? 1;
-      if (options.volume === undefined) {
+      if (options.pan !== undefined) {
+        const panner = context.createStereoPanner();
+        panner.pan.value = Math.max(-1, Math.min(1, options.pan));
+        const gain = context.createGain();
+        gain.gain.value = options.volume ?? 1;
+        source.connect(panner).connect(gain).connect(effects);
+      } else if (options.volume === undefined) {
         source.connect(effects);
       } else {
         const gain = context.createGain();

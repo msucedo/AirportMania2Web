@@ -56,7 +56,7 @@ import { GateView, gateColorSwing, gateLabelStrength, gateSurfaceIds, mixColors 
 import { HUD_FONT, HUD_HEIGHT, HUD_SURFACES, Hud } from './view/hud';
 import { ORDER_FLAG_SURFACES, OrderFlags } from './view/orderFlags';
 import { PAINTING_SURFACES, PaintChooser, PaintingSign, SprayCan } from './view/paintingSpotView';
-import { PlaneState, RULES } from './sim/rules';
+import { PlaneState, RULES, UNSELECTABLE_STATES } from './sim/rules';
 import { Simulation, type Gate, type Hangar, type Place, type Plane, type SimEvent, type StopSpot, secondTouch } from './sim/simulation';
 import type { StageLayout } from './stages/layout';
 
@@ -653,7 +653,10 @@ export class LevelScene {
     if (!pattern) return;
     const voiced = pattern.includes('%s');
     const pitch = voiced ? (plane.sex === 'MALE' ? plane.descriptor.pitch.male : plane.descriptor.pitch.female) : 1;
-    this.audio.play(pattern.replace('%s', plane.sex), { pitch });
+    // 0x6b24: a plane's sounds are placed by where it is across the screen (the channel is given
+    // `x / 480 − 0.5` every frame). How the engine turns that into left and right is not read:
+    // it is taken as all the way at either edge, and fixed as the sound starts.
+    this.audio.play(pattern.replace('%s', plane.sex), { pitch, pan: 2 * (plane.x / SCREEN_WIDTH - 0.5) });
     if (voiced) this.planeViews.get(plane.id)?.talk();
   }
 
@@ -1135,6 +1138,9 @@ export class LevelScene {
     const selected = this.sim.selected;
     this.flags.update(selected, selected ? tintOf(selected.color) : 0xffffff);
 
+    // 0x10f4c, 0x110c8: every frame the plane under the pointer is marked, if it can be picked.
+    const under = !this.paused && !this.dialog && this.pointer ? this.sim.planeAt(this.pointer.x, this.pointer.y) : null;
+    const pointedPlane = under && !UNSELECTABLE_STATES.has(under.state) ? under : null;
     for (const plane of this.sim.planes) {
       let view = this.planeViews.get(plane.id);
       if (plane.gone) {
@@ -1178,6 +1184,7 @@ export class LevelScene {
         altitude: plane.altitude,
         scale: plane.scale,
         selected: plane.selected,
+        pointed: plane === pointedPlane,
         energy: plane.energy,
         need: idle ? plane.need : null,
         thought: draining && plane.queue.length > 0 ? this.destinationIcon(plane) : null,

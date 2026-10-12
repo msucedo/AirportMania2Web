@@ -189,6 +189,8 @@ export interface PlaneLook {
   altitude: number;
   scale: number;
   selected: boolean;
+  /** The pointer is on it and it can be picked (`plane+0x27c`, 0x110c8). */
+  pointed?: boolean;
   energy: number;
   /** What the plane asks for while it waits with nothing to do, shown in its speech balloon; null for nothing. */
   need: number | null;
@@ -247,6 +249,7 @@ export class PlaneView extends Container {
   private gear: number;
   private gearFrame = 0;
   private selectedFor = 0;
+  private pointed = 0;
   private sequence: { fps: number; frames: readonly number[] } | null = null;
   private sequenceAt = 0;
   private lastEnergy: number | null = null;
@@ -479,7 +482,8 @@ export class PlaneView extends Container {
     const eyesShut = this.blink <= 0.1;
 
     this.lookTimer = Math.max(0, this.lookTimer - dt);
-    this.look = slide(this.look, look.idle || this.lookTimer > 0, 4, dt);
+    // 0x6b5c: at 8 a second (0x9dd4).
+    this.look = slide(this.look, look.idle || this.lookTimer > 0, 8, dt);
 
     // Eyebrows (0x8768–0x88f4): a raise that goes up and comes back, and a tilt that follows the
     // mood at 50° per second.
@@ -503,7 +507,8 @@ export class PlaneView extends Container {
     }
 
     // Landing gear (0x6bc6): folds away in the air and rolls with the distance covered on the ground.
-    this.gear = this.plane.rail?.alwaysDown ? 1 : slide(this.gear, look.gearDown, 4, dt);
+    // 0x6b68: at 2 a second (0x9e28).
+    this.gear = this.plane.rail?.alwaysDown ? 1 : slide(this.gear, look.gearDown, 2, dt);
     if (altitude < 1) {
       this.gearFrame = (this.gearFrame + Math.hypot(this.x - this.lastX, this.y - this.lastY) * 0.2) % GEAR_FRAMES;
     }
@@ -555,7 +560,10 @@ export class PlaneView extends Container {
         pose.opened.x = pose.closed.x = pose.eyeX + this.look * this.plane.eyes.movement;
       }
     });
-    this.body.scale.set(flipped ? -scale : scale, scale);
+    // 0x8492, 0x863c: it is a tenth larger by a value that follows its being pointed at, 7 a second.
+    this.pointed = slide(this.pointed, look.pointed === true, 7, dt);
+    const size = scale * (1 + 0.1 * this.pointed);
+    this.body.scale.set(flipped ? -size : size, size);
     this.body.y = -altitude;
     // The shadow is gone 50 px up (0x8c06).
     this.shadow.alpha = Math.max(0, Math.min(1, 1 - altitude / 50));

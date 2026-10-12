@@ -202,6 +202,35 @@ Handles both a finished landing (plane state 13) and a take-off (any other state
   for unloading and loading alike.
 - Other globals: 200 take-off acceleration (`0x1772dc`), 250 landing speed (`0x1772e0`).
 
+## The plane's update, read through (`0x6af0`)
+
+Its start, every frame and whatever the state:
+
+- `+0x354` rises and `+0x350` falls with time (`0x6b06`).
+- Its sound channel (`+0x3c`) is given `x / screen width − 0.5` (`0x6b24` → `0x8be98`): where the
+  plane is across the screen. Web version: its sounds are placed left to right by that, fixed
+  as each starts; how the engine uses the number is not read.
+- Its floating texts are updated (`0x658e0`).
+- The eyes' shift (`+0x298` flag, `+0x29c` value) follows at 8 a second (`0x9dd4`), and the
+  gear (`+0x250`, `+0x254`) at 2 a second (`0x9e28`). (The web version had both at 4.)
+- With the gear's value above 0 and the altitude (`+0x2f0`) under 1 the wheels' frame
+  (`+0x258`) advances by 0.2 × speed × dt, wrapping at 3 (`0x6bc6`).
+
+Its end, after the state's own code (`0x8426`):
+
+- The place and height are moved on by their speeds (`0x9f18`, `0x843a`), and the place drawn
+  at is the ground's less the height (`0x847e`).
+- The body's transform (`0x848e`): scaled `1 + 0.1·p`, `p` (`+0x280`) following at 7 a second
+  (`0xa014`) the mark the click handler puts on the plane under the pointer when it can be
+  picked (`+0x27c`, `0x110c8`, cleared for all each frame at `0x10e2e`); scaled by the lane's
+  size (`+0x290`); the wash's shake; turned by the pitch (`+0x2fc`); moved `DespY − 28` down;
+  mirrored when it does not face right (`+0x224`); and put at its place.
+- Moving faster than 10 px a second it takes its heading from its speed (`0x9f90`, `0x5c8c`).
+- The picked value (`+0x284` flag, `+0x288`) follows at 5 a second and its clock (`+0x28c`)
+  runs while picked; it is let go when the airport's picked plane is another (`0x8670`).
+- Its depth (`+4`) is its ground line less 10 (`0x8686`).
+- Web version: the swell under the pointer was missing and is built.
+
 ## Giving up, taxiing and take-off — confirmed
 
 - `Plane::giveUp` (`0x6a24`): state 1, lost-plane counter (`level+0x138`) + 1, and the score is
