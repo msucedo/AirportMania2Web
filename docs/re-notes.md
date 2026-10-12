@@ -2467,14 +2467,14 @@ verifies that each can be passed and that funds, stars and the opening of stage 
   once earned; Close 340 wide at (0, 105).
 - Notice (`0x31b48`): state 1, its clock rises at 5 a second to 1, drawn at scale
   `1.5 − 0.5·clock` and opacity the clock; state 2, the clock is set to 4 and falls, and a
-  touch or its end goes to state 3 (`0x32030`), where it falls from 1 at 5 a second, drawn at
+  finger lifted anywhere (`0x31c2e`) or its end goes to state 3 (`0x32030`), where it falls from 1 at 5 a second, drawn at
   scale `0.5 + 0.5·clock` and opacity the clock. Particles are thrown as it starts (`0x31648`,
   as many as `0x1b798` gives for the award).
 - An award under the finger (`+0x2c`, set through `0x1b574`) swells: its value follows at 5 a
   second (`0x1b57c`) and it is drawn at `1 + 0.1·value` about its place (`0x1b5c2`). Built.
 - Web version: the room is opened from the map's Awards button. Not built: the third page (an
   online leaderboard, `0x1f2d4`) and the keys that turn pages. Taken, not read: the ribbon's width, that the value filled into a
-  description is what the award counts, that a touch must be on the notice to send it away,
+  description is what the award counts, 
   and what the earned branch of the dialog computes at `0x1ae08`.
 
 ## Starting a game — confirmed

@@ -341,6 +341,8 @@ export class LevelScene {
     const release = (event: FederatedPointerEvent): void => {
       scene.heldChooser?.release(event.global.y);
       scene.heldChooser = null;
+      // 0x31c2e: a finger lifted anywhere sends the award's notice away.
+      if (scene.notice) scene.notice.touched = true;
       // 0x10ee8: a tab acts as the finger lifts on it (its slot 8, 0x244a8), not as it goes down.
       const at = event.global;
       if (scene.coffeeTab?.held && scene.coffeeTab.contains(at.x, at.y) && !scene.paused && !scene.dialog) scene.sim.serveCoffee();
@@ -645,10 +647,7 @@ export class LevelScene {
     text.anchor.set(0.5);
     text.position.set(240, 160);
     text.alpha = 0;
-    // A touch on it sends it away early.
-    text.eventMode = 'static';
     const notice = { text, id, state: noticeStart(), touched: false };
-    text.on('pointerdown', () => (notice.touched = true));
     this.root.addChild(text);
     this.notice = notice;
     // 0x31648: its fireworks go up with it.
