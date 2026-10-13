@@ -100,7 +100,13 @@ async function main(): Promise<void> {
     const player = new AudioPlayer(data.resources);
     player.muted = params.has('mute');
     player.setVolumes(settings.sound, settings.music);
-    player.preload(['SOUNDS.DIALOG_ROLL']);
+    // Browsers keep sound off until the page is touched: the first touch anywhere turns it on,
+    // on every screen (each is a page of its own here).
+    const unlock = (): void => {
+      player.unlock();
+      player.preload(['SOUNDS.DIALOG_ROLL', 'SOUNDS.CLICK']);
+    };
+    for (const name of ['pointerdown', 'keydown'] as const) document.addEventListener(name, unlock, { capture: true, once: true });
     dialogSound.play = (id) => player.play(id);
     return player;
   };
