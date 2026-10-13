@@ -14,9 +14,10 @@
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
     <link rel="icon" href="icons/icon-192.png" />
     <style>
-      html, body { position: fixed; inset: 0; margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-      /* The game keeps clear of the notch and the home bar. */
-      #game { box-sizing: border-box; width: 100%; height: 100%; touch-action: none; display: flex; align-items: center; justify-content: center; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+      /* The game takes the whole height, as on the phones it was made for, and keeps clear of the
+         notch at the sides; the home bar lies over its last few pixels. */
+      #game { box-sizing: border-box; width: 100%; height: 100%; touch-action: none; display: flex; align-items: center; justify-content: center; padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
       canvas { image-rendering: auto; touch-action: none; }
       /* Ours, outside the game: a phone held upright is asked to be turned, and the keeping of the
          game for playing offline says how far it has got. */

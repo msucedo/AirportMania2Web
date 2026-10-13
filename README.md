@@ -90,7 +90,8 @@ Good to know:
 - The game on the home screen keeps its own progress, apart from Safari's.
 - After changing the game, `npm run phone` again and open it once on the wifi: the new build
   replaces the old one, and is the one played from the next opening on.
-- On a phone the game is fitted inside the margins the notch and the home bar leave, and the
+- On a phone the game takes the whole height (the home bar lies over its last pixels), with
+  black at the sides since the screen is longer than the game's 3:2, and the
   browser's own double-tap gesture is called off (two quick touches take an order back).
 - If the computer's address changes, the certificate is made again by itself; the phone goes on
   trusting it.
