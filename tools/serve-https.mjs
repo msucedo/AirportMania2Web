@@ -69,6 +69,8 @@ const TYPES = {
 
 function serve(request, response) {
   const path = decodeURIComponent(new URL(request.url, 'http://x').pathname);
+  // What tells whether a phone looks for a new build, and takes it.
+  if (path === '/sw.js' || path === '/precache.json') console.log(`${new Date().toLocaleTimeString()}  ${request.socket.remoteAddress?.replace('::ffff:', '')}  asks for ${path.slice(1)}`);
   // The certificate authority the phone has to trust, once.
   if (path === '/rootCA.pem') {
     response.writeHead(200, { 'Content-Type': 'application/x-x509-ca-cert', 'Content-Disposition': 'attachment; filename="airport-mania-local-ca.pem"' });

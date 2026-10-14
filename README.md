@@ -88,8 +88,9 @@ Then, on the iPhone, on the same wifi:
 Good to know:
 
 - The game on the home screen keeps its own progress, apart from Safari's.
-- After changing the game, `npm run phone` again and open it once on the wifi: the new build
-  replaces the old one, and is the one played from the next opening on.
+- After changing the game, `npm run phone` again and open the game on the wifi: it looks for the
+  new build on opening and on coming back to it, says "Guardando la versión nueva" while it keeps
+  it, and plays it from the next opening on. The server prints a line each time a phone looks.
 - On a phone the game takes the whole height (the home bar lies over its last pixels), with
   black at the sides since the screen is longer than the game's 3:2, and the
   browser's own double-tap gesture is called off (two quick touches take an order back).
