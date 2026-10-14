@@ -52,7 +52,8 @@ export class FogView extends Container {
     });
     this.propeller = textures.sprite('ANTI_FOG.PROPELLER');
     this.propeller.scale.set(0.8, 1);
-    this.body = [textures.sprite('ANTI_FOG.BASE'), textures.sprite('ANTI_FOG.NOSE')];
+    // The base is placed, and swells, by its hot spot (16, 16), as the engine draws it.
+    this.body = [textures.pinned('ANTI_FOG.BASE'), textures.sprite('ANTI_FOG.NOSE')];
     this.machine.addChild(this.body[0]!, this.propeller, this.body[1]!);
     this.addChild(this.machine);
     this.visible = false;

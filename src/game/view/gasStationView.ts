@@ -41,7 +41,8 @@ export class GasStationView extends Container {
     this.addChild(spot, this.body);
 
     this.mark = textures.sprite('INDICATORS.FUELING_MARK');
-    this.needle = textures.sprite('INDICATORS.FUELING_MARK_TICK');
+    // 0x41028: the needle turns about its hot spot, the foot of the needle.
+    this.needle = textures.pinned('INDICATORS.FUELING_MARK_TICK');
     for (const part of [this.mark, this.needle]) {
       part.position.set(node.x, node.y - 80);
       this.addChild(part);

@@ -66,7 +66,8 @@ export class BonusView extends Container {
       let view = this.balloons.get(balloon.id);
       if (!view) {
         const holder = new Container();
-        const thread = textures.sprite('BALLOON.THREAD');
+        // The thread leans about its hot spot, the top of the string (2, 0).
+        const thread = textures.pinned('BALLOON.THREAD');
         const body = textures.sprite(`BALLOON.${balloon.image}`);
         // The balloon turns the other way about a point 20 px above, so it stays upright over
         // its leaning thread.
