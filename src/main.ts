@@ -102,11 +102,16 @@ async function main(): Promise<void> {
     player.setVolumes(settings.sound, settings.music);
     // Browsers keep sound off until the page is touched: the first touch anywhere turns it on,
     // on every screen (each is a page of its own here).
+    // Safari counts only some touch events as letting sound on (the lifting of a finger, not its
+    // landing), so every kind is tried until the sound runs.
+    const kinds = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'] as const;
     const unlock = (): void => {
+      const first = !player.unlocked;
       player.unlock();
-      player.preload(['SOUNDS.DIALOG_ROLL', 'SOUNDS.CLICK']);
+      if (first) player.preload(['SOUNDS.DIALOG_ROLL', 'SOUNDS.CLICK']);
+      if (player.running) for (const name of kinds) document.removeEventListener(name, unlock, { capture: true });
     };
-    for (const name of ['pointerdown', 'keydown'] as const) document.addEventListener(name, unlock, { capture: true, once: true });
+    for (const name of kinds) document.addEventListener(name, unlock, { capture: true });
     dialogSound.play = (id) => player.play(id);
     return player;
   };

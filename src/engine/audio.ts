@@ -33,12 +33,16 @@ export class AudioPlayer {
   /** Call from a pointer or key handler. Safe to call repeatedly. */
   unlock(): void {
     if (this.context) {
-      void this.context.resume();
+      if (this.context.state !== 'running') {
+        void this.context.resume();
+        this.wake(this.context);
+      }
       return;
     }
     const Context = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Context) return;
     this.context = new Context();
+    this.wake(this.context);
     this.effects = this.context.createGain();
     this.effects.gain.value = EFFECTS_LEVEL * this.volumes.sound;
     this.effects.connect(this.context.destination);
@@ -47,6 +51,19 @@ export class AudioPlayer {
     this.musicGain.connect(this.context.destination);
     this.pendingMusic?.();
     this.pendingMusic = null;
+  }
+
+  /** Whether sound is on: the context made and running. */
+  get running(): boolean {
+    return this.context?.state === 'running';
+  }
+
+  /** Safari only lets sound out once something has been played inside a touch: a silent sample. */
+  private wake(context: AudioContext): void {
+    const source = context.createBufferSource();
+    source.buffer = context.createBuffer(1, 1, 22050);
+    source.connect(context.destination);
+    source.start(0);
   }
 
   /** Player volumes from 0 to 1, on top of the mix levels. */
