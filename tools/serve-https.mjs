@@ -3,7 +3,7 @@
 // (`brew install mkcert`) for this computer's addresses and kept in .certs/, which is not committed.
 // Usage: node tools/serve-https.mjs [distDir]      (PORT=8443 and HTTP_PORT=8080 can be changed)
 import { execFileSync } from 'node:child_process';
-import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { createServer as createHttp } from 'node:http';
 import { createServer as createHttps } from 'node:https';
 import { networkInterfaces } from 'node:os';
@@ -69,6 +69,19 @@ const TYPES = {
 
 function serve(request, response) {
   const path = decodeURIComponent(new URL(request.url, 'http://x').pathname);
+  // What the phones report (src/engine/offline.ts), kept in phone-reports.log.
+  if (path === '/report' && request.method === 'POST') {
+    let body = '';
+    request.on('data', (chunk) => (body += chunk));
+    request.on('end', () => {
+      const line = `${new Date().toLocaleTimeString()}  ${request.socket.remoteAddress?.replace('::ffff:', '')}  ${body.slice(0, 2000)}`;
+      console.log(line);
+      appendFileSync('phone-reports.log', `${line}\n`);
+      response.writeHead(204);
+      response.end();
+    });
+    return;
+  }
   // What tells whether a phone looks for a new build, and takes it.
   if (path === '/sw.js' || path === '/precache.json') console.log(`${new Date().toLocaleTimeString()}  ${request.socket.remoteAddress?.replace('::ffff:', '')}  asks for ${path.slice(1)}`);
   // The certificate authority the phone has to trust, once.

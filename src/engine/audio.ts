@@ -1,3 +1,4 @@
+import { report } from './offline';
 import type { Resources } from '../data/resources';
 
 // 0x2f3ac, 0x2f42c: the sound slider's value is the effects' level as it is, and the music's
@@ -51,6 +52,11 @@ export class AudioPlayer {
     this.musicGain.connect(this.context.destination);
     this.pendingMusic?.();
     this.pendingMusic = null;
+  }
+
+  /** The sound's state, for reports: none, suspended, running, interrupted or closed. */
+  get state(): string {
+    return this.context?.state ?? 'none';
   }
 
   /** Whether sound is on: the context made and running. */
@@ -272,6 +278,7 @@ export class AudioPlayer {
     } catch (error) {
       // The game stays playable without that sample.
       console.warn(`Could not load sample ${id}`, error);
+      report('sample failed', { id, own: this.ownDecoder, reason: String(error) });
       return null;
     }
   }

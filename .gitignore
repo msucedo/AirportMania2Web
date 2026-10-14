@@ -12,3 +12,4 @@ public/assets-hd/
 # Icons made from the game's pictures, and the local HTTPS certificates.
 public/icons/
 .certs/
+phone-reports.log

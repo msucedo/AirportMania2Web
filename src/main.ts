@@ -1,4 +1,4 @@
-import { keepForOffline } from './engine/offline';
+import { keepForOffline, report } from './engine/offline';
 import { usePalette } from './game/palette';
 import { SceneLoading } from './game/sceneLoading';
 import { dialogSound } from './game/view/dialog';
@@ -105,10 +105,11 @@ async function main(): Promise<void> {
     // Safari counts only some touch events as letting sound on (the lifting of a finger, not its
     // landing), so every kind is tried until the sound runs.
     const kinds = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'] as const;
-    const unlock = (): void => {
+    const unlock = (event: Event): void => {
       const first = !player.unlocked;
       player.unlock();
       if (first) player.preload(['SOUNDS.DIALOG_ROLL', 'SOUNDS.CLICK']);
+      report('touch', { kind: event.type, sound: player.state });
       if (player.running) for (const name of kinds) document.removeEventListener(name, unlock, { capture: true });
     };
     for (const name of kinds) document.addEventListener(name, unlock, { capture: true });

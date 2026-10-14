@@ -12,6 +12,9 @@ async function tell(message) {
 async function keep() {
   const { version, files } = await (await fetch('precache.json', { cache: 'no-store' })).json();
   if (version !== VERSION) throw new Error('the list is of another build');
+  // What older builds kept goes first: a phone may not have room for two at once.
+  const old = (await caches.keys()).filter((name) => name.startsWith(PREFIX) && name !== PREFIX + VERSION);
+  await Promise.all(old.map((name) => caches.delete(name)));
   const cache = await caches.open(PREFIX + VERSION);
   // What an interrupted keeping left is not fetched again.
   const have = new Set((await cache.keys()).map((request) => request.url));
